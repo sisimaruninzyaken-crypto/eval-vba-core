@@ -14,12 +14,6 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
-
-
-
-
-
-
 Option Explicit
 
 '=== frmEval ヘッダ：共通で使う変数 ===
@@ -99,6 +93,7 @@ Private mPrintBtnHook As clsPrintBtnHook
 Private mHdrNameSink As cHdrNameSink
 Private mNameSuggestSink As cNameSuggestSink
 Private mDupNameWarned As Boolean
+Private mBasicInfoTidyDone As Boolean
 
 
 
@@ -249,8 +244,8 @@ Private Sub ResizeFrameToContent(f As MSForms.Frame, contentBottom As Single)
     nextTop = f.Top + f.Height + 6
 End Sub
 
-Private Sub nL(ByRef Y As Single, Optional ByVal rows As Long = 1)
-    Y = Y + rows * 26
+Private Sub nL(ByRef y As Single, Optional ByVal rows As Long = 1)
+    y = y + rows * 26
 End Sub
 
 
@@ -260,8 +255,8 @@ Function CreateLabel( _
     parent As MSForms.Frame, _
     ByVal caption As String, _
     ByVal x As Single, _
-    ByVal Y As Single, _
-    Optional ByVal w As Single = 160, _
+    ByVal y As Single, _
+    Optional ByVal W As Single = 160, _
     Optional ByVal nm As String = "" _
 ) As MSForms.label
 
@@ -275,9 +270,9 @@ Function CreateLabel( _
     With lb
         .caption = caption
         .Left = x
-        .Top = Y
+        .Top = y
         .AutoSize = False
-        .Width = w
+        .Width = W
     End With
 
     Set CreateLabel = lb
@@ -288,27 +283,27 @@ End Function
 Function CreateLabelXY( _
     parent As MSForms.Frame, _
     ByVal x As Single, _
-    ByVal Y As Single, _
+    ByVal y As Single, _
     Optional ByVal caption As String = "", _
     Optional ByVal nm As String = "", _
-    Optional ByVal w As Single = 160 _
+    Optional ByVal W As Single = 160 _
 ) As MSForms.label
-    Set CreateLabelXY = CreateLabel(parent, caption, x, Y, w, nm)
+    Set CreateLabelXY = CreateLabel(parent, caption, x, y, W, nm)
 End Function
 
 
 
 
-Private Function CreateTextBox(parent As MSForms.Frame, x As Single, Y As Single, _
-                               w As Single, h As Single, multiline As Boolean, _
+Private Function CreateTextBox(parent As MSForms.Frame, x As Single, y As Single, _
+                               W As Single, H As Single, multiline As Boolean, _
                                Optional name As String = "", Optional tag As String = "") As MSForms.TextBox
     Dim tb As MSForms.TextBox
     Set tb = parent.Controls.Add("Forms.TextBox.1", IIf(name = "", vbNullString, name))
     With tb
         .Left = x
-        .Top = Y
-        .Width = w
-        .Height = IIf(h > 0, h, 20)
+        .Top = y
+        .Width = W
+        .Height = IIf(H > 0, H, 20)
         .multiline = multiline
         .EnterKeyBehavior = multiline
         .tag = tag
@@ -316,14 +311,14 @@ Private Function CreateTextBox(parent As MSForms.Frame, x As Single, Y As Single
     Set CreateTextBox = tb
 End Function
 
-Private Function CreateCombo(parent As MSForms.Frame, x As Single, Y As Single, _
-                             w As Single, Optional name As String = "", Optional tag As String = "") As MSForms.ComboBox
+Private Function CreateCombo(parent As MSForms.Frame, x As Single, y As Single, _
+                             W As Single, Optional name As String = "", Optional tag As String = "") As MSForms.ComboBox
     Dim cB As MSForms.ComboBox
     Set cB = parent.Controls.Add("Forms.ComboBox.1", IIf(name = "", vbNullString, name))
     With cB
         .Left = x
-        .Top = Y
-        .Width = w
+        .Top = y
+        .Width = W
         .Style = fmStyleDropDownList
         .tag = tag
     End With
@@ -331,14 +326,14 @@ Private Function CreateCombo(parent As MSForms.Frame, x As Single, Y As Single, 
 End Function
 
 Private Function CreateCheck(parent As MSForms.Frame, caption As String, _
-                             x As Single, Y As Single, Optional name As String = "", _
+                             x As Single, y As Single, Optional name As String = "", _
                              Optional tag As String = "") As MSForms.CheckBox
     Dim ck As MSForms.CheckBox
     Set ck = parent.Controls.Add("Forms.CheckBox.1", IIf(name = "", vbNullString, name))
     With ck
         .caption = caption
         .Left = x
-        .Top = Y
+        .Top = y
         .tag = tag
     End With
     Set CreateCheck = ck
@@ -358,7 +353,7 @@ End Sub
 
 '=== チェックボックスを並べる汎用フレーム ===
 Private Function BuildCheckFrame(parent As MSForms.Frame, _
-    title As String, x As Single, Y As Single, w As Single, _
+    title As String, x As Single, y As Single, W As Single, _
     items As Variant, Optional groupTag As String = "") As MSForms.Frame
 
     Dim f As MSForms.Frame
@@ -366,15 +361,15 @@ Private Function BuildCheckFrame(parent As MSForms.Frame, _
     With f
         .caption = title
         .Left = x
-        .Top = Y
-        .Width = w
+        .Top = y
+        .Width = W
         .Height = 60                ' 仮高さ。下で中身に合わせて伸ばす
         .ScrollBars = fmScrollBarsNone
     End With
 
     ' チェックを2列で配置（長くなりすぎない程度）
     Dim i As Long, col As Long, row As Long
-    Dim colW As Single: colW = (w - 24) / 2
+    Dim colW As Single: colW = (W - 24) / 2
     Dim rowH As Single: rowH = 20
     Dim maxRow As Long: maxRow = 0
 
@@ -444,7 +439,7 @@ End Function
 
 '=== 関節拘縮：左右チェックを1行生成するヘルパー ======================
 Private Sub CreateContractureRLRow(parent As MSForms.Frame, _
-                                   ByRef Y As Single, _
+                                   ByRef y As Single, _
                                    ByVal partCaption As String, _
                                    ByVal baseTag As String)
     ' ガイド：先頭で見出しを作ったレイアウトに合わせる
@@ -453,16 +448,16 @@ Private Sub CreateContractureRLRow(parent As MSForms.Frame, _
     '   左  : （右の列）+ 60
 
     ' 見出し（部位名）
-    Call CreateLabel(parent, partCaption, COL_LX, Y)
+    Call CreateLabel(parent, partCaption, COL_LX, y)
 
     ' 右チェック
-    Call CreateCheck(parent, "右", COL_LX + 90 + 20, Y, , baseTag & ".右")
+    Call CreateCheck(parent, "右", COL_LX + 90 + 20, y, , baseTag & ".右")
 
     ' 左チェック
-    Call CreateCheck(parent, "左", COL_LX + 90 + 20 + 60, Y, , baseTag & ".左")
+    Call CreateCheck(parent, "左", COL_LX + 90 + 20 + 60, y, , baseTag & ".左")
 
     ' 次の行へ
-    nL Y
+    nL y
 End Sub
 
 
@@ -477,28 +472,28 @@ Private Sub Build_RLA_ChecksPart(f As MSForms.Frame, ByVal kind As String)
         phases = Array("PSw", "ISw", "MSw", "TSw")      ' 遊脚期
     End If
 
-    Dim i As Long, Y As Single
-    Y = 22
+    Dim i As Long, y As Single
+    y = 22
 
     For i = LBound(phases) To UBound(phases)
         Dim key As String: key = CStr(phases(i))
 
         ' 左端：フェーズ名ラベル
-        Call CreateLabel(f, RLAPhaseCaption(key), 12, Y, 90)
+        Call CreateLabel(f, RLAPhaseCaption(key), 12, y, 90)
 
         ' 簡易チェック（4つ）※名前は "RLA_<key>_<番号>" とする
-        Call AddRLAChk(f, key, "可動域不足", 120, Y)
-        Call AddRLAChk(f, key, "筋力低下", 300, Y)
-        Y = Y + 22
-        Call AddRLAChk(f, key, "疼痛/不安定", 120, Y)
-        Call AddRLAChk(f, key, "協調不良", 300, Y)
+        Call AddRLAChk(f, key, "可動域不足", 120, y)
+        Call AddRLAChk(f, key, "筋力低下", 300, y)
+        y = y + 22
+        Call AddRLAChk(f, key, "疼痛/不安定", 120, y)
+        Call AddRLAChk(f, key, "協調不良", 300, y)
 
         ' 右端：レベル選択（OptionButton, GroupName=key）
-        Call AddRLAOpt(f, key, "軽度", f.Width - 180, Y - 22)
-        Call AddRLAOpt(f, key, "中等度", f.Width - 120, Y - 22)
-        Call AddRLAOpt(f, key, "高度", f.Width - 60, Y - 22)
+        Call AddRLAOpt(f, key, "軽度", f.Width - 180, y - 22)
+        Call AddRLAOpt(f, key, "中等度", f.Width - 120, y - 22)
+        Call AddRLAOpt(f, key, "高度", f.Width - 60, y - 22)
 
-        Y = Y + 30
+        y = y + 30
     Next
 
     ' フレームの高さは呼び出し元で ResizeFrameToContent しているためここでは触らない
@@ -521,26 +516,26 @@ End Function
 
 ' チェックボックス追加（名前は RLA_<key>_n）
 Private Sub AddRLAChk(f As MSForms.Frame, ByVal key As String, ByVal caption As String, _
-                      ByVal x As Single, ByVal Y As Single)
+                      ByVal x As Single, ByVal y As Single)
     Dim ck As MSForms.CheckBox
     Set ck = f.Controls.Add("Forms.CheckBox.1", "RLA_" & key & "_" & Replace(caption, "/", "_"))
     With ck
         .caption = caption
         .Left = x
-        .Top = Y
+        .Top = y
     End With
 End Sub
 
 ' レベル用オプションボタン（GroupName=key）
 Private Sub AddRLAOpt(f As MSForms.Frame, ByVal key As String, ByVal caption As String, _
-                      ByVal x As Single, ByVal Y As Single)
+                      ByVal x As Single, ByVal y As Single)
     Dim ob As MSForms.OptionButton
     Set ob = f.Controls.Add("Forms.OptionButton.1")
     With ob
         .caption = caption
         .groupName = key
         .Left = x
-        .Top = Y
+        .Top = y
     End With
 End Sub
 
@@ -616,15 +611,15 @@ Private Sub FitLayout()
     End If
 
     ' 各ホストフレームも同様にクランプ
-    Dim hosts As Variant, h As MSForms.Frame, i As Long
+    Dim hosts As Variant, H As MSForms.Frame, i As Long
     hosts = Array(hostBasic, hostPost, hostMove, hostTests, hostWalk, hostCog)
     For i = LBound(hosts) To UBound(hosts)
-        Set h = hosts(i)
-        If Not h Is Nothing Then
-            h.Left = 0: h.Top = 0
-            h.Width = iw - 12: If h.Width < 120 Then h.Width = 120
-            h.Height = iH - 12: If h.Height < 100 Then h.Height = 100
-            h.ScrollBars = fmScrollBarsNone
+        Set H = hosts(i)
+        If Not H Is Nothing Then
+            H.Left = 0: H.Top = 0
+            H.Width = iw - 12: If H.Width < 120 Then H.Width = 120
+            H.Height = iH - 12: If H.Height < 100 Then H.Height = 100
+            H.ScrollBars = fmScrollBarsNone
         End If
     Next i
 
@@ -658,17 +653,17 @@ Private Function CollectCandidatesByNameLocal(ByVal ws As Worksheet, _
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, nameCol).End(xlUp).row
     Dim tmp As New Collection
-    Dim r As Long, nm As String
-    For r = 2 To lastRow
-        nm = CStr(ws.Cells(r, nameCol).value)
-        If NormName(nm) = key Then tmp.Add r
+    Dim R As Long, nm As String
+    For R = 2 To lastRow
+        nm = CStr(ws.Cells(R, nameCol).value)
+        If NormName(nm) = key Then tmp.Add R
     Next
 
     If tmp.Count = 0 Then Exit Function
 
     Dim a() As Long: ReDim a(1 To tmp.Count)
-    For r = 1 To tmp.Count
-        a(r) = CLng(tmp(r))
+    For R = 1 To tmp.Count
+        a(R) = CLng(tmp(R))
     Next
     CollectCandidatesByNameLocal = a
 End Function
@@ -1134,10 +1129,10 @@ End Function
 '=== BIコンボにイベントフックを張る ===
 Private Sub AttachBIHook(ByRef cB As MSForms.ComboBox)
     If BIHooks Is Nothing Then Set BIHooks = New Collection
-    Dim h As CboBIHook
-    Set h = New CboBIHook
-    h.Init Me, cB
-    BIHooks.Add h
+    Dim H As CboBIHook
+    Set H = New CboBIHook
+    H.Init Me, cB
+    BIHooks.Add H
 End Sub
 
 '=== BI：項目×選択肢 → 点数（Barthel標準に沿う） ==================
@@ -1273,10 +1268,10 @@ End Sub
 '=== 任意のTextBoxにIMEひらがなフックを張る ===
 Private Sub AttachImeHiragana(tb As MSForms.TextBox)
     If ImeHooks Is Nothing Then Set ImeHooks = New Collection
-    Dim h As TxtImeHook
-    Set h = New TxtImeHook
-    h.Init tb
-    ImeHooks.Add h
+    Dim H As TxtImeHook
+    Set H = New TxtImeHook
+    H.Init tb
+    ImeHooks.Add H
     ' 念のため直ちに反映
     On Error Resume Next
     tb.IMEMode = fmIMEModeHiragana
@@ -1285,10 +1280,10 @@ End Sub
 '=== MultiPage にフックを張る ===
 Private Sub AttachMPHook(mp As MSForms.MultiPage)
     If MPHs Is Nothing Then Set MPHs = New Collection
-    Dim h As MPHook
-    Set h = New MPHook
-    h.Init Me, mp
-    MPHs.Add h
+    Dim H As MPHook
+    Set H = New MPHook
+    H.Init Me, mp
+    MPHs.Add H
 End Sub
 
 '=== IADL備考にIMEひらがなを再適用（都度呼ぶ） ===
@@ -1355,7 +1350,7 @@ Private Sub BuildKyoOnADL(pg As MSForms.Page)
     End With
     
 
-    Dim Y As Single: Y = 22
+    Dim y As Single: y = 22
     Dim lb As MSForms.label, cB As MSForms.ComboBox, txt As MSForms.TextBox
     Dim choices As Variant
 
@@ -1370,25 +1365,25 @@ Private Sub BuildKyoOnADL(pg As MSForms.Page)
     
     
 ' 寝返り
-Set lb = CreateLabel(fr, "寝返り", COL_LX, Y)
+Set lb = CreateLabel(fr, "寝返り", COL_LX, y)
 Set cB = fr.Controls.Add("Forms.ComboBox.1", "cmbKyo_Roll", True)
-With cB: .Left = COL_LX + lblW + 60: .Top = Y - 3: .Width = 120: End With
+With cB: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
 AddItemsToCombo cB, choices
-Y = Y + rowH
+y = y + rowH
 
 ' 起き上がり
-Set lb = CreateLabel(fr, "起き上がり", COL_LX, Y)
+Set lb = CreateLabel(fr, "起き上がり", COL_LX, y)
 Set cB = fr.Controls.Add("Forms.ComboBox.1", "cmbKyo_SitUp", True)
-With cB: .Left = COL_LX + lblW + 60: .Top = Y - 3: .Width = 120: End With
+With cB: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
 AddItemsToCombo cB, choices
-Y = Y + rowH
+y = y + rowH
 
 ' 座位保持
-Set lb = CreateLabel(fr, "座位保持", COL_LX, Y)
+Set lb = CreateLabel(fr, "座位保持", COL_LX, y)
 Set cB = fr.Controls.Add("Forms.ComboBox.1", "cmbKyo_SitHold", True)
-With cB: .Left = COL_LX + lblW + 60: .Top = Y - 3: .Width = 120: End With
+With cB: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
 AddItemsToCombo cB, choices
-Y = Y + rowH
+y = y + rowH
 
     
   ' 右列：立ち上がり / 立位保持（左列と同じ行Y=22,46／オフセット+60／幅120で揃える）
@@ -1403,19 +1398,19 @@ Set cboStand = CreateCombo(fr, COL_RX + lblW + 60, 46, 120, , "POSTURE|立位保持"
 cboStand.List = MakeList("自立,見守り（監視下）,一部介助,全介助")
 
     ' 備考
-    Set lb = CreateLabel(fr, "備考", COL_LX, Y)
+    Set lb = CreateLabel(fr, "備考", COL_LX, y)
     Set txt = fr.Controls.Add("Forms.TextBox.1", "txtKyoNote")
     With txt
         .Left = COL_LX + 40
-        .Top = Y - 3
+        .Top = y - 3
         .Width = fr.InsideWidth - (COL_LX + 40) - 12
         .Height = 120
         .multiline = True
         .EnterKeyBehavior = True
     End With
-    Y = Y + txt.Height + 12
+    y = y + txt.Height + 12
 
-    fr.Height = Y + 12
+    fr.Height = y + 12
 End Sub
 
 'ADL-起居動作用：コンボに候補をセット
@@ -1605,22 +1600,22 @@ Private Sub LayoutPosture()
     Dim rowH As Single:   rowH = 28
     Dim labelW As Single: labelW = Application.Max(60, colW - 110)
 
-    Dim i As Long, c As Long, r As Long, x As Single, Y As Single
+    Dim i As Long, c As Long, R As Long, x As Single, y As Single
     For i = LBound(items) To UBound(items)
         c = (i - LBound(items)) \ rows
-        r = (i - LBound(items)) Mod rows
+        R = (i - LBound(items)) Mod rows
         x = 12 + c * colW
-        Y = startY + r * rowH
+        y = startY + R * rowH
 
         With fr.Controls("lblPost_" & CStr(i))
             .Left = x
-            .Top = Y + 3
+            .Top = y + 3
             .Width = labelW
             .Visible = True
         End With
         With fr.Controls("cmbPost_" & CStr(i))
             .Left = x + labelW + 6
-            .Top = Y
+            .Top = y
             .Width = 100
             .Visible = True
         End With
@@ -1659,12 +1654,12 @@ End Sub
 
 
 '======================================================================
-Public Sub RegisterMPHook(h As MPHook)
-    mMPHooks.Add h
+Public Sub RegisterMPHook(H As MPHook)
+    mMPHooks.Add H
 End Sub
 
-Public Sub RegisterTxtHook(h As TxtImeHook)
-    mTxtHooks.Add h
+Public Sub RegisterTxtHook(H As TxtImeHook)
+    mTxtHooks.Add H
 End Sub
 
 
@@ -1706,7 +1701,7 @@ Public Sub UpdateNameSuggest()
     Dim lb As MSForms.ListBox
     Dim ws As Worksheet
     Dim cName As Long, cID As Long
-    Dim lastRow As Long, r As Long
+    Dim lastRow As Long, R As Long
     Dim key As String, keyN As String
     Dim nm As String, idv As String
     Dim hit As Long
@@ -1769,12 +1764,12 @@ Next i
     seen.CompareMode = vbTextCompare
 
 
-    For r = 2 To lastRow
-        nm = CStr(ws.Cells(r, cName).value)
+    For R = 2 To lastRow
+        nm = CStr(ws.Cells(R, cName).value)
         If Len(nm) > 0 Then
             If InStr(1, NormalizeName(nm), keyN, vbTextCompare) > 0 Then
                 idv = ""
-                If cID > 0 Then idv = CStr(ws.Cells(r, cID).value)
+                If cID > 0 Then idv = CStr(ws.Cells(R, cID).value)
                 
                 
                 Dim nmKey As String
@@ -1794,7 +1789,7 @@ Next i
                 
             End If
         End If
-    Next r
+    Next R
 
     If hit > 0 Then lb.Visible = True
     
@@ -1909,31 +1904,31 @@ Private Function FindLastRowByPID(ByVal pid As String, ByVal ws As Worksheet) As
     Dim bestRow As Long
     Dim bestD As Date, bestHasTs As Boolean, bestTs As Date
 
-    Dim r As Long
-    For r = 2 To last
-        If CStr(ws.Cells(r, CLng(colPID)).value) = pid Then
-            If IsDate(ws.Cells(r, CLng(colDate)).value) Then
-                Dim d As Date: d = CDate(ws.Cells(r, CLng(colDate)).value)
+    Dim R As Long
+    For R = 2 To last
+        If CStr(ws.Cells(R, CLng(colPID)).value) = pid Then
+            If IsDate(ws.Cells(R, CLng(colDate)).value) Then
+                Dim d As Date: d = CDate(ws.Cells(R, CLng(colDate)).value)
 
                 Dim hasTs As Boolean, t As Date
-                hasTs = (Not IsError(colTS)) And IsDate(ws.Cells(r, CLng(colTS)).value)
-                If hasTs Then t = CDate(ws.Cells(r, CLng(colTS)).value)
+                hasTs = (Not IsError(colTS)) And IsDate(ws.Cells(R, CLng(colTS)).value)
+                If hasTs Then t = CDate(ws.Cells(R, CLng(colTS)).value)
 
                 If bestRow = 0 Then
-                    bestRow = r: bestD = d: bestHasTs = hasTs: If hasTs Then bestTs = t
+                    bestRow = R: bestD = d: bestHasTs = hasTs: If hasTs Then bestTs = t
                 ElseIf d > bestD Then
-                    bestRow = r: bestD = d: bestHasTs = hasTs: If hasTs Then bestTs = t
+                    bestRow = R: bestD = d: bestHasTs = hasTs: If hasTs Then bestTs = t
                 ElseIf d = bestD Then
                     If hasTs And Not bestHasTs Then
-                        bestRow = r: bestHasTs = True: bestTs = t
+                        bestRow = R: bestHasTs = True: bestTs = t
                     ElseIf hasTs And bestHasTs Then
                         If t > bestTs Then
-                            bestRow = r: bestTs = t
+                            bestRow = R: bestTs = t
                         ElseIf t = bestTs Then
-                            If r > bestRow Then bestRow = r
+                            If R > bestRow Then bestRow = R
                         End If
                     ElseIf (Not hasTs) And (Not bestHasTs) Then
-                        If r > bestRow Then bestRow = r
+                        If R > bestRow Then bestRow = R
                     End If
                 End If
             End If
@@ -2164,7 +2159,7 @@ look("IO_MMT") = HeaderCol_Compat("IO_MMT", ws)
 look("IO_Tone") = HeaderCol_Compat("IO_Tone", ws)
 
 ' ROMは複数列のため次手で別処理
-Dim r As Long
+Dim R As Long
 ws.Activate
 Dim cName As Long: cName = HeaderCol_Compat("氏名", ws)
 If cName = 0 Then cName = HeaderCol_Compat("利用者名", ws)
@@ -2177,11 +2172,11 @@ End If
 Dim rr As Long
 For rr = ws.Cells(ws.rows.Count, cName).End(xlUp).row To 2 Step -1
     If Trim$(CStr(ws.Cells(rr, cName).value)) = pname Then
-        r = rr
+        R = rr
         Exit For
     End If
 Next
-If r = 0 Then
+If R = 0 Then
     MsgBox "前回データが見つかりません（氏名一致なし）: " & pname, vbExclamation
     Exit Sub
 End If
@@ -2191,9 +2186,9 @@ End If
 'If r <= 0 Then Exit Sub
 
 
-If r > 0 Then
-    Application.Run "LoadSensoryFromSheet", ThisWorkbook.Worksheets("EvalData"), r, Me
-    Application.Run "LoadMMTFromSheet", ThisWorkbook.Worksheets("EvalData"), r, Me
+If R > 0 Then
+    Application.Run "LoadSensoryFromSheet", ThisWorkbook.Worksheets("EvalData"), R, Me
+    Application.Run "LoadMMTFromSheet", ThisWorkbook.Worksheets("EvalData"), R, Me
     Application.Run "LoadLatestPainNow"
     Application.Run "Load_ADL_Latest"
 End If
@@ -2234,16 +2229,16 @@ Private Function FindRowByNameWithPickLocal(ws As Worksheet, nameText As String,
     If colDate = 0 Then colDate = modEvalIOEntry.FindColByHeaderExact(ws, "作成日")
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, colName).End(xlUp).row
-    Dim rows() As Long, cnt As Long, r As Long
+    Dim rows() As Long, cnt As Long, R As Long
     ReDim rows(1 To maxCount)
 
-    For r = lastRow To 2 Step -1
-        If ws.Cells(r, colName).value = nameText Then
+    For R = lastRow To 2 Step -1
+        If ws.Cells(R, colName).value = nameText Then
             cnt = cnt + 1
-            rows(cnt) = r
+            rows(cnt) = R
             If cnt = maxCount Then Exit For
         End If
-    Next r
+    Next R
 
     If cnt = 0 Then Exit Function
     If cnt = 1 Then
@@ -2304,23 +2299,23 @@ dtCol = RCol(ws, look, "Basic.EvalDate", "評価日", "記録日", "更新日", "作成日")
 
 
 
-    Dim i As Long, r As Long, msg As String, disp As Long
+    Dim i As Long, R As Long, msg As String, disp As Long
     msg = "同姓同名が見つかりました。読み込むデータを選択してください（番号を入力）。" & vbCrLf & vbCrLf
     For i = lb To ub
-        r = candidates(i)
+        R = candidates(i)
         disp = i - lb + 1
         msg = msg & CStr(disp) & ") "
         If dtCol > 0 Then
-            If IsDate(ws.Cells(r, dtCol).value) Then
-                msg = msg & Format$(CDate(ws.Cells(r, dtCol).value), "yyyy/mm/dd")
+            If IsDate(ws.Cells(R, dtCol).value) Then
+                msg = msg & Format$(CDate(ws.Cells(R, dtCol).value), "yyyy/mm/dd")
             Else
-                msg = msg & CStr(ws.Cells(r, dtCol).value)
+                msg = msg & CStr(ws.Cells(R, dtCol).value)
             End If
         Else
             msg = msg & "(評価日なし)"
         End If
-        If ageCol > 0 Then msg = msg & " | 年齢:" & Trim$(CStr(ws.Cells(r, ageCol).value))
-        If pidCol > 0 Then msg = msg & " | ID:" & Trim$(CStr(ws.Cells(r, pidCol).value))
+        If ageCol > 0 Then msg = msg & " | 年齢:" & Trim$(CStr(ws.Cells(R, ageCol).value))
+        If pidCol > 0 Then msg = msg & " | ID:" & Trim$(CStr(ws.Cells(R, pidCol).value))
         msg = msg & vbCrLf
     Next i
 
@@ -2436,19 +2431,19 @@ Private Function FindLastRowByPIDLocal(ByVal ws As Worksheet, ByVal look As Obje
     Dim dtCol As Long: dtCol = EnsureHeaderColumnLocal(ws, look, "Basic.EvalDate")
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, idCol).End(xlUp).row
-    Dim r As Long, pick As Long, best As Date, curTs As Date, curDt As Date
+    Dim R As Long, pick As Long, best As Date, curTs As Date, curDt As Date
 
-    For r = 3 To lastRow
-        If CStr(ws.Cells(r, idCol).value) = pid Then
+    For R = 3 To lastRow
+        If CStr(ws.Cells(R, idCol).value) = pid Then
             curTs = 0: curDt = 0
             On Error Resume Next
-            curTs = CDate(ws.Cells(r, tsCol).value)
-            curDt = CDate(ws.Cells(r, dtCol).value)
+            curTs = CDate(ws.Cells(R, tsCol).value)
+            curDt = CDate(ws.Cells(R, dtCol).value)
             On Error GoTo 0
             If curTs > 0 Then
-                If curTs > best Then best = curTs: pick = r
+                If curTs > best Then best = curTs: pick = R
             ElseIf curDt > 0 Then
-                If curDt > best Then best = curDt: pick = r
+                If curDt > best Then best = curDt: pick = R
             End If
         End If
     Next
@@ -2465,20 +2460,20 @@ Private Function FindLastRowByNameLocal(ByVal ws As Worksheet, _
     Dim dtCol As Long:   dtCol = ResolveColOrCreate(ws, look, "Basic.EvalDate", "評価日", "EvalDate")
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, nameCol).End(xlUp).row
-    Dim r As Long, pick As Long, best As Date, curTs As Date, curDt As Date
+    Dim R As Long, pick As Long, best As Date, curTs As Date, curDt As Date
 
-    For r = 3 To lastRow
-        If KeyNormalize(ws.Cells(r, nameCol).value) = KeyNormalize(pname) Then
+    For R = 3 To lastRow
+        If KeyNormalize(ws.Cells(R, nameCol).value) = KeyNormalize(pname) Then
 
             curTs = 0: curDt = 0
             On Error Resume Next
-            curTs = CDate(ws.Cells(r, tsCol).value)
-            curDt = CDate(ws.Cells(r, dtCol).value)
+            curTs = CDate(ws.Cells(R, tsCol).value)
+            curDt = CDate(ws.Cells(R, dtCol).value)
             On Error GoTo 0
             If curTs > 0 Then
-                If curTs > best Then best = curTs: pick = r
+                If curTs > best Then best = curTs: pick = R
             ElseIf curDt > 0 Then
-                If curDt > best Then best = curDt: pick = r
+                If curDt > best Then best = curDt: pick = R
             End If
         End If
     Next
@@ -2488,9 +2483,9 @@ End Function
 
 
 Private Function NextDataRowLocal(ByVal ws As Worksheet) As Long
-    Dim r As Long: r = ws.Cells(ws.rows.Count, 1).End(xlUp).row
-    If r < 3 Then r = 2
-    NextDataRowLocal = r + 1
+    Dim R As Long: R = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    If R < 3 Then R = 2
+    NextDataRowLocal = R + 1
 End Function
 
 Private Function GeneratePIDLocal() As String
@@ -2533,31 +2528,31 @@ Private Sub SetImeRecursive(container As Object)
 End Sub
 
 Private Sub FixRestNRS_Once()
-    Dim l As Control, c As Control
+    Dim L As Control, c As Control
     On Error Resume Next
     Set c = Me.Controls("cmbNRS_Move")                  ' 動作時NRSのコンボ
     If c Is Nothing Then Exit Sub
 
     ' 近い高さにあるラベルを探す（見つからなければ新規に作る）
-    For Each l In Me.Controls
-        If TypeName(l) = "Label" Then
-            If l.caption = "安静時NRS" Or (Abs(l.Top - c.Top) <= 20 And l.Left < c.Left) Then
+    For Each L In Me.Controls
+        If TypeName(L) = "Label" Then
+            If L.caption = "安静時NRS" Or (Abs(L.Top - c.Top) <= 20 And L.Left < c.Left) Then
                 Exit For
             End If
         End If
     Next
-    If l Is Nothing Then
-        Set l = c.parent.Controls.Add("Forms.Label.1", "lblNRS_Rest", True)
+    If L Is Nothing Then
+        Set L = c.parent.Controls.Add("Forms.Label.1", "lblNRS_Rest", True)
     End If
 
     ' 表示・位置・サイズを確定
-    l.caption = "安静時NRS"
-    l.Visible = True
-    l.WordWrap = False
-    l.Width = 72
-    l.Top = c.Top
-    l.Left = c.Left - (l.Width + 6)
-    l.ZOrder 0
+    L.caption = "安静時NRS"
+    L.Visible = True
+    L.WordWrap = False
+    L.Width = 72
+    L.Top = c.Top
+    L.Left = c.Left - (L.Width + 6)
+    L.ZOrder 0
 End Sub
 
 
@@ -2819,11 +2814,11 @@ If look("Basic.EvalDate") = 0 Then look("Basic.EvalDate") = modEvalIOEntry.FindC
 
     ' 3) 名前で探索（複数なら候補番号を選ばせる）
   ' ③ 名前で行番号を特定
-Dim r As Long
-r = FindRowByNameWithPickLocal(ws, pname)
+Dim R As Long
+R = FindRowByNameWithPickLocal(ws, pname)
 
 
-If r <= 0 Then
+If R <= 0 Then
     MsgBox "前回の値が見つかりません。", vbInformation
     Exit Sub
 End If
@@ -2837,7 +2832,7 @@ If cName = 0 Then
     MsgBox "氏名列が見つかりません。", vbExclamation
     Exit Sub
 End If
-If StrComp(CStr(ws.Cells(r, cName).value), pname, vbTextCompare) <> 0 Then
+If StrComp(CStr(ws.Cells(R, cName).value), pname, vbTextCompare) <> 0 Then
     MsgBox "選択行の氏名が「" & pname & "」と一致しません。読み込みを中止します。", vbExclamation
     Exit Sub
 End If
@@ -2860,7 +2855,7 @@ Private Sub UserForm_Activate()
    
     Static done As Boolean
     Dim scrH As Single
-    Dim h As Single
+    Dim H As Single
     
     Application.WindowState = xlMaximized
     
@@ -2887,15 +2882,15 @@ Me.Left = Application.Left + (Application.Width - Me.Width) / 2: Me.Top = Applic
 
 
  Dim scrH As Single
-    Dim h As Single
+    Dim H As Single
     scrH = Application.UsableHeight
     If scrH < 500 Then
-        h = 530
+        H = 530
     Else
-        h = 690
+        H = 690
     End If
 
-    Me.Height = h
+    Me.Height = H
     DoEvents
 
     Call LegacyInit
@@ -2930,7 +2925,7 @@ Call RemoveLegacyPainUI
 
 If Not mPainTidyBusy Then
     'TidyPainUI_Once
-    Me.Height = h
+    Me.Height = H
     DoEvents
     ClearPainUI Me   ' ← 起動時は空で開始（読み込みは手動で）
 End If
@@ -2983,23 +2978,12 @@ End If
 
 '--- Fix: 子MultiPage見切れ対策（2025-12-13 OKスナップショット固定）
 
-'Me.Controls("mpPhys").Height = 520#
-'Me.Controls("cmdSaveGlobal").Top = Me.InsideHeight - Me.Controls("cmdSaveGlobal").Height - 12
 
 Me.Controls("MultiPage2").parent.Height = Me.Controls("MultiPage2").Height
 Me.Controls("Frame12").Height = 508.1
 Me.Controls("mpPhys").Pages(0).Controls("Frame8").Controls("mpROM").Height = Me.Controls("mpPhys").Pages(0).Controls("Frame8").InsideHeight - Me.Controls("mpPhys").Pages(0).Controls("Frame8").Controls("mpROM").Top
-'Me.Controls("mpPhys").Height = Me.InsideHeight - 80
 Me.Controls("mpPhys").Pages(0).Controls("Frame8").Height = Me.Controls("mpPhys").Height
 Me.Controls("mpPhys").Pages(0).Controls("Frame8").Controls("mpROM").Height = Me.Controls("mpPhys").Pages(0).Controls("Frame8").InsideHeight - Me.Controls("mpPhys").Pages(0).Controls("Frame8").Controls("mpROM").Top
-
-
-
-    'frmEval.Controls("mpPhys").Pages(0).Controls("Frame8").Controls("mpROM").Height = _
-    'frmEval.Controls("mpPhys").Pages(0).Controls("Frame8").Controls("mpROM").Pages(0).Controls("Frame19").Top + _
-    'frmEval.Controls("mpPhys").Pages(0).Controls("Frame8").Controls("mpROM").Pages(0).Controls("Frame19").Height + 24
-
-
 
 
 
@@ -3049,6 +3033,11 @@ DoEvents
 On Error Resume Next
 Me.Controls("MultiPage1").Pages(0).Controls("Frame32").Controls("btnLoadPrevCtl").Visible = False
 On Error GoTo 0
+    
+ If Not mBasicInfoTidyDone Then
+    mBasicInfoTidyDone = True
+    Call TidyBasicInfo_TwoColumns
+ End If
     
 End Sub
 
@@ -3191,7 +3180,7 @@ Trace "update nextTop done; mpADL.Top=" & mpADL.Top & _
       ", nextTop=" & nextTop, "Initialize"
 
 
-Dim Y As Single, cboTmp As MSForms.ComboBox
+Dim y As Single, cboTmp As MSForms.ComboBox
 
 
 
@@ -3200,9 +3189,9 @@ Dim Y As Single, cboTmp As MSForms.ComboBox
     
     nextTop = pad
     Dim fTests As MSForms.Frame: Set fTests = CreateFrameP(hostTests, "テスト・評価（秒=小数2桁・握力=小数1桁・0以上）", 150)
-    Y = 22
-    CreateLabel fTests, "10m歩行（秒）", COL_LX, Y: CreateTextBox fTests, COL_LX + lblW + 20, Y, 80, 0, False, "txtTenMWalk", "Test.10m": nL Y
-    CreateLabel fTests, "TUG（秒）", COL_LX, Y: CreateTextBox fTests, COL_LX + lblW + 20, Y, 80, 0, False, "txtTUG", "Test.TUG"
+    y = 22
+    CreateLabel fTests, "10m歩行（秒）", COL_LX, y: CreateTextBox fTests, COL_LX + lblW + 20, y, 80, 0, False, "txtTenMWalk", "Test.10m": nL y
+    CreateLabel fTests, "TUG（秒）", COL_LX, y: CreateTextBox fTests, COL_LX + lblW + 20, y, 80, 0, False, "txtTUG", "Test.TUG"
     CreateLabel fTests, "5回立ち上がり（秒）", COL_RX, 22: CreateTextBox fTests, COL_RX + lblW + 60, 22, 80, 0, False, "txtFiveSTS", "Test.5xSTS"
     CreateLabel fTests, "セミタンデム（秒）", COL_RX, 46: CreateTextBox fTests, COL_RX + lblW + 60, 46, 80, 0, False, "txtSemi", "Test.Semi"
     CreateLabel fTests, "握力 右（kg）", COL_LX, 94: CreateTextBox fTests, COL_LX + lblW + 20, 94, 80, 0, False, "txtGripR", "Grip.R"
@@ -3218,18 +3207,18 @@ Trace "WALK start", "Init"
 Set mpWalk = hostWalk.Controls.Add("Forms.MultiPage.1")
 
 ' 変数宣言は With の外でOK
-Dim w As Single, h As Single
+Dim W As Single, H As Single
 
 With mpWalk
     .Left = 0
     .Top = 0
 
     ' 内寸ベースで算出し、下限を付けてクランプ
-    w = hostWalk.InsideWidth - 12:  If w < 200 Then w = 200
-    h = hostWalk.InsideHeight - 12: If h < 150 Then h = 150
+    W = hostWalk.InsideWidth - 12:  If W < 200 Then W = 200
+    H = hostWalk.InsideHeight - 12: If H < 150 Then H = 150
 
-    .Width = w
-    .Height = h
+    .Width = W
+    .Height = H
     .Style = fmTabStyleTabs
 End With
 
@@ -3256,13 +3245,13 @@ End With
 
     nextTop = pad
     Dim fGait As MSForms.Frame: Set fGait = CreateFrameP(hostWalkGait, "歩行評価（自立度）", 90)
-    Y = 22
+    y = 22
     Dim rowH As Single: rowH = 28
     
-    CreateLabel fGait, "歩行自立度", COL_LX, Y
-    Dim cboGait As MSForms.ComboBox: Set cboGait = CreateCombo(fGait, COL_LX + lblW, Y, 500, , "Gait.自立度")
+    CreateLabel fGait, "歩行自立度", COL_LX, y
+    Dim cboGait As MSForms.ComboBox: Set cboGait = CreateCombo(fGait, COL_LX + lblW, y, 500, , "Gait.自立度")
     cboGait.List = MakeList("完全自立,修正自立（補助具使用）,監視・見守り,軽介助（25%未満）,中等度介助（25-50%）,重介助（50%以上）,全介助")
-    ResizeFrameToContent fGait, Y + rowH
+    ResizeFrameToContent fGait, y + rowH
 
     Dim hostWalkRLA As MSForms.Frame
     Set hostWalkRLA = mpWalk.Pages(1).Controls.Add("Forms.Frame.1")
@@ -3323,16 +3312,16 @@ End With
     
     nextTop = pad
     Dim fCog As MSForms.Frame: Set fCog = CreateFrameP(hostCog, "認知機能・精神面", 110)
-    Y = 22
-    CreateLabel fCog, "認知機能レベル", COL_LX, Y
-    Dim cboCog As MSForms.ComboBox: Set cboCog = CreateCombo(fCog, COL_LX + lblW, Y, 160, , "Cognition.Level")
+    y = 22
+    CreateLabel fCog, "認知機能レベル", COL_LX, y
+    Dim cboCog As MSForms.ComboBox: Set cboCog = CreateCombo(fCog, COL_LX + lblW, y, 160, , "Cognition.Level")
     cboCog.List = MakeList("正常,軽度低下,中等度低下,高度低下")
-    CreateLabel fCog, "精神面", COL_RX, Y
-    Dim cboPsy As MSForms.ComboBox: Set cboPsy = CreateCombo(fCog, COL_RX + lblW, Y, 160, , "Psych.Status")
+    CreateLabel fCog, "精神面", COL_RX, y
+    Dim cboPsy As MSForms.ComboBox: Set cboPsy = CreateCombo(fCog, COL_RX + lblW, y, 160, , "Psych.Status")
     cboPsy.List = MakeList("安定,不安傾向,抑うつ傾向,その他")
-    CreateLabel fCog, "備考", COL_LX, Y + 28
-    CreateTextBox fCog, COL_LX + lblW, Y + 26, 610, 50, True, , "Cognition.備考"
-    ResizeFrameToContent fCog, Y + 26 + 50
+    CreateLabel fCog, "備考", COL_LX, y + 28
+    CreateTextBox fCog, COL_LX + lblW, y + 26, 610, 50, True, , "Cognition.備考"
+    ResizeFrameToContent fCog, y + 26 + 50
     
     Trace "COG end", "Init"
 
@@ -3369,7 +3358,7 @@ RecalcBI
     nextTop = pad
   Dim fBasic As MSForms.Frame: Set fBasic = CreateFrameP(hostBasic, "基本情報", 360)
     Set fBasicRef = fBasic
-    Y = 22
+    y = 22
 
     ' --- 最上段：ユーティリティ行 ---
     Dim chkDelta As MSForms.CheckBox
@@ -3387,101 +3376,101 @@ RecalcBI
         .Width = 120: .Height = 24: .name = "btnSaveCtl"
     End With
     PositionTopRightButtons fBasic
-    nL Y, 1
+    nL y, 1
 
     ' 行1：ID / 評価日 / 評価者（小さめ）
-    CreateLabel fBasic, "ID", COL_LX, Y
+    CreateLabel fBasic, "ID", COL_LX, y
     Dim tbPID As MSForms.TextBox
-    Set tbPID = CreateTextBox(fBasic, COL_LX + lblW, Y, 120, 0, False, "txtPID", "PatientID")
+    Set tbPID = CreateTextBox(fBasic, COL_LX + lblW, y, 120, 0, False, "txtPID", "PatientID")
     btnLoadPrevCtl.Left = tbPID.Left + tbPID.Width + 12
     btnLoadPrevCtl.Top = tbPID.Top
-    CreateLabel fBasic, "評価日", COL_RX, Y
-    Dim tbED As MSForms.TextBox: Set tbED = CreateTextBox(fBasic, COL_RX + lblW, Y, 120, 0, False, "txtEDate", "EvalDate")
+    CreateLabel fBasic, "評価日", COL_RX, y
+    Dim tbED As MSForms.TextBox: Set tbED = CreateTextBox(fBasic, COL_RX + lblW, y, 120, 0, False, "txtEDate", "EvalDate")
     tbED.Text = Format(Date, "yyyy/mm/dd")
-    CreateLabel fBasic, "評価者", COL_RX + lblW + 130, Y
-    Dim tbEva As MSForms.TextBox: Set tbEva = CreateTextBox(fBasic, COL_RX + lblW + 180, Y, 90, 0, False, "txtEvaluator", "Basic.Evaluator")
+    CreateLabel fBasic, "評価者", COL_RX + lblW + 130, y
+    Dim tbEva As MSForms.TextBox: Set tbEva = CreateTextBox(fBasic, COL_RX + lblW + 180, y, 90, 0, False, "txtEvaluator", "Basic.Evaluator")
     tbEva.Font.Size = 8
-    nL Y
+    nL y
 
     ' 行2：氏名 / 年齢 / 性別
-    CreateLabel fBasic, "氏名", COL_LX, Y
-    CreateTextBox fBasic, COL_LX + lblW, Y, 200, 0, False, "txtName", "Basic.Name"
-    CreateLabel fBasic, "年齢", COL_RX, Y
-    CreateTextBox fBasic, COL_RX + lblW, Y, 60, 0, False, "txtAge", "Basic.Age"
-    CreateLabel fBasic, "性別", COL_RX + lblW + 70, Y
-    Dim cboSex As MSForms.ComboBox: Set cboSex = CreateCombo(fBasic, COL_RX + lblW + 110, Y, 90, "cboSex", "Basic.Gender")
+    CreateLabel fBasic, "氏名", COL_LX, y
+    CreateTextBox fBasic, COL_LX + lblW, y, 200, 0, False, "txtName", "Basic.Name"
+    CreateLabel fBasic, "年齢", COL_RX, y
+    CreateTextBox fBasic, COL_RX + lblW, y, 60, 0, False, "txtAge", "Basic.Age"
+    CreateLabel fBasic, "性別", COL_RX + lblW + 70, y
+    Dim cboSex As MSForms.ComboBox: Set cboSex = CreateCombo(fBasic, COL_RX + lblW + 110, y, 90, "cboSex", "Basic.Gender")
     cboSex.List = MakeList("男性,女性,その他,不明")
-    nL Y
+    nL y
     
     ' 行2.5：生年月日
-    CreateLabel fBasic, "生年月日", COL_RX, Y
+    CreateLabel fBasic, "生年月日", COL_RX, y
     Dim tbBirth As MSForms.TextBox
-    Set tbBirth = CreateTextBox(fBasic, COL_RX + lblW, Y, 120, 0, False, "txtBirth", "Basic.BirthDate")
+    Set tbBirth = CreateTextBox(fBasic, COL_RX + lblW, y, 120, 0, False, "txtBirth", "Basic.BirthDate")
     tbBirth.IMEMode = fmIMEModeOff
 
 
-    nL Y
+    nL y
     
-    CreateLabel fBasic, "※生年月日は 19990804 の形式で入力してください（年齢は自動計算されます）", COL_RX + lblW + 130, Y
+    CreateLabel fBasic, "※生年月日は 19990804 の形式で入力してください（年齢は自動計算されます）", COL_RX + lblW + 130, y
     fBasic.Controls(fBasic.Controls.Count - 1).Font.Size = 8
-    fBasic.Controls(fBasic.Controls.Count - 1).Top = Y - 21
+    fBasic.Controls(fBasic.Controls.Count - 1).Top = y - 21
 
 
 
     ' 行3：主診断 / 発症日
-    CreateLabel fBasic, "主診断", COL_LX, Y
-    CreateTextBox fBasic, COL_LX + lblW, Y, 260, 0, False, "txtDx", "Basic.PrimaryDx"
-    CreateLabel fBasic, "発症日", COL_RX, Y
-    CreateTextBox fBasic, COL_RX + lblW, Y, 120, 0, False, "txtOnset", "Basic.OnsetDate"
-    nL Y
+    CreateLabel fBasic, "主診断", COL_LX, y
+    CreateTextBox fBasic, COL_LX + lblW, y, 260, 0, False, "txtDx", "Basic.PrimaryDx"
+    CreateLabel fBasic, "発症日", COL_RX, y
+    CreateTextBox fBasic, COL_RX + lblW, y, 120, 0, False, "txtOnset", "Basic.OnsetDate"
+    nL y
 
     ' 行4：生活状況 / 要介護度
-    CreateLabel fBasic, "生活状況", COL_LX, Y
-    CreateTextBox fBasic, COL_LX + lblW, Y, 220, 0, False, "txtLiving", "Basic.Living"
-    CreateLabel fBasic, "要介護度", COL_RX, Y
-    Dim cboLev As MSForms.ComboBox: Set cboLev = CreateCombo(fBasic, COL_RX + lblW, Y, 150, "cboCare", "Basic.CareLevel")
+    CreateLabel fBasic, "生活状況", COL_LX, y
+    CreateTextBox fBasic, COL_LX + lblW, y, 220, 0, False, "txtLiving", "Basic.Living"
+    CreateLabel fBasic, "要介護度", COL_RX, y
+    Dim cboLev As MSForms.ComboBox: Set cboLev = CreateCombo(fBasic, COL_RX + lblW, y, 150, "cboCare", "Basic.CareLevel")
     cboLev.List = MakeList("要支援1,要支援2,要介護1,要介護2,要介護3,要介護4,要介護5")
-    nL Y
+    nL y
 
     ' 行5：障害高齢者／認知症高齢者（ラベル個別幅）
     Dim LBLW_LONG_LEFT As Long:  LBLW_LONG_LEFT = 150
     Dim LBLW_LONG_RIGHT As Long: LBLW_LONG_RIGHT = 170
 
-    CreateLabel fBasic, "障害高齢者の日常生活自立度", COL_LX, Y, LBLW_LONG_LEFT
+    CreateLabel fBasic, "障害高齢者の日常生活自立度", COL_LX, y, LBLW_LONG_LEFT
     Dim cboEL As MSForms.ComboBox
-    Set cboEL = CreateCombo(fBasic, COL_LX + LBLW_LONG_LEFT + 6, Y, 180, "cboElder", "Basic.ElderlyLevel")
+    Set cboEL = CreateCombo(fBasic, COL_LX + LBLW_LONG_LEFT + 6, y, 180, "cboElder", "Basic.ElderlyLevel")
     cboEL.List = MakeList("自立,J1,J2,A1,A2,B1,B2,C1,C2")
 
-    CreateLabel fBasic, "認知症高齢者の日常生活自立度", COL_RX, Y, LBLW_LONG_RIGHT
+    CreateLabel fBasic, "認知症高齢者の日常生活自立度", COL_RX, y, LBLW_LONG_RIGHT
     Dim cboDL As MSForms.ComboBox
-    Set cboDL = CreateCombo(fBasic, COL_RX + LBLW_LONG_RIGHT + 6, Y, 160, "cboDementia", "Basic.DementiaLevel")
+    Set cboDL = CreateCombo(fBasic, COL_RX + LBLW_LONG_RIGHT + 6, y, 160, "cboDementia", "Basic.DementiaLevel")
     cboDL.List = MakeList("自立,I,IIa,IIb,IIIa,IIIb,IV,M")
-    nL Y, 1
+    nL y, 1
 
     ' 補助具／リスク（2列）
-    nL Y, 1
+    nL y, 1
 
     Dim frRisk As MSForms.Frame
     Dim ASSISTIVE_CSV As String: ASSISTIVE_CSV = "杖,シルバーカー,歩行器,車いす,短下肢装具,介助ベルト,手すり,スロープ"
     Dim RISK_CSV As String: RISK_CSV = "転倒,誤嚥,失禁,褥瘡,低栄養,徘徊,せん妄,ADL低下"
 
-    Set frRisk = BuildCheckFrame(fBasic, "リスク", COL_RX, Y, 370, MakeList(RISK_CSV), "RiskGroup")
+    Set frRisk = BuildCheckFrame(fBasic, "リスク", COL_RX, y, 370, MakeList(RISK_CSV), "RiskGroup")
 
     Dim nextY As Single
     nextY = frRisk.Top + frRisk.Height
-    Y = nextY + 8
+    y = nextY + 8
 
     BuildAssistiveChecksInWalkEval ASSISTIVE_CSV
 
     ' Needs（左右2カラム）
     Dim needsH As Single: needsH = 36
-    CreateLabel fBasic, "患者Needs", COL_LX, Y
-    CreateTextBox fBasic, COL_LX + lblW, Y, 270, needsH, True, "txtNeedsPt", "Needs.Patient"
-    CreateLabel fBasic, "家族Needs", COL_RX, Y
-    CreateTextBox fBasic, COL_RX + lblW, Y, 270, needsH, True, "txtNeedsFam", "Needs.Family"
-    Y = Y + needsH + 10
+    CreateLabel fBasic, "患者Needs", COL_LX, y
+    CreateTextBox fBasic, COL_LX + lblW, y, 270, needsH, True, "txtNeedsPt", "Needs.Patient"
+    CreateLabel fBasic, "家族Needs", COL_RX, y
+    CreateTextBox fBasic, COL_RX + lblW, y, 270, needsH, True, "txtNeedsFam", "Needs.Family"
+    y = y + needsH + 10
 
-    ResizeFrameToContent fBasic, Y
+    ResizeFrameToContent fBasic, y
     
     
     ' レイアウト＆タブ順
@@ -3528,30 +3517,30 @@ RecalcBI
     '================ 関節拘縮（右・左）＋備考 ================
     Dim fCon As MSForms.Frame: Set fCon = CreateFrameP(hostPost, "関節拘縮（右・左）＋備考", 180)
     Dim y0 As Single: y0 = 22
-    Y = y0
+    y = y0
 
     ' ガイド見出し
-    CreateLabel fCon, "部位", COL_LX, Y
-    CreateLabel fCon, "右", COL_LX + 90 + 20, Y
-    CreateLabel fCon, "左", COL_LX + 90 + 20 + 60, Y
-    nL Y
+    CreateLabel fCon, "部位", COL_LX, y
+    CreateLabel fCon, "右", COL_LX + 90 + 20, y
+    CreateLabel fCon, "左", COL_LX + 90 + 20 + 60, y
+    nL y
 
-    CreateCheck fCon, "頸部（左右なし）", COL_LX, Y, "", "Contracture.頸部": nL Y
+    CreateCheck fCon, "頸部（左右なし）", COL_LX, y, "", "Contracture.頸部": nL y
 
     ' 部位ごとにR/Lチェック
-    CreateContractureRLRow fCon, Y, "肩関節", "Contracture.肩"
-    CreateContractureRLRow fCon, Y, "肘関節", "Contracture.肘"
-    CreateContractureRLRow fCon, Y, "手関節", "Contracture.手関節"
-    CreateContractureRLRow fCon, Y, "股関節", "Contracture.股関節"
-    CreateContractureRLRow fCon, Y, "膝関節", "Contracture.膝関節"
-    CreateContractureRLRow fCon, Y, "足関節", "Contracture.足関節"
+    CreateContractureRLRow fCon, y, "肩関節", "Contracture.肩"
+    CreateContractureRLRow fCon, y, "肘関節", "Contracture.肘"
+    CreateContractureRLRow fCon, y, "手関節", "Contracture.手関節"
+    CreateContractureRLRow fCon, y, "股関節", "Contracture.股関節"
+    CreateContractureRLRow fCon, y, "膝関節", "Contracture.膝関節"
+    CreateContractureRLRow fCon, y, "足関節", "Contracture.足関節"
 
     ' 備考（右側上部に）
     CreateLabel fCon, "備考", COL_RX, y0 - 2
     CreateTextBox fCon, COL_RX + lblW, y0 - 4, 250, 80, True, "", "Contracture.備考"
 
     ' 高さ調整
-    ResizeFrameToContent fCon, Application.WorksheetFunction.Max(Y, y0 + 80)
+    ResizeFrameToContent fCon, Application.WorksheetFunction.Max(y, y0 + 80)
 
 
   SetupInputModesJP
@@ -3869,7 +3858,7 @@ Public Sub AddPainFactorsUI()
     Dim host As MSForms.Frame
     Dim fr As MSForms.Frame
     Dim cap As MSForms.label
-    Dim i As Long, Y As Single
+    Dim i As Long, y As Single
 
     Dim t As Object
     Set t = FindCtlDeep(Me, "fraPainFactors")
@@ -3912,25 +3901,25 @@ Public Sub AddPainFactorsUI()
     )
 
     ' 左列配置
-    Y = 8
+    y = 8
     For i = LBound(provItems) To UBound(provItems)
         Dim cB As MSForms.CheckBox
         Set cB = fr.Controls.Add("Forms.CheckBox.1", CStr(provItems(i)(0)), True)
         cB.caption = CStr(provItems(i)(1))
         cB.Left = 12
-        cB.Top = Y
-        Y = Y + cB.Height + 2
+        cB.Top = y
+        y = y + cB.Height + 2
     Next i
 
     ' 右列配置
-    Y = 8
+    y = 8
     For i = LBound(relItems) To UBound(relItems)
         Dim cb2 As MSForms.CheckBox
         Set cb2 = fr.Controls.Add("Forms.CheckBox.1", CStr(relItems(i)(0)), True)
         cb2.caption = CStr(relItems(i)(1))
         cb2.Left = fr.Width \ 2 + 8
-        cb2.Top = Y
-        Y = Y + cb2.Height + 2
+        cb2.Top = y
+        y = y + cb2.Height + 2
     Next i
 End Sub
 
@@ -4532,34 +4521,34 @@ Clean:
     
     '=== Pain headings finalize (once) ===
 Dim f As MSForms.Frame
-Dim l As MSForms.label
+Dim L As MSForms.label
 
 On Error Resume Next
 '--- 直下 ---
-Set l = Me.Controls("lblVAS"):           If Not l Is Nothing Then l.WordWrap = False: l.caption = "VAS（0～100）": l.WordWrap = False: l.AutoSize = False: l.Width = 120
-Set l = Me.Controls("lblPainQual"):      If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 140
-Set l = Me.Controls("lblPainCourse"):    If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 140
-Set l = Me.Controls("lblPainSite"):      If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 150
-Set l = Me.Controls("lblPainFactors"):   If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 150
+Set L = Me.Controls("lblVAS"):           If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
+Set L = Me.Controls("lblPainQual"):      If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+Set L = Me.Controls("lblPainCourse"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+Set L = Me.Controls("lblPainSite"):      If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
+Set L = Me.Controls("lblPainFactors"):   If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
 
 '--- Frame3 内 ---
 Set f = Me.Controls("Frame3")
 If Not f Is Nothing Then
-    Set l = f.Controls("lblVAS"):         If Not l Is Nothing Then l.WordWrap = False: l.caption = "VAS（0～100）": l.WordWrap = False: l.AutoSize = False: l.Width = 120
-    Set l = f.Controls("lblPainQual"):    If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 140
-    Set l = f.Controls("lblPainCourse"):  If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 140
-    Set l = f.Controls("lblPainSite"):    If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 150
-    Set l = f.Controls("lblPainFactors"): If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 150
+    Set L = f.Controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
+    Set L = f.Controls("lblPainQual"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+    Set L = f.Controls("lblPainCourse"):  If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+    Set L = f.Controls("lblPainSite"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
+    Set L = f.Controls("lblPainFactors"): If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
 End If
 
 '--- Frame12 内 ---
 Set f = Me.Controls("Frame12")
 If Not f Is Nothing Then
-    Set l = f.Controls("lblVAS"):         If Not l Is Nothing Then l.WordWrap = False: l.caption = "VAS（0～100）": l.WordWrap = False: l.AutoSize = False: l.Width = 120
-    Set l = f.Controls("lblPainQual"):    If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 140
-    Set l = f.Controls("lblPainCourse"):  If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 140
-    Set l = f.Controls("lblPainSite"):    If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 150
-    Set l = f.Controls("lblPainFactors"): If Not l Is Nothing Then l.WordWrap = False: l.AutoSize = False: l.Width = 150
+    Set L = f.Controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
+    Set L = f.Controls("lblPainQual"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+    Set L = f.Controls("lblPainCourse"):  If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+    Set L = f.Controls("lblPainSite"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
+    Set L = f.Controls("lblPainFactors"): If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
 End If
 On Error GoTo 0
 '=== /Pain headings finalize ===
@@ -4585,16 +4574,16 @@ Private Sub FixPainCaptionsAndWidth()
 End Sub
 
 Public Sub FixPainLabels_Final()
-    Dim f As Control, c As Control, l As Object
+    Dim f As Control, c As Control, L As Object
 
     '--- 直下のラベルを処理 ---
     For Each c In Me.Controls
         If TypeName(c) = "Label" Then
             If c.name = "lblPainQual" Then
-                Set l = c
+                Set L = c
                 On Error Resume Next
-                CallByName l, "AutoSize", VbLet, True   ' 必要幅を取得
-                CallByName l, "AutoSize", VbLet, False  ' 固定に戻す（折返し防止）
+                CallByName L, "AutoSize", VbLet, True   ' 必要幅を取得
+                CallByName L, "AutoSize", VbLet, False  ' 固定に戻す（折返し防止）
                 On Error GoTo 0
             ElseIf c.name = "lblVAS" Then
                 c.caption = "VAS（0～100）"
@@ -4608,10 +4597,10 @@ Public Sub FixPainLabels_Final()
             For Each c In f.Controls
                 If TypeName(c) = "Label" Then
                     If c.name = "lblPainQual" Then
-                        Set l = c
+                        Set L = c
                         On Error Resume Next
-                        CallByName l, "AutoSize", VbLet, True
-                        CallByName l, "AutoSize", VbLet, False
+                        CallByName L, "AutoSize", VbLet, True
+                        CallByName L, "AutoSize", VbLet, False
                         On Error GoTo 0
                     ElseIf c.name = "lblVAS" Then
                         c.caption = "VAS（0～100）"
@@ -5007,7 +4996,7 @@ Private Sub BuildWalkAbnormal_Frames()
     Dim pg As MSForms.Page
     Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
-    Dim w As Single, h As Single
+    Dim W As Single, H As Single
 
     ' MultiPage2（歩行評価）を取得
     For Each ctl In Me.Controls
@@ -5025,8 +5014,8 @@ Private Sub BuildWalkAbnormal_Frames()
     If pg Is Nothing Then Exit Sub
 
     ' ページのワークエリアサイズ
-    w = mp.Width - 24
-    h = mp.Height - 24
+    W = mp.Width - 24
+    H = mp.Height - 24
 
     ' 既存フレーム削除（再生成用）
     For Each ctl In pg.Controls
@@ -5041,18 +5030,18 @@ Private Sub BuildWalkAbnormal_Frames()
         .caption = "A：片麻痺・脳血管障害パターン"
         .Left = 6
         .Top = 6
-        .Width = w / 2 - 12
-        .Height = h / 2 - 12
+        .Width = W / 2 - 12
+        .Height = H / 2 - 12
     End With
 
     ' --- B：パーキンソン系 ---
     Set f = pg.Controls.Add("Forms.Frame.1", "fraWalkAbn_B", True)
     With f
         .caption = "B：パーキンソン関連パターン"
-        .Left = w / 2 + 6
+        .Left = W / 2 + 6
         .Top = 6
-        .Width = w / 2 - 12
-        .Height = h / 2 - 12
+        .Width = W / 2 - 12
+        .Height = H / 2 - 12
     End With
 
     ' --- C：整形・高齢者不安定歩行 ---
@@ -5060,19 +5049,19 @@ Private Sub BuildWalkAbnormal_Frames()
     With f
         .caption = "C：整形・高齢者不安定歩行"
         .Left = 6
-        .Top = h / 2 + 6
-        .Width = w / 2 - 12
-        .Height = h / 2 - 12
+        .Top = H / 2 + 6
+        .Width = W / 2 - 12
+        .Height = H / 2 - 12
     End With
 
     ' --- D：協調障害・失調 ---
     Set f = pg.Controls.Add("Forms.Frame.1", "fraWalkAbn_D", True)
     With f
         .caption = "D：協調障害・失調パターン"
-        .Left = w / 2 + 6
-        .Top = h / 2 + 6
-        .Width = w / 2 - 12
-        .Height = h / 2 - 12
+        .Left = W / 2 + 6
+        .Top = H / 2 + 6
+        .Width = W / 2 - 12
+        .Height = H / 2 - 12
     End With
 End Sub
 
@@ -6541,20 +6530,20 @@ End Sub
 
 Private Sub mDailyList_DblClicked()
     Dim lb As MSForms.ListBox
-    Dim r As Long, c As Long
+    Dim R As Long, c As Long
     Dim buf As String
     
     ' 対象の一覧ListBoxを取得
     Set lb = Me.Controls("lstDailyLogList")
     
     ' 全行・全列をタブ区切り＋改行で連結
-    For r = 0 To lb.ListCount - 1
+    For R = 0 To lb.ListCount - 1
         For c = 0 To lb.ColumnCount - 1
             If c > 0 Then buf = buf & vbTab
-            buf = buf & CStr(lb.List(r, c))
+            buf = buf & CStr(lb.List(R, c))
         Next c
         buf = buf & vbCrLf
-    Next r
+    Next R
     
     ' クリップボードへコピー
     Dim dobj As New MSForms.DataObject
@@ -6706,13 +6695,13 @@ End Sub
 Private Sub GetPageUsableArea( _
     ByVal pageIndex As Long, _
     ByRef x As Single, _
-    ByRef Y As Single, _
-    ByRef w As Single, _
-    ByRef h As Single)
+    ByRef y As Single, _
+    ByRef W As Single, _
+    ByRef H As Single)
 
     Dim mp As MSForms.MultiPage
 
-    x = 0: Y = 0: w = 0: h = 0   ' デフォルトクリア
+    x = 0: y = 0: W = 0: H = 0   ' デフォルトクリア
 
     Set mp = GetMainMultiPage()
     If mp Is Nothing Then Exit Sub
@@ -6723,9 +6712,9 @@ Private Sub GetPageUsableArea( _
     ' 今は MultiPage 全体を「ページの利用可能領域」として返す
     ' （余白やタブ分のマイナスは、後で AlignRootFrame 側で調整する）
     x = 0
-    Y = 0
-    w = mp.Width
-    h = mp.Height
+    y = 0
+    W = mp.Width
+    H = mp.Height
 End Sub
 
 
@@ -6766,7 +6755,7 @@ End Sub
 Private Sub PreviewOnePage(ByVal idx As Long, ByVal mp As MSForms.MultiPage)
     Dim pg As MSForms.Page
     Dim root As MSForms.Frame
-    Dim x As Single, Y As Single, w As Single, h As Single
+    Dim x As Single, y As Single, W As Single, H As Single
 
     Set pg = mp.Pages(idx)
     Set root = GetPageRootFrame(idx)
@@ -6786,17 +6775,17 @@ Private Sub PreviewOnePage(ByVal idx As Long, ByVal mp As MSForms.MultiPage)
                 "H=" & root.Height
 
     ' AlignRootFrameToPage が使うページ領域
-    GetPageUsableArea idx, x, Y, w, h
+    GetPageUsableArea idx, x, y, W, H
     Debug.Print "  PageArea:", _
-                "X=" & x, "Y=" & Y, _
-                "W=" & w, "H=" & h
+                "X=" & x, "Y=" & y, _
+                "W=" & W, "H=" & H
 
     ' もし AlignRootFrameToPage を呼んだらこうなる（※実際には書き換えない）
     Debug.Print "  WouldAlignTo:", _
                 "L=" & (x), _
-                "T=" & (Y), _
-                "W=" & (w), _
-                "H=" & (h)
+                "T=" & (y), _
+                "W=" & (W), _
+                "H=" & (H)
 End Sub
 
 
@@ -7289,7 +7278,7 @@ End Sub
 
 
 
-Private Sub frHeader_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal Y As Single)
+Private Sub frHeader_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
     On Error Resume Next
     If TypeName(Me.ActiveControl) = "CommandButton" Then
         If Me.ActiveControl.name = "cmdArchiveDelete" Then
@@ -7343,7 +7332,7 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
     Dim nm As String
     Dim v As Variant
     Dim dFrom As Date, dTo As Date
-    Dim lastRow As Long, r As Long
+    Dim lastRow As Long, R As Long
     Dim s As String
     Dim hit As Long
     Dim d As Date, staff As String, note As String
@@ -7382,21 +7371,21 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
       & "■ この月に記録された特記事項（時系列）" & vbCrLf
 
     hit = 0
-    For r = 2 To lastRow
-        If Trim$(ws.Cells(r, 2).value) = nm And (cntSameName = 1 Or Trim$(ws.Cells(r, 3).value) = pid) Then
-            If IsDate(ws.Cells(r, 1).value) Then
-                d = CDate(ws.Cells(r, 1).value)
+    For R = 2 To lastRow
+        If Trim$(ws.Cells(R, 2).value) = nm And (cntSameName = 1 Or Trim$(ws.Cells(R, 3).value) = pid) Then
+            If IsDate(ws.Cells(R, 1).value) Then
+                d = CDate(ws.Cells(R, 1).value)
                 If d >= dFrom And d <= dTo Then
-                    note = CStr(ws.Cells(r, 5).value)
+                    note = CStr(ws.Cells(R, 5).value)
                     If Len(Trim$(note)) > 0 Then
-                        staff = CStr(ws.Cells(r, 4).value)
+                        staff = CStr(ws.Cells(R, 4).value)
                         s = s & "・" & Format$(d, "m/d") & "（" & staff & "） " & note & vbCrLf
                         hit = hit + 1
                     End If
                 End If
             End If
         End If
-    Next r
+    Next R
 
     If hit = 0 Then
         s = s & "・（この月の記録はありません）" & vbCrLf
