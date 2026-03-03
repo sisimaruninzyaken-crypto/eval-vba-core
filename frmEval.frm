@@ -3002,8 +3002,6 @@ Me.Controls("mpPhys").Pages(0).Controls("Frame8").Controls("mpROM").Height = Me.
     Call Preview_NameToHeader
     Me.Controls("txtName").Visible = False
     Me.Controls("txtPID").Visible = False
-    Me.Controls("Label115").Visible = False
-    Me.Controls("Label112").Visible = False
 
     
     AddHeaderArchiveDeleteButton
@@ -3410,10 +3408,9 @@ RecalcBI
 
 
     nL y
-    
-    CreateLabel fBasic, "※生年月日は 19990804 の形式で入力してください（年齢は自動計算されます）", COL_RX + lblW + 130, y
-    fBasic.Controls(fBasic.Controls.Count - 1).Font.Size = 8
-    fBasic.Controls(fBasic.Controls.Count - 1).Top = y - 21
+   
+      
+   
 
 
 

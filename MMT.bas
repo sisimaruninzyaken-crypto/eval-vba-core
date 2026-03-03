@@ -79,7 +79,7 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
     ' 1) 候補名を優先
     For Each cand In Array("fraMMTHost", "Frame9", "fraMMTWrap")
         On Error Resume Next
-        Set host = pg.Controls(CStr(cand))
+        Set host = SafeGetControl(pg, CStr(cand))
         On Error GoTo 0
         
         If Not host Is Nothing Then
@@ -229,20 +229,20 @@ End Function
 
 
 Private Sub MakeCbo(ByVal pg As Object, ByVal nm As String, _
-                    ByVal l As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
+                    ByVal L As Single, ByVal t As Single, ByVal W As Single, ByVal H As Single)
     Dim o As MSForms.ComboBox
     Set o = pg.Controls.Add("Forms.ComboBox.1", nm, True)
-    o.Left = l: o.Top = t: o.Width = w: o.Height = h
+    o.Left = L: o.Top = t: o.Width = W: o.Height = H
     o.Style = MSForms.fmStyleDropDownList: o.BoundColumn = 1
     o.List = Split("0,1,2,3,4,5", ","): o.tag = "MMTGEN"
 End Sub
 
 
 Private Sub MakeLbl(ByVal pg As Object, ByVal nm As String, ByVal cap As String, _
-                    ByVal l As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
+                    ByVal L As Single, ByVal t As Single, ByVal W As Single, ByVal H As Single)
     Dim o As MSForms.label
     Set o = pg.Controls.Add("Forms.Label.1", nm, True)
-    o.caption = cap: o.Left = l: o.Top = t: o.Width = w: o.Height = h: o.tag = "MMTGEN"
+    o.caption = cap: o.Left = L: o.Top = t: o.Width = W: o.Height = H: o.tag = "MMTGEN"
 End Sub
 
 
@@ -256,13 +256,13 @@ Private Sub BuildMMTPage(ByVal pg As Object, ByVal items As Variant)
     MakeLbl pg, "lblHdrR", "右", x0 + LBL_W + gap, y0 - 20, 30, 18
     MakeLbl pg, "lblHdrL", "左", x0 + LBL_W + gap + COL_W + gap, y0 - 20, 30, 18
 
-    Dim i As Long, Y As Single: Y = y0
+    Dim i As Long, y As Single: y = y0
     For i = LBound(items) To UBound(items)
         Dim key As String: key = CStr(items(i))
-        MakeLbl pg, "lbl_" & key, key, x0, Y + 3, LBL_W, 18
-        MakeCbo pg, "cboR_" & key, x0 + LBL_W + gap, Y, COL_W, 18
-        MakeCbo pg, "cboL_" & key, x0 + LBL_W + gap + COL_W + gap, Y, COL_W, 18
-        Y = Y + ROW_H
+        MakeLbl pg, "lbl_" & key, key, x0, y + 3, LBL_W, 18
+        MakeCbo pg, "cboR_" & key, x0 + LBL_W + gap, y, COL_W, 18
+        MakeCbo pg, "cboL_" & key, x0 + LBL_W + gap + COL_W + gap, y, COL_W, 18
+        y = y + ROW_H
     Next
 End Sub
 
@@ -295,7 +295,7 @@ End Sub
 
 
 ' === 保存（行ベース） ===
-Public Sub SaveMMTToSheet(ws As Worksheet, r As Long, owner As Object)
+Public Sub SaveMMTToSheet(ws As Worksheet, R As Long, owner As Object)
     Dim c As Long
     Dim s As String
 
@@ -308,17 +308,17 @@ Public Sub SaveMMTToSheet(ws As Worksheet, r As Long, owner As Object)
 
     ' 2) MMTを文字列化して保存
     s = MMT_SaveToString()              ' ←既にある関数（直下に見えているもの）を使う
-    ws.Cells(r, c).value = s
+    ws.Cells(R, c).value = s
 
     ' 3) ログ
-    Debug.Print "[MMT][SAVE] row=" & r & " col=" & c & " len=" & Len(s)
+    Debug.Print "[MMT][SAVE] row=" & R & " col=" & c & " len=" & Len(s)
 End Sub
 
 '=== 子タブ(MMT) → 文字列（保存用テスト） ===
 Private Function MMT_SaveToString() As String
     Dim pg As Object, mp As Object, p As Long, c As Object
     Dim parts() As String, n As Long
-    Set pg = GetMMTPage()
+    Set pg = GetMMTPage(frmEval)
     If pg Is Nothing Then Exit Function
 
     On Error Resume Next
@@ -360,7 +360,7 @@ End Function
 
 
 ' === 読込（行ベース） ===
-Public Sub LoadMMTFromSheet(ws As Worksheet, r As Long, owner As Object)
+Public Sub LoadMMTFromSheet(ws As Worksheet, R As Long, owner As Object)
 
     
 
@@ -372,7 +372,7 @@ Public Sub LoadMMTFromSheet(ws As Worksheet, r As Long, owner As Object)
     Debug.Print "[MMT] col=" & c
     If c = 0 Then Exit Sub
 
-    s = ReadStr_Compat("IO_MMT", r, ws)
+    s = ReadStr_Compat("IO_MMT", R, ws)
     Debug.Print "[MMT] s.len=" & Len(s)
     If Len(s) = 0 Then Exit Sub
 
@@ -390,7 +390,7 @@ Public Sub LoadMMTFromSheet(ws As Worksheet, r As Long, owner As Object)
 
     If mp Is Nothing Then
         Debug.Print "[MMT] building child tabs"
-        MMT_BuildChildTabs_Direct owner
+        MMT_BuildChildTabs_Direct
         Set mp = GetMMTChildTabs(pg)
         Debug.Print "[MMT] after rebuild", TypeName(mp)
         If mp Is Nothing Then Exit Sub
@@ -415,7 +415,7 @@ Private Sub MMT_LoadFromString_Core(ByVal s As String)
     Dim p As MSForms.Page
     Dim cboR As MSForms.ComboBox, cboL As MSForms.ComboBox
 
-    Set pg = GetMMTPage()
+    Set pg = GetMMTPage(frmEval)
     If pg Is Nothing Then
         MsgBox "MMTページが見つかりません。", vbExclamation
         Exit Sub
@@ -533,4 +533,13 @@ Private Function ParseField(ByVal rec As String, ByVal idx As Long) As String
     Else
         ParseField = ""
     End If
+End Function
+
+
+
+
+Private Function SafeGetControl(ByVal parent As Object, ByVal nm As String) As Object
+    On Error Resume Next
+    Set SafeGetControl = parent.Controls(nm)
+    On Error GoTo 0
 End Function

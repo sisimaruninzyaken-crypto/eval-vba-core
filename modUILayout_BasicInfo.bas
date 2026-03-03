@@ -1,6 +1,7 @@
 Attribute VB_Name = "modUILayout_BasicInfo"
+
 Public Sub TidyBasicInfo_TwoColumns()
-   
+
     Dim uf As Object, mp As Object, pg As Object, f1 As Object, f32 As Object
     Dim W As Double, H As Double
     Dim xL As Double, xR As Double, wCol As Double
@@ -8,7 +9,8 @@ Public Sub TidyBasicInfo_TwoColumns()
     Dim rowH As Double, gapY As Double
     Dim yL As Double, yR As Double
     Dim i As Long
-    Dim aLbl As Variant, aCtl As Variant
+    Dim aCapL As Variant, aCtlL As Variant
+    Dim aCapR As Variant, aCtlR As Variant
 
     Set uf = frmEval
     Set mp = uf.Controls("MultiPage1")
@@ -19,6 +21,16 @@ Public Sub TidyBasicInfo_TwoColumns()
     ' 「変更点のみ保存…」を消す（本体はチェックボックス）
     f32.Controls("chkDeltaOnly").Visible = False
     f32.Controls("chkDeltaOnly").Height = 0
+
+    ' ---- 旧: 自動採番 Label### を全て隠す（Frame32内だけ）----
+    Dim c As Object
+    For Each c In f32.Controls
+        If TypeName(c) = "Label" Then
+            If Left$(c.name, 5) = "Label" Then
+                c.Visible = False
+            End If
+        End If
+    Next c
 
     W = f32.InsideWidth
     H = f32.InsideHeight
@@ -38,104 +50,74 @@ Public Sub TidyBasicInfo_TwoColumns()
     ' ★開始位置（左右を完全に一致させる）
     yR = 6
     yL = yR
-    
-    ' 左：個人情報（9項目）
-    aLbl = Array("Label116", "Label118", "Label117", "Label123", "Label122", "Label124", "Label125")
-    aCtl = Array("txtAge", "txtBirth", "cboSex", "cboCare", "txtLiving", "cboElder", "cboDementia")
-    
 
-    For i = 0 To UBound(aCtl)
-        f32.Controls(CStr(aLbl(i))).Left = xL + xLbl
-        f32.Controls(CStr(aLbl(i))).Top = yL
-        f32.Controls(CStr(aLbl(i))).Width = wLbl
-        f32.Controls(CStr(aLbl(i))).Height = rowH
+    ' 左：個人情報（7項目）
+    aCapL = Array("年齢", "生年月日", "性別", "要介護度", "生活状況", "障害高齢者の日常生活自立度", "認知症高齢者の日常生活自立度")
+    aCtlL = Array("txtAge", "txtBirth", "cboSex", "cboCare", "txtLiving", "cboElder", "cboDementia")
 
-        f32.Controls(CStr(aCtl(i))).Left = xL + xCtl
-        f32.Controls(CStr(aCtl(i))).Top = yL - 1
-        f32.Controls(CStr(aCtl(i))).Width = wCtl
-        f32.Controls(CStr(aCtl(i))).Height = rowH + 2
-
+    For i = 0 To UBound(aCtlL)
+        Call EnsureLabel(f32, "lblBI_L_" & CStr(i + 1), CStr(aCapL(i)), xL + xLbl, yL, wLbl, rowH)
+        Call PlaceCtl(f32, CStr(aCtlL(i)), xL + xCtl, yL - 1, wCtl, rowH + 2)
         yL = yL + rowH + gapY
     Next i
 
-    ' 左下：Needs（2行）
+    ' 左下：Needs（本人/家族 2行）
     yL = yL + 10
 
-    f32.Controls("Label126").Left = xL + xLbl
-    f32.Controls("Label126").Top = yL
-    f32.Controls("Label126").Width = wLbl
-    f32.Controls("Label126").Height = rowH
-
-    f32.Controls("txtNeedsPt").Left = xL + xCtl
-    f32.Controls("txtNeedsPt").Top = yL - 1
-    f32.Controls("txtNeedsPt").Width = wCtl
-    f32.Controls("txtNeedsPt").Height = rowH + 2
+    Call EnsureLabel(f32, "lblBI_NeedsPt", "本人Needs", xL + xLbl, yL, wLbl, rowH)
+    Call PlaceCtl(f32, "txtNeedsPt", xL + xCtl, yL - 1, wCtl, rowH + 2)
 
     yL = yL + rowH + gapY
 
-    f32.Controls("Label127").Left = xL + xLbl
-    f32.Controls("Label127").Top = yL
-    f32.Controls("Label127").Width = wLbl
-    f32.Controls("Label127").Height = rowH
+    Call EnsureLabel(f32, "lblBI_NeedsFam", "家族Needs", xL + xLbl, yL, wLbl, rowH)
+    Call PlaceCtl(f32, "txtNeedsFam", xL + xCtl, yL - 1, wCtl, rowH + 2)
 
-    f32.Controls("txtNeedsFam").Left = xL + xCtl
-    f32.Controls("txtNeedsFam").Top = yL - 1
-    f32.Controls("txtNeedsFam").Width = wCtl
-    f32.Controls("txtNeedsFam").Height = rowH + 2
+    ' 右：医療情報（4項目）
+    aCapR = Array("評価日", "評価者", "主診断", "発症日")
+    aCtlR = Array("txtEDate", "txtEvaluator", "txtDx", "txtOnset")
 
-    ' 右：医療情報
-    f32.Controls("Label113").Left = xR + xLbl
-    f32.Controls("Label113").Top = yR
-    f32.Controls("Label113").Width = wLbl
-    f32.Controls("Label113").Height = rowH
+    For i = 0 To UBound(aCtlR)
+        Call EnsureLabel(f32, "lblBI_R_" & CStr(i + 1), CStr(aCapR(i)), xR + xLbl, yR, wLbl, rowH)
+        Call PlaceCtl(f32, CStr(aCtlR(i)), xR + xCtl, yR - 1, wCtl, rowH + 2)
+        yR = yR + rowH + gapY
+    Next i
 
-    f32.Controls("txtEDate").Left = xR + xCtl
-    f32.Controls("txtEDate").Top = yR - 1
-    f32.Controls("txtEDate").Width = wCtl
-    f32.Controls("txtEDate").Height = rowH + 2
-
-    yR = yR + rowH + gapY
-
-    f32.Controls("Label114").Left = xR + xLbl
-    f32.Controls("Label114").Top = yR
-    f32.Controls("Label114").Width = wLbl
-    f32.Controls("Label114").Height = rowH
-
-    f32.Controls("txtEvaluator").Left = xR + xCtl
-    f32.Controls("txtEvaluator").Top = yR - 1
-    f32.Controls("txtEvaluator").Width = wCtl
-    f32.Controls("txtEvaluator").Height = rowH + 2
-
-    yR = yR + rowH + gapY
-
-    f32.Controls("Label120").Left = xR + xLbl
-    f32.Controls("Label120").Top = yR
-    f32.Controls("Label120").Width = wLbl
-    f32.Controls("Label120").Height = rowH
-
-    f32.Controls("txtDx").Left = xR + xCtl
-    f32.Controls("txtDx").Top = yR - 1
-    f32.Controls("txtDx").Width = wCtl
-    f32.Controls("txtDx").Height = rowH + 2
-
-    yR = yR + rowH + gapY
-
-    f32.Controls("Label121").Left = xR + xLbl
-    f32.Controls("Label121").Top = yR
-    f32.Controls("Label121").Width = wLbl
-    f32.Controls("Label121").Height = rowH
-
-    f32.Controls("txtOnset").Left = xR + xCtl
-    f32.Controls("txtOnset").Top = yR - 1
-    f32.Controls("txtOnset").Width = wCtl
-    f32.Controls("txtOnset").Height = rowH + 2
-
-    yR = yR + rowH + 10
+    yR = yR + 10
 
     ' 右下：リスク
-    f32.Controls("Frame33").Left = xR + xLbl
-    f32.Controls("Frame33").Top = yR
-    f32.Controls("Frame33").Width = wCol - 6
-    f32.Controls("Frame33").Height = H - yR - 12
+    Call PlaceCtl(f32, "Frame33", xR + xLbl, yR, wCol - 6, H - yR - 12)
+
+End Sub
+
+' ===== helpers (このモジュール内) =====
+Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Double, ByVal T As Double, ByVal W As Double, ByVal H As Double)
+    Dim c As Object
+    On Error Resume Next
+    Set c = parent.Controls(nm)
+    On Error GoTo 0
+    If c Is Nothing Then Exit Sub
+
+    c.Left = L
+    c.Top = T
+    c.Width = W
+    c.Height = H
+End Sub
+
+Private Sub EnsureLabel(ByVal parent As Object, ByVal nm As String, ByVal cap As String, ByVal L As Double, ByVal T As Double, ByVal W As Double, ByVal H As Double)
+    Dim lb As Object
+    On Error Resume Next
+    Set lb = parent.Controls(nm)
+    On Error GoTo 0
+
+    If lb Is Nothing Then
+        Set lb = parent.Controls.Add("Forms.Label.1", nm)
+    End If
+
+    lb.Visible = True
+    lb.caption = cap
+    lb.Left = L
+    lb.Top = T
+    lb.Width = W
+    lb.Height = H
 End Sub
 
