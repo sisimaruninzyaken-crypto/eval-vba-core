@@ -1,16 +1,26 @@
 Attribute VB_Name = "modUILayout_BasicInfo"
 
+
+
+
+
 Public Sub TidyBasicInfo_TwoColumns()
 
     Dim uf As Object, mp As Object, pg As Object, f1 As Object, f32 As Object
     Dim W As Double, H As Double
     Dim xL As Double, xR As Double, wCol As Double
     Dim xLbl As Double, xCtl As Double, wLbl As Double, wCtl As Double
-    Dim rowH As Double, gapY As Double
+    Dim rowH As Double, gapY As Double, multiH As Double
     Dim yL As Double, yR As Double
     Dim i As Long
     Dim aCapL As Variant, aCtlL As Variant
     Dim aCapR As Variant, aCtlR As Variant
+
+    Dim c As Object
+    Dim txtED As Object
+    Dim T As Object
+    Dim xRightCtl As Double
+    Dim riskH As Double
 
     Set uf = frmEval
     Set mp = uf.Controls("MultiPage1")
@@ -18,12 +28,11 @@ Public Sub TidyBasicInfo_TwoColumns()
     Set f1 = pg.Controls("Frame1")
     Set f32 = f1.Controls("Frame32")
 
-    ' 「変更点のみ保存…」を消す（本体はチェックボックス）
+    ' 「変更点のみ保存」チェック非表示（本体はチェックボックス）
     f32.Controls("chkDeltaOnly").Visible = False
     f32.Controls("chkDeltaOnly").Height = 0
 
-    ' ---- 旧: 自動採番 Label### を全て隠す（Frame32内だけ）----
-    Dim c As Object
+    ' 旧 Label### を全て隠す（Frame32直下のみ）
     For Each c In f32.Controls
         If TypeName(c) = "Label" Then
             If Left$(c.name, 5) = "Label" Then
@@ -31,6 +40,40 @@ Public Sub TidyBasicInfo_TwoColumns()
             End If
         End If
     Next c
+
+    ' 右カラム用コントロールを確保（無ければ追加）
+    On Error Resume Next
+    Set txtED = f32.Controls("txtEDate")
+    On Error GoTo 0
+
+    On Error Resume Next
+    Set T = f32.Controls("txtAdmDate")
+    On Error GoTo 0
+    If T Is Nothing Then Set T = f32.Controls.Add("Forms.TextBox.1", "txtAdmDate", True)
+
+    Set T = Nothing
+    On Error Resume Next
+    Set T = f32.Controls("txtDisDate")
+    On Error GoTo 0
+    If T Is Nothing Then Set T = f32.Controls.Add("Forms.TextBox.1", "txtDisDate", True)
+
+    Set T = Nothing
+    On Error Resume Next
+    Set T = f32.Controls("txtTxCourse")
+    On Error GoTo 0
+    If T Is Nothing Then Set T = f32.Controls.Add("Forms.TextBox.1", "txtTxCourse", True)
+    T.multiline = True
+    T.EnterKeyBehavior = True
+    T.WordWrap = True
+
+    Set T = Nothing
+    On Error Resume Next
+    Set T = f32.Controls("txtComplications")
+    On Error GoTo 0
+    If T Is Nothing Then Set T = f32.Controls.Add("Forms.TextBox.1", "txtComplications", True)
+    T.multiline = True
+    T.EnterKeyBehavior = True
+    T.WordWrap = True
 
     W = f32.InsideWidth
     H = f32.InsideHeight
@@ -46,13 +89,25 @@ Public Sub TidyBasicInfo_TwoColumns()
 
     rowH = 16
     gapY = 6
+    multiH = 64
 
-    ' ★開始位置（左右を完全に一致させる）
+    ' 右カラムの入力位置は既存 txtEDate に合わせる（あれば）
+    xRightCtl = xR + xCtl
+
+    ' 開始位置（左右カラムを一致）
     yR = 6
     yL = yR
 
-    ' 左：個人情報（7項目）
-    aCapL = Array("年齢", "生年月日", "性別", "要介護度", "生活状況", "障害高齢者の日常生活自立度", "認知症高齢者の日常生活自立度")
+    ' Left: 個人情報（7項目）
+    aCapL = Array( _
+        "年齢", _
+        "生年月日", _
+        "性別", _
+        "要介護", _
+        "生活歴", _
+        "高齢者の日常生活自立度", _
+        "認知症高齢者の日常生活自立度" _
+    )
     aCtlL = Array("txtAge", "txtBirth", "cboSex", "cboCare", "txtLiving", "cboElder", "cboDementia")
 
     For i = 0 To UBound(aCtlL)
@@ -61,35 +116,61 @@ Public Sub TidyBasicInfo_TwoColumns()
         yL = yL + rowH + gapY
     Next i
 
-    ' 左下：Needs（本人/家族 2行）
+    ' Left: Needs（本人/家族）
     yL = yL + 10
-
     Call EnsureLabel(f32, "lblBI_NeedsPt", "本人Needs", xL + xLbl, yL, wLbl, rowH)
     Call PlaceCtl(f32, "txtNeedsPt", xL + xCtl, yL - 1, wCtl, rowH + 2)
 
     yL = yL + rowH + gapY
-
     Call EnsureLabel(f32, "lblBI_NeedsFam", "家族Needs", xL + xLbl, yL, wLbl, rowH)
     Call PlaceCtl(f32, "txtNeedsFam", xL + xCtl, yL - 1, wCtl, rowH + 2)
 
-    ' 右：医療情報（4項目）
-    aCapR = Array("評価日", "評価者", "主診断", "発症日")
-    aCtlR = Array("txtEDate", "txtEvaluator", "txtDx", "txtOnset")
+   
+
+    aCapR = Array("評価日", "評価者")
+    aCtlR = Array("txtEDate", "txtEvaluator")
 
     For i = 0 To UBound(aCtlR)
-        Call EnsureLabel(f32, "lblBI_R_" & CStr(i + 1), CStr(aCapR(i)), xR + xLbl, yR, wLbl, rowH)
-        Call PlaceCtl(f32, CStr(aCtlR(i)), xR + xCtl, yR - 1, wCtl, rowH + 2)
+        Call EnsureLabel(f32, "lblBI_R_E_" & CStr(i + 1), CStr(aCapR(i)), xR + xLbl, yR, wLbl, rowH)
+        Call PlaceCtl(f32, CStr(aCtlR(i)), xRightCtl, yR - 1, wCtl, rowH + 2)
         yR = yR + rowH + gapY
     Next i
 
-    yR = yR + 10
+    yR = yR + 4
 
-    ' 右下：リスク
-    Call PlaceCtl(f32, "Frame33", xR + xLbl, yR, wCol - 6, H - yR - 12)
+    ' Right: 医療情報
+    Call EnsureLabel(f32, "lblBI_R_Header_Med", "【医療情報】", xR + xLbl, yR, wLbl, rowH)
+    yR = yR + rowH + gapY
+
+    ' 順序：発症日→主診断→入院日→退院日
+    aCapR = Array("発症日", "主診断", "入院日", "退院日")
+    aCtlR = Array("txtOnset", "txtDx", "txtAdmDate", "txtDisDate")
+
+    For i = 0 To UBound(aCtlR)
+        Call EnsureLabel(f32, "lblBI_R_M_" & CStr(i + 1), CStr(aCapR(i)), xR + xLbl, yR, wLbl, rowH)
+        Call PlaceCtl(f32, CStr(aCtlR(i)), xRightCtl, yR - 1, wCtl, rowH + 2)
+        yR = yR + rowH + gapY
+    Next i
+
+    ' 治療経過（複数行）
+    Call EnsureLabel(f32, "lblBI_R_M_5", "治療経過", xR + xLbl, yR, wLbl, rowH)
+    Call PlaceCtl(f32, "txtTxCourse", xRightCtl, yR - 1, wCtl, multiH)
+    yR = yR + multiH + gapY
+
+    ' 合併症（複数行）
+    Call EnsureLabel(f32, "lblBI_R_M_6", "合併症", xR + xLbl, yR, wLbl, rowH)
+    Call PlaceCtl(f32, "txtComplications", xRightCtl, yR - 1, wCtl, multiH)
+    yR = yR + multiH + 8
+
+    ' 右下：リスク群（最下段へ）
+    riskH = H - yR - 12
+    If riskH < 24 Then riskH = 24
+    Call PlaceCtl(f32, "Frame33", xR + xLbl, yR, wCol - 6, riskH)
+    Call ArrangeRiskChecks_TwoCols(f32.Controls("Frame33"))
 
 End Sub
 
-' ===== helpers (このモジュール内) =====
+' ===== helpers =====
 Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Double, ByVal T As Double, ByVal W As Double, ByVal H As Double)
     Dim c As Object
     On Error Resume Next
@@ -101,6 +182,95 @@ Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Doub
     c.Top = T
     c.Width = W
     c.Height = H
+End Sub
+
+Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
+
+    Dim names() As String
+    Dim tops() As Double
+    Dim lefts() As Double
+    Dim cnt As Long
+    Dim i As Long, j As Long
+
+    Dim c As Object
+    Dim tmpS As String
+    Dim tmpD As Double
+
+    Dim padL As Double
+    Dim padT As Double
+    Dim rowH As Double
+    Dim gapY As Double
+    Dim colGap As Double
+    Dim colW As Double
+    Dim x1 As Double, x2 As Double
+    Dim y As Double
+    Dim idx As Long
+    Dim half As Long
+
+    padL = 12
+    padT = 18
+    rowH = 16
+    gapY = 6
+    colGap = 24
+
+    ' Collect checkboxes
+    cnt = 0
+    For Each c In riskFrame.Controls
+        If TypeName(c) = "CheckBox" Then
+            cnt = cnt + 1
+            ReDim Preserve names(1 To cnt)
+            ReDim Preserve tops(1 To cnt)
+            ReDim Preserve lefts(1 To cnt)
+            names(cnt) = c.name
+            tops(cnt) = c.Top
+            lefts(cnt) = c.Left
+        End If
+    Next c
+    If cnt = 0 Then Exit Sub
+
+    ' Sort by Top, then Left (simple bubble sort)
+    For i = 1 To cnt - 1
+        For j = i + 1 To cnt
+            If (tops(j) < tops(i)) Or ((tops(j) = tops(i)) And (lefts(j) < lefts(i))) Then
+                tmpS = names(i): names(i) = names(j): names(j) = tmpS
+                tmpD = tops(i): tops(i) = tops(j): tops(j) = tmpD
+                tmpD = lefts(i): lefts(i) = lefts(j): lefts(j) = tmpD
+            End If
+        Next j
+    Next i
+
+    ' Layout
+    colW = (riskFrame.InsideWidth - (padL * 2) - colGap) / 2
+    If colW < 60 Then colW = 60
+
+    x1 = padL
+    x2 = padL + colW + colGap
+
+    half = (cnt + 1) \ 2
+
+    idx = 1
+    y = padT
+    For i = 1 To half
+        Set c = riskFrame.Controls(names(idx))
+        c.Left = x1
+        c.Top = y
+        c.Width = colW
+        idx = idx + 1
+        y = y + rowH + gapY
+        If idx > cnt Then Exit For
+    Next i
+
+    y = padT
+    For i = 1 To (cnt - half)
+        Set c = riskFrame.Controls(names(idx))
+        c.Left = x2
+        c.Top = y
+        c.Width = colW
+        idx = idx + 1
+        y = y + rowH + gapY
+        If idx > cnt Then Exit For
+    Next i
+
 End Sub
 
 Private Sub EnsureLabel(ByVal parent As Object, ByVal nm As String, ByVal cap As String, ByVal L As Double, ByVal T As Double, ByVal W As Double, ByVal H As Double)
