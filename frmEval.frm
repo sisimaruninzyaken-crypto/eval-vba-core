@@ -94,6 +94,7 @@ Private mHdrNameSink As cHdrNameSink
 Private mNameSuggestSink As cNameSuggestSink
 Private mDupNameWarned As Boolean
 Private mBasicInfoTidyDone As Boolean
+Private mAgeBusy As Boolean
 
 
 
@@ -2630,7 +2631,8 @@ End Sub
 '=== ボタンをキャプション部分一致で探す（Frame/MultiPage/Page を再帰）===
 Public Function FindButtonByCaptionLike(container As Object, _
                                         ByVal needle As String) As Object
-    On Error GoTo SafeExit
+SafeExit:
+        mAgeBusy = False
 
     Dim c  As Object
     Dim pg As MSForms.Page
@@ -2664,7 +2666,7 @@ Public Function FindButtonByCaptionLike(container As Object, _
         End If
     Next
 
-SafeExit:
+
 End Function
 
 
@@ -2863,7 +2865,7 @@ Private Sub UserForm_Activate()
     done = True
    
     Me.Controls("txtHdrName").SetFocus
-
+    
 
 End Sub
 
@@ -4383,7 +4385,7 @@ Public Sub TidyPainCourse()
     Dim f As MSForms.Frame
     Dim frCourse As MSForms.Frame, lbCourse As MSForms.label
     Dim frSite As MSForms.Frame, frFactors As MSForms.Frame
-    Dim L0 As Single, T0 As Single, M As Single, gap As Single
+    Dim L0 As Single, T0 As Single, m As Single, gap As Single
     Dim wLeftCol As Single, rightEdge As Single
     
     Set f = Me.Controls("Frame12")
@@ -4398,7 +4400,7 @@ Public Sub TidyPainCourse()
     If lbCourse Is Nothing Or frCourse Is Nothing Then Exit Sub
 
     ' レイアウト定数
-    M = 12        ' フレーム内の左右マージン
+    m = 12        ' フレーム内の左右マージン
     gap = 8       ' コントロール間のギャップ
     L0 = frSite.Left                        ' 左列の開始位置（疼痛部位と合わせる）
     wLeftCol = frSite.Width                 ' 左列の幅を疼痛部位と一致させる
@@ -4439,8 +4441,8 @@ Public Sub TidyPainCourse()
     ' 1段目は既存のLeftを使いつつ、右端がはみ出さないように微調整
     Dim right1 As Single
     right1 = cmbUnit.Left + cmbUnit.Width
-    If right1 > frCourse.Width - M Then
-        cmbUnit.Left = frCourse.Width - M - cmbUnit.Width
+    If right1 > frCourse.Width - m Then
+        cmbUnit.Left = frCourse.Width - m - cmbUnit.Width
         ' 数値・ラベルも左へ詰める
         If Not txtDur Is Nothing Then txtDur.Left = cmbUnit.Left - gap - txtDur.Width
         If Not lblDur Is Nothing Then lblDur.Left = txtDur.Left - gap - lblDur.Width - 4   ' ← ★少し余白
@@ -4450,10 +4452,10 @@ Public Sub TidyPainCourse()
     End If
 
     ' 2段目（「日内変動」コンボ）は枠内いっぱいに
-    If Not lblDay Is Nothing Then lblDay.Left = M
+    If Not lblDay Is Nothing Then lblDay.Left = m
     If Not cmbDay Is Nothing Then
-        cmbDay.Left = IIf(lblDay Is Nothing, M, lblDay.Left + lblDay.Width + gap)
-        cmbDay.Width = frCourse.Width - M - cmbDay.Left
+        cmbDay.Left = IIf(lblDay Is Nothing, m, lblDay.Left + lblDay.Width + gap)
+        cmbDay.Width = frCourse.Width - m - cmbDay.Left
         If cmbDay.Width < 80 Then cmbDay.Width = 80
     End If
 
@@ -4464,7 +4466,7 @@ Public Sub TidyPainCourse()
     For Each c In frCourse.Controls
         bottomY = Application.WorksheetFunction.Max(bottomY, c.Top + c.Height)
     Next
-    frCourse.Height = bottomY + M
+    frCourse.Height = bottomY + m
 End Sub
 '--------------------------------------------
 
@@ -7515,4 +7517,160 @@ Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     btn.Left = kana.Left + kana.Width + 12
     btn.Top = kana.Top + 2
 End Sub
+
+
+
+
+
+
+
+' ====== ガード（無限ループ防止）======
+
+
+' ====== BasicInfo（Frame32）コントロール実体取得 ======
+Private Function BIObj(ByVal ctrlName As String) As Object
+    ' IMdcText / TextBox など “実体(Object)” を返す
+    Set BIObj = Me.Controls("MultiPage1").Pages("Page1") _
+                  .Controls("Frame1").Controls("Frame32") _
+                  .Controls(ctrlName).Object
+End Function
+
+Private Function ReadText(ByVal o As Object) As String
+    ' Value優先、ダメならText
+    On Error Resume Next
+    ReadText = CStr(CallByName(o, "Value", VbGet))
+    If Err.Number <> 0 Then
+        Err.Clear
+        ReadText = CStr(CallByName(o, "Text", VbGet))
+    End If
+    Err.Clear
+    On Error GoTo 0
+End Function
+
+Private Sub WriteText(ByVal o As Object, ByVal s As String)
+    ' Value優先、ダメならText
+    On Error Resume Next
+    CallByName o, "Value", VbLet, s
+    If Err.Number <> 0 Then
+        Err.Clear
+        CallByName o, "Text", VbLet, s
+    End If
+    Err.Clear
+    On Error GoTo 0
+End Sub
+
+' ====== 年齢更新本体 ======
+Private Sub UpdateAgeFromBirth()
+    If mAgeBusy Then Exit Sub
+    mAgeBusy = True
+
+    Dim sBirth As String, sEDate As String
+    Dim dtBirth As Date, dtEval As Date
+    Dim age As Long
+
+    sBirth = Trim$(ReadText(BIObj("txtBirth")))
+    If Len(sBirth) = 0 Then
+        WriteText BIObj("txtAge"), ""
+        mAgeBusy = False
+        Exit Sub
+    End If
+
+    If Not TryParseBirthDate_ShowaOrAD(sBirth, dtBirth) Then
+        ' 入力途中/不正 → 年齢は空欄（エラーは出さない）
+        WriteText BIObj("txtAge"), ""
+        mAgeBusy = False
+        Exit Sub
+    End If
+
+    sEDate = Trim$(ReadText(BIObj("txtEDate")))
+    If IsDate(sEDate) Then
+        dtEval = CDate(sEDate)
+    Else
+        dtEval = Date
+    End If
+
+    age = CalcAge(dtBirth, dtEval)
+    WriteText BIObj("txtAge"), CStr(age)
+
+    mAgeBusy = False
+End Sub
+
+Private Function CalcAge(ByVal birth As Date, ByVal asOfDate As Date) As Long
+    Dim y As Long
+    y = Year(asOfDate) - Year(birth)
+    If Format$(asOfDate, "mmdd") < Format$(birth, "mmdd") Then y = y - 1
+    CalcAge = y
+End Function
+
+' 昭和・西暦の両対応（昭和だけでOKならここだけで完結）
+Private Function TryParseBirthDate_ShowaOrAD(ByVal raw As String, ByRef outDate As Date) As Boolean
+    Dim s As String, era As String
+    Dim a As Variant
+    Dim y As Long, m As Long, d As Long
+    Dim adY As Long
+
+    s = Trim$(raw)
+    If Len(s) = 0 Then Exit Function
+
+    ' ざっくり正規化（文字化けしないよう、置換対象を明示）
+    On Error Resume Next
+    s = StrConv(s, vbNarrow)
+    On Error GoTo 0
+
+    s = Replace$(s, "／", "/")
+    s = Replace$(s, "昭和", "S")
+    s = Replace$(s, "年", "/")
+    s = Replace$(s, "月", "/")
+    s = Replace$(s, "日", "")
+    s = Replace$(s, ".", "/")
+    s = Replace$(s, "-", "/")
+    s = UCase$(s)
+
+    Do While InStr(s, "//") > 0
+        s = Replace$(s, "//", "/")
+    Loop
+
+    ' 先頭がSなら昭和
+    If Left$(s, 1) = "S" Then
+        era = "S"
+        s = Trim$(Mid$(s, 2))
+    Else
+        era = ""
+    End If
+
+    ' 西暦として読めるならそれでOK（互換）
+    If era = "" Then
+        If IsDate(s) Then
+            outDate = CDate(s)
+            TryParseBirthDate_ShowaOrAD = True
+        End If
+        Exit Function
+    End If
+
+    a = Split(s, "/")
+    If UBound(a) < 2 Then Exit Function
+
+    y = val(a(0)): m = val(a(1)): d = val(a(2))
+    If y <= 0 Or m <= 0 Or d <= 0 Then Exit Function
+
+    ' 昭和1=1926 → 1925 + 昭和年
+    adY = 1925 + y
+
+    On Error GoTo EH
+    outDate = DateSerial(adY, m, d)
+    TryParseBirthDate_ShowaOrAD = True
+    Exit Function
+EH:
+End Function
+
+' ====== 発火が怪しい環境でも必ず更新されるトリガ ======
+Private Sub MultiPage1_Change()
+    ' タブ移動のタイミングで必ず同期
+    On Error Resume Next
+    UpdateAgeFromBirth
+    On Error GoTo 0
+    UpdateAgeFromBirth
+End Sub
+
+
 
