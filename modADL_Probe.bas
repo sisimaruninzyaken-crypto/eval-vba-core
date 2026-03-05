@@ -70,6 +70,51 @@ Public Sub Snapshot_ADL_Once()
         v = p.Controls("cmbBI_" & i).Text
         s = s & "BI_" & i & "=" & v & "|"
     Next i
+    
+
+If mp.Pages(0).Controls("chkBIHomeEnv_Entrance").value Then
+    s = s & "BI_HomeEnv_0=1|"
+Else
+    s = s & "BI_HomeEnv_0=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_Genkan").value Then
+    s = s & "BI_HomeEnv_1=1|"
+Else
+    s = s & "BI_HomeEnv_1=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_IndoorStep").value Then
+    s = s & "BI_HomeEnv_2=1|"
+Else
+    s = s & "BI_HomeEnv_2=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_Stairs").value Then
+    s = s & "BI_HomeEnv_3=1|"
+Else
+    s = s & "BI_HomeEnv_3=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_Handrail").value Then
+    s = s & "BI_HomeEnv_4=1|"
+Else
+    s = s & "BI_HomeEnv_4=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_Slope").value Then
+    s = s & "BI_HomeEnv_5=1|"
+Else
+    s = s & "BI_HomeEnv_5=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_NarrowPath").value Then
+    s = s & "BI_HomeEnv_6=1|"
+Else
+    s = s & "BI_HomeEnv_6=0|"
+End If
+
+s = s & "BI_HomeEnv_Note=" & mp.Pages(0).Controls("txtBIHomeEnvNote").Text & "|"
 
     ' --- IADL (#1) ---
     Set p = mp.Pages(1)
@@ -121,6 +166,52 @@ Public Function Build_ADL_IO() As String
         v = p.Controls("cmbBI_" & i).Text
         s = s & "BI_" & i & "=" & v & "|"
     Next i
+    
+
+If mp.Pages(0).Controls("chkBIHomeEnv_Entrance").value Then
+    s = s & "BI_HomeEnv_0=1|"
+Else
+    s = s & "BI_HomeEnv_0=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_Genkan").value Then
+    s = s & "BI_HomeEnv_1=1|"
+Else
+    s = s & "BI_HomeEnv_1=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_IndoorStep").value Then
+    s = s & "BI_HomeEnv_2=1|"
+Else
+    s = s & "BI_HomeEnv_2=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_Stairs").value Then
+    s = s & "BI_HomeEnv_3=1|"
+Else
+    s = s & "BI_HomeEnv_3=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_Handrail").value Then
+    s = s & "BI_HomeEnv_4=1|"
+Else
+    s = s & "BI_HomeEnv_4=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_Slope").value Then
+    s = s & "BI_HomeEnv_5=1|"
+Else
+    s = s & "BI_HomeEnv_5=0|"
+End If
+
+If mp.Pages(0).Controls("chkBIHomeEnv_NarrowPath").value Then
+    s = s & "BI_HomeEnv_6=1|"
+Else
+    s = s & "BI_HomeEnv_6=0|"
+End If
+
+s = s & "BI_HomeEnv_Note=" & mp.Pages(0).Controls("txtBIHomeEnvNote").Text & "|"
+
 
     ' --- IADL (#1) ---
     Set p = mp.Pages(1)
@@ -155,7 +246,7 @@ End Function
 
 Public Sub Save_ADL_Once()
     Dim ws As Worksheet, look As Object
-    Dim s As String, r As Long, c As Long
+    Dim s As String, R As Long, c As Long
     Dim lastCol As Long
 
     Set ws = ThisWorkbook.Worksheets("EvalData")            ' 既存ヘルパ（PainIOと同じ想定）
@@ -165,14 +256,14 @@ Public Sub Save_ADL_Once()
 
 
     ' 追記行を決定（ヘッダの次行から開始）
-    r = ws.Cells(ws.rows.Count, c).End(xlUp).row: If r < 2 Then r = 2 Else r = r + 1
+    R = ws.Cells(ws.rows.Count, c).End(xlUp).row: If R < 2 Then R = 2 Else R = R + 1
 
 
     ' IO生成 → 書き込み
     s = Build_ADL_IO()
-    Debug.Print "[Chk]"; TypeName(ws); r; c; TypeName(ws.Cells(r, c))
+    Debug.Print "[Chk]"; TypeName(ws); R; c; TypeName(ws.Cells(R, c))
 
-ws.Cells(r, c).Value2 = CStr(s)
+ws.Cells(R, c).Value2 = CStr(s)
 
 
 
@@ -182,15 +273,15 @@ End Sub
 '=== Helper: 見出し列を保証して列番号を返す（無ければ1行目の末尾に作成） ===
 Public Function EnsureHeader(ws As Worksheet, ByVal header As String) As Long
 
-    Dim M As Variant, lastCol As Long
-    M = Application.Match(header, ws.rows(1), 0)
-    If IsError(M) Then
+    Dim m As Variant, lastCol As Long
+    m = Application.Match(header, ws.rows(1), 0)
+    If IsError(m) Then
         lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
         If lastCol < 1 Then lastCol = 1
         ws.Cells(1, lastCol + 1).value = header
         EnsureHeader = lastCol + 1
     Else
-        EnsureHeader = CLng(M)
+        EnsureHeader = CLng(m)
     End If
 End Function
 
@@ -203,17 +294,17 @@ End Function
 '=== Load: EvalDataの IO_ADL 最新行を読み込み、フォームに反映 ===
 Public Sub Load_ADL_Latest()
     Dim ws As Worksheet, mp As MSForms.MultiPage, p As MSForms.Page, ctl As Control
-    Dim c As Long, r As Long, s As String
+    Dim c As Long, R As Long, s As String
     Dim parts As Variant, i As Long, n As Long
     Dim k As String, v As String
     Dim cmbSU As MSForms.ComboBox, cmbSH As MSForms.ComboBox
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
     c = EnsureHeader(ws, "IO_ADL")
-    r = ws.Cells(ws.rows.Count, c).End(xlUp).row
-    If r < 2 Then Exit Sub    ' データなし
+    R = ws.Cells(ws.rows.Count, c).End(xlUp).row
+    If R < 2 Then Exit Sub    ' データなし
 
-    s = ReadStr_Compat("IO_ADL", r, ws)
+    s = ReadStr_Compat("IO_ADL", R, ws)
     parts = Split(s, "|")
 
     ' mpADL 取得
@@ -251,6 +342,16 @@ Public Sub Load_ADL_Latest()
     Case "BI_8":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_8"), v
     Case "BI_9":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_9"), v
 
+    Case "BI_HomeEnv_0":            mp.Pages(0).Controls("chkBIHomeEnv_Entrance").value = (v = "1")
+    Case "BI_HomeEnv_1":            mp.Pages(0).Controls("chkBIHomeEnv_Genkan").value = (v = "1")
+    Case "BI_HomeEnv_2":            mp.Pages(0).Controls("chkBIHomeEnv_IndoorStep").value = (v = "1")
+    Case "BI_HomeEnv_3":            mp.Pages(0).Controls("chkBIHomeEnv_Stairs").value = (v = "1")
+    Case "BI_HomeEnv_4":            mp.Pages(0).Controls("chkBIHomeEnv_Handrail").value = (v = "1")
+    Case "BI_HomeEnv_5":            mp.Pages(0).Controls("chkBIHomeEnv_Slope").value = (v = "1")
+    Case "BI_HomeEnv_6":            mp.Pages(0).Controls("chkBIHomeEnv_NarrowPath").value = (v = "1")
+    Case "BI_HomeEnv_Note":         mp.Pages(0).Controls("txtBIHomeEnvNote").Text = v
+
+
     ' --- IADL (#1) ---
     Case "IADL_0":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_0"), v
     Case "IADL_1":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_1"), v
@@ -276,22 +377,22 @@ End Select
 NextI:
     Next i
 
-    Debug.Print "[ADL.Load] Row=" & r & " | Pairs=" & n & " | Len=" & Len(s)
+    Debug.Print "[ADL.Load] Row=" & R & " | Pairs=" & n & " | Len=" & Len(s)
 End Sub
 
 
 
 '=== Save→Load: ADL を一発検証（EvalDataに追記→直後にフォームへ反映） ===
 Public Sub SaveAndReload_ADL()
-    Dim ws As Worksheet, c As Long, r As Long, s As String
+    Dim ws As Worksheet, c As Long, R As Long, s As String
     Call Save_ADL_Once
     Call Load_ADL_Latest
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
     c = EnsureHeader(ws, "IO_ADL")
-    r = ws.Cells(ws.rows.Count, c).End(xlUp).row
-    s = ReadStr_Compat("IO_Sensory", r, ws)
-    Debug.Print "[ADL.SaveLoad] Row=" & r & " Col=" & c & " | Len=" & Len(s)
+    R = ws.Cells(ws.rows.Count, c).End(xlUp).row
+    s = ReadStr_Compat("IO_Sensory", R, ws)
+    Debug.Print "[ADL.SaveLoad] Row=" & R & " Col=" & c & " | Len=" & Len(s)
 End Sub
 
 
@@ -300,14 +401,14 @@ End Sub
 
 '=== Checklist: ADL 保存/読込の健全性を一発確認 ===
 Public Sub PreRelease_ADL_Checklist()
-    Dim ws As Worksheet, c As Long, r As Long, s As String
+    Dim ws As Worksheet, c As Long, R As Long, s As String
     Set ws = ThisWorkbook.Worksheets("EvalData")
     c = EnsureHeader(ws, "IO_ADL")
-    r = ws.Cells(ws.rows.Count, c).End(xlUp).row
-    If r < 2 Then Debug.Print "[ADL.Check] データなし": Exit Sub
+    R = ws.Cells(ws.rows.Count, c).End(xlUp).row
+    If R < 2 Then Debug.Print "[ADL.Check] データなし": Exit Sub
 
-    s = ReadStr_Compat("IO_Sensory", r, ws)
-    Debug.Print "[ADL.Check] Col=" & c & " Row=" & r & " | Len=" & Len(s)
+    s = ReadStr_Compat("IO_Sensory", R, ws)
+    Debug.Print "[ADL.Check] Col=" & c & " Row=" & R & " | Len=" & Len(s)
 
     ' 冪等チェック：保存→読込→長さ
     Call SaveAndReload_ADL
@@ -347,16 +448,16 @@ End Sub
 
 
 '=== Save: ADL を「指定行 r」に書き込む（行は外部で決定） ===
-Public Sub Save_ADL_AtRow(ByVal ws As Worksheet, ByVal r As Long)
+Public Sub Save_ADL_AtRow(ByVal ws As Worksheet, ByVal R As Long)
     Dim c As Long, s As String
     If ws Is Nothing Then Exit Sub
-    If r < 2 Then r = 2
+    If R < 2 Then R = 2
 
     c = EnsureHeader(ws, "IO_ADL")   ' 見出し確保して列番号取得（同名が他にある場合は、その関数を使用しているモジュールのものでもOK）
     s = Build_ADL_IO                 ' 現在のフォーム値をIO化（固定順）
 
-    ws.Cells(r, c).Value2 = CStr(s)  ' 指定行に上書き保存（追記は呼び出し側でrを進める）
-    Debug.Print "[ADL.Save@Row] Row=" & r & " Col=" & c & " | Len=" & Len(s)
+    ws.Cells(R, c).Value2 = CStr(s)  ' 指定行に上書き保存（追記は呼び出し側でrを進める）
+    Debug.Print "[ADL.Save@Row] Row=" & R & " Col=" & c & " | Len=" & Len(s)
 End Sub
 
 
@@ -372,38 +473,38 @@ End Sub
 Private Function ADLKeyNormalize(ByVal tag As String) As String
     ' UIタグ → 保存キー互換
     ' 例：BI.摂食→BI_0 / IADL.調理→IADL_0 / BI.Total→BITotal
-    Dim M As Object, k As String
+    Dim m As Object, k As String
     k = Replace(tag, ".", "_")
     If k = "BI_Total" Then ADLKeyNormalize = "BITotal": Exit Function
     
     ' 日本語→番号の最小マップ（必要に応じて次の手で拡張）
     ' BI（バーサル）
-    Set M = CreateObject("Scripting.Dictionary")
-    M.CompareMode = 1
-    M("BI_摂食") = "BI_0"
-    M("BI_車いす-ベッド移乗") = "BI_1"
-    M("BI_整容") = "BI_2"
-    M("BI_トイレ動作") = "BI_3"
-    M("BI_入浴") = "BI_4"
-    M("BI_歩行/車いす移動") = "BI_5"
-    M("BI_階段昇降") = "BI_6"
-    M("BI_更衣") = "BI_7"
-    M("BI_排便コントロール") = "BI_8"
-    M("BI_排尿コントロール") = "BI_9"
+    Set m = CreateObject("Scripting.Dictionary")
+    m.CompareMode = 1
+    m("BI_摂食") = "BI_0"
+    m("BI_車いす-ベッド移乗") = "BI_1"
+    m("BI_整容") = "BI_2"
+    m("BI_トイレ動作") = "BI_3"
+    m("BI_入浴") = "BI_4"
+    m("BI_歩行/車いす移動") = "BI_5"
+    m("BI_階段昇降") = "BI_6"
+    m("BI_更衣") = "BI_7"
+    m("BI_排便コントロール") = "BI_8"
+    m("BI_排尿コントロール") = "BI_9"
     
     ' IADL
-    M("IADL_調理") = "IADL_0"
-    M("IADL_洗濯") = "IADL_1"
-    M("IADL_掃除") = "IADL_2"
-    M("IADL_買い物") = "IADL_3"
-    M("IADL_金銭管理") = "IADL_4"
-    M("IADL_服薬管理") = "IADL_5"
-    M("IADL_趣味・余暇活動") = "IADL_6"
-    M("IADL_社会参加（外出・地域活動）") = "IADL_7"
-    M("IADL_コミュニケーション（電話・会話）") = "IADL_8"
+    m("IADL_調理") = "IADL_0"
+    m("IADL_洗濯") = "IADL_1"
+    m("IADL_掃除") = "IADL_2"
+    m("IADL_買い物") = "IADL_3"
+    m("IADL_金銭管理") = "IADL_4"
+    m("IADL_服薬管理") = "IADL_5"
+    m("IADL_趣味・余暇活動") = "IADL_6"
+    m("IADL_社会参加（外出・地域活動）") = "IADL_7"
+    m("IADL_コミュニケーション（電話・会話）") = "IADL_8"
     
-    If M.exists(k) Then
-        ADLKeyNormalize = M(k)
+    If m.exists(k) Then
+        ADLKeyNormalize = m(k)
     Else
         ADLKeyNormalize = k ' 未定義はそのまま（次の手で補完）
     End If
@@ -475,7 +576,7 @@ End Sub
 
 
 '=== Load: read IO_ADL from a specified row and apply to owner form ===
-Public Sub Load_ADL_FromRow(ws As Worksheet, r As Long, owner As Object)
+Public Sub Load_ADL_FromRow(ws As Worksheet, R As Long, owner As Object)
     Dim mp As MSForms.MultiPage, p As MSForms.Page, ctl As Control
     Dim c As Long, s As String
     Dim parts As Variant, i As Long, n As Long
@@ -484,12 +585,12 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, r As Long, owner As Object)
 
     If ws Is Nothing Then Exit Sub
     If owner Is Nothing Then Exit Sub
-    If r < 2 Then Exit Sub
+    If R < 2 Then Exit Sub
 
     c = EnsureHeader(ws, "IO_ADL")
     If c < 1 Then Exit Sub
 
-    s = ReadStr_Compat("IO_ADL", r, ws)
+    s = ReadStr_Compat("IO_ADL", R, ws)
     If Len(s) = 0 Then Exit Sub
     parts = Split(s, "|")
 
@@ -552,6 +653,6 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, r As Long, owner As Object)
 NextI:
     Next i
 
-    Debug.Print "[ADL.Load] Row=" & r & " | Pairs=" & n & " | Len=" & Len(s)
+    Debug.Print "[ADL.Load] Row=" & R & " | Pairs=" & n & " | Len=" & Len(s)
 End Sub
 

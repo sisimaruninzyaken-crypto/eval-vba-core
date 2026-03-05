@@ -296,7 +296,7 @@ End Function
 
 
 Private Function CreateTextBox(parent As MSForms.Frame, x As Single, y As Single, _
-                               W As Single, H As Single, multiline As Boolean, _
+                               W As Single, h As Single, multiline As Boolean, _
                                Optional name As String = "", Optional tag As String = "") As MSForms.TextBox
     Dim tb As MSForms.TextBox
     Set tb = parent.Controls.Add("Forms.TextBox.1", IIf(name = "", vbNullString, name))
@@ -304,7 +304,7 @@ Private Function CreateTextBox(parent As MSForms.Frame, x As Single, y As Single
         .Left = x
         .Top = y
         .Width = W
-        .Height = IIf(H > 0, H, 20)
+        .Height = IIf(h > 0, h, 20)
         .multiline = multiline
         .EnterKeyBehavior = multiline
         .tag = tag
@@ -612,15 +612,15 @@ Private Sub FitLayout()
     End If
 
     ' 各ホストフレームも同様にクランプ
-    Dim hosts As Variant, H As MSForms.Frame, i As Long
+    Dim hosts As Variant, h As MSForms.Frame, i As Long
     hosts = Array(hostBasic, hostPost, hostMove, hostTests, hostWalk, hostCog)
     For i = LBound(hosts) To UBound(hosts)
-        Set H = hosts(i)
-        If Not H Is Nothing Then
-            H.Left = 0: H.Top = 0
-            H.Width = iw - 12: If H.Width < 120 Then H.Width = 120
-            H.Height = iH - 12: If H.Height < 100 Then H.Height = 100
-            H.ScrollBars = fmScrollBarsNone
+        Set h = hosts(i)
+        If Not h Is Nothing Then
+            h.Left = 0: h.Top = 0
+            h.Width = iw - 12: If h.Width < 120 Then h.Width = 120
+            h.Height = iH - 12: If h.Height < 100 Then h.Height = 100
+            h.ScrollBars = fmScrollBarsNone
         End If
     Next i
 
@@ -983,9 +983,15 @@ Set EnsureBI_IADL = mpADL
     Dim pBI As MSForms.Page: Set pBI = mpADL.Pages(0)
     ' 一旦クリアしてから作成（空／重複どちらにも対応）
     Dim iCtl As Long
-    For iCtl = pBI.Controls.Count - 1 To 0 Step -1
+    
+     For iCtl = pBI.Controls.Count - 1 To 0 Step -1
+    If Left(pBI.Controls(iCtl).name, 5) = "lblBI" _
+    Or Left(pBI.Controls(iCtl).name, 5) = "cmbBI" _
+    Or pBI.Controls(iCtl).name = "txtBITotal" _
+    Or pBI.Controls(iCtl).name = "frBIHomeEnv" Then
         pBI.Controls.Remove pBI.Controls(iCtl).name
-    Next
+    End If
+Next
 
     Dim biItems As Variant, biChoices As Variant
     biItems = Array("摂食", "車いす-ベッド移乗", "整容", "トイレ動作", "入浴", _
@@ -1052,9 +1058,87 @@ Set EnsureBI_IADL = mpADL
 
         yBI = yBI + rowH
     Next idx
+    
+   Dim frHomeEnv As MSForms.Frame
+    Dim lblHomeNote As MSForms.label, txtHomeNote As MSForms.TextBox
+    Dim homeItems As Variant, homeNames As Variant, h As Long
+    Dim ckHome As MSForms.CheckBox
+    Dim yHome As Single
 
+Set frHomeEnv = pBI.Controls.Add("Forms.Frame.1", "frBIHomeEnv")
+With frHomeEnv
+    .caption = "住宅状況（該当のみチェック）"
+    .Left = 420
+    .ZOrder 0
+    .Top = yBI + 6
+    .Width = 390
+End With
+
+homeItems = Array( _
+    "玄関までの段差", _
+    "上がり框（段差）", _
+    "屋内の段差", _
+    "階段あり", _
+    "手すりあり", _
+    "スロープあり", _
+    "通路が狭い" _
+)
+
+homeNames = Array( _
+    "chkBIHomeEnv_Entrance", _
+    "chkBIHomeEnv_Genkan", _
+    "chkBIHomeEnv_IndoorStep", _
+    "chkBIHomeEnv_Stairs", _
+    "chkBIHomeEnv_Handrail", _
+    "chkBIHomeEnv_Slope", _
+    "chkBIHomeEnv_NarrowPath" _
+)
+
+yHome = 18
+For h = LBound(homeItems) To UBound(homeItems)
+    Set ckHome = frHomeEnv.Controls.Add("Forms.CheckBox.1", CStr(homeNames(h)))
+
+    Dim col As Long, row As Long
+    col = h Mod 2
+    row = h \ 2
+
+    With ckHome
+        .caption = CStr(homeItems(h))
+        .Left = 12 + col * (frHomeEnv.InsideWidth / 2)
+        .Top = 18 + row * 20
+        .Width = (frHomeEnv.InsideWidth / 2) - 18
+        .tag = "BI.HomeEnv." & CStr(h)   '←Tagはそのまま
+        .value = False
+    End With
+Next h
+
+yHome = 18 + ((UBound(homeItems) + 1 + 1) \ 2) * 20
+
+Set lblHomeNote = frHomeEnv.Controls.Add("Forms.Label.1", "lblBIHomeEnvNote")
+With lblHomeNote
+    .caption = "備考"
+    .Left = 12
+    .Top = yHome + 4
+    .Width = 60
+End With
+
+Set txtHomeNote = frHomeEnv.Controls.Add("Forms.TextBox.1", "txtBIHomeEnvNote")
+With txtHomeNote
+    .tag = "BI.HomeEnv.Note"           '←Tagはそのまま
+    .Left = 12
+    .Top = lblHomeNote.Top + 14
+    .Width = frHomeEnv.InsideWidth - 18
+    .Height = 100
+    .multiline = True
+    .EnterKeyBehavior = True
+End With
+
+'★ 高さをここで確定（固定230をやめる）
+frHomeEnv.Height = txtHomeNote.Top + txtHomeNote.Height + 12
+  
     pBI.ScrollBars = fmScrollBarsNone
     pBI.ScrollHeight = yBI + 8
+
 
     '======================== IADL（9項目） ========================
     Dim pIADL As MSForms.Page: Set pIADL = mpADL.Pages(1)
@@ -1123,6 +1207,14 @@ Set EnsureBI_IADL = mpADL
     nextTop = mpADL.Top + mpADL.Height + 10
     If Not hostMove Is Nothing Then hostMove.ScrollHeight = nextTop + 10
 
+    '--- BI: 住宅状況を右側へ固定（最後に当てる：整列で戻されないように）---
+On Error Resume Next
+pBI.Controls("frBIHomeEnv").Left = 600
+pBI.Controls("frBIHomeEnv").Top = 12
+pBI.Controls("frBIHomeEnv").ZOrder 0
+On Error GoTo 0
+
+
     Set EnsureBI_IADL = mpADL
 End Function
 '=================================================================
@@ -1130,10 +1222,10 @@ End Function
 '=== BIコンボにイベントフックを張る ===
 Private Sub AttachBIHook(ByRef cB As MSForms.ComboBox)
     If BIHooks Is Nothing Then Set BIHooks = New Collection
-    Dim H As CboBIHook
-    Set H = New CboBIHook
-    H.Init Me, cB
-    BIHooks.Add H
+    Dim h As CboBIHook
+    Set h = New CboBIHook
+    h.Init Me, cB
+    BIHooks.Add h
 End Sub
 
 '=== BI：項目×選択肢 → 点数（Barthel標準に沿う） ==================
@@ -1269,10 +1361,10 @@ End Sub
 '=== 任意のTextBoxにIMEひらがなフックを張る ===
 Private Sub AttachImeHiragana(tb As MSForms.TextBox)
     If ImeHooks Is Nothing Then Set ImeHooks = New Collection
-    Dim H As TxtImeHook
-    Set H = New TxtImeHook
-    H.Init tb
-    ImeHooks.Add H
+    Dim h As TxtImeHook
+    Set h = New TxtImeHook
+    h.Init tb
+    ImeHooks.Add h
     ' 念のため直ちに反映
     On Error Resume Next
     tb.IMEMode = fmIMEModeHiragana
@@ -1281,10 +1373,10 @@ End Sub
 '=== MultiPage にフックを張る ===
 Private Sub AttachMPHook(mp As MSForms.MultiPage)
     If MPHs Is Nothing Then Set MPHs = New Collection
-    Dim H As MPHook
-    Set H = New MPHook
-    H.Init Me, mp
-    MPHs.Add H
+    Dim h As MPHook
+    Set h = New MPHook
+    h.Init Me, mp
+    MPHs.Add h
 End Sub
 
 '=== IADL備考にIMEひらがなを再適用（都度呼ぶ） ===
@@ -1655,12 +1747,12 @@ End Sub
 
 
 '======================================================================
-Public Sub RegisterMPHook(H As MPHook)
-    mMPHooks.Add H
+Public Sub RegisterMPHook(h As MPHook)
+    mMPHooks.Add h
 End Sub
 
-Public Sub RegisterTxtHook(H As TxtImeHook)
-    mTxtHooks.Add H
+Public Sub RegisterTxtHook(h As TxtImeHook)
+    mTxtHooks.Add h
 End Sub
 
 
@@ -2857,12 +2949,14 @@ Private Sub UserForm_Activate()
    
     Static done As Boolean
     Dim scrH As Single
-    Dim H As Single
+    Dim h As Single
     
     Application.WindowState = xlMaximized
     
     If done Then Exit Sub
     done = True
+    
+    Call Align_BIHomeEnv_Once
    
     Me.Controls("txtHdrName").SetFocus
     
@@ -2884,15 +2978,15 @@ Me.Left = Application.Left + (Application.Width - Me.Width) / 2: Me.Top = Applic
 
 
  Dim scrH As Single
-    Dim H As Single
+    Dim h As Single
     scrH = Application.UsableHeight
     If scrH < 500 Then
-        H = 530
+        h = 530
     Else
-        H = 690
+        h = 690
     End If
 
-    Me.Height = H
+    Me.Height = h
     DoEvents
 
     Call LegacyInit
@@ -2927,7 +3021,7 @@ Call RemoveLegacyPainUI
 
 If Not mPainTidyBusy Then
     'TidyPainUI_Once
-    Me.Height = H
+    Me.Height = h
     DoEvents
     ClearPainUI Me   ' ← 起動時は空で開始（読み込みは手動で）
 End If
@@ -3207,7 +3301,7 @@ Trace "WALK start", "Init"
 Set mpWalk = hostWalk.Controls.Add("Forms.MultiPage.1")
 
 ' 変数宣言は With の外でOK
-Dim W As Single, H As Single
+Dim W As Single, h As Single
 
 With mpWalk
     .Left = 0
@@ -3215,10 +3309,10 @@ With mpWalk
 
     ' 内寸ベースで算出し、下限を付けてクランプ
     W = hostWalk.InsideWidth - 12:  If W < 200 Then W = 200
-    H = hostWalk.InsideHeight - 12: If H < 150 Then H = 150
+    h = hostWalk.InsideHeight - 12: If h < 150 Then h = 150
 
     .Width = W
-    .Height = H
+    .Height = h
     .Style = fmTabStyleTabs
 End With
 
@@ -4995,7 +5089,7 @@ Private Sub BuildWalkAbnormal_Frames()
     Dim pg As MSForms.Page
     Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
-    Dim W As Single, H As Single
+    Dim W As Single, h As Single
 
     ' MultiPage2（歩行評価）を取得
     For Each ctl In Me.Controls
@@ -5014,7 +5108,7 @@ Private Sub BuildWalkAbnormal_Frames()
 
     ' ページのワークエリアサイズ
     W = mp.Width - 24
-    H = mp.Height - 24
+    h = mp.Height - 24
 
     ' 既存フレーム削除（再生成用）
     For Each ctl In pg.Controls
@@ -5030,7 +5124,7 @@ Private Sub BuildWalkAbnormal_Frames()
         .Left = 6
         .Top = 6
         .Width = W / 2 - 12
-        .Height = H / 2 - 12
+        .Height = h / 2 - 12
     End With
 
     ' --- B：パーキンソン系 ---
@@ -5040,7 +5134,7 @@ Private Sub BuildWalkAbnormal_Frames()
         .Left = W / 2 + 6
         .Top = 6
         .Width = W / 2 - 12
-        .Height = H / 2 - 12
+        .Height = h / 2 - 12
     End With
 
     ' --- C：整形・高齢者不安定歩行 ---
@@ -5048,9 +5142,9 @@ Private Sub BuildWalkAbnormal_Frames()
     With f
         .caption = "C：整形・高齢者不安定歩行"
         .Left = 6
-        .Top = H / 2 + 6
+        .Top = h / 2 + 6
         .Width = W / 2 - 12
-        .Height = H / 2 - 12
+        .Height = h / 2 - 12
     End With
 
     ' --- D：協調障害・失調 ---
@@ -5058,9 +5152,9 @@ Private Sub BuildWalkAbnormal_Frames()
     With f
         .caption = "D：協調障害・失調パターン"
         .Left = W / 2 + 6
-        .Top = H / 2 + 6
+        .Top = h / 2 + 6
         .Width = W / 2 - 12
-        .Height = H / 2 - 12
+        .Height = h / 2 - 12
     End With
 End Sub
 
@@ -6696,11 +6790,11 @@ Private Sub GetPageUsableArea( _
     ByRef x As Single, _
     ByRef y As Single, _
     ByRef W As Single, _
-    ByRef H As Single)
+    ByRef h As Single)
 
     Dim mp As MSForms.MultiPage
 
-    x = 0: y = 0: W = 0: H = 0   ' デフォルトクリア
+    x = 0: y = 0: W = 0: h = 0   ' デフォルトクリア
 
     Set mp = GetMainMultiPage()
     If mp Is Nothing Then Exit Sub
@@ -6713,7 +6807,7 @@ Private Sub GetPageUsableArea( _
     x = 0
     y = 0
     W = mp.Width
-    H = mp.Height
+    h = mp.Height
 End Sub
 
 
@@ -6754,7 +6848,7 @@ End Sub
 Private Sub PreviewOnePage(ByVal idx As Long, ByVal mp As MSForms.MultiPage)
     Dim pg As MSForms.Page
     Dim root As MSForms.Frame
-    Dim x As Single, y As Single, W As Single, H As Single
+    Dim x As Single, y As Single, W As Single, h As Single
 
     Set pg = mp.Pages(idx)
     Set root = GetPageRootFrame(idx)
@@ -6774,17 +6868,17 @@ Private Sub PreviewOnePage(ByVal idx As Long, ByVal mp As MSForms.MultiPage)
                 "H=" & root.Height
 
     ' AlignRootFrameToPage が使うページ領域
-    GetPageUsableArea idx, x, y, W, H
+    GetPageUsableArea idx, x, y, W, h
     Debug.Print "  PageArea:", _
                 "X=" & x, "Y=" & y, _
-                "W=" & W, "H=" & H
+                "W=" & W, "H=" & h
 
     ' もし AlignRootFrameToPage を呼んだらこうなる（※実際には書き換えない）
     Debug.Print "  WouldAlignTo:", _
                 "L=" & (x), _
                 "T=" & (y), _
                 "W=" & (W), _
-                "H=" & (H)
+                "H=" & (h)
 End Sub
 
 
@@ -7673,4 +7767,16 @@ Private Sub MultiPage1_Change()
 End Sub
 
 
+Public Sub Align_BIHomeEnv_Once()
 
+    Dim fr As Object
+    
+    Set fr = Me.Controls("mpADL").Object.Pages(0).Controls("frBIHomeEnv")
+    
+    If Not fr Is Nothing Then
+        fr.Left = fr.parent.InsideWidth - fr.Width - 12
+        fr.Top = 12
+        fr.ZOrder 0
+    End If
+
+End Sub
