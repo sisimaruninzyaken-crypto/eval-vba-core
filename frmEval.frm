@@ -5688,7 +5688,9 @@ Public Sub BuildCog_DementiaBlock()
         .Left = lbl.Left + lbl.Width + 6
         .Top = fraTop - 2
         .Width = mp.Width - .Left - 12
-        .Height = 18
+        .Height = 54
+        .multiline = True
+        .IMEMode = fmIMEModeHiragana
     End With
 End Sub
 
