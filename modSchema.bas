@@ -22,6 +22,11 @@ Public Sub EnsureEvalDataSchema(Optional ByVal dryRun As Boolean = True)
 
     ' 4) 欠損列を補完（末尾に追加）
     EnsureHeaders ws, desiredPosture, dryRun
+    
+    Dim desiredBasic As Collection
+    Set desiredBasic = BasicInfoDesiredHeaders()
+    EnsureHeaders ws, desiredBasic, dryRun
+
 
     ' 5) “姿勢”ブロック内の並び順を指定順へ（シート全体の順序は後段拡張）
     ReorderPostureBlock ws, desiredPosture, dryRun
@@ -164,12 +169,12 @@ Private Sub ApplyHeaderAliases(ByVal ws As Worksheet, ByVal dictAlias As Object,
                 If dstCol > 0 And dstCol <> j Then
                     ' 既にターゲット列が存在：空欄を埋める形でマージし、旧列を削除
                     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, j).End(xlUp).row
-                    Dim r As Long
-                    For r = 2 To lastRow
-                        If Len(ws.Cells(r, dstCol).value) = 0 And Len(ws.Cells(r, j).value) > 0 Then
-                            ws.Cells(r, dstCol).value = ws.Cells(r, j).value
+                    Dim R As Long
+                    For R = 2 To lastRow
+                        If Len(ws.Cells(R, dstCol).value) = 0 And Len(ws.Cells(R, j).value) > 0 Then
+                            ws.Cells(R, dstCol).value = ws.Cells(R, j).value
                         End If
-                    Next r
+                    Next R
                     ws.Columns(j).Delete
                 Else
                     ' ターゲット列が無い：そのまま改名
@@ -290,12 +295,6 @@ Private Sub AddKoushukuSideAliasesShort(ByVal d As Object, ByVal shortJoint As S
 End Sub
 
 
-
-
-
-
-
-
 Public Sub ListUnknownPostureHeaders()
     Dim ws As Worksheet: Set ws = GetEvalDataSheet()
     Dim desired As Collection: Set desired = PostureDesiredHeaders()
@@ -324,3 +323,16 @@ Public Sub ListUnknownPostureHeaders()
     End If
 End Sub
 
+
+Private Function BasicInfoDesiredHeaders() As Collection
+    Dim c As New Collection
+
+    c.Add "住宅状況"
+    c.Add "住宅備考"
+    c.Add "直近入院日"
+    c.Add "直近退院日"
+    c.Add "治療経過"
+    c.Add "合併疾患・コントロール"
+
+    Set BasicInfoDesiredHeaders = c
+End Function

@@ -7,7 +7,7 @@ Attribute VB_Name = "modUILayout_BasicInfo"
 Public Sub TidyBasicInfo_TwoColumns()
 
     Dim uf As Object, mp As Object, pg As Object, f1 As Object, f32 As Object
-    Dim W As Double, H As Double
+    Dim W As Double, h As Double
     Dim xL As Double, xR As Double, wCol As Double
     Dim xLbl As Double, xCtl As Double, wLbl As Double, wCtl As Double
     Dim wLblR As Double, wCtlR As Double
@@ -19,7 +19,7 @@ Public Sub TidyBasicInfo_TwoColumns()
 
     Dim c As Object
     Dim txtED As Object
-    Dim T As Object
+    Dim t As Object
     Dim xRightCtl As Double
     Dim riskH As Double
 
@@ -48,36 +48,36 @@ Public Sub TidyBasicInfo_TwoColumns()
     On Error GoTo 0
 
     On Error Resume Next
-    Set T = f32.Controls("txtAdmDate")
+    Set t = f32.Controls("txtAdmDate")
     On Error GoTo 0
-    If T Is Nothing Then Set T = f32.Controls.Add("Forms.TextBox.1", "txtAdmDate", True)
+    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtAdmDate", True)
 
-    Set T = Nothing
+    Set t = Nothing
     On Error Resume Next
-    Set T = f32.Controls("txtDisDate")
+    Set t = f32.Controls("txtDisDate")
     On Error GoTo 0
-    If T Is Nothing Then Set T = f32.Controls.Add("Forms.TextBox.1", "txtDisDate", True)
+    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtDisDate", True)
 
-    Set T = Nothing
+    Set t = Nothing
     On Error Resume Next
-    Set T = f32.Controls("txtTxCourse")
+    Set t = f32.Controls("txtTxCourse")
     On Error GoTo 0
-    If T Is Nothing Then Set T = f32.Controls.Add("Forms.TextBox.1", "txtTxCourse", True)
-    T.multiline = True
-    T.EnterKeyBehavior = True
-    T.WordWrap = True
+    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtTxCourse", True)
+    t.multiline = True
+    t.EnterKeyBehavior = True
+    t.WordWrap = True
 
-    Set T = Nothing
+    Set t = Nothing
     On Error Resume Next
-    Set T = f32.Controls("txtComplications")
+    Set t = f32.Controls("txtComplications")
     On Error GoTo 0
-    If T Is Nothing Then Set T = f32.Controls.Add("Forms.TextBox.1", "txtComplications", True)
-    T.multiline = True
-    T.EnterKeyBehavior = True
-    T.WordWrap = True
+    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtComplications", True)
+    t.multiline = True
+    t.EnterKeyBehavior = True
+    t.WordWrap = True
 
     W = f32.InsideWidth
-    H = f32.InsideHeight
+    h = f32.InsideHeight
 
     xL = 12
     wCol = (W - 36) / 2
@@ -112,7 +112,7 @@ Public Sub TidyBasicInfo_TwoColumns()
         "生年月日", _
         "性別", _
         "要介護", _
-        "生活歴", _
+        "家族構成", _
         "高齢者の日常生活自立度", _
         "認知症高齢者の日常生活自立度" _
     )
@@ -127,18 +127,18 @@ Public Sub TidyBasicInfo_TwoColumns()
     ' Left: Needs（本人/家族）
     yL = yL + 10
     Call EnsureLabel(f32, "lblBI_NeedsPt", "本人Needs", xL + xLbl, yL, wLbl, rowH)
-    Set T = f32.Controls("txtNeedsPt")
-    T.multiline = True
-    T.EnterKeyBehavior = True
-    T.WordWrap = True
+    Set t = f32.Controls("txtNeedsPt")
+    t.multiline = True
+    t.EnterKeyBehavior = True
+    t.WordWrap = True
     Call PlaceCtl(f32, "txtNeedsPt", xL + xCtl, yL - 1, wCtl, needsH)
 
     yL = yL + needsH + gapY
     Call EnsureLabel(f32, "lblBI_NeedsFam", "家族Needs", xL + xLbl, yL, wLbl, rowH)
-    Set T = f32.Controls("txtNeedsFam")
-    T.multiline = True
-    T.EnterKeyBehavior = True
-    T.WordWrap = True
+    Set t = f32.Controls("txtNeedsFam")
+    t.multiline = True
+    t.EnterKeyBehavior = True
+    t.WordWrap = True
     Call PlaceCtl(f32, "txtNeedsFam", xL + xCtl, yL - 1, wCtl, needsH)
     yL = yL + needsH + gapY
    
@@ -188,7 +188,7 @@ Public Sub TidyBasicInfo_TwoColumns()
     yR = yR + multiH + 8
 
     ' 右下：リスク群（最下段へ）
-    riskH = H - yR - 12
+    riskH = h - yR - 12
     If riskH < 24 Then riskH = 24
     Call PlaceCtl(f32, "Frame33", xR + xLbl, yR, wCol - 6, riskH)
     Call ArrangeRiskChecks_TwoCols(f32.Controls("Frame33"))
@@ -196,7 +196,7 @@ Public Sub TidyBasicInfo_TwoColumns()
 End Sub
 
 ' ===== helpers =====
-Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Double, ByVal T As Double, ByVal W As Double, ByVal H As Double)
+Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Double, ByVal t As Double, ByVal W As Double, ByVal h As Double)
     Dim c As Object
     On Error Resume Next
     Set c = parent.Controls(nm)
@@ -204,9 +204,9 @@ Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Doub
     If c Is Nothing Then Exit Sub
 
     c.Left = L
-    c.Top = T
+    c.Top = t
     c.Width = W
-    c.Height = H
+    c.Height = h
 End Sub
 
 Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
@@ -298,7 +298,7 @@ Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
 
 End Sub
 
-Private Sub EnsureLabel(ByVal parent As Object, ByVal nm As String, ByVal cap As String, ByVal L As Double, ByVal T As Double, ByVal W As Double, ByVal H As Double)
+Private Sub EnsureLabel(ByVal parent As Object, ByVal nm As String, ByVal cap As String, ByVal L As Double, ByVal t As Double, ByVal W As Double, ByVal h As Double)
     Dim lb As Object
     On Error Resume Next
     Set lb = parent.Controls(nm)
@@ -311,8 +311,13 @@ Private Sub EnsureLabel(ByVal parent As Object, ByVal nm As String, ByVal cap As
     lb.Visible = True
     lb.caption = cap
     lb.Left = L
-    lb.Top = T
+    lb.Top = t
     lb.Width = W
-    lb.Height = H
+    lb.Height = h
 End Sub
+
+
+
+
+
 
