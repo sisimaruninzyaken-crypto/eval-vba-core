@@ -13,52 +13,52 @@ Private Const ROM_GAP_Y As Single = 6
 
 
 Public Sub BuildParalysisTabUI(host As MSForms.Frame)
-    Dim w As Single, h As Single, Y As Single
-    w = host.Width: h = host.Height
-    Y = PAD_Y
+    Dim W As Single, h As Single, y As Single
+    W = host.Width: h = host.Height
+    y = PAD_Y
 
     ' 見出し:基本情報
-    Y = AddSectionTitle_(host, "基本情報", Y)
-    Y = AddComboRow_(host, "麻痺側", "cboParalysisSide", Array("右", "左", "両側"), Y)
-    Y = AddComboRow_(host, "麻痺の種類", "cboParalysisType", Array("片麻痺", "四肢麻痺", "単麻痺"), Y)
+    y = AddSectionTitle_(host, "基本情報", y)
+    y = AddComboRow_(host, "麻痺側", "cboParalysisSide", Array("右", "左", "両側"), y)
+    y = AddComboRow_(host, "麻痺の種類", "cboParalysisType", Array("片麻痺", "四肢麻痺", "単麻痺"), y)
 
     ' 見出し:BRS
-    Y = Y + ROM_HDR_GAP
-Y = AddSectionTitle_(host, "Brunnstrom Recovery Stage(BRS)", Y)
+    y = y + ROM_HDR_GAP
+y = AddSectionTitle_(host, "Brunnstrom Recovery Stage(BRS)", y)
 
 Dim brsValues As Variant          ' ← ここを修正(Dim の後にスペース)
 brsValues = Array("Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ")
 
-Y = AddComboRow_(host, "上肢", "cboBRS_Upper", brsValues, Y)
-Y = AddComboRow_(host, "手指", "cboBRS_Hand", brsValues, Y)
-Y = AddComboRow_(host, "下肢", "cboBRS_Lower", brsValues, Y)
+y = AddComboRow_(host, "上肢", "cboBRS_Upper", brsValues, y)
+y = AddComboRow_(host, "手指", "cboBRS_Hand", brsValues, y)
+y = AddComboRow_(host, "下肢", "cboBRS_Lower", brsValues, y)
     ' 見出し:随伴現象
-    Y = Y + ROM_HDR_GAP
-    Y = AddSectionTitle_(host, "随伴現象", Y)
-    Y = AddCheckRow_(host, "共同運動", "chkSynergy", Y)
-    Y = AddCheckRow_(host, "連合反応", "chkAssociatedRxn", Y)
+    y = y + ROM_HDR_GAP
+    y = AddSectionTitle_(host, "随伴現象", y)
+    y = AddCheckRow_(host, "共同運動", "chkSynergy", y)
+    y = AddCheckRow_(host, "連合反応", "chkAssociatedRxn", y)
 
     ' 備考欄
-    PlaceMemoBelow host, w, h, Y, "txtParalysisMemo"
+    PlaceMemoBelow host, W, h, y, "txtParalysisMemo"
 End Sub
 
 ' ---- 行ビルダ(Private) ----
-Private Function AddSectionTitle_(host As MSForms.Frame, ttl As String, Y As Single) As Single
+Private Function AddSectionTitle_(host As MSForms.Frame, ttl As String, y As Single) As Single
     Dim lbl As MSForms.label
     Set lbl = host.Controls.Add("Forms.Label.1")
     With lbl
         .caption = ttl
         .Left = PX(PAD_X)
-        .Top = PX(Y)
+        .Top = PX(y)
         .Width = PX(host.Width - PAD_X * 2)
         .Height = ROW_H
         .Font.Bold = True
     End With
-    AddSectionTitle_ = PX(Y + ROW_H + ROM_GAP_Y)
+    AddSectionTitle_ = PX(y + ROW_H + ROM_GAP_Y)
 End Function
 
 Private Function AddComboRow_(host As MSForms.Frame, cap As String, ctlName As String, _
-                              items As Variant, Y As Single) As Single
+                              items As Variant, y As Single) As Single
     Dim wCap As Single, wCombo As Single, xCap As Single, xCombo As Single
     wCap = PX(COL1_W): wCombo = PX(ROM_COL_EDT_W)
     xCap = PX(PAD_X):  xCombo = PX(PAD_X + wCap + 8)
@@ -67,7 +67,7 @@ Private Function AddComboRow_(host As MSForms.Frame, cap As String, ctlName As S
     Set lbl = host.Controls.Add("Forms.Label.1")
     With lbl
         .caption = cap
-        .Left = xCap: .Top = PX(Y)
+        .Left = xCap: .Top = PX(y)
         .Width = wCap: .Height = ROW_H
         .TextAlign = fmTextAlignLeft
     End With
@@ -75,16 +75,16 @@ Private Function AddComboRow_(host As MSForms.Frame, cap As String, ctlName As S
     Dim cbo As MSForms.ComboBox
     Set cbo = host.Controls.Add("Forms.ComboBox.1", ctlName, True)
     With cbo
-        .Left = xCombo: .Top = PX(Y)
+        .Left = xCombo: .Top = PX(y)
         .Width = wCombo: .Height = ROW_H
         .Style = fmStyleDropDownList
         .List = items
     End With
 
-    AddComboRow_ = PX(Y + ROW_H + ROM_GAP_Y)
+    AddComboRow_ = PX(y + ROW_H + ROM_GAP_Y)
 End Function
 
-Private Function AddCheckRow_(host As MSForms.Frame, cap As String, ctlName As String, Y As Single) As Single
+Private Function AddCheckRow_(host As MSForms.Frame, cap As String, ctlName As String, y As Single) As Single
     Dim wCap As Single, xCap As Single, xChk As Single
     wCap = PX(COL1_W): xCap = PX(PAD_X): xChk = PX(PAD_X + wCap + 8)
 
@@ -92,7 +92,7 @@ Private Function AddCheckRow_(host As MSForms.Frame, cap As String, ctlName As S
     Set lbl = host.Controls.Add("Forms.Label.1")
     With lbl
         .caption = cap
-        .Left = xCap: .Top = PX(Y)
+        .Left = xCap: .Top = PX(y)
         .Width = wCap: .Height = ROW_H
         .TextAlign = fmTextAlignLeft
     End With
@@ -101,11 +101,11 @@ Private Function AddCheckRow_(host As MSForms.Frame, cap As String, ctlName As S
     Set chk = host.Controls.Add("Forms.CheckBox.1", ctlName, True)
     With chk
         .caption = "有"
-        .Left = xChk: .Top = PX(Y)
+        .Left = xChk: .Top = PX(y)
         .Width = PX(60): .Height = ROW_H
     End With
 
-    AddCheckRow_ = PX(Y + ROW_H + ROM_GAP_Y)
+    AddCheckRow_ = PX(y + ROW_H + ROM_GAP_Y)
 End Function
 
 

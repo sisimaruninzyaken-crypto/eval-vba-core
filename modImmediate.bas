@@ -471,36 +471,36 @@ Private Sub BuildPage(pg As Object, items As Variant)
     MakeLabel pg, "lblHdr_R", "右", x0 + LBL_W + gap, y0 - 20, 30, 18
     MakeLabel pg, "lblHdr_L", "左", x0 + LBL_W + gap + COL_W + gap, y0 - 20, 30, 18
 
-    Dim i As Long, Y As Single
-    Y = y0
+    Dim i As Long, y As Single
+    y = y0
     For i = LBound(items) To UBound(items)
         Dim key As String: key = CStr(items(i))
 
-        MakeLabel pg, "lbl_" & key, key, x0, Y + 3, LBL_W, 18
-        MakeCombo pg, "cboR_" & key, x0 + LBL_W + gap, Y, COL_W, 18
-        MakeCombo pg, "cboL_" & key, x0 + LBL_W + gap + COL_W + gap, Y, COL_W, 18
+        MakeLabel pg, "lbl_" & key, key, x0, y + 3, LBL_W, 18
+        MakeCombo pg, "cboR_" & key, x0 + LBL_W + gap, y, COL_W, 18
+        MakeCombo pg, "cboL_" & key, x0 + LBL_W + gap + COL_W + gap, y, COL_W, 18
 
-        Y = Y + ROW_H
+        y = y + ROW_H
     Next i
 End Sub
 
 '--- Label 生成 ---
-Private Sub MakeLabel(pg As Object, nm As String, cap As String, l As Single, t As Single, w As Single, h As Single)
+Private Sub MakeLabel(pg As Object, nm As String, cap As String, L As Single, t As Single, W As Single, h As Single)
     Dim o As MSForms.label
     Set o = pg.Controls.Add("Forms.Label.1", nm, True)
     With o
         .caption = cap
-        .Left = l: .Top = t: .Width = w: .Height = h
+        .Left = L: .Top = t: .Width = W: .Height = h
         .tag = "MMTGEN"
     End With
 End Sub
 
 '--- ComboBox 生成（MMT 0～5） ---
-Private Sub MakeCombo(pg As Object, nm As String, l As Single, t As Single, w As Single, h As Single)
+Private Sub MakeCombo(pg As Object, nm As String, L As Single, t As Single, W As Single, h As Single)
     Dim o As MSForms.ComboBox
     Set o = pg.Controls.Add("Forms.ComboBox.1", nm, True)
     With o
-        .Left = l: .Top = t: .Width = w: .Height = h
+        .Left = L: .Top = t: .Width = W: .Height = h
         .Style = fmStyleDropDownList
         .tag = "MMTGEN"
         .BoundColumn = 1
@@ -577,28 +577,28 @@ Private Sub BuildMMTPage(pg As Object, items As Variant)
     MakeLbl pg, "lblHdrR", "右", x0 + LBL_W + gap, y0 - 20, 30, 18
     MakeLbl pg, "lblHdrL", "左", x0 + LBL_W + gap + COL_W + gap, y0 - 20, 30, 18
 
-    Dim i As Long, Y As Single: Y = y0
+    Dim i As Long, y As Single: y = y0
     For i = LBound(items) To UBound(items)
         Dim key$: key = CStr(items(i))
-        MakeLbl pg, "lbl_" & key, key, x0, Y + 3, LBL_W, 18
-        MakeCbo pg, "cboR_" & key, x0 + LBL_W + gap, Y, COL_W, 18
-        MakeCbo pg, "cboL_" & key, x0 + LBL_W + gap + COL_W + gap, Y, COL_W, 18
-        Y = Y + ROW_H
+        MakeLbl pg, "lbl_" & key, key, x0, y + 3, LBL_W, 18
+        MakeCbo pg, "cboR_" & key, x0 + LBL_W + gap, y, COL_W, 18
+        MakeCbo pg, "cboL_" & key, x0 + LBL_W + gap + COL_W + gap, y, COL_W, 18
+        y = y + ROW_H
     Next
 End Sub
 
-Private Sub MakeLbl(pg As Object, nm$, cap$, l!, t!, w!, h!)
+Private Sub MakeLbl(pg As Object, nm$, cap$, L!, t!, W!, h!)
     Dim o As MSForms.label
     Set o = pg.Controls.Add("Forms.Label.1", nm, True)
-    o.caption = cap: o.Left = l: o.Top = t: o.Width = w: o.Height = h: o.tag = "MMTGEN"
+    o.caption = cap: o.Left = L: o.Top = t: o.Width = W: o.Height = h: o.tag = "MMTGEN"
 End Sub
 
 Private Sub MakeCbo(ByVal pg As Object, ByVal nm As String, _
-                    ByVal l As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
+                    ByVal L As Single, ByVal t As Single, ByVal W As Single, ByVal h As Single)
     Dim o As MSForms.ComboBox
     Set o = pg.Controls.Add("Forms.ComboBox.1", nm, True)
     With o
-        .Left = l: .Top = t: .Width = w: .Height = h
+        .Left = L: .Top = t: .Width = W: .Height = h
         .Style = fmStyleDropDownList
         .BoundColumn = 1
         .List = Split("0,1,2,3,4,5", ",")
@@ -790,6 +790,25 @@ Public Sub Verify_MonthlyExport_OpensWorkbook()
     ' 開いているブック名を列挙
     ListOpenWorkbooks
 End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

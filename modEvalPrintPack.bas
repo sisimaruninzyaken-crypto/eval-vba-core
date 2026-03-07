@@ -231,7 +231,7 @@ Private Sub CollectSeries_FromIO( _
     ByRef vals() As Double, _
     ByRef cnt As Long)
 
-    Dim ws As Worksheet, lastR As Long, r As Long
+    Dim ws As Worksheet, lastR As Long, R As Long
     Dim idVal As String, ed As Variant, dt As Date
     Dim s As String, v As String
 
@@ -239,16 +239,16 @@ Private Sub CollectSeries_FromIO( _
     lastR = ws.Cells(ws.rows.Count, 89).End(xlUp).row ' 89=氏名
 
     cnt = 0
-    For r = 2 To lastR
-        If CStr(ws.Cells(r, 89).value) = nm Then
-            idVal = CStr(ws.Cells(r, 97).value) ' 97=ID
+    For R = 2 To lastR
+        If CStr(ws.Cells(R, 89).value) = nm Then
+            idVal = CStr(ws.Cells(R, 97).value) ' 97=ID
             If Len(idFilter) = 0 Or idVal = idFilter Then
 
-                ed = ws.Cells(r, 86).value ' 86=評価日（確定）
+                ed = ws.Cells(R, 86).value ' 86=評価日（確定）
                 If Not IsDate(ed) Then GoTo ContinueNext
                 dt = CDate(ed)
 
-                s = CStr(ws.Cells(r, 1).Value2) ' 1=IO_TestEval
+                s = CStr(ws.Cells(R, 1).Value2) ' 1=IO_TestEval
                 v = GetIOVal_Pack(s, ioKey)
 
                 If Len(v) = 0 Or v = "." Then GoTo ContinueNext
@@ -262,7 +262,7 @@ Private Sub CollectSeries_FromIO( _
             End If
         End If
 ContinueNext:
-    Next r
+    Next R
 
     If cnt = 0 Then Exit Sub
 
@@ -282,7 +282,7 @@ Private Sub CollectGrip_FromIO( _
     ByRef vL() As Double, _
     ByRef cnt As Long)
 
-    Dim ws As Worksheet, lastR As Long, r As Long
+    Dim ws As Worksheet, lastR As Long, R As Long
     Dim idVal As String, ed As Variant, dt As Date
     Dim s As String, sr As String, sl As String
 
@@ -290,16 +290,16 @@ Private Sub CollectGrip_FromIO( _
     lastR = ws.Cells(ws.rows.Count, 89).End(xlUp).row
 
     cnt = 0
-    For r = 2 To lastR
-        If CStr(ws.Cells(r, 89).value) = nm Then
-            idVal = CStr(ws.Cells(r, 97).value)
+    For R = 2 To lastR
+        If CStr(ws.Cells(R, 89).value) = nm Then
+            idVal = CStr(ws.Cells(R, 97).value)
             If Len(idFilter) = 0 Or idVal = idFilter Then
 
-                ed = ws.Cells(r, 86).value
+                ed = ws.Cells(R, 86).value
                 If Not IsDate(ed) Then GoTo ContinueNext
                 dt = CDate(ed)
 
-                s = CStr(ws.Cells(r, 1).Value2)
+                s = CStr(ws.Cells(R, 1).Value2)
                 sr = GetIOVal_Pack(s, "Test_Grip_R_kg")
                 sl = GetIOVal_Pack(s, "Test_Grip_L_kg")
 
@@ -318,7 +318,7 @@ Private Sub CollectGrip_FromIO( _
             End If
         End If
 ContinueNext:
-    Next r
+    Next R
 
     If cnt = 0 Then Exit Sub
 
@@ -667,24 +667,24 @@ Private Function TrendWord_Larger_Pack(ByVal diff As Double) As String
 End Function
 
 Private Function GripTrendWord_Pack(ByVal diffR As Double, ByVal diffL As Double) As String
-    Dim r As String, l As String
+    Dim R As String, L As String
     If Abs(diffR) < 0.000001 Then
-        r = "右=±0"
+        R = "右=±0"
     ElseIf diffR > 0 Then
-        r = "右=↑"
+        R = "右=↑"
     Else
-        r = "右=↓"
+        R = "右=↓"
     End If
 
     If Abs(diffL) < 0.000001 Then
-        l = "左=±0"
+        L = "左=±0"
     ElseIf diffL > 0 Then
-        l = "左=↑"
+        L = "左=↑"
     Else
-        l = "左=↓"
+        L = "左=↓"
     End If
 
-    GripTrendWord_Pack = "（" & r & " / " & l & "）"
+    GripTrendWord_Pack = "（" & R & " / " & L & "）"
 End Function
 
 
@@ -817,7 +817,7 @@ Private Function SummaryLine_BetterLarge(ByRef d() As Date, ByRef v() As Double,
                              "（前回 " & d0 & " " & prev & unit & " / 差 " & Format$(diff, "+0.0;-0.0;0.0") & unit & "）"
 End Function
 
-Private Function SummaryLine_Grip(ByRef d() As Date, ByRef r() As Double, ByRef l() As Double, ByVal cnt As Long) As String
+Private Function SummaryLine_Grip(ByRef d() As Date, ByRef R() As Double, ByRef L() As Double, ByVal cnt As Long) As String
     If cnt <= 0 Then
         SummaryLine_Grip = "データなし"
         Exit Function
@@ -827,7 +827,7 @@ Private Function SummaryLine_Grip(ByRef d() As Date, ByRef r() As Double, ByRef 
     Dim lr As Double, ll As Double, pr As Double, pl As Double
     Dim dr As Double, dl As Double, markR As String, markL As String
 
-    lr = r(cnt): ll = l(cnt)
+    lr = R(cnt): ll = L(cnt)
     d1 = Format$(d(cnt), "yyyy/mm/dd")
 
     If cnt = 1 Then
@@ -835,7 +835,7 @@ Private Function SummaryLine_Grip(ByRef d() As Date, ByRef r() As Double, ByRef 
         Exit Function
     End If
 
-    pr = r(cnt - 1): pl = l(cnt - 1)
+    pr = R(cnt - 1): pl = L(cnt - 1)
     d0 = Format$(d(cnt - 1), "yyyy/mm/dd")
     dr = lr - pr: dl = ll - pl
 
@@ -928,14 +928,14 @@ Private Function Line_Short_Larger(ByVal unit As String, ByVal cnt As Long, ByRe
     End If
 End Function
 
-Private Function Line_Short_Grip(ByVal cnt As Long, ByRef r() As Double, ByRef l() As Double) As String
+Private Function Line_Short_Grip(ByVal cnt As Long, ByRef R() As Double, ByRef L() As Double) As String
     If cnt <= 0 Then Line_Short_Grip = "データなし": Exit Function
     If cnt >= 2 Then
-        Line_Short_Grip = r(cnt) & " / " & l(cnt) & "kg（前回比 " & _
-            Format$(r(cnt) - r(cnt - 1), "+0.0;-0.0;0.0") & " / " & _
-            Format$(l(cnt) - l(cnt - 1), "+0.0;-0.0;0.0") & "kg）"
+        Line_Short_Grip = R(cnt) & " / " & L(cnt) & "kg（前回比 " & _
+            Format$(R(cnt) - R(cnt - 1), "+0.0;-0.0;0.0") & " / " & _
+            Format$(L(cnt) - L(cnt - 1), "+0.0;-0.0;0.0") & "kg）"
     Else
-        Line_Short_Grip = r(cnt) & " / " & l(cnt) & "kg（初回）"
+        Line_Short_Grip = R(cnt) & " / " & L(cnt) & "kg（初回）"
     End If
 End Function
 

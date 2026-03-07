@@ -577,7 +577,7 @@ End Function
 Private Function GetBedMobilityBand() As String
     Dim ws As Worksheet
     Dim nm As String
-    Dim r As Long
+    Dim R As Long
     Dim raw As String
     Dim v As String
 
@@ -587,11 +587,11 @@ Private Function GetBedMobilityBand() As String
     If LenB(nm) = 0 Then Exit Function
 
     ' ※あなたの既存 FindLatestRowByName を使う前提（NormalizeName含む版でOK）
-    r = FindLatestRowByName(ws, nm)
-    If r <= 1 Then Exit Function
+    R = FindLatestRowByName(ws, nm)
+    If R <= 1 Then Exit Function
 
     ' ※既存の ReadStr_Compat / IO_GetVal を使用
-    raw = ReadStr_Compat("IO_ADL", r, ws)
+    raw = ReadStr_Compat("IO_ADL", R, ws)
     If LenB(raw) = 0 Then Exit Function
 
     v = IO_GetVal(raw, "Kyo_Roll") & "|" & _

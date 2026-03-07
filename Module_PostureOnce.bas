@@ -3,7 +3,7 @@ Attribute VB_Name = "Module_PostureOnce"
 Public Sub Posture_ListOnce()
     Dim uf As Object: Set uf = frmEval
     Dim mp As Object, pg As Object
-    Dim c As Object, Y As Object
+    Dim c As Object, y As Object
 
     On Error Resume Next
 
@@ -11,8 +11,8 @@ Public Sub Posture_ListOnce()
     For Each c In uf.Controls
         If TypeName(c) = "MultiPage" Then Set mp = c: Exit For
         If c.Controls.Count >= 0 Then
-            For Each Y In c.Controls
-                If TypeName(Y) = "MultiPage" Then Set mp = Y: Exit For
+            For Each y In c.Controls
+                If TypeName(y) = "MultiPage" Then Set mp = y: Exit For
             Next
             If Not mp Is Nothing Then Exit For
         End If
@@ -26,8 +26,8 @@ Public Sub Posture_ListOnce()
     For Each c In pg.Controls
         Debug.Print TypeName(c), "|", SafeName1(c), "|", SafeCap1(c)
         If c.Controls.Count >= 0 Then
-            For Each Y In c.Controls
-                Debug.Print "  -", TypeName(Y), "|", SafeName1(Y), "|", SafeCap1(Y)
+            For Each y In c.Controls
+                Debug.Print "  -", TypeName(y), "|", SafeName1(y), "|", SafeCap1(y)
             Next
         End If
     Next

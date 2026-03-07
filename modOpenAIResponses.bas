@@ -39,7 +39,7 @@ End Function
 
 Private Function GetOpenAIApiKey() As String
     ' 名前定義 OPENAI_API_KEY のセルにキー文字列を入れている前提（前に作ったやつ）
-    GetOpenAIApiKey = CStr(ThisWorkbook.Names("OPENAI_API_KEY").RefersToRange.value)
+    GetOpenAIApiKey = CStr(ThisWorkbook.names("OPENAI_API_KEY").RefersToRange.value)
     GetOpenAIApiKey = Trim$(GetOpenAIApiKey)
     If Len(GetOpenAIApiKey) = 0 Then Err.Raise vbObjectError + 514, "GetOpenAIApiKey", "OPENAI_API_KEY が空です"
 End Function

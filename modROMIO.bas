@@ -55,17 +55,17 @@ End Sub
 
 Private Sub SaveROMblock(ws As Worksheet, rowNum As Long, owner As Object, look As Object, _
                          layer As String, joint As String, motions As Variant)
-    Dim M As Variant, side As Variant
-    For Each M In motions
+    Dim m As Variant, side As Variant
+    For Each m In motions
         For Each side In Array("R", "L")
             Dim hdr$, ctl$, col&, v$
-            hdr = "ROM_" & layer & "_" & joint & "_" & CStr(M) & "_" & CStr(side)
-            ctl = "txtROM_" & layer & "_" & joint & "_" & CStr(M) & "_" & CStr(side)
+            hdr = "ROM_" & layer & "_" & joint & "_" & CStr(m) & "_" & CStr(side)
+            ctl = "txtROM_" & layer & "_" & joint & "_" & CStr(m) & "_" & CStr(side)
             v = GetCtlText(owner, ctl)                              ' ModUtil
             col = ResolveColOrCreate(ws, look, hdr)                 ' ★無ければ見出し作成
             ws.Cells(rowNum, col).value = v
         Next side
-    Next M
+    Next m
 End Sub
 
 Private Sub LoadROMblock(ws As Worksheet, rowNum As Long, owner As Object, look As Object, _
@@ -77,18 +77,18 @@ Private Sub LoadROMblock(ws As Worksheet, rowNum As Long, owner As Object, look 
                 "| keySample=" & "ROM_" & layer & "_" & joint & "_" & CStr(motions(LBound(motions))) & "_R", _
                 "| colSample=" & HeaderCol_Compat("ROM_" & layer & "_" & joint & "_" & CStr(motions(LBound(motions))) & "_R", ws)
 
-    Dim M As Variant, side As Variant
-    For Each M In motions
+    Dim m As Variant, side As Variant
+    For Each m In motions
         For Each side In Array("R", "L")
             Dim hdr$, ctl$, col&
-            hdr = "ROM_" & layer & "_" & joint & "_" & CStr(M) & "_" & CStr(side)
-            ctl = "txtROM_" & layer & "_" & joint & "_" & CStr(M) & "_" & CStr(side)
+            hdr = "ROM_" & layer & "_" & joint & "_" & CStr(m) & "_" & CStr(side)
+            ctl = "txtROM_" & layer & "_" & joint & "_" & CStr(m) & "_" & CStr(side)
             col = ResolveColumn(look, hdr)                          ' 無ければスキップ
             Dim v As String: v = ReadStr_Compat(hdr, rowNum, ws)
 If Len(v) > 0 Then FindCtlDeep(owner, ctl).Text = v
 
         Next side
-    Next M
+    Next m
 End Sub
 
 
@@ -137,15 +137,15 @@ End Sub
 
 '=== Local: 1行目に見出しが無ければ作って列番号を返す ===
 Private Function HeaderColEnsure(ws As Worksheet, ByVal header As String) As Long
-    Dim M As Variant, lastCol As Long
-    M = Application.Match(header, ws.rows(1), 0)
-    If IsError(M) Then
+    Dim m As Variant, lastCol As Long
+    m = Application.Match(header, ws.rows(1), 0)
+    If IsError(m) Then
         lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
         If lastCol < 1 Then lastCol = 1
         ws.Cells(1, lastCol + 1).value = header
         HeaderColEnsure = lastCol + 1
     Else
-        HeaderColEnsure = CLng(M)
+        HeaderColEnsure = CLng(m)
     End If
 End Function
 

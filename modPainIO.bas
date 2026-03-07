@@ -256,12 +256,12 @@ End Sub
 
 '=== [TEMP] Pain UI Selection Probe ====================================
 Private Function FindByNameRecursive(container As Object, ByVal target As String) As Object
-    Dim c As Object, r As Object
+    Dim c As Object, R As Object
     For Each c In container.Controls
         If StrComp(CStr(c.name), target, vbBinaryCompare) = 0 Then Set FindByNameRecursive = c: Exit Function
         If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
-            Set r = FindByNameRecursive(c, target)
-            If Not r Is Nothing Then Set FindByNameRecursive = r: Exit Function
+            Set R = FindByNameRecursive(c, target)
+            If Not R Is Nothing Then Set FindByNameRecursive = R: Exit Function
         End If
     Next
 End Function
@@ -280,13 +280,13 @@ Private Function FindLargestTextBoxOnPage(pg As Object) As MSForms.TextBox
             End If
         End If
         If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
-            Dim r As MSForms.TextBox
-            Set r = FindLargestTextBoxOnPage(c)
-            If Not r Is Nothing Then
-                area = r.Width * r.Height
+            Dim R As MSForms.TextBox
+            Set R = FindLargestTextBoxOnPage(c)
+            If Not R Is Nothing Then
+                area = R.Width * R.Height
                 If area > bestArea Then
                     bestArea = area
-                    Set FindLargestTextBoxOnPage = r
+                    Set FindLargestTextBoxOnPage = R
                 End If
             End If
         End If
@@ -314,9 +314,9 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
         End If
 
         If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
-            Dim r As MSForms.TextBox
-            Set r = FindNoteTextBox(c)
-            If Not r Is Nothing Then Set FindNoteTextBox = r: Exit Function
+            Dim R As MSForms.TextBox
+            Set R = FindNoteTextBox(c)
+            If Not R Is Nothing Then Set FindNoteTextBox = R: Exit Function
         End If
     Next
 
@@ -585,8 +585,8 @@ End Sub
 '=== LoadLatestSensoryNow（2025-10-22統合版）===
 Public Sub LoadLatestSensoryNow(Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
-    Dim r As Long: r = LatestRowByHeader("IO_Sensory", ws)
-    If r <= 0 Then
+    Dim R As Long: R = LatestRowByHeader("IO_Sensory", ws)
+    If R <= 0 Then
         Debug.Print "[LoadSensory] header not found"
         Exit Sub
     End If
@@ -598,7 +598,7 @@ Public Sub LoadLatestSensoryNow(Optional ByVal ws As Worksheet)
     ' 新ロジック：直接APIで読み込み
     Dim raw As String
     raw = LoadLatestSensoryNow_Raw(ws)
-    Debug.Print "[LoadSensory] R=" & r & " Len=" & Len(raw) & " | " & Left$(raw, 60)
+    Debug.Print "[LoadSensory] R=" & R & " Len=" & Len(raw) & " | " & Left$(raw, 60)
 End Sub
 
 

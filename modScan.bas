@@ -48,7 +48,7 @@ Public Sub MakeProjectMap()
     ' 参照は late binding（Extensibility 参照なしで動く）
     Dim vbProj As Object: Set vbProj = wb.VBProject
     Dim comp As Object, cm As Object
-    Dim r As Long: r = 2
+    Dim R As Long: R = 2
 
     ' 型定数（参照なし対応）
     Const ctStdModule As Long = 1
@@ -75,22 +75,22 @@ Public Sub MakeProjectMap()
             code = ""
         End If
 
-        sh.Cells(r, 1).value = comp.name
-        sh.Cells(r, 2).value = kind
-        sh.Cells(r, 3).value = nLines
+        sh.Cells(R, 1).value = comp.name
+        sh.Cells(R, 2).value = kind
+        sh.Cells(R, 3).value = nLines
 
         ' キー語の出現回数
-        sh.Cells(r, 4).value = CountOccur(code, "mpADL")
-        sh.Cells(r, 5).value = CountOccur(code, "EnsureBI_IADL")
-        sh.Cells(r, 6).value = CountOccur(code, "BuildKyoOnADL")
-        sh.Cells(r, 7).value = CountOccur(code, "RemoveAllMpADL")
-        sh.Cells(r, 8).value = CountOccur(code, "CAP_BI")
-        sh.Cells(r, 9).value = CountOccur(code, "CAP_IADL")
-        sh.Cells(r, 10).value = CountOccur(code, "CAP_KYO")
-        sh.Cells(r, 11).value = CountOccur(code, "hostMove")
-        sh.Cells(r, 12).value = CountOccur(code, "nextTop")
+        sh.Cells(R, 4).value = CountOccur(code, "mpADL")
+        sh.Cells(R, 5).value = CountOccur(code, "EnsureBI_IADL")
+        sh.Cells(R, 6).value = CountOccur(code, "BuildKyoOnADL")
+        sh.Cells(R, 7).value = CountOccur(code, "RemoveAllMpADL")
+        sh.Cells(R, 8).value = CountOccur(code, "CAP_BI")
+        sh.Cells(R, 9).value = CountOccur(code, "CAP_IADL")
+        sh.Cells(R, 10).value = CountOccur(code, "CAP_KYO")
+        sh.Cells(R, 11).value = CountOccur(code, "hostMove")
+        sh.Cells(R, 12).value = CountOccur(code, "nextTop")
 
-        r = r + 1
+        R = R + 1
     Next
 
     ' 体裁

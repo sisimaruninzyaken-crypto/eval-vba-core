@@ -46,7 +46,7 @@ Private Const CAP_FUNC_PAIN   As String = "疼痛（部位／NRS）"
 
 Public Sub PlaceMemoBelow( _
     host As MSForms.Frame, _
-    ByVal w As Single, ByVal h As Single, _
+    ByVal W As Single, ByVal h As Single, _
     ByVal yTop As Single, _
     ByVal memoName As String, _
     Optional ByVal fr1 As MSForms.Frame, _
@@ -92,7 +92,7 @@ With lbl
     .caption = labelText
     .Left = PAD_X
     .Top = memoTop
-    .Width = w - PAD_X * 2
+    .Width = W - PAD_X * 2
     .Height = ROW_H
     .Font.Bold = False
 End With
@@ -105,7 +105,7 @@ Set txt = host.Controls.Add("Forms.TextBox.1", memoName)
 With txt
     .Left = PAD_X
     .Top = lbl.Top + ROW_H
-    .Width = w - PAD_X * 2
+    .Width = W - PAD_X * 2
 
     ' 残り高さを計算 → 最低高さ＆1以上に丸めてから設定
     hCalc = Application.WorksheetFunction.Min(MEMO_DESIRED_H, h - PAD_Y - .Top)
@@ -284,52 +284,52 @@ End Function
 ' MMT（主要筋群・左右）
 '========================================
 Private Sub BuildMMTSection(owner As frmEval, host As MSForms.Frame)
-    Dim Y As Single: Y = PAD_Y
+    Dim y As Single: y = PAD_Y
 
     Dim groups As Variant
     ' 代表筋群（簡潔）：肩外転／肘屈曲／手関節背屈／股屈曲／膝伸展／足背屈
     groups = Array("肩外転", "肘屈曲", "手関節背屈", "股屈曲", "膝伸展", "足背屈")
 
     ' 見出し
-    Y = AddHeaderRow(host, "筋群", Y)
+    y = AddHeaderRow(host, "筋群", y)
 
     Dim i As Long
     For i = LBound(groups) To UBound(groups)
-        Y = AddMMTRow(owner, host, CStr(groups(i)), Y)
+        y = AddMMTRow(owner, host, CStr(groups(i)), y)
     Next i
     
-    Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, Y + ROM_HDR_GAP, "txtMMTMemo")
+    Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, y + ROM_HDR_GAP, "txtMMTMemo")
     
 End Sub
 
-Private Function AddHeaderRow(host As MSForms.Frame, title As String, Y As Single) As Single
+Private Function AddHeaderRow(host As MSForms.Frame, title As String, y As Single) As Single
     Dim hTitle As MSForms.label, hR As MSForms.label, hL As MSForms.label
     Set hTitle = host.Controls.Add("Forms.Label.1")
-    With hTitle: .caption = title: .Left = PAD_X: .Top = Y: .Width = COL1_W: .Height = ROW_H: .Font.Bold = True: End With
+    With hTitle: .caption = title: .Left = PAD_X: .Top = y: .Width = COL1_W: .Height = ROW_H: .Font.Bold = True: End With
     Set hR = host.Controls.Add("Forms.Label.1")
-    With hR: .caption = "右": .Left = PAD_X + COL1_W + 8: .Top = Y: .Width = COL_EDT_W: .Height = ROW_H: .TextAlign = fmTextAlignCenter: .Font.Bold = True: End With
+    With hR: .caption = "右": .Left = PAD_X + COL1_W + 8: .Top = y: .Width = COL_EDT_W: .Height = ROW_H: .TextAlign = fmTextAlignCenter: .Font.Bold = True: End With
     Set hL = host.Controls.Add("Forms.Label.1")
-    With hL: .caption = "左": .Left = hR.Left + COL_EDT_W + 8: .Top = Y: .Width = COL_EDT_W: .Height = ROW_H: .TextAlign = fmTextAlignCenter: .Font.Bold = True: End With
-    AddHeaderRow = Y + ROW_H + 2
+    With hL: .caption = "左": .Left = hR.Left + COL_EDT_W + 8: .Top = y: .Width = COL_EDT_W: .Height = ROW_H: .TextAlign = fmTextAlignCenter: .Font.Bold = True: End With
+    AddHeaderRow = y + ROW_H + 2
 End Function
 
-Private Function AddMMTRow(owner As frmEval, host As MSForms.Frame, muscle As String, Y As Single) As Single
+Private Function AddMMTRow(owner As frmEval, host As MSForms.Frame, muscle As String, y As Single) As Single
     Dim lbl As MSForms.label
     Set lbl = host.Controls.Add("Forms.Label.1")
-    With lbl: .caption = muscle: .Left = PAD_X: .Top = Y: .Width = COL1_W: .Height = ROW_H: End With
+    With lbl: .caption = muscle: .Left = PAD_X: .Top = y: .Width = COL1_W: .Height = ROW_H: End With
 
     Dim cboR As MSForms.ComboBox, cboL As MSForms.ComboBox
     Set cboR = host.Controls.Add("Forms.ComboBox.1")
     Set cboL = host.Controls.Add("Forms.ComboBox.1")
 
-    SetupMMTCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = Y
-    SetupMMTCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = Y
+    SetupMMTCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = y
+    SetupMMTCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = y
 
     cboR.tag = TAG_FUNC_PREFIX & "|MMT_" & muscle & "_右"
     cboL.tag = TAG_FUNC_PREFIX & "|MMT_" & muscle & "_左"
 
     ' （BI合計とは無関係なので CboBIHook は未適用）
-    AddMMTRow = Y + ROW_H + GAP_Y
+    AddMMTRow = y + ROW_H + GAP_Y
 End Function
 
 Private Sub SetupMMTCombo(cbo As MSForms.ComboBox)
@@ -348,21 +348,21 @@ Private Sub SetupMMTCombo(cbo As MSForms.ComboBox)
 End Sub
 
 
-Private Function AddSensoryRow(host As MSForms.Frame, itemKey As String, Y As Single) As Single
+Private Function AddSensoryRow(host As MSForms.Frame, itemKey As String, y As Single) As Single
     Dim lbl As MSForms.label
     Set lbl = host.Controls.Add("Forms.Label.1")
-    With lbl: .caption = Replace(itemKey, "_", " / "): .Left = PAD_X: .Top = Y: .Width = COL1_W: .Height = ROW_H: End With
+    With lbl: .caption = Replace(itemKey, "_", " / "): .Left = PAD_X: .Top = y: .Width = COL1_W: .Height = ROW_H: End With
 
     Dim cboR As MSForms.ComboBox, cboL As MSForms.ComboBox
     Set cboR = host.Controls.Add("Forms.ComboBox.1")
     Set cboL = host.Controls.Add("Forms.ComboBox.1")
-    SetupSensoryCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = Y
-    SetupSensoryCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = Y
+    SetupSensoryCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = y
+    SetupSensoryCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = y
 
     cboR.tag = TAG_FUNC_PREFIX & "|SENS_" & itemKey & "_右"
     cboL.tag = TAG_FUNC_PREFIX & "|SENS_" & itemKey & "_左"
 
-    AddSensoryRow = Y + ROW_H + GAP_Y
+    AddSensoryRow = y + ROW_H + GAP_Y
 End Function
 
 Private Sub SetupSensoryCombo(cbo As MSForms.ComboBox)
@@ -377,21 +377,21 @@ Private Sub SetupSensoryCombo(cbo As MSForms.ComboBox)
     End With
 End Sub
 
-Private Function AddMASRow(host As MSForms.Frame, groupName As String, Y As Single) As Single
+Private Function AddMASRow(host As MSForms.Frame, groupName As String, y As Single) As Single
     Dim lbl As MSForms.label
     Set lbl = host.Controls.Add("Forms.Label.1")
-    With lbl: .caption = groupName: .Left = PAD_X: .Top = Y: .Width = COL1_W: .Height = ROW_H: End With
+    With lbl: .caption = groupName: .Left = PAD_X: .Top = y: .Width = COL1_W: .Height = ROW_H: End With
 
     Dim cboR As MSForms.ComboBox, cboL As MSForms.ComboBox
     Set cboR = host.Controls.Add("Forms.ComboBox.1")
     Set cboL = host.Controls.Add("Forms.ComboBox.1")
-    SetupMASCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = Y
-    SetupMASCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = Y
+    SetupMASCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = y
+    SetupMASCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = y
 
     cboR.tag = TAG_FUNC_PREFIX & "|TONE_MAS_" & groupName & "_右"
     cboL.tag = TAG_FUNC_PREFIX & "|TONE_MAS_" & groupName & "_左"
 
-    AddMASRow = Y + ROW_H + GAP_Y
+    AddMASRow = y + ROW_H + GAP_Y
 End Function
 
 Private Sub SetupMASCombo(cbo As MSForms.ComboBox)
@@ -408,21 +408,21 @@ Private Sub SetupMASCombo(cbo As MSForms.ComboBox)
     End With
 End Sub
 
-Private Function AddReflexRow(host As MSForms.Frame, reflexName As String, Y As Single) As Single
+Private Function AddReflexRow(host As MSForms.Frame, reflexName As String, y As Single) As Single
     Dim lbl As MSForms.label
     Set lbl = host.Controls.Add("Forms.Label.1")
-    With lbl: .caption = reflexName: .Left = PAD_X: .Top = Y: .Width = COL1_W: .Height = ROW_H: End With
+    With lbl: .caption = reflexName: .Left = PAD_X: .Top = y: .Width = COL1_W: .Height = ROW_H: End With
 
     Dim cboR As MSForms.ComboBox, cboL As MSForms.ComboBox
     Set cboR = host.Controls.Add("Forms.ComboBox.1")
     Set cboL = host.Controls.Add("Forms.ComboBox.1")
-    SetupReflexCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = Y
-    SetupReflexCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = Y
+    SetupReflexCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = y
+    SetupReflexCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = y
 
     cboR.tag = TAG_FUNC_PREFIX & "|REFLEX_" & reflexName & "_右"
     cboL.tag = TAG_FUNC_PREFIX & "|REFLEX_" & reflexName & "_左"
 
-    AddReflexRow = Y + ROW_H + GAP_Y
+    AddReflexRow = y + ROW_H + GAP_Y
 End Function
 
 Private Sub SetupReflexCombo(cbo As MSForms.ComboBox)
@@ -438,7 +438,7 @@ Private Sub SetupReflexCombo(cbo As MSForms.ComboBox)
     End With
 End Sub
 
-Private Function AddDeformText(owner As frmEval, host As MSForms.Frame, Y As Single) As Single
+Private Function AddDeformText(owner As frmEval, host As MSForms.Frame, y As Single) As Single
     Dim lbl As MSForms.label, txt As MSForms.TextBox
 
     ' ラベル（←他と同じ列幅を使う）
@@ -446,7 +446,7 @@ Private Function AddDeformText(owner As frmEval, host As MSForms.Frame, Y As Sin
     With lbl
         .caption = "変形（所見）"
         .Left = PAD_X
-        .Top = Y
+        .Top = y
         .Width = COL1_W            ' ★統一！
         .Height = ROW_H
     End With
@@ -455,7 +455,7 @@ Private Function AddDeformText(owner As frmEval, host As MSForms.Frame, Y As Sin
     Set txt = host.Controls.Add("Forms.TextBox.1")
     With txt
         .Left = PAD_X + COL1_W + 8      ' ★統一！
-        .Top = Y
+        .Top = y
         ' 横幅と高さは前回の設定を流用（値はあなたの好みで）
         Dim availW As Single
         availW = host.Width - .Left - PAD_X
@@ -481,7 +481,7 @@ End Function
 
 
 
-Private Function AddPainRow(owner As frmEval, host As MSForms.Frame, Y As Single) As Single
+Private Function AddPainRow(owner As frmEval, host As MSForms.Frame, y As Single) As Single
     ' 追加は全部ローカル定数：外部に依存しない
     Const NRS_LBL_W As Single = 28
     Const NRS_CBO_W As Single = 60
@@ -492,7 +492,7 @@ Private Function AddPainRow(owner As frmEval, host As MSForms.Frame, Y As Single
     Set lbl = host.Controls.Add("Forms.Label.1")
     With lbl
         .caption = "疼痛（部位）"
-        .Left = PAD_X: .Top = Y
+        .Left = PAD_X: .Top = y
         .Width = COL1_W: .Height = ROW_H
     End With
 
@@ -501,12 +501,12 @@ Private Function AddPainRow(owner As frmEval, host As MSForms.Frame, Y As Single
     Set lblN = host.Controls.Add("Forms.Label.1")
     With lblN
         .caption = "NRS"
-        .Top = Y: .Width = NRS_LBL_W: .Height = ROW_H
+        .Top = y: .Width = NRS_LBL_W: .Height = ROW_H
     End With
 
     Set cbo = host.Controls.Add("Forms.ComboBox.1")
     With cbo
-        .Top = Y: .Width = NRS_CBO_W: .Height = ROW_H
+        .Top = y: .Width = NRS_CBO_W: .Height = ROW_H
         .Style = fmStyleDropDownList
         .tag = TAG_FUNC_PREFIX & "|PAIN_NRS"
         ' 必要なら 0～10 を自動で埋める（既に設定しているなら何もしない）
@@ -525,7 +525,7 @@ Private Function AddPainRow(owner As frmEval, host As MSForms.Frame, Y As Single
     Dim txt As MSForms.TextBox
     Set txt = host.Controls.Add("Forms.TextBox.1")
     With txt
-        .Top = Y
+        .Top = y
         .Left = PAD_X + COL1_W + GAP_X
         .Width = lblN.Left - GAP_X - .Left
         If .Width < 80 Then .Width = 80        ' 安全弁
@@ -536,7 +536,7 @@ Private Function AddPainRow(owner As frmEval, host As MSForms.Frame, Y As Single
         ' 日本語入力のままでOK。半角固定なら: .IMEMode = fmIMEModeDisable
     End With
 
-    AddPainRow = Y + ROW_H + GAP_Y
+    AddPainRow = y + ROW_H + GAP_Y
 End Function
 
 
@@ -605,10 +605,10 @@ Private Function FindMultiPageRecursive(parent As Object) As MSForms.MultiPage
             End If
         End If
         If TypeOf c Is MSForms.Frame Then
-            Dim M As MSForms.MultiPage
-            Set M = FindMultiPageRecursive(c)
-            If Not M Is Nothing Then
-                Set FindMultiPageRecursive = M
+            Dim m As MSForms.MultiPage
+            Set m = FindMultiPageRecursive(c)
+            If Not m Is Nothing Then
+                Set FindMultiPageRecursive = m
                 Exit Function
             End If
         End If
@@ -846,19 +846,19 @@ End Sub
 
 '=== 感覚のみ ===
 Private Sub BuildSensoryTabUI(host As MSForms.Frame)
-    Dim Y As Single: Y = PAD_Y
+    Dim y As Single: y = PAD_Y
 
-    Y = AddHeaderRow(host, "感覚（表在）", Y)
-    Y = AddSensoryRow(host, "表在_触覚", Y)
-    Y = AddSensoryRow(host, "表在_痛覚", Y)
-    Y = AddSensoryRow(host, "表在_温度覚", Y)
+    y = AddHeaderRow(host, "感覚（表在）", y)
+    y = AddSensoryRow(host, "表在_触覚", y)
+    y = AddSensoryRow(host, "表在_痛覚", y)
+    y = AddSensoryRow(host, "表在_温度覚", y)
 
-    Y = Y + ROM_HDR_GAP
-    Y = AddHeaderRow(host, "感覚（深部）", Y)
-    Y = AddSensoryRow(host, "深部_位置覚", Y)
-    Y = AddSensoryRow(host, "深部_振動覚", Y)
+    y = y + ROM_HDR_GAP
+    y = AddHeaderRow(host, "感覚（深部）", y)
+    y = AddSensoryRow(host, "深部_位置覚", y)
+    y = AddSensoryRow(host, "深部_振動覚", y)
 
-    Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, Y + ROM_HDR_GAP, "txtSensMemo")
+    Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, y + ROM_HDR_GAP, "txtSensMemo")
 End Sub
 
 
@@ -886,11 +886,11 @@ Private Function AddROMRow_Compact( _
     host As MSForms.Frame, _
     jointName As String, _
     moveName As String, _
-    Y As Single _
+    y As Single _
 ) As Single
 
     Dim xR As Single, xL As Single: ROM_GetCols xR, xL
-Dim yPix As Single: yPix = PX(Y)
+Dim yPix As Single: yPix = PX(y)
 
 Dim txtR As MSForms.TextBox, txtL As MSForms.TextBox
 Set txtR = host.Controls.Add("Forms.TextBox.1")
@@ -952,7 +952,7 @@ End Function
 '=== ROM compact：R / L 見出し（ROM専用幅で） ===
 Private Function AddROMDirHeader_Compact(host As MSForms.Frame, y0 As Single) As Single
     Dim xR As Single, xL As Single: ROM_GetCols xR, xL
-    Dim Y As Single: Y = PX(y0)              ' ← y も丸めておく（任意だけど安定します）
+    Dim y As Single: y = PX(y0)              ' ← y も丸めておく（任意だけど安定します）
 
     Dim lblR As MSForms.label, lblL As MSForms.label
 
@@ -960,7 +960,7 @@ Private Function AddROMDirHeader_Compact(host As MSForms.Frame, y0 As Single) As
     With lblR
         .caption = "R"
         .Left = PX(xR)                        ' ← ここに PX
-        .Top = Y
+        .Top = y
         .Width = PX(ROM_COL_EDT_W)            ' ← ここに PX
         .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter
@@ -971,14 +971,14 @@ Private Function AddROMDirHeader_Compact(host As MSForms.Frame, y0 As Single) As
     With lblL
         .caption = "L"
         .Left = PX(xL)                        ' ← ここに PX
-        .Top = Y
+        .Top = y
         .Width = PX(ROM_COL_EDT_W)            ' ← ここに PX
         .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter
         .Font.Bold = True
     End With
 
-    AddROMDirHeader_Compact = Y + ROM_ROW_H + ROM_GAP_Y
+    AddROMDirHeader_Compact = y + ROM_ROW_H + ROM_GAP_Y
 End Function
 
 
@@ -999,10 +999,10 @@ Public Sub BuildROMSection_TwoCols(host As MSForms.Frame)
 
     ' ←ここは残す：On Error GoTo 0 の直後から差し替え
 
-Dim w As Single, h As Single, colW As Single
-w = host.InsideWidth: h = host.InsideHeight
+Dim W As Single, h As Single, colW As Single
+W = host.InsideWidth: h = host.InsideHeight
 ' 列幅を整数に丸める
-colW = PX((w - (PAD_X * 2) - COL_GAP_X) / 2)
+colW = PX((W - (PAD_X * 2) - COL_GAP_X) / 2)
 
 Dim frUL As MSForms.Frame, frLL As MSForms.Frame
 
@@ -1068,7 +1068,7 @@ End With
     yR = AddROMRow_Compact(frLL, "足関節", "底屈", yR)
 
     ' 備考は共通ヘルパーに統一（自動でhostスクロールもOFF）
-    Call PlaceMemoBelow(host, w, h, Application.WorksheetFunction.Max(yL, yR) + ROM_HDR_GAP, _
+    Call PlaceMemoBelow(host, W, h, Application.WorksheetFunction.Max(yL, yR) + ROM_HDR_GAP, _
                         "txtROMMemo", frUL, frLL)
     ' …上肢/下肢の行をすべて作り終えた直後に…
     NormalizeRomColumns frUL
@@ -1082,25 +1082,25 @@ End Sub
 ' 呼び出し例: BuildToneReflexTabUI hostReflex
 '========================================
 Private Sub BuildToneReflexTabUI(host As MSForms.Frame)
-    Dim Y As Single: Y = PAD_Y
+    Dim y As Single: y = PAD_Y
 
     ' --- 筋緊張（MAS） ---
-    Y = AddHeaderRow(host, "筋緊張（MAS）", Y)
-    Y = AddMASRow(host, "上肢屈筋群", Y)
-    Y = AddMASRow(host, "上肢伸筋群", Y)
-    Y = AddMASRow(host, "下肢屈筋群", Y)
-    Y = AddMASRow(host, "下肢伸筋群", Y)
+    y = AddHeaderRow(host, "筋緊張（MAS）", y)
+    y = AddMASRow(host, "上肢屈筋群", y)
+    y = AddMASRow(host, "上肢伸筋群", y)
+    y = AddMASRow(host, "下肢屈筋群", y)
+    y = AddMASRow(host, "下肢伸筋群", y)
 
     ' --- 反射 ---
-    Y = Y + ROM_HDR_GAP
-    Y = AddHeaderRow(host, "腱反射", Y)
-    Y = AddReflexRow(host, "上腕二頭筋（C5-6）", Y)
-    Y = AddReflexRow(host, "上腕三頭筋（C7）", Y)
-    Y = AddReflexRow(host, "膝蓋腱（L2-4）", Y)
-    Y = AddReflexRow(host, "アキレス腱（S1）", Y)
+    y = y + ROM_HDR_GAP
+    y = AddHeaderRow(host, "腱反射", y)
+    y = AddReflexRow(host, "上腕二頭筋（C5-6）", y)
+    y = AddReflexRow(host, "上腕三頭筋（C7）", y)
+    y = AddReflexRow(host, "膝蓋腱（L2-4）", y)
+    y = AddReflexRow(host, "アキレス腱（S1）", y)
 
     ' 備考（下端に確保）
-    Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, Y + ROM_HDR_GAP, "txtReflexMemo")
+    Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, y + ROM_HDR_GAP, "txtReflexMemo")
 End Sub
 
 '========================================
@@ -1108,14 +1108,14 @@ End Sub
 ' 呼び出し例: BuildPainTabUI owner, hostPain
 '========================================
 Private Sub BuildPainTabUI(owner As frmEval, host As MSForms.Frame)
-    Dim Y As Single: Y = PAD_Y
+    Dim y As Single: y = PAD_Y
 
-    Y = AddDeformText(owner, host, Y) ' 変形 所見（自由テキスト）
-    Y = Y + ROM_HDR_GAP
-    Y = AddPainRow(owner, host, Y)    ' 部位＋NRS
+    y = AddDeformText(owner, host, y) ' 変形 所見（自由テキスト）
+    y = y + ROM_HDR_GAP
+    y = AddPainRow(owner, host, y)    ' 部位＋NRS
 
     ' 備考（下端に確保）
-    Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, Y + ROM_HDR_GAP, "txtPainMemo")
+    Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, y + ROM_HDR_GAP, "txtPainMemo")
 End Sub
 
 
@@ -1124,46 +1124,46 @@ End Sub
 ' 呼び出し元: EnsurePhysicalFunctionTabs_Root
 '========================================
 Private Sub BuildSensoryToneReflexPain(owner As frmEval, host As MSForms.Frame)
-    Dim Y As Single: Y = PAD_Y
+    Dim y As Single: y = PAD_Y
 
     ' --- 感覚（表在） ---
-    Y = AddHeaderRow(host, "感覚（表在）", Y)
-    Y = AddSensoryRow(host, "表在_触覚", Y)
-    Y = AddSensoryRow(host, "表在_痛覚", Y)
-    Y = AddSensoryRow(host, "表在_温度覚", Y)
+    y = AddHeaderRow(host, "感覚（表在）", y)
+    y = AddSensoryRow(host, "表在_触覚", y)
+    y = AddSensoryRow(host, "表在_痛覚", y)
+    y = AddSensoryRow(host, "表在_温度覚", y)
 
     ' --- 感覚（深部） ---
-    Y = Y + ROM_HDR_GAP
-    Y = AddHeaderRow(host, "感覚（深部）", Y)
-    Y = AddSensoryRow(host, "深部_関節位置覚", Y)
-    Y = AddSensoryRow(host, "深部_振動覚", Y)
+    y = y + ROM_HDR_GAP
+    y = AddHeaderRow(host, "感覚（深部）", y)
+    y = AddSensoryRow(host, "深部_関節位置覚", y)
+    y = AddSensoryRow(host, "深部_振動覚", y)
 
     ' --- 筋緊張（MAS） ---
-    Y = Y + ROM_HDR_GAP
-    Y = AddHeaderRow(host, "筋緊張（MAS）", Y)
-    Y = AddMASRow(host, "上肢屈筋群", Y)
-    Y = AddMASRow(host, "上肢伸筋群", Y)
-    Y = AddMASRow(host, "下肢屈筋群", Y)
-    Y = AddMASRow(host, "下肢伸筋群", Y)
+    y = y + ROM_HDR_GAP
+    y = AddHeaderRow(host, "筋緊張（MAS）", y)
+    y = AddMASRow(host, "上肢屈筋群", y)
+    y = AddMASRow(host, "上肢伸筋群", y)
+    y = AddMASRow(host, "下肢屈筋群", y)
+    y = AddMASRow(host, "下肢伸筋群", y)
 
     ' --- 反射 ---
-    Y = Y + ROM_HDR_GAP
-    Y = AddHeaderRow(host, "腱反射", Y)
-    Y = AddReflexRow(host, "上腕二頭筋（C5-6）", Y)
-    Y = AddReflexRow(host, "上腕三頭筋（C7）", Y)
-    Y = AddReflexRow(host, "膝蓋腱（L2-4）", Y)
-    Y = AddReflexRow(host, "アキレス腱（S1）", Y)
+    y = y + ROM_HDR_GAP
+    y = AddHeaderRow(host, "腱反射", y)
+    y = AddReflexRow(host, "上腕二頭筋（C5-6）", y)
+    y = AddReflexRow(host, "上腕三頭筋（C7）", y)
+    y = AddReflexRow(host, "膝蓋腱（L2-4）", y)
+    y = AddReflexRow(host, "アキレス腱（S1）", y)
 
     ' --- 変形（自由テキスト） ---
-    Y = Y + ROM_HDR_GAP
-    Y = AddDeformText(owner, host, Y)
+    y = y + ROM_HDR_GAP
+    y = AddDeformText(owner, host, y)
 
     ' --- 疼痛（部位＋NRS） ---
-    Y = Y + ROM_HDR_GAP
-    Y = AddPainRow(owner, host, Y)
+    y = y + ROM_HDR_GAP
+    y = AddPainRow(owner, host, y)
 
     ' 備考：ページ下端に確保
-    Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, Y + ROM_HDR_GAP, "txtSensReflexPainMemo")
+    Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, y + ROM_HDR_GAP, "txtSensReflexPainMemo")
 End Sub
 
 ' --- ROM 1行分の右(R)/左(L)のX座標を返すだけ ---
@@ -1186,18 +1186,18 @@ Private Sub NormalizeRomColumns(host As MSForms.Frame)
     Dim xR As Single, xL As Single
     ROM_GetCols xR, xL
     xR = PX(xR): xL = PX(xL)
-    Dim w As Single: w = PX(ROM_COL_EDT_W)
+    Dim W As Single: W = PX(ROM_COL_EDT_W)
 
     Dim c As Control
     For Each c In host.Controls
         Select Case TypeName(c)
             Case "TextBox"
                 ' タグに「右」「左」が入るようにしておく（③参照）
-                If InStr(c.tag, "右") > 0 Then c.Left = xR: c.Width = w
-                If InStr(c.tag, "左") > 0 Then c.Left = xL: c.Width = w
+                If InStr(c.tag, "右") > 0 Then c.Left = xR: c.Width = W
+                If InStr(c.tag, "左") > 0 Then c.Left = xL: c.Width = W
             Case "Label"
-                If c.caption = "R" Then c.Left = xR: c.Width = w
-                If c.caption = "L" Then c.Left = xL: c.Width = w
+                If c.caption = "R" Then c.Left = xR: c.Width = W
+                If c.caption = "L" Then c.Left = xL: c.Width = W
         End Select
     Next
 End Sub
@@ -1206,51 +1206,51 @@ End Sub
 ' 麻痺タブ UI
 '========================================================
 Public Sub BuildParalysisTabUI(host As MSForms.Frame)
-    Dim w As Single, h As Single, Y As Single
-    w = host.Width: h = host.Height
-    Y = PAD_Y
+    Dim W As Single, h As Single, y As Single
+    W = host.Width: h = host.Height
+    y = PAD_Y
 
     ' ---- 基本情報 ----
-    Y = AddSectionTitle(host, "基本情報", Y)
-    Y = AddComboRow(host, "麻痺側", "cboParalysisSide", Array("右", "左", "両側"), Y)
-    Y = AddComboRow(host, "麻痺の種類", "cboParalysisType", Array("片麻痺", "四肢麻痺", "単麻痺"), Y)
+    y = AddSectionTitle(host, "基本情報", y)
+    y = AddComboRow(host, "麻痺側", "cboParalysisSide", Array("右", "左", "両側"), y)
+    y = AddComboRow(host, "麻痺の種類", "cboParalysisType", Array("片麻痺", "四肢麻痺", "単麻痺"), y)
 
     ' ---- BRS ----
-    Y = Y + ROM_HDR_GAP
-    Y = AddSectionTitle(host, "Brunnstrom Recovery Stage（BRS）", Y)
+    y = y + ROM_HDR_GAP
+    y = AddSectionTitle(host, "Brunnstrom Recovery Stage（BRS）", y)
     Dim brsValues As Variant
     brsValues = Array("Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ")
-    Y = AddComboRow(host, "上肢", "cboBRS_Upper", brsValues, Y)
-    Y = AddComboRow(host, "手指", "cboBRS_Hand", brsValues, Y)
-    Y = AddComboRow(host, "下肢", "cboBRS_Lower", brsValues, Y)
+    y = AddComboRow(host, "上肢", "cboBRS_Upper", brsValues, y)
+    y = AddComboRow(host, "手指", "cboBRS_Hand", brsValues, y)
+    y = AddComboRow(host, "下肢", "cboBRS_Lower", brsValues, y)
 
     ' ---- 随伴現象 ----
-    Y = Y + ROM_HDR_GAP
-    Y = AddSectionTitle(host, "随伴現象", Y)
-    Y = AddCheckRow(host, "共同運動", "chkSynergy", Y)
-    Y = AddCheckRow(host, "連合反応", "chkAssociatedRxn", Y)
+    y = y + ROM_HDR_GAP
+    y = AddSectionTitle(host, "随伴現象", y)
+    y = AddCheckRow(host, "共同運動", "chkSynergy", y)
+    y = AddCheckRow(host, "連合反応", "chkAssociatedRxn", y)
 
     ' ---- 備考 ----
-    PlaceMemoBelow host, w, h, Y, "txtParalysisMemo"
+    PlaceMemoBelow host, W, h, y, "txtParalysisMemo"
 End Sub
 
 '---- 小物：行ビルダ（見出し／コンボ行／チェック行）----
-Private Function AddSectionTitle(host As MSForms.Frame, ttl As String, Y As Single) As Single
+Private Function AddSectionTitle(host As MSForms.Frame, ttl As String, y As Single) As Single
     Dim lbl As MSForms.label
     Set lbl = host.Controls.Add("Forms.Label.1")
     With lbl
         .caption = ttl
         .Left = PX(PAD_X)
-        .Top = PX(Y)
+        .Top = PX(y)
         .Width = PX(host.Width - PAD_X * 2)
         .Height = ROW_H
         .Font.Bold = True
     End With
-    AddSectionTitle = PX(Y + ROW_H + ROM_GAP_Y)
+    AddSectionTitle = PX(y + ROW_H + ROM_GAP_Y)
 End Function
 
 Private Function AddComboRow(host As MSForms.Frame, cap As String, nameCombo As String, _
-                             items As Variant, Y As Single) As Single
+                             items As Variant, y As Single) As Single
     Dim wCaption As Single, wCombo As Single, xCaption As Single, xCombo As Single
     wCaption = PX(COL1_W)
     wCombo = PX(ROM_COL_EDT_W)
@@ -1262,7 +1262,7 @@ Private Function AddComboRow(host As MSForms.Frame, cap As String, nameCombo As 
     With lbl
         .caption = cap
         .Left = xCaption
-        .Top = PX(Y)
+        .Top = PX(y)
         .Width = wCaption
         .Height = ROW_H
         .TextAlign = fmTextAlignLeft
@@ -1272,17 +1272,17 @@ Private Function AddComboRow(host As MSForms.Frame, cap As String, nameCombo As 
     Set cbo = host.Controls.Add("Forms.ComboBox.1", nameCombo, True)
     With cbo
         .Left = xCombo
-        .Top = PX(Y)
+        .Top = PX(y)
         .Width = wCombo
         .Height = ROW_H
         .Style = fmStyleDropDownList
         .List = items
     End With
 
-    AddComboRow = PX(Y + ROW_H + ROM_GAP_Y)
+    AddComboRow = PX(y + ROW_H + ROM_GAP_Y)
 End Function
 
-Private Function AddCheckRow(host As MSForms.Frame, cap As String, nameChk As String, Y As Single) As Single
+Private Function AddCheckRow(host As MSForms.Frame, cap As String, nameChk As String, y As Single) As Single
     Dim wCaption As Single, xCaption As Single, xChk As Single
     wCaption = PX(COL1_W)
     xCaption = PX(PAD_X)
@@ -1293,7 +1293,7 @@ Private Function AddCheckRow(host As MSForms.Frame, cap As String, nameChk As St
     With lbl
         .caption = cap
         .Left = xCaption
-        .Top = PX(Y)
+        .Top = PX(y)
         .Width = wCaption
         .Height = ROW_H
         .TextAlign = fmTextAlignLeft
@@ -1304,12 +1304,12 @@ Private Function AddCheckRow(host As MSForms.Frame, cap As String, nameChk As St
     With chk
         .caption = "有"
         .Left = xChk
-        .Top = PX(Y)
+        .Top = PX(y)
         .Width = PX(60)
         .Height = ROW_H
     End With
 
-    AddCheckRow = PX(Y + ROW_H + ROM_GAP_Y)
+    AddCheckRow = PX(y + ROW_H + ROM_GAP_Y)
 End Function
 
 
@@ -1352,34 +1352,34 @@ End Sub
 ' 上肢 子タブ
 '------------------------------------------------------------
 Public Sub BuildROM_Upper(host As MSForms.Frame)
-    Dim w As Single, h As Single
-    w = host.Width: h = host.Height
+    Dim W As Single, h As Single
+    W = host.Width: h = host.Height
 
-    Dim Y As Single: Y = ROM_GROUP_PAD
+    Dim y As Single: y = ROM_GROUP_PAD
     
     
 
     ' 肩
-    Y = BuildRomJointBlock(host, "Upper", "Shoulder", "【 肩関節 】", _
-            Split("Flex,Ext,Abd,Add,ER,IR", ","), Y)
-    Y = Y + ROM_JOINT_GAP_Y
+    y = BuildRomJointBlock(host, "Upper", "Shoulder", "【 肩関節 】", _
+            Split("Flex,Ext,Abd,Add,ER,IR", ","), y)
+    y = y + ROM_JOINT_GAP_Y
 
     ' 肘
-    Y = BuildRomJointBlock(host, "Upper", "Elbow", "【 肘関節 】", _
-            Split("Flex,Ext", ","), Y)
-    Y = Y + ROM_JOINT_GAP_Y
+    y = BuildRomJointBlock(host, "Upper", "Elbow", "【 肘関節 】", _
+            Split("Flex,Ext", ","), y)
+    y = y + ROM_JOINT_GAP_Y
 
     ' 前腕
-    Y = BuildRomJointBlock(host, "Upper", "Forearm", "【 前腕 】", _
-            Split("Sup,Pro", ","), Y)
-    Y = Y + ROM_JOINT_GAP_Y
+    y = BuildRomJointBlock(host, "Upper", "Forearm", "【 前腕 】", _
+            Split("Sup,Pro", ","), y)
+    y = y + ROM_JOINT_GAP_Y
 
     ' 手関節
-    Y = BuildRomJointBlock(host, "Upper", "Wrist", "【 手関節 】", _
-            Split("Dorsi,Palmar,Radial,Ulnar", ","), Y)
+    y = BuildRomJointBlock(host, "Upper", "Wrist", "【 手関節 】", _
+            Split("Dorsi,Palmar,Radial,Ulnar", ","), y)
             
             
- PlaceMemoBelow host, w, h, Y, "txtROM_Upper_Memo"
+ PlaceMemoBelow host, W, h, y, "txtROM_Upper_Memo"
  
 
 End Sub
@@ -1388,28 +1388,28 @@ End Sub
 ' 下肢 子タブ
 '------------------------------------------------------------
 Public Sub BuildROM_Lower(host As MSForms.Frame)
-    Dim w As Single, h As Single
-    w = host.Width: h = host.Height
+    Dim W As Single, h As Single
+    W = host.Width: h = host.Height
 
-    Dim Y As Single: Y = ROM_GROUP_PAD
+    Dim y As Single: y = ROM_GROUP_PAD
     
     
     ' 股
-    Y = BuildRomJointBlock(host, "Lower", "Hip", "【 股関節 】", _
-            Split("Flex,Ext,Abd,Add,ER,IR", ","), Y)
-    Y = Y + ROM_JOINT_GAP_Y
+    y = BuildRomJointBlock(host, "Lower", "Hip", "【 股関節 】", _
+            Split("Flex,Ext,Abd,Add,ER,IR", ","), y)
+    y = y + ROM_JOINT_GAP_Y
 
     ' 膝
-    Y = BuildRomJointBlock(host, "Lower", "Knee", "【 膝関節 】", _
-            Split("Flex,Ext", ","), Y)
-    Y = Y + ROM_JOINT_GAP_Y
+    y = BuildRomJointBlock(host, "Lower", "Knee", "【 膝関節 】", _
+            Split("Flex,Ext", ","), y)
+    y = y + ROM_JOINT_GAP_Y
 
     ' 足関節
-    Y = BuildRomJointBlock(host, "Lower", "Ankle", "【 足関節 】", _
-            Split("Dorsi,Plantar,Inv,Ev", ","), Y)
+    y = BuildRomJointBlock(host, "Lower", "Ankle", "【 足関節 】", _
+            Split("Dorsi,Plantar,Inv,Ev", ","), y)
             
             
-PlaceMemoBelow host, w, h, Y, "txtROM_Lower_Memo"
+PlaceMemoBelow host, W, h, y, "txtROM_Lower_Memo"
 End Sub
 
 '------------------------------------------------------------
@@ -1573,8 +1573,8 @@ End Sub
 '=== LoadLatestROMNow（2025-10-22統合版）===
 Public Sub LoadLatestROMNow(Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
-    Dim r As Long: r = LatestRowByHeader("ROM_Upper_Shoulder_Flex_R", ws)
-    If r <= 0 Then
+    Dim R As Long: R = LatestRowByHeader("ROM_Upper_Shoulder_Flex_R", ws)
+    If R <= 0 Then
         Debug.Print "[LoadROM] header not found"
         Exit Sub
     End If
@@ -1585,7 +1585,7 @@ Public Sub LoadLatestROMNow(Optional ByVal ws As Worksheet)
 
     Dim raw As String
     raw = LoadLatestROMNow_Raw(ws)
-    Debug.Print "[LoadROM] R=" & r & " Len=" & Len(raw) & " | " & Left$(raw, 60)
+    Debug.Print "[LoadROM] R=" & R & " Len=" & Len(raw) & " | " & Left$(raw, 60)
 End Sub
 
 
