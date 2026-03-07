@@ -137,3 +137,48 @@ Private Function JsonUnescape(ByVal s As String) As String
     JsonUnescape = out
 End Function
 
+
+
+
+Public Function GenerateBasicPlanNarrative(ByVal planStructure As Object) As Object
+    Dim systemInstructions As String
+    Dim userInput As String
+    Dim draft As Object
+
+    systemInstructions = BuildBasicSystemPrompt()
+    userInput = BuildBasicUserPrompt(planStructure)
+
+    Set draft = CreateObject("Scripting.Dictionary")
+    draft("PlanText") = OpenAI_BuildDraft(systemInstructions, userInput)
+    draft("MonitoringText") = OpenAI_BuildDraft(systemInstructions, userInput & vbCrLf & "[task] monitoring")
+
+    Set GenerateBasicPlanNarrative = draft
+End Function
+
+Private Function BuildBasicSystemPrompt() As String
+    BuildBasicSystemPrompt = _
+        "あなたは医療計画書の文章作成専用アシスタントです。" & _
+        "判定・診断・数値解釈は行わず、入力済みの構造化データを自然文に整形してください。"
+End Function
+
+Private Function BuildBasicUserPrompt(ByVal planStructure As Object) As String
+    Dim k As Variant
+    Dim lines As Collection
+    Dim i As Long
+    Dim arr() As String
+
+    Set lines = New Collection
+    lines.Add "以下はVBA判定済みデータです。判断を追加せず文章化のみ行ってください。"
+
+    For Each k In planStructure.keys
+        lines.Add CStr(k) & ": " & CStr(planStructure(k))
+    Next k
+
+    ReDim arr(1 To lines.Count)
+    For i = 1 To lines.Count
+        arr(i) = lines(i)
+    Next i
+
+    BuildBasicUserPrompt = Join(arr, vbCrLf)
+End Function
+

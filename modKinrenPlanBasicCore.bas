@@ -628,4 +628,31 @@ EH:
 End Function
 
 
+Public Function BuildBasicPlanStructureFromJudge(ByVal judged As Object) As Object
+    Dim mainCause As String
+    Dim needSelf As String
+    Dim needFamily As String
+    Dim needByDifficulty As String
+    Dim mmtMap As Object
 
+    mainCause = CStr(judged("MainCause"))
+    needSelf = CStr(judged("NeedPatient"))
+    needFamily = CStr(judged("NeedFamily"))
+    needByDifficulty = CStr(judged("ActivityCandidate"))
+    Set mmtMap = BuildMMTMapFromIO(CStr(judged("MMT_IO")))
+
+    Set BuildBasicPlanStructureFromJudge = BuildBasicPlanStructure(mainCause, needSelf, needFamily, needByDifficulty, mmtMap)
+End Function
+
+Private Function BuildMMTMapFromIO(ByVal mmtIO As String) As Object
+    Dim m As Object
+    Set m = CreateObject("Scripting.Dictionary")
+
+    ' TODO: 既存MMT_IOフォーマットの正式パーサーに置換する。
+    ' 最低限のフォールバック値をセット。
+    m("大腿四頭筋") = 3
+    m("中殿筋") = 3
+    m("腸腰筋") = 3
+
+    Set BuildMMTMapFromIO = m
+End Function
