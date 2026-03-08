@@ -40,6 +40,7 @@ Private Const MAIN_SAVE_BLANK_WARN_THRESHOLD As Double = 0.8
 Private Const MAIN_SAVE_BLANK_WARN_MESSAGE As String = "保存内容の大半が空欄です。" & vbCrLf & _
     "既存データを上書きすると元に戻せない可能性があります。" & vbCrLf & _
     "本当に保存しますか？"
+Private Const MAIN_SAVE_MIN_CHANGE_COUNT As Long = 3
 Private Const HDR_HOMEENV_CHECKS As String = "Basic.HomeEnv.Checks"
 Private Const HDR_HOMEENV_NOTE As String = "Basic.HomeEnv.Note"
 Private Const HDR_RISK_CHECKS As String = "Basic.Risk.Checks"
@@ -515,14 +516,88 @@ End Sub
 
 Private Function ShouldWarnSparseMainSave(ws As Worksheet, ByVal patientName As String, owner As Object) As Boolean
     Dim existingRow As Long
-    existingRow = FindLatestRowByName(ws, patientName)
+    existingRow = ResolveExistingEvalRow(ws, patientName, owner)
     If existingRow <= 0 Then Exit Function
 
     Dim totalCount As Long, blankCount As Long
     CountMainFormTextInputs owner, totalCount, blankCount
-    If totalCount <= 0 Then Exit Function
+    
 
-    ShouldWarnSparseMainSave = (CDbl(blankCount) / CDbl(totalCount) >= MAIN_SAVE_BLANK_WARN_THRESHOLD)
+    Dim blankWarn As Boolean
+    If totalCount > 0 Then
+        blankWarn = (CDbl(blankCount) / CDbl(totalCount) >= MAIN_SAVE_BLANK_WARN_THRESHOLD)
+    End If
+
+    Dim changeCount As Long
+    changeCount = CountMainFormTextboxChanges(ws, existingRow, owner)
+
+    ShouldWarnSparseMainSave = (blankWarn Or changeCount < MAIN_SAVE_MIN_CHANGE_COUNT)
+End Function
+
+Private Function ResolveExistingEvalRow(ws As Worksheet, ByVal patientName As String, owner As Object) As Long
+    ResolveExistingEvalRow = FindLatestRowByName(ws, patientName)
+
+    Dim idVal As String
+    idVal = Trim$(GetID_FromBasicInfo(owner))
+    If Len(idVal) = 0 Then Exit Function
+
+    Dim rowByID As Long
+    rowByID = FindLatestRowByNameAndID(ws, patientName, idVal)
+    If rowByID > 0 Then ResolveExistingEvalRow = rowByID
+End Function
+
+Private Function CountMainFormTextboxChanges(ws As Worksheet, ByVal existingRow As Long, owner As Object) As Long
+    Dim map As Variant
+    map = MainSaveTextboxHeaderMap()
+
+    Dim i As Long
+    For i = LBound(map) To UBound(map)
+        Dim headerName As String
+        Dim ctlName As String
+        Dim c As Long
+        Dim curVal As String
+        Dim oldVal As String
+
+        headerName = CStr(map(i)(0))
+        ctlName = CStr(map(i)(1))
+
+        c = FindColByHeaderExact(ws, headerName)
+        If c = 0 Then GoTo NextItem
+
+        curVal = NormalizeCompareValue(GetCtlTextGeneric(owner, ctlName))
+        oldVal = NormalizeCompareValue(CStr(ws.Cells(existingRow, c).value))
+
+        If StrComp(curVal, oldVal, vbBinaryCompare) <> 0 Then
+            CountMainFormTextboxChanges = CountMainFormTextboxChanges + 1
+        End If
+NextItem:
+    Next i
+End Function
+
+Private Function MainSaveTextboxHeaderMap() As Variant
+    MainSaveTextboxHeaderMap = Array( _
+        Array("評価日", "txtEDate"), _
+        Array("年齢", "txtAge"), _
+        Array("Basic.Name", "txtName"), _
+        Array("評価者", "txtEvaluator"), _
+        Array("評価者職種", "txtEvaluatorJob"), _
+        Array("発症日", "txtOnset"), _
+        Array("患者Needs", "txtNeedsPt"), _
+        Array("家族Needs", "txtNeedsFam"), _
+        Array("生活状況", "txtLiving"), _
+        Array("住宅備考", "txtBIHomeEnvNote"), _
+        Array("主診断", "txtDx"), _
+        Array("直近入院日", "txtAdmDate"), _
+        Array("直近退院日", "txtDisDate"), _
+        Array("治療経過", "txtTxCourse"), _
+        Array("合併疾患", "txtComplications"), _
+        Array("IO_Cog_DementiaNote", "txtDementiaNote"), _
+        Array("IO_Mental_Note", "txtMentalNote") _
+    )
+End Function
+
+Private Function NormalizeCompareValue(ByVal v As String) As String
+    NormalizeCompareValue = Trim$(Replace(CStr(v), vbCrLf, vbLf))
 End Function
 
 Private Sub CountMainFormTextInputs(owner As Object, ByRef totalCount As Long, ByRef blankCount As Long)
