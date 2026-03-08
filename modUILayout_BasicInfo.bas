@@ -12,6 +12,7 @@ Public Sub TidyBasicInfo_TwoColumns()
     Dim xLbl As Double, xCtl As Double, wLbl As Double, wCtl As Double
     Dim wLblR As Double, wCtlR As Double
     Dim rowH As Double, gapY As Double, multiH As Double, needsH As Double
+    Dim socialH As Double
     Dim yL As Double, yR As Double
     Dim i As Long
     Dim aCapL As Variant, aCtlL As Variant
@@ -46,6 +47,14 @@ Public Sub TidyBasicInfo_TwoColumns()
     On Error Resume Next
     Set txtED = f32.Controls("txtEDate")
     On Error GoTo 0
+    
+    Set t = Nothing
+    On Error Resume Next
+    Set t = f32.Controls("txtEvaluatorJob")
+    On Error GoTo 0
+    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtEvaluatorJob", True)
+    t.tag = "BI.EvaluatorJob"
+    
 
     On Error Resume Next
     Set t = f32.Controls("txtAdmDate")
@@ -95,7 +104,8 @@ Public Sub TidyBasicInfo_TwoColumns()
     rowH = 16
     gapY = 6
     multiH = 64
-    needsH = rowH * 4 + gapY * 2
+    socialH = 50
+    needsH = 58
 
     ' 右カラムの入力位置は既存 txtEDate に合わせる（あれば）
    Dim xCtlR As Double
@@ -107,21 +117,26 @@ Public Sub TidyBasicInfo_TwoColumns()
     yL = yR
 
     ' Left: 個人情報（7項目）
-    aCapL = Array( _
-        "年齢", _
-        "生年月日", _
-        "性別", _
-        "要介護", _
-        "家族構成", _
-        "高齢者の日常生活自立度", _
-        "認知症高齢者の日常生活自立度" _
-    )
-    aCtlL = Array("txtAge", "txtBirth", "cboSex", "cboCare", "txtLiving", "cboElder", "cboDementia")
+aCapL = Array( _
+    "年齢", _
+    "生年月日", _
+    "性別", _
+    "要介護", _
+    "高齢者の日常生活自立度", _
+    "認知症高齢者の日常生活自立度", _
+    "社会参加状況" _
+)
+    aCtlL = Array("txtAge", "txtBirth", "cboSex", "cboCare", "cboElder", "cboDementia", "txtLiving")
 
     For i = 0 To UBound(aCtlL)
         Call EnsureLabel(f32, "lblBI_L_" & CStr(i + 1), CStr(aCapL(i)), xL + xLbl, yL, wLbl, rowH)
-        Call PlaceCtl(f32, CStr(aCtlL(i)), xL + xCtl, yL - 1, wCtlShort, rowH + 2)
-        yL = yL + rowH + gapY
+        If CStr(aCtlL(i)) = "txtLiving" Then
+            Call PlaceCtl(f32, CStr(aCtlL(i)), xL + xCtl, yL - 1, wCtl, socialH)
+            yL = yL + socialH + gapY
+        Else
+            Call PlaceCtl(f32, CStr(aCtlL(i)), xL + xCtl, yL - 1, wCtlShort, rowH + 2)
+            yL = yL + rowH + gapY
+        End If
     Next i
 
     ' Left: Needs（本人/家族）
@@ -146,9 +161,9 @@ Public Sub TidyBasicInfo_TwoColumns()
 
    
 
-    aCapR = Array("評価日", "評価者")
-    aCtlR = Array("txtEDate", "txtEvaluator")
-
+    aCapR = Array("評価日", "評価者", "評価者職種")
+    aCtlR = Array("txtEDate", "txtEvaluator", "txtEvaluatorJob")
+    
     For i = 0 To UBound(aCtlR)
         Call EnsureLabel(f32, "lblBI_R_E_" & CStr(i + 1), CStr(aCapR(i)), xR + xLbl, yR, wLblR, rowH)
         Call PlaceCtl(f32, CStr(aCtlR(i)), xRightCtl, yR - 1, wCtl, rowH + 2)
@@ -159,6 +174,7 @@ Public Sub TidyBasicInfo_TwoColumns()
 
     ' Right: 医療情報
     Call EnsureLabel(f32, "lblBI_R_Header_Med", "【医療情報】", xR + xLbl, yR, wLblR, rowH)
+    f32.Controls("lblBI_R_Header_Med").Visible = False
     yR = yR + rowH + gapY
 
     ' 順序：発症日→主診断→入院日→退院日

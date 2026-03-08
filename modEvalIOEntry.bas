@@ -689,6 +689,7 @@ map = Array( _
     Array("«•Ê", "cboSex"), _
     Array("Basic.Name", "txtName"), _
     Array("•]‰¿Ò", "txtEvaluator"), _
+    Array("•]‰¿ÒEí", "txtEvaluatorJob"), _
     Array("”­Ç“ú", "txtOnset"), _
     Array("Š³ÒNeeds", "txtNeedsPt"), _
     Array("‰Æ‘°Needs", "txtNeedsFam"), _
@@ -775,6 +776,7 @@ map = Array( _
     Array("«•Ê", "cboSex"), _
     Array("Basic.Name", "txtName"), _
     Array("•]‰¿Ò", "txtEvaluator"), _
+    Array("•]‰¿ÒEí", "txtEvaluatorJob"), _
     Array("”­Ç“ú", "txtOnset"), _
     Array("Š³ÒNeeds", "txtNeedsPt"), _
     Array("‰Æ‘°Needs", "txtNeedsFam"), _
@@ -1046,6 +1048,7 @@ Public Sub EnsureHeaderCol_BasicInfo(ByVal ws As Worksheet)
     d("BasicInfo_•]‰¿“ú") = "Basic.EvalDate":        d("•]‰¿“ú") = "Basic.EvalDate": d("EvalDate") = "Basic.EvalDate"
     d("BasicInfo_•]‰¿Ò") = "Basic.Evaluator":       d("•]‰¿Ò") = "Basic.Evaluator"
     d("BasicInfo_”N—î") = "Basic.Age":               d("”N—î") = "Basic.Age": d("Age") = "Basic.Age"
+    d("BasicInfo_•]‰¿ÒEí") = "Basic.EvaluatorJob": d("•]‰¿ÒEí") = "Basic.EvaluatorJob": d("EvaluatorJob") = "Basic.EvaluatorJob"
     d("BasicInfo_«•Ê") = "Basic.Sex":               d("«•Ê") = "Basic.Sex": d("Sex") = "Basic.Sex"
     d("BasicInfo_åf’f") = "Basic.PrimaryDx":       d("åf’f") = "Basic.PrimaryDx": d("å•a–¼") = "Basic.PrimaryDx"
     d("BasicInfo_”­Ç“ú") = "Basic.OnsetDate":       d("”­Ç“ú") = "Basic.OnsetDate"
@@ -1088,6 +1091,7 @@ Public Sub EnsureHeaderCol_BasicInfo(ByVal ws As Worksheet)
     Dim need As Variant, mustHave As Variant
     mustHave = Array( _
         "Basic.ID", "Basic.Name", "Basic.EvalDate", "Basic.Evaluator", _
+        "BI.EvaluatorJob", _
         "Basic.Age", "Basic.Sex", "Basic.PrimaryDx", "Basic.OnsetDate", _
         "Basic.CareLevel", "Basic.DementiaADL", "Basic.LifeStatus", _
         "Basic.Needs.Patient", "Basic.Needs.Family", _
@@ -2702,6 +2706,8 @@ Public Sub MirrorBasicRow(ByVal ws As Worksheet, ByVal rowNum As Long)
     MirrorBasicPair ws, rowNum, "Basic.Sex", "«•Ê"
     ' •]‰¿Ò
     MirrorBasicPair ws, rowNum, "Basic.Evaluator", "•]‰¿Ò"
+    ' •]‰¿ÒEí
+    MirrorBasicPair ws, rowNum, "Basic.EvaluatorJob", "•]‰¿ÒEí"
     ' ”­Ç“ú
     MirrorBasicPair ws, rowNum, "Basic.OnsetDate", "”­Ç“ú"
     ' Š³ÒNeeds
@@ -2742,6 +2748,7 @@ Public Sub MirrorBasicRow_Eval(ByVal ws As Worksheet, ByVal rowNum As Long)
         Array("Basic.Age", "”N—î"), _
         Array("Basic.Sex", "«•Ê"), _
         Array("Basic.Evaluator", "•]‰¿Ò"), _
+        Array("•]‰¿ÒEí", "txtEvaluatorJob"), _
         Array("Basic.OnsetDate", "”­Ç“ú"), _
         Array("Basic.Needs.Patient", "Š³ÒNeeds"), _
         Array("Basic.Needs.Family", "‰Æ‘°Needs"), _
