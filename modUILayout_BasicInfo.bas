@@ -103,7 +103,7 @@ Public Sub TidyBasicInfo_TwoColumns()
 
     rowH = 16
     gapY = 6
-    multiH = 64
+    multiH = 42
     socialH = 50
     needsH = 58
 
@@ -175,11 +175,17 @@ aCapL = Array( _
     ' Right: ˆã—Ãî•ñ
     Call EnsureLabel(f32, "lblBI_R_Header_Med", "yˆã—Ãî•ñz", xR + xLbl, yR, wLblR, rowH)
     f32.Controls("lblBI_R_Header_Med").Visible = False
-    yR = yR + rowH + gapY
+    yR = yR + gapY
+
+    If Not ControlExists(f32, "txtAdmDate") Then f32.Controls.Add "Forms.TextBox.1", "txtAdmDate"
+    If Not ControlExists(f32, "txtDisDate") Then f32.Controls.Add "Forms.TextBox.1", "txtDisDate"
+
 
     ' ‡˜F”­Ç“ú¨åf’f¨“ü‰@“ú¨‘Ş‰@“ú
     aCapR = Array("”­Ç“ú", "åf’f", "“ü‰@“ú", "‘Ş‰@“ú")
     aCtlR = Array("txtOnset", "txtDx", "txtAdmDate", "txtDisDate")
+
+   
 
     For i = 0 To UBound(aCtlR)
         Call EnsureLabel(f32, "lblBI_R_M_" & CStr(i + 1), CStr(aCapR(i)), xR + xLbl, yR, wLblR, rowH)

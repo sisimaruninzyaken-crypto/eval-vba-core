@@ -36,6 +36,10 @@ Public mDailyLogManual As Boolean    ' 日々の記録の手動保存フラグ
 Private Const FRM_AIDS As String = "Frame33"
 Private Const FRM_RISK As String = "Frame34"
 Private Const IO_TRACE As Boolean = False
+Private Const MAIN_SAVE_BLANK_WARN_THRESHOLD As Double = 0.8
+Private Const MAIN_SAVE_BLANK_WARN_MESSAGE As String = "保存内容の大半が空欄です。" & vbCrLf & _
+    "既存データを上書きすると元に戻せない可能性があります。" & vbCrLf & _
+    "本当に保存しますか？"
 Private Const HDR_HOMEENV_CHECKS As String = "Basic.HomeEnv.Checks"
 Private Const HDR_HOMEENV_NOTE As String = "Basic.HomeEnv.Note"
 Private Const HDR_RISK_CHECKS As String = "Basic.Risk.Checks"
@@ -468,6 +472,13 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
 Dim nm As String: nm = Trim$(owner.txtName.Text)
 If Len(nm) = 0 Then MsgBox "氏名を入力してから保存してください。", vbExclamation: Exit Sub
 
+If ShouldWarnSparseMainSave(ws, nm, owner) Then
+    If MsgBox(MAIN_SAVE_BLANK_WARN_MESSAGE, vbExclamation + vbYesNo + vbDefaultButton2) = vbNo Then
+        Exit Sub
+    End If
+End If
+
+
 Dim diffOnly As Boolean
 On Error Resume Next
 diffOnly = CBool(owner.Controls("chkDiffOnly").value)  ' 無ければ False のまま
@@ -501,6 +512,77 @@ If cName > 0 Then ws.Cells(R, cName).value = nm
 
     
 End Sub
+
+Private Function ShouldWarnSparseMainSave(ws As Worksheet, ByVal patientName As String, owner As Object) As Boolean
+    Dim existingRow As Long
+    existingRow = FindLatestRowByName(ws, patientName)
+    If existingRow <= 0 Then Exit Function
+
+    Dim totalCount As Long, blankCount As Long
+    CountMainFormTextInputs owner, totalCount, blankCount
+    If totalCount <= 0 Then Exit Function
+
+    ShouldWarnSparseMainSave = (CDbl(blankCount) / CDbl(totalCount) >= MAIN_SAVE_BLANK_WARN_THRESHOLD)
+End Function
+
+Private Sub CountMainFormTextInputs(owner As Object, ByRef totalCount As Long, ByRef blankCount As Long)
+    Dim dailyRoot As Object
+    On Error Resume Next
+    Set dailyRoot = owner.Controls("fraDailyLog")
+    On Error GoTo 0
+
+    CountTextInputsRecursive owner, dailyRoot, totalCount, blankCount
+End Sub
+
+Private Sub CountTextInputsRecursive(ByVal container As Object, ByVal excludedRoot As Object, ByRef totalCount As Long, ByRef blankCount As Long)
+    Dim ctrl As Object
+    For Each ctrl In container.Controls
+        If Not excludedRoot Is Nothing Then
+            If IsDescendantControl(ctrl, excludedRoot) Then GoTo NextControl
+        End If
+
+        Select Case TypeName(ctrl)
+            Case "TextBox", "ComboBox"
+                totalCount = totalCount + 1
+                On Error Resume Next
+                If Len(Trim$(CStr(ctrl.value))) = 0 Then blankCount = blankCount + 1
+                On Error GoTo 0
+        End Select
+
+        On Error Resume Next
+        Dim childCount As Long
+        childCount = ctrl.Controls.Count
+        If Err.Number = 0 And childCount > 0 Then
+            On Error GoTo 0
+            CountTextInputsRecursive ctrl, excludedRoot, totalCount, blankCount
+        Else
+            Err.Clear
+            On Error GoTo 0
+        End If
+NextControl:
+    Next ctrl
+End Sub
+
+Private Function IsDescendantControl(ByVal ctrl As Object, ByVal root As Object) As Boolean
+    Dim p As Object
+    On Error Resume Next
+    Set p = ctrl
+    Do While Not p Is Nothing
+        If p Is root Then
+            IsDescendantControl = True
+            Exit Function
+        End If
+        Set p = p.parent
+        If Err.Number <> 0 Then
+            Err.Clear
+            Exit Do
+        End If
+    Loop
+    On Error GoTo 0
+End Function
+
+
+
 
 Private Sub LoadEvaluation_LastRow_From_OBSOLETE(owner As Object)
     MsgBox "この入口は廃止しました。読み込みは『名前→直近候補から選択』に統一しています。", vbInformation
