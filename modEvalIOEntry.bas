@@ -37,7 +37,7 @@ Private Const FRM_AIDS As String = "Frame33"
 Private Const FRM_RISK As String = "Frame34"
 Private Const IO_TRACE As Boolean = False
 Private Const MAIN_SAVE_MIN_FILLED_FIELDS As Long = 10
-Private Const MAIN_SAVE_BLANK_WARN_MESSAGE As String = "入力項目が少ない状態です。" & vbCrLf & _
+Private Const MAIN_SAVE_FEW_INPUT_MESSAGE As String = "入力項目が少ない状態です。" & vbCrLf & _
     "既存データを上書きすると元に戻せない可能性があります。" & vbCrLf & _
     "本当に保存しますか？"
 Private Const MAIN_SAVE_MIN_CHANGE_COUNT As Long = 3
@@ -476,8 +476,10 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
 Dim nm As String: nm = Trim$(owner.txtName.Text)
 If Len(nm) = 0 Then MsgBox "氏名を入力してから保存してください。", vbExclamation: Exit Sub
 
-If ShouldWarnSparseMainSave(ws, nm, owner) Then
-    If MsgBox(MAIN_SAVE_BLANK_WARN_MESSAGE, vbExclamation + vbYesNo + vbDefaultButton2) = vbNo Then
+Dim warnMessage As String
+warnMessage = GetSparseMainSaveWarningMessage(ws, nm, owner)
+If Len(warnMessage) > 0 Then
+    If MsgBox(warnMessage, vbExclamation + vbYesNo + vbDefaultButton2) = vbNo Then
         Exit Sub
     End If
 End If
@@ -520,7 +522,7 @@ If cName > 0 Then ws.Cells(R, cName).value = nm
     
 End Sub
 
-Private Function ShouldWarnSparseMainSave(ws As Worksheet, ByVal patientName As String, owner As Object) As Boolean
+Private Function GetSparseMainSaveWarningMessage(ws As Worksheet, ByVal patientName As String, owner As Object) As String
     Dim existingRow As Long
     existingRow = ResolveExistingEvalRow(ws, patientName, owner)
     If existingRow <= 0 Then Exit Function
@@ -535,7 +537,14 @@ Private Function ShouldWarnSparseMainSave(ws As Worksheet, ByVal patientName As 
     Dim changeCount As Long
     changeCount = CountMainFormTextboxChanges(ws, existingRow, owner)
 
-    ShouldWarnSparseMainSave = (filledCount < MAIN_SAVE_MIN_FILLED_FIELDS Or changeCount < MAIN_SAVE_MIN_CHANGE_COUNT)
+    If filledCount < MAIN_SAVE_MIN_FILLED_FIELDS Then
+        GetSparseMainSaveWarningMessage = MAIN_SAVE_FEW_INPUT_MESSAGE
+        Exit Function
+    End If
+
+    If changeCount < MAIN_SAVE_MIN_CHANGE_COUNT Then
+        GetSparseMainSaveWarningMessage = MAIN_SAVE_FEW_CHANGE_MESSAGE
+    End If
 End Function
 
 Private Function ResolveExistingEvalRow(ws As Worksheet, ByVal patientName As String, owner As Object) As Long
