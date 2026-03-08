@@ -36,11 +36,14 @@ Public mDailyLogManual As Boolean    ' 日々の記録の手動保存フラグ
 Private Const FRM_AIDS As String = "Frame33"
 Private Const FRM_RISK As String = "Frame34"
 Private Const IO_TRACE As Boolean = False
-Private Const MAIN_SAVE_BLANK_WARN_THRESHOLD As Double = 0.8
-Private Const MAIN_SAVE_BLANK_WARN_MESSAGE As String = "保存内容の大半が空欄です。" & vbCrLf & _
+Private Const MAIN_SAVE_MIN_FILLED_FIELDS As Long = 10
+Private Const MAIN_SAVE_BLANK_WARN_MESSAGE As String = "入力項目が少ない状態です。" & vbCrLf & _
     "既存データを上書きすると元に戻せない可能性があります。" & vbCrLf & _
     "本当に保存しますか？"
 Private Const MAIN_SAVE_MIN_CHANGE_COUNT As Long = 3
+Private Const MAIN_SAVE_FEW_CHANGE_MESSAGE As String = "変更項目がほとんどありません。" & vbCrLf & _
+    "誤って保存しようとしていないか確認してください。" & vbCrLf & _
+    "本当に保存しますか？"
 Private Const HDR_HOMEENV_CHECKS As String = "Basic.HomeEnv.Checks"
 Private Const HDR_HOMEENV_NOTE As String = "Basic.HomeEnv.Note"
 Private Const HDR_RISK_CHECKS As String = "Basic.Risk.Checks"
@@ -498,6 +501,9 @@ End If
    ' ★氏名セルを必ず現在入力で上書き（前回コピーの取り違い防止）
 Dim cName As Long
 cName = FindColByHeaderExact(ws, "氏名"): If cName = 0 Then cName = FindColByHeaderExact(ws, "利用者名"): If cName = 0 Then cName = FindColByHeaderExact(ws, "名前")
+
+
+
 If cName > 0 Then ws.Cells(R, cName).value = nm
 
  ws.Cells(R, 1).value = R
@@ -523,15 +529,13 @@ Private Function ShouldWarnSparseMainSave(ws As Worksheet, ByVal patientName As 
     CountMainFormTextInputs owner, totalCount, blankCount
     
 
-    Dim blankWarn As Boolean
-    If totalCount > 0 Then
-        blankWarn = (CDbl(blankCount) / CDbl(totalCount) >= MAIN_SAVE_BLANK_WARN_THRESHOLD)
-    End If
+    Dim filledCount As Long
+    filledCount = CountMainFormFilledFields(owner)
 
     Dim changeCount As Long
     changeCount = CountMainFormTextboxChanges(ws, existingRow, owner)
 
-    ShouldWarnSparseMainSave = (blankWarn Or changeCount < MAIN_SAVE_MIN_CHANGE_COUNT)
+    ShouldWarnSparseMainSave = (filledCount < MAIN_SAVE_MIN_FILLED_FIELDS Or changeCount < MAIN_SAVE_MIN_CHANGE_COUNT)
 End Function
 
 Private Function ResolveExistingEvalRow(ws As Worksheet, ByVal patientName As String, owner As Object) As Long
@@ -573,6 +577,19 @@ Private Function CountMainFormTextboxChanges(ws As Worksheet, ByVal existingRow 
 NextItem:
     Next i
 End Function
+
+Private Function CountMainFormFilledFields(owner As Object) As Long
+    Dim map As Variant
+    map = MainSaveTextboxHeaderMap()
+
+    Dim i As Long
+    For i = LBound(map) To UBound(map)
+        If Len(NormalizeCompareValue(GetCtlTextGeneric(owner, CStr(map(i)(1))))) > 0 Then
+            CountMainFormFilledFields = CountMainFormFilledFields + 1
+        End If
+    Next i
+End Function
+
 
 Private Function MainSaveTextboxHeaderMap() As Variant
     MainSaveTextboxHeaderMap = Array( _
