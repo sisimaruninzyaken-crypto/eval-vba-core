@@ -846,6 +846,18 @@ Private Sub SetComboSafe_Basic(owner As Object, ctlName As String, ByVal v As Va
     If hit >= 0 Then cB.ListIndex = hit Else cB.ListIndex = -1
 End Sub
 
+Private Sub SyncAgeBeforeBasicSave(ByVal owner As Object)
+    On Error GoTo EH
+
+    ' frmEval ?J??N\bh??pAXR[vOQ?
+    CallByName owner, "SyncAgeFromBirth", VbMethod
+    Exit Sub
+EH:
+    Debug.Print "[Basic] SyncAgeBeforeBasicSave skipped:", Err.Number, Err.Description
+    Err.Clear
+End Sub
+
+
 '====================================================================
 ' BasicInfo IO セクション（評価日・氏名・年齢・Needs 等）
 '  - EvalData 上の Basic.* 系ヘッダとの対応を一元管理する窓口
@@ -863,7 +875,7 @@ Public Sub SaveBasicInfoToSheet_FromMe(ws As Worksheet, R As Long, owner As Obje
     
     Debug.Print "[Basic] Enter_SaveBasicInfo | ws=" & ws.name & " | r=" & R
 
-    UpdateAgeFromBirth owner
+    SyncAgeBeforeBasicSave owner
     
     
     '--- 単一値のマッピング（最後の要素に _ を付けない） ---

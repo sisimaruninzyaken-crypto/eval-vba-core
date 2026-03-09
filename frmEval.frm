@@ -101,39 +101,7 @@ Private mAgeBusy As Boolean
 Public Sub SyncAgeFromBirth()
     On Error GoTo EH
 
-    Dim s As String
-    s = Trim$(Me.controls("txtBirth").text)
-    If Len(s) = 0 Then Exit Sub
-
-    ' yyyy/mm/dd, yyyy-mm-dd ‚ð‘z’èiDateValue‚ÉŠñ‚¹‚éj
-   s = Replace$(s, "-", "/")
-
-' š‚±‚±‚É“ü‚ê‚é
-Dim d As String
-d = Replace$(Replace$(s, "/", ""), ".", "")
-If Len(d) = 8 And IsNumeric(d) Then
-    s = Left$(d, 4) & "/" & Mid$(d, 5, 2) & "/" & Right$(d, 2)
-    Me.controls("txtBirth").text = s
-End If
-
-Dim dt As Date
-dt = DateValue(s)
-
-
-    Dim today As Date
-    today = Date
-
-    Dim age As Long
-    age = DateDiff("yyyy", dt, today)
-    If DateSerial(Year(today), Month(dt), day(dt)) > today Then
-        age = age - 1
-    End If
-
-    Me.controls("txtAge").text = CStr(age)
-
-#If APP_DEBUG Then
-    Debug.Print "[SyncAgeFromBirth] birth=", Format$(dt, "yyyy/mm/dd"), " age=", age
-#End If
+    UpdateAgeFromBirth
 
     Exit Sub
 EH:
