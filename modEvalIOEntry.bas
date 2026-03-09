@@ -464,81 +464,37 @@ End Function
 
 
 Public Sub SaveEvaluation_Append_From(owner As Object)
-    Dim wsTarget As Worksheet
+    Dim wsUser As Worksheet
     Dim resolveMessage As String
-    If ResolveUserHistorySheet(owner, True, wsTarget, resolveMessage) Then
-        EnsureHistorySheetInitialized wsTarget
-        Dim appendRow As Long: appendRow = NextAppendRow(wsTarget)
-        wsTarget.Cells(appendRow, EnsureHeader(wsTarget, HDR_ROWNO)).value = appendRow - 1
-        SaveAllSectionsToSheet wsTarget, appendRow, owner
-        Save_CognitionMental_AtRow wsTarget, appendRow, frmEval
-        MirrorBasicRow wsTarget, appendRow
+
+
+    If ResolveUserHistorySheet(owner, True, wsUser, resolveMessage) Then
+        EnsureHistorySheetInitialized wsUser
+
+        Dim appendRow As Long
+        appendRow = NextAppendRow(wsUser)
+        
+        wsUser.Cells(appendRow, EnsureHeader(wsUser, HDR_ROWNO)).value = appendRow - 1
+        SaveAllSectionsToSheet wsUser, appendRow, owner
+        Save_CognitionMental_AtRow wsUser, appendRow, frmEval
+        MirrorBasicRow wsUser, appendRow
+        
         Dim idxRow As Long
-        idxRow = FindEvalIndexRowBySheetName(EnsureEvalIndexSheet(), wsTarget.name)
+        idxRow = FindEvalIndexRowBySheetName(EnsureEvalIndexSheet(), wsUser.name)
         If idxRow > 0 Then
-            UpdateEvalIndexMetadata owner, idxRow, wsTarget.name
-            UpdateEvalIndexStats idxRow, wsTarget
+            UpdateEvalIndexMetadata owner, idxRow, wsUser.name
+            UpdateEvalIndexStats idxRow, wsUser
         End If
         Exit Sub
-    ElseIf Len(resolveMessage) > 0 Then
+    End If
+
+
+
+    If Len(resolveMessage) > 0 Then
         MsgBox resolveMessage, vbExclamation
-        Exit Sub
+    Else
+        MsgBox "保存先シートが見つからないため、保存を中断します。", vbExclamation
     End If
-
-
-    Dim ws As Worksheet: Set ws = EnsureEvalSheet(EVAL_SHEET_NAME)
-    Dim r As Long: r = NextAppendRow(ws)
-    'r = WorksheetFunction.Max(ws.Cells(ws.rows.Count, 156).End(xlUp).row, ws.Cells(ws.rows.Count, 157).End(xlUp).row) + 1
-
-
-    t "[ENTRY] Save to", ws.name, "row", r
-    ' ★変更点のみ保存（chkDiffOnly=ONなら前回値を事前コピー）
-Dim nm As String: nm = Trim$(owner.txtName.text)
-If Len(nm) = 0 Then MsgBox "氏名を入力してから保存してください。", vbExclamation: Exit Sub
-
-Dim warnMessage As String
-warnMessage = GetSparseMainSaveWarningMessage(ws, nm, owner)
-If Len(warnMessage) > 0 Then
-    If MsgBox(warnMessage, vbExclamation + vbYesNo + vbDefaultButton2) = vbNo Then
-        Exit Sub
-    End If
-End If
-
-
-Dim diffOnly As Boolean
-On Error Resume Next
-diffOnly = CBool(owner.controls("chkDiffOnly").value)  ' 無ければ False のまま
-On Error GoTo 0
-
-If False Then ' diffOnly And Len(nm) > 0 Then
-    Dim rOld As Long: rOld = FindLatestRowByName(ws, nm)
-    If rOld > 0 Then
-        Dim lastCol As Long
-        lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
-        ws.Range(ws.Cells(r, 1), ws.Cells(r, lastCol)).value = _
-            ws.Range(ws.Cells(rOld, 1), ws.Cells(rOld, lastCol)).value
-    End If
-End If
-
-   ' ★氏名セルを必ず現在入力で上書き（前回コピーの取り違い防止）
-Dim cName As Long
-cName = FindColByHeaderExact(ws, "氏名"): If cName = 0 Then cName = FindColByHeaderExact(ws, "利用者名"): If cName = 0 Then cName = FindColByHeaderExact(ws, "名前")
-
-
-
-If cName > 0 Then ws.Cells(r, cName).value = nm
-
- ws.Cells(r, 1).value = r
-  
-    SaveAllSectionsToSheet ws, r, owner
-    t "[ENTRY] Save done"
-    
-    
-        Save_CognitionMental_AtRow ws, r, frmEval
-        'Save_DailyLog_FromForm owner
-        
-        Call MirrorBasicRow(ws, r)
-
     
 End Sub
 
