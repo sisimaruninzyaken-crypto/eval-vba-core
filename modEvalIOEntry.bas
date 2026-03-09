@@ -863,6 +863,8 @@ Public Sub SaveBasicInfoToSheet_FromMe(ws As Worksheet, R As Long, owner As Obje
     
     Debug.Print "[Basic] Enter_SaveBasicInfo | ws=" & ws.name & " | r=" & R
 
+    UpdateAgeFromBirth owner
+    
     
     '--- 単一値のマッピング（最後の要素に _ を付けない） ---
     Dim map As Variant
