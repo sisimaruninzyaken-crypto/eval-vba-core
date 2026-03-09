@@ -1,28 +1,4 @@
 Attribute VB_Name = "modEvalIOEntry"
-'=== modEvalIOEntry : 評価フォーム IO ハブ ============================
-' 役割：
-'   - frmEval から EvalData シートへの保存／読込のハブ
-'   - 各セクション IO モジュール（ROM / 姿勢 / MMT / 感覚・筋緊張・疼痛 /
-'     ADL / 認知・精神 / テスト評価 / 日々の記録）をここから呼び出す
-'   - EvalData の行決定（新規行 / 既存行）と、ID / BasicInfo の管理
-'
-' このモジュールが「知ってよい」こと：
-'   - EvalData のヘッダ名・列番号（HeaderCol_Compat / Module2 / modHeaderMap 経由）
-'   - frmEval を owner As Object として扱うこと（ただしレイアウト詳細は知らない）
-'
-' このモジュールが「やってはいけない」こと：
-'   - フォームのレイアウト変更（Left/Top/Width/Height の書き換え）
-'   - タブ構造の生成・破壊（MultiPage.Pages.Add など）
-'   - コントロールの新規作成や削除
-'   - EvalData 以外のシート IO（他シートの書き換え）
-'
-' 今後のリファクタ方針：
-'   - Save/Load の入口は原則ここに集約する
-'   - FromSheet 系は modEvalIOEntry および専用 IO モジュールからのみ呼び出す
-'   - UI レイアウト系の処理は専用 Layout モジュールへ徐々に退避していく
-'====================================================================
-
-
 
 
 Option Explicit
@@ -3123,10 +3099,45 @@ Private Function EnsureEvalIndexSheet() As Worksheet
 
     Set EnsureEvalIndexSheet = ws
 End Function
+Private Function BasicInfoLegacyHeaders() As Variant
+    BasicInfoLegacyHeaders = Array( _
+        "氏名", "フリガナ", "性別", "生年月日", "年齢", "住所", _
+        "電話番号", "本人Needs", "家族Needs", "主病名", "要介護度", _
+        "発症日", "既往歴", "高齢者の日常生活自立度", "認知症高齢者の日常生活自立度", _
+        "評価日", "初回評価日", "経過", "備考", "要支援", "補助具", "生活状況")
+End Function
 
 Private Function CommonHistoryHeaders() As Variant
-    CommonHistoryHeaders = Array(HDR_ROWNO, "Basic.ID", "Basic.Name", "Basic.NameKana", "Basic.EvalDate", "Basic.Evaluator", "Basic.EvaluatorJob", "Basic.Age", "Basic.BirthDate", "Basic.Sex", "Basic.PrimaryDx", "Basic.OnsetDate", "Basic.CareLevel", "Basic.DementiaADL", "Basic.LifeStatus", "Basic.Needs.Patient", "Basic.Needs.Family", "Basic.Medical.AdmitDate", "Basic.Medical.DischargeDate", "Basic.Medical.CourseNote", "Basic.Medical.ComplicationNote", HDR_HOMEENV_CHECKS, HDR_HOMEENV_NOTE, HDR_AIDS_CHECKS, HDR_RISK_CHECKS, "IO_Cog_DementiaNote", "IO_Mental_Note")
-End Function
+
+    Dim headers As Collection: Set headers = New Collection
+    Dim v As Variant
+
+    For Each v In Array( _
+        HDR_ROWNO, "Basic.ID", "Basic.Name", "Basic.NameKana", _
+        "Basic.EvalDate", "Basic.Evaluator", "Basic.EvaluatorJob", "Basic.Age", _
+        "Basic.BirthDate", "Basic.Sex", "Basic.PrimaryDx", "Basic.OnsetDate", _
+        "Basic.CareLevel", "Basic.DementiaADL", "Basic.LifeStatus", _
+        "Basic.Needs.Patient", "Basic.Needs.Family", _
+        "Basic.Medical.AdmitDate", "Basic.Medical.DischargeDate", _
+        "Basic.Medical.CourseNote", "Basic.Medical.ComplicationNote", _
+        HDR_HOMEENV_CHECKS, HDR_HOMEENV_NOTE, HDR_AIDS_CHECKS, HDR_RISK_CHECKS, _
+        "IO_Cog_DementiaNote", "IO_Mental_Note")
+        headers.Add CStr(v)
+    Next v
+
+    For Each v In BasicInfoLegacyHeaders()
+        headers.Add CStr(v)
+    Next v
+
+    Dim arr() As String
+    ReDim arr(0 To headers.count - 1) As String
+    Dim i As Long
+    For i = 1 To headers.count
+        arr(i - 1) = CStr(headers(i))
+    Next i
+    CommonHistoryHeaders = arr
+    
+    End Function
 
 Private Sub EnsureHistorySheetInitialized(ByVal ws As Worksheet)
     Dim headers As Variant: headers = CommonHistoryHeaders()
@@ -3242,26 +3253,67 @@ Private Function GetLatestValidEvalRow(ByVal ws As Worksheet) As Long
     Next r
 End Function
 
-Private Sub UpdateEvalIndexStats(ByVal indexRow As Long, ByVal wsTarget As Worksheet)
+Public Sub GetUserEvalDateStats(ByVal wsTarget As Worksheet, _
+                                ByRef firstEvalDate As String, _
+                                ByRef latestEvalDate As String, _
+                                ByRef previousEvalDate As String, _
+                                ByRef recordCount As Long)
     Dim cEval As Long: cEval = FindColByHeaderExact(wsTarget, "Basic.EvalDate")
     If cEval = 0 Then Exit Sub
+
     Dim lastRow As Long: lastRow = LastDataRow(wsTarget)
-    Dim r As Long, d As Date, cnt As Long
-    Dim firstD As Date, latestD As Date
+    Dim r As Long, d As Date
+    Dim firstD As Date, latestD As Date, prevD As Date
+    Dim hasFirst As Boolean, hasLatest As Boolean, hasPrev As Boolean
+
     For r = 2 To lastRow
         If TryParseEvalDate(wsTarget.Cells(r, cEval).value, d) Then
-            cnt = cnt + 1
-            If cnt = 1 Or d < firstD Then firstD = d
-            If cnt = 1 Or d > latestD Then latestD = d
+            recordCount = recordCount + 1
+
+            If (Not hasFirst) Or d < firstD Then
+                firstD = d
+                hasFirst = True
+            End If
+
+            If (Not hasLatest) Or d > latestD Then
+                If hasLatest And d <> latestD Then
+                    If (Not hasPrev) Or latestD > prevD Then
+                        prevD = latestD
+                        hasPrev = True
+                    End If
+                End If
+                latestD = d
+                hasLatest = True
+            ElseIf d < latestD Then
+                If (Not hasPrev) Or d > prevD Then
+                    prevD = d
+                    hasPrev = True
+                End If
+            End If
         End If
     Next r
+
+    If hasFirst Then firstEvalDate = Format$(firstD, "yyyy/mm/dd")
+    If hasLatest Then latestEvalDate = Format$(latestD, "yyyy/mm/dd")
+    If hasPrev Then previousEvalDate = Format$(prevD, "yyyy/mm/dd")
+End Sub
+
+Public Function GetPreviousEvalDateText(ByVal wsTarget As Worksheet) As String
+    Dim firstEvalDate As String, latestEvalDate As String, previousEvalDate As String
+    Dim recordCount As Long
+    GetUserEvalDateStats wsTarget, firstEvalDate, latestEvalDate, previousEvalDate, recordCount
+    GetPreviousEvalDateText = previousEvalDate
+End Function
+
+Private Sub UpdateEvalIndexStats(ByVal indexRow As Long, ByVal wsTarget As Worksheet)
+    Dim firstEvalDate As String, latestEvalDate As String, previousEvalDate As String
+    Dim recordCount As Long
+
+    GetUserEvalDateStats wsTarget, firstEvalDate, latestEvalDate, previousEvalDate, recordCount
+
     Dim indexWs As Worksheet: Set indexWs = EnsureEvalIndexSheet()
-    If cnt > 0 Then
-        indexWs.Cells(indexRow, 5).value = Format$(firstD, "yyyy/mm/dd")
-        indexWs.Cells(indexRow, 6).value = Format$(latestD, "yyyy/mm/dd")
-    Else
-        indexWs.Cells(indexRow, 5).ClearContents
-        indexWs.Cells(indexRow, 6).ClearContents
-    End If
-    indexWs.Cells(indexRow, 7).value = cnt
+    
+    indexWs.Cells(indexRow, 5).value = firstEvalDate
+    indexWs.Cells(indexRow, 6).value = latestEvalDate
+    indexWs.Cells(indexRow, 7).value = recordCount
 End Sub
