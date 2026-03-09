@@ -110,7 +110,9 @@ EH:
 #End If
 End Sub
 
-
+Public Function TryGetBirthDateForStorage(ByVal raw As String, ByRef outDate As Date) As Boolean
+    TryGetBirthDateForStorage = TryParseBirthDate_ShowaOrAD(raw, outDate)
+End Function
 
 
 '=== 共通ヘルパー：フレームの高さを子コントロールの一番下＋余白まで伸ばす ===

@@ -5,6 +5,7 @@ Option Explicit
 
 Public Const EVAL_SHEET_NAME As String = "EvalData"
 Private Const EVAL_INDEX_SHEET_NAME As String = "EvalIndex"
+Private Const CLIENT_MASTER_SHEET_NAME As String = "ClientMaster"
 Private Const EVAL_HISTORY_SHEET_PREFIX As String = "EV_"
 Private Const HDR_ROWNO As String = "RowNo"
 Private Const HDR_USER_ID As String = "UserID"
@@ -14,6 +15,10 @@ Private Const HDR_SHEET As String = "SheetName"
 Private Const HDR_FIRST_EVAL As String = "FirstEvalDate"
 Private Const HDR_LATEST_EVAL As String = "LatestEvalDate"
 Private Const HDR_RECORD_COUNT As String = "RecordCount"
+Private Const HDR_BIRTH_DATE As String = "BirthDate"
+Private Const HDR_GENDER As String = "Gender"
+Private Const HDR_CARE_LEVEL As String = "CareLevel"
+Private Const HDR_CREATED_DATE As String = "CreatedDate"
 Public mDailyLogManual As Boolean    ' 日々の記録の手動保存フラグ
 
 
@@ -425,7 +430,8 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
 
     If ResolveUserHistorySheet(owner, True, wsUser, resolveMessage) Then
         EnsureHistorySheetInitialized wsUser
-
+        EnsureClientMasterEntry owner
+        
         Dim appendRow As Long
         appendRow = NextAppendRow(wsUser)
         
@@ -452,6 +458,122 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
     End If
     
 End Sub
+
+Private Function ClientMasterHeaders() As Variant
+    ClientMasterHeaders = Array(HDR_USER_ID, HDR_NAME, HDR_KANA, HDR_BIRTH_DATE, HDR_GENDER, HDR_CARE_LEVEL, HDR_CREATED_DATE)
+End Function
+
+Private Function EnsureClientMasterSheet() As Worksheet
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(CLIENT_MASTER_SHEET_NAME)
+    On Error GoTo 0
+
+    If ws Is Nothing Then
+        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
+        ws.name = CLIENT_MASTER_SHEET_NAME
+    End If
+
+    Dim headers As Variant: headers = ClientMasterHeaders()
+    Dim i As Long
+    For i = LBound(headers) To UBound(headers)
+        ws.Cells(1, i + 1).value = CStr(headers(i))
+    Next i
+
+    Set EnsureClientMasterSheet = ws
+End Function
+
+Private Function FindClientMasterRowsByName(ByVal ws As Worksheet, ByVal nameText As String) As Collection
+    Dim c As New Collection
+    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, 2).End(xlUp).row
+    Dim r As Long
+    For r = 2 To lastRow
+        If StrComp(NormalizeName(CStr(ws.Cells(r, 2).value)), NormalizeName(nameText), vbTextCompare) = 0 Then c.Add r
+    Next r
+    Set FindClientMasterRowsByName = c
+End Function
+
+Private Function FindClientMasterRowByUserID(ByVal ws As Worksheet, ByVal userID As String) As Long
+    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
+    Dim r As Long
+    For r = 2 To lastRow
+        If StrComp(Trim$(CStr(ws.Cells(r, 1).value)), Trim$(userID), vbTextCompare) = 0 Then
+            FindClientMasterRowByUserID = r
+            Exit Function
+        End If
+    Next r
+End Function
+
+Private Function FindClientMasterRow(ByVal ws As Worksheet, ByVal userID As String, ByVal nameText As String, ByRef shouldSkip As Boolean) As Long
+    Dim rowsByName As Collection
+
+    If Len(Trim$(userID)) > 0 Then
+        FindClientMasterRow = FindClientMasterRowByUserID(ws, userID)
+        Exit Function
+    End If
+
+    If Len(Trim$(nameText)) = 0 Then Exit Function
+
+    Set rowsByName = FindClientMasterRowsByName(ws, nameText)
+    If rowsByName.count = 1 Then
+        FindClientMasterRow = CLng(rowsByName(1))
+    ElseIf rowsByName.count > 1 Then
+        shouldSkip = True
+    End If
+End Function
+
+Private Function TryGetBirthDateForClientMaster(ByVal owner As Object, ByRef outDateText As String) As Boolean
+    On Error GoTo EH
+
+    Dim rawBirth As String
+    rawBirth = Trim$(GetCtlTextGeneric(owner, "txtBirth"))
+    If Len(rawBirth) = 0 Then Exit Function
+
+    Dim dtBirth As Date
+    If CallByName(owner, "TryGetBirthDateForStorage", VbMethod, rawBirth, dtBirth) Then
+        outDateText = Format$(dtBirth, "yyyy/mm/dd")
+        TryGetBirthDateForClientMaster = True
+    End If
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Sub EnsureClientMasterEntry(ByVal owner As Object)
+    On Error GoTo EH
+
+    Dim ws As Worksheet: Set ws = EnsureClientMasterSheet()
+    Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
+    Dim nameVal As String: nameVal = Trim$(GetCtlTextGeneric(owner, "txtName"))
+    Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
+    Dim genderVal As String: genderVal = Trim$(GetCtlTextGeneric(owner, "cboSex"))
+    Dim careVal As String: careVal = Trim$(GetCtlTextGeneric(owner, "cboCare"))
+
+    Dim skipRegistration As Boolean
+    Dim hitRow As Long
+    hitRow = FindClientMasterRow(ws, idVal, nameVal, skipRegistration)
+    If hitRow > 0 Then Exit Sub
+    If skipRegistration Then Exit Sub
+    If Len(nameVal) = 0 Then Exit Sub
+
+    Dim birthText As String
+    Call TryGetBirthDateForClientMaster(owner, birthText)
+
+    Dim newRow As Long
+    newRow = NextAppendRow(ws)
+
+    ws.Cells(newRow, 1).value = idVal
+    ws.Cells(newRow, 2).value = nameVal
+    ws.Cells(newRow, 3).value = kanaVal
+    ws.Cells(newRow, 4).value = birthText
+    ws.Cells(newRow, 5).value = genderVal
+    ws.Cells(newRow, 6).value = careVal
+    ws.Cells(newRow, 7).value = Format$(Date, "yyyy/mm/dd")
+    Exit Sub
+EH:
+    Err.Clear
+End Sub
+
 
 Private Function GetSparseMainSaveWarningMessage(ws As Worksheet, ByVal patientName As String, owner As Object) As String
     Dim existingRow As Long
