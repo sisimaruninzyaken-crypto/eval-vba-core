@@ -3167,23 +3167,22 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     If rowsByName.count = 1 Then
         indexRow = CLng(rowsByName(1))
     Else
-       If Len(idVal) = 0 Then
-            If Not forSave Then message = "同姓同名の利用者が存在するため利用者IDの指定が必要です": Exit Function
+        If Len(idVal) = 0 Then
+            message = "同姓同名の利用者が存在するため利用者IDの指定が必要です"
+            Exit Function
         End If
+        
         Dim i As Long
         For i = 1 To rowsByName.count
-            If StrComp(CStr(indexWs.Cells(CLng(rowsByName(i)), 1).value), idVal, vbTextCompare) = 0 Then indexRow = CLng(rowsByName(i)): Exit For
-        Next i
+            If StrComp(CStr(indexWs.Cells(CLng(rowsByName(i)), 1).value), idVal, vbTextCompare) = 0 Then
+                indexRow = CLng(rowsByName(i))
+                Exit For
+            End If
+            
+            Next i
+            
         If indexRow = 0 Then
-            If Not forSave Then message = "指定された利用者IDに一致する履歴が見つかりません": Exit Function
-            newRow = NextAppendRow(indexWs)
-            indexWs.Cells(newRow, 1).value = idVal
-            indexWs.Cells(newRow, 2).value = nm
-            indexWs.Cells(newRow, 3).value = kanaVal
-            indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
-            Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
-            EnsureHistorySheetInitialized wsTarget
-            ResolveUserHistorySheet = True
+            message = "w指定された利用者IDに一致する履歴が見つかりません"
             Exit Function
         End If
     
