@@ -472,6 +472,14 @@ Private Function GetControlCaptionSafe(ByVal ctl As Object) As String
     Err.Clear
 End Function
 
+Private Function GetControlTagSafe(ByVal ctrl As Object) As String
+    On Error Resume Next
+    GetControlTagSafe = CStr(ctrl.tag)
+    On Error GoTo 0
+End Function
+
+
+
 Private Function JoinCollection(ByVal col As Collection, ByVal delimiter As String) As String
     Dim i As Long
     For i = 1 To col.count
