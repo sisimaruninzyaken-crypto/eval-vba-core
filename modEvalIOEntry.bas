@@ -3242,9 +3242,59 @@ Private Function BuildDuplicateNameCandidatesMessage(ByVal indexWs As Worksheet,
     Next i
 
     If Len(lines) > 0 Then
-        BuildDuplicateNameCandidatesMessage = vbCrLf & vbCrLf & ":" & vbCrLf & lines
+                BuildDuplicateNameCandidatesMessage = vbCrLf & vbCrLf & ":" & vbCrLf & lines & _
+            vbCrLf & vbCrLf & "V‹K‚Ìê‡‚ÍŽŸ‚ÌID‚ðŽg—p‚Å‚«‚Ü‚·:" & vbCrLf & _
+            BuildNextAvailableUserIDCandidate(indexWs)
     End If
 End Function
+
+Private Function BuildNextAvailableUserIDCandidate(ByVal indexWs As Worksheet) As String
+    Dim lastRow As Long
+    Dim r As Long
+    Dim rawID As String
+    Dim idNum As Long
+    Dim maxID As Long
+    Dim maxDigits As Long
+    Dim hasNumericID As Boolean
+
+    lastRow = indexWs.Cells(indexWs.rows.count, 1).End(xlUp).row
+    For r = 2 To lastRow
+        rawID = Trim$(CStr(indexWs.Cells(r, 1).value))
+        If TryParseNumericUserID(rawID, idNum) Then
+            hasNumericID = True
+            If idNum > maxID Then maxID = idNum
+            If Len(rawID) > maxDigits Then maxDigits = Len(rawID)
+        End If
+    Next r
+
+    If Not hasNumericID Then
+        BuildNextAvailableUserIDCandidate = "001"
+        Exit Function
+    End If
+
+    If maxDigits < 3 Then maxDigits = 3
+    BuildNextAvailableUserIDCandidate = Format$(maxID + 1, String$(maxDigits, "0"))
+End Function
+
+Private Function TryParseNumericUserID(ByVal rawID As String, ByRef parsedID As Long) As Boolean
+    Dim numericValue As Double
+
+    If Len(rawID) = 0 Then Exit Function
+    If Not IsNumeric(rawID) Then Exit Function
+
+    On Error GoTo EH
+    numericValue = CDbl(rawID)
+    If numericValue < 0 Then Exit Function
+    If numericValue <> Fix(numericValue) Then Exit Function
+    If numericValue > CLng(&H7FFFFFFF) Then Exit Function
+
+    parsedID = CLng(numericValue)
+    TryParseNumericUserID = True
+    Exit Function
+EH:
+    TryParseNumericUserID = False
+End Function
+
 
 
 Private Sub UpdateEvalIndexMetadata(ByVal owner As Object, ByVal indexRow As Long, ByVal sheetName As String)
