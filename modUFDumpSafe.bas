@@ -58,7 +58,7 @@ Private Sub DumpControl_Safe(ByVal ws As Object, ByVal parent As Object, ByVal d
 
     ' parentの直下だけ列挙（Parent一致でフィルタ）
     Dim c As MSForms.Control
-    For Each c In parent.Controls
+    For Each c In parent.controls
         If (c.parent Is parent) Then
             DumpOne ws, c, depth + 1
 
@@ -111,7 +111,7 @@ Private Sub DumpPageChildren_Safe(ByVal ws As Object, ByVal pg As MSForms.Page, 
     On Error GoTo ErrH
 
     Dim c As MSForms.Control
-    For Each c In pg.Controls
+    For Each c In pg.controls
         If (c.parent Is pg) Then
             DumpOne ws, c, depth
 

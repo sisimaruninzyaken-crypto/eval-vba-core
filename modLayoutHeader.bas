@@ -8,19 +8,19 @@ Public Sub Align_LoadPrevButton_NextToHdrKana(ByVal f As Object)
     Dim refBtn As Object
 
     On Error Resume Next
-    Set hdr = f.Controls("frHeader")
+    Set hdr = f.controls("frHeader")
     If hdr Is Nothing Then Exit Sub
 
-    Set kana = hdr.Controls("txtHdrKana")
+    Set kana = hdr.controls("txtHdrKana")
     If kana Is Nothing Then Exit Sub
 
-    Set btn = hdr.Controls("cmdHdrLoadPrev")
-    If btn Is Nothing Then Set btn = f.Controls("btnLoadPrevCtl")
+    Set btn = hdr.controls("cmdHdrLoadPrev")
+    If btn Is Nothing Then Set btn = f.controls("btnLoadPrevCtl")
     If btn Is Nothing Then Exit Sub
 
-    Set refBtn = hdr.Controls("cmdSaveHeader")
-    If refBtn Is Nothing Then Set refBtn = hdr.Controls("cmdClearHeader")
-    If refBtn Is Nothing Then Set refBtn = hdr.Controls("cmdCloseHeader")
+    Set refBtn = hdr.controls("cmdSaveHeader")
+    If refBtn Is Nothing Then Set refBtn = hdr.controls("cmdClearHeader")
+    If refBtn Is Nothing Then Set refBtn = hdr.controls("cmdCloseHeader")
     On Error GoTo 0
 
     btn.Width = 180

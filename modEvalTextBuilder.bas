@@ -6,11 +6,11 @@ Public Sub Preview_NameToHeader()
 
 
     Dim hdr As MSForms.Frame
-    Set hdr = f.Controls("frHeader")
+    Set hdr = f.controls("frHeader")
     Call Align_LoadPrevButton_NextToHdrKana(f)
 
     Dim btn As MSForms.CommandButton
-    Set btn = hdr.Controls("cmdClearHeader")
+    Set btn = hdr.controls("cmdClearHeader")
     
     Dim gap As Single: gap = 10
     Dim pad As Single: pad = 8
@@ -22,10 +22,10 @@ Public Sub Preview_NameToHeader()
 
     '--- create or get header label ---
     On Error Resume Next
-    Set lbl = hdr.Controls("lblHdrName")
+    Set lbl = hdr.controls("lblHdrName")
     On Error GoTo 0
     If lbl Is Nothing Then
-    Set lbl = hdr.Controls.Add("Forms.Label.1", "lblHdrName", True)
+    Set lbl = hdr.controls.Add("Forms.Label.1", "lblHdrName", True)
     lbl.caption = "éÅñº"
     lbl.AutoSize = True
     lbl.Width = lbl.Width + 8   ' Å© Ç±Ç±
@@ -34,15 +34,15 @@ End If
 
     '--- create or get header textbox ---
     On Error Resume Next
-    Set txt = hdr.Controls("txtHdrName")
+    Set txt = hdr.controls("txtHdrName")
     On Error GoTo 0
     If txt Is Nothing Then
-        Set txt = hdr.Controls.Add("Forms.TextBox.1", "txtHdrName", True)
-        txt.SpecialEffect = f.Controls("txtName").SpecialEffect
-        txt.Font.name = f.Controls("txtName").Font.name
-        txt.Font.Size = f.Controls("txtName").Font.Size
-        txt.Height = f.Controls("txtName").Height
-        txt.Width = f.Controls("txtName").Width
+        Set txt = hdr.controls.Add("Forms.TextBox.1", "txtHdrName", True)
+        txt.SpecialEffect = f.controls("txtName").SpecialEffect
+        txt.Font.name = f.controls("txtName").Font.name
+        txt.Font.Size = f.controls("txtName").Font.Size
+        txt.Height = f.controls("txtName").Height
+        txt.Width = f.controls("txtName").Width
     End If
 
 
@@ -50,20 +50,20 @@ End If
 
     '--- create or get header kana label/textbox ---
     On Error Resume Next
-    Set lblKana = hdr.Controls("lblHdrKana")
+    Set lblKana = hdr.controls("lblHdrKana")
     On Error GoTo 0
     If lblKana Is Nothing Then
-        Set lblKana = hdr.Controls.Add("Forms.Label.1", "lblHdrKana", True)
+        Set lblKana = hdr.controls.Add("Forms.Label.1", "lblHdrKana", True)
         lblKana.caption = "Ç”ÇËÇ™Ç»"
         lblKana.AutoSize = True
         lblKana.Width = lblKana.Width + 8
     End If
 
     On Error Resume Next
-    Set txtKana = hdr.Controls("txtHdrKana")
+    Set txtKana = hdr.controls("txtHdrKana")
     On Error GoTo 0
     If txtKana Is Nothing Then
-        Set txtKana = hdr.Controls.Add("Forms.TextBox.1", "txtHdrKana", True)
+        Set txtKana = hdr.controls.Add("Forms.TextBox.1", "txtHdrKana", True)
         txtKana.SpecialEffect = txt.SpecialEffect
         txtKana.Font.name = txt.Font.name
         txtKana.Font.Size = txt.Font.Size
@@ -75,7 +75,7 @@ End If
    'Call frmEval.EnsureHeaderLoadPrevButton
 
     '--- value sync (one-way preview) ---
-    txt.text = f.Controls("txtName").text
+    txt.text = f.controls("txtName").text
 
     '--- position: [éÅñº][txt] [cmdClearHeader][cmdSaveHeader][cmdCloseHeader] ---
     txt.Top = btn.Top + (btn.Height - txt.Height) / 2
@@ -94,29 +94,29 @@ End If
     Dim txtID As MSForms.TextBox
 
     On Error Resume Next
-    Set lblID = hdr.Controls("lblHdrPID")
+    Set lblID = hdr.controls("lblHdrPID")
     On Error GoTo 0
     If lblID Is Nothing Then
-        Set lblID = hdr.Controls.Add("Forms.Label.1", "lblHdrPID", True)
+        Set lblID = hdr.controls.Add("Forms.Label.1", "lblHdrPID", True)
         lblID.caption = "ID"
         lblID.AutoSize = True
         lblID.Width = lblID.Width + 8
     End If
 
     On Error Resume Next
-    Set txtID = hdr.Controls("txtHdrPID")
+    Set txtID = hdr.controls("txtHdrPID")
     On Error GoTo 0
     If txtID Is Nothing Then
-        Set txtID = hdr.Controls.Add("Forms.TextBox.1", "txtHdrPID", True)
-        txtID.SpecialEffect = f.Controls("txtPID").SpecialEffect
-        txtID.Font.name = f.Controls("txtPID").Font.name
-        txtID.Font.Size = f.Controls("txtPID").Font.Size
-        txtID.Height = f.Controls("txtPID").Height
-        txtID.Width = f.Controls("txtPID").Width
+        Set txtID = hdr.controls.Add("Forms.TextBox.1", "txtHdrPID", True)
+        txtID.SpecialEffect = f.controls("txtPID").SpecialEffect
+        txtID.Font.name = f.controls("txtPID").Font.name
+        txtID.Font.Size = f.controls("txtPID").Font.Size
+        txtID.Height = f.controls("txtPID").Height
+        txtID.Width = f.controls("txtPID").Width
     End If
 
     '--- value sync (one-way preview) ---
-    txtID.text = f.Controls("txtPID").text
+    txtID.text = f.controls("txtPID").text
 
     '--- position: [ID][txt] [éÅñº][txt] [buttons...] ---
     txtID.Top = btn.Top + (btn.Height - txtID.Height) / 2

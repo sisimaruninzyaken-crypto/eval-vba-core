@@ -25,17 +25,17 @@ Public Sub TidyBasicInfo_TwoColumns()
     Dim riskH As Double
 
     Set uf = frmEval
-    Set mp = uf.Controls("MultiPage1")
+    Set mp = uf.controls("MultiPage1")
     Set pg = mp.Pages("Page1")
-    Set f1 = pg.Controls("Frame1")
-    Set f32 = f1.Controls("Frame32")
+    Set f1 = pg.controls("Frame1")
+    Set f32 = f1.controls("Frame32")
 
     ' 「変更点のみ保存」チェック非表示（本体はチェックボックス）
-    f32.Controls("chkDeltaOnly").Visible = False
-    f32.Controls("chkDeltaOnly").Height = 0
+    f32.controls("chkDeltaOnly").Visible = False
+    f32.controls("chkDeltaOnly").Height = 0
 
     ' 旧 Label### を全て隠す（Frame32直下のみ）
-    For Each c In f32.Controls
+    For Each c In f32.controls
         If TypeName(c) = "Label" Then
             If Left$(c.name, 5) = "Label" Then
                 c.Visible = False
@@ -45,42 +45,42 @@ Public Sub TidyBasicInfo_TwoColumns()
 
     ' 右カラム用コントロールを確保（無ければ追加）
     On Error Resume Next
-    Set txtED = f32.Controls("txtEDate")
+    Set txtED = f32.controls("txtEDate")
     On Error GoTo 0
     
     Set t = Nothing
     On Error Resume Next
-    Set t = f32.Controls("txtEvaluatorJob")
+    Set t = f32.controls("txtEvaluatorJob")
     On Error GoTo 0
-    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtEvaluatorJob", True)
+    If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtEvaluatorJob", True)
     t.tag = "BI.EvaluatorJob"
     
 
     On Error Resume Next
-    Set t = f32.Controls("txtAdmDate")
+    Set t = f32.controls("txtAdmDate")
     On Error GoTo 0
-    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtAdmDate", True)
+    If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtAdmDate", True)
 
     Set t = Nothing
     On Error Resume Next
-    Set t = f32.Controls("txtDisDate")
+    Set t = f32.controls("txtDisDate")
     On Error GoTo 0
-    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtDisDate", True)
+    If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtDisDate", True)
 
     Set t = Nothing
     On Error Resume Next
-    Set t = f32.Controls("txtTxCourse")
+    Set t = f32.controls("txtTxCourse")
     On Error GoTo 0
-    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtTxCourse", True)
+    If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtTxCourse", True)
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
 
     Set t = Nothing
     On Error Resume Next
-    Set t = f32.Controls("txtComplications")
+    Set t = f32.controls("txtComplications")
     On Error GoTo 0
-    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtComplications", True)
+    If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtComplications", True)
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
@@ -142,7 +142,7 @@ aCapL = Array( _
     ' Left: Needs（本人/家族）
     yL = yL + 10
     Call EnsureLabel(f32, "lblBI_NeedsPt", "本人Needs", xL + xLbl, yL, wLbl, rowH)
-    Set t = f32.Controls("txtNeedsPt")
+    Set t = f32.controls("txtNeedsPt")
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
@@ -150,7 +150,7 @@ aCapL = Array( _
 
     yL = yL + needsH + gapY
     Call EnsureLabel(f32, "lblBI_NeedsFam", "家族Needs", xL + xLbl, yL, wLbl, rowH)
-    Set t = f32.Controls("txtNeedsFam")
+    Set t = f32.controls("txtNeedsFam")
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
@@ -174,11 +174,11 @@ aCapL = Array( _
 
     ' Right: 医療情報
     Call EnsureLabel(f32, "lblBI_R_Header_Med", "【医療情報】", xR + xLbl, yR, wLblR, rowH)
-    f32.Controls("lblBI_R_Header_Med").Visible = False
+    f32.controls("lblBI_R_Header_Med").Visible = False
     yR = yR + gapY
 
-    If Not ControlExists(f32, "txtAdmDate") Then f32.Controls.Add "Forms.TextBox.1", "txtAdmDate"
-    If Not ControlExists(f32, "txtDisDate") Then f32.Controls.Add "Forms.TextBox.1", "txtDisDate"
+    If Not ControlExists(f32, "txtAdmDate") Then f32.controls.Add "Forms.TextBox.1", "txtAdmDate"
+    If Not ControlExists(f32, "txtDisDate") Then f32.controls.Add "Forms.TextBox.1", "txtDisDate"
 
 
     ' 順序：発症日→主診断→入院日→退院日
@@ -196,7 +196,7 @@ aCapL = Array( _
     ' 治療経過（複数行）
     Call EnsureLabel(f32, "lblBI_R_M_5", "治療経過", xR + xLbl, yR, wLblR, rowH)
     Call PlaceCtl(f32, "txtTxCourse", xRightCtl, yR - 1, wCtl, multiH)
-    With f32.Controls("txtTxCourse")
+    With f32.controls("txtTxCourse")
        .IMEMode = fmIMEModeHiragana
     End With
     yR = yR + multiH + gapY
@@ -204,7 +204,7 @@ aCapL = Array( _
     ' 合併症（複数行）
     Call EnsureLabel(f32, "lblBI_R_M_6", "合併症", xR + xLbl, yR, wLblR, rowH)
     Call PlaceCtl(f32, "txtComplications", xRightCtl, yR - 1, wCtl, multiH)
-    With f32.Controls("txtComplications")
+    With f32.controls("txtComplications")
      .IMEMode = fmIMEModeHiragana
     End With
     yR = yR + multiH + 8
@@ -213,7 +213,7 @@ aCapL = Array( _
     riskH = h - yR - 12
     If riskH < 24 Then riskH = 24
     Call PlaceCtl(f32, "Frame33", xR + xLbl, yR, wCol - 6, riskH)
-    Call ArrangeRiskChecks_TwoCols(f32.Controls("Frame33"))
+    Call ArrangeRiskChecks_TwoCols(f32.controls("Frame33"))
 
 End Sub
 
@@ -221,7 +221,7 @@ End Sub
 Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Double, ByVal t As Double, ByVal W As Double, ByVal h As Double)
     Dim c As Object
     On Error Resume Next
-    Set c = parent.Controls(nm)
+    Set c = parent.controls(nm)
     On Error GoTo 0
     If c Is Nothing Then Exit Sub
 
@@ -262,7 +262,7 @@ Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
 
     ' Collect checkboxes
     cnt = 0
-    For Each c In riskFrame.Controls
+    For Each c In riskFrame.controls
         If TypeName(c) = "CheckBox" Then
             cnt = cnt + 1
             ReDim Preserve names(1 To cnt)
@@ -298,7 +298,7 @@ Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
     idx = 1
     y = padT
     For i = 1 To half
-        Set c = riskFrame.Controls(names(idx))
+        Set c = riskFrame.controls(names(idx))
         c.Left = x1
         c.Top = y
         c.Width = colW
@@ -309,7 +309,7 @@ Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
 
     y = padT
     For i = 1 To (cnt - half)
-        Set c = riskFrame.Controls(names(idx))
+        Set c = riskFrame.controls(names(idx))
         c.Left = x2
         c.Top = y
         c.Width = colW
@@ -323,11 +323,11 @@ End Sub
 Private Sub EnsureLabel(ByVal parent As Object, ByVal nm As String, ByVal cap As String, ByVal L As Double, ByVal t As Double, ByVal W As Double, ByVal h As Double)
     Dim lb As Object
     On Error Resume Next
-    Set lb = parent.Controls(nm)
+    Set lb = parent.controls(nm)
     On Error GoTo 0
 
     If lb Is Nothing Then
-        Set lb = parent.Controls.Add("Forms.Label.1", nm)
+        Set lb = parent.controls.Add("Forms.Label.1", nm)
     End If
 
     lb.Visible = True

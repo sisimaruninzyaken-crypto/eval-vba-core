@@ -18,7 +18,7 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal o
 
     ' 1) 「筋緊張」 or 「反射」を含むページを特定
     On Error Resume Next
-    For Each ctl In owner.Controls
+    For Each ctl In owner.controls
         If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
@@ -38,8 +38,8 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal o
     Do While q.count > 0
         Set node = q(1): q.Remove 1
         On Error Resume Next
-        For Each ch In node.Controls
-            Set tmp = ch.Controls
+        For Each ch In node.controls
+            Set tmp = ch.controls
             If Err.Number = 0 Then q.Add ch     ' 子あり
             Err.Clear
             If TypeName(ch) = "ComboBox" Then combos.Add ch
@@ -105,11 +105,11 @@ vL = CStr(arr(pos + 1).value): If Len(vL) = 0 Then vL = CStr(arr(pos + 1).text)
     Dim note As String, cNote As Long
 
     On Error Resume Next
-    For Each box In target.Controls
+    For Each box In target.controls
         If TypeName(box) = "TextBox" Then
             If box.multiline Or box.Height > bestH Then Set noteCtl = box: bestH = box.Height
         ElseIf TypeName(box) = "Frame" Then
-            For Each subCtl In box.Controls
+            For Each subCtl In box.controls
                 If TypeName(subCtl) = "TextBox" Then
                     If subCtl.multiline Or subCtl.Height > bestH Then Set noteCtl = subCtl: bestH = subCtl.Height
                 End If
@@ -134,7 +134,7 @@ Public Sub LoadToneReflexFromSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal
     Dim ctl As Object, mp As Object, pg As Object, target As Object
     ' 1) 「筋緊張」or「反射」を含むページを特定
     On Error Resume Next
-    For Each ctl In owner.Controls
+    For Each ctl In owner.controls
         If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
@@ -179,8 +179,8 @@ cont:
     Do While q.count > 0
         Set node = q(1): q.Remove 1
         On Error Resume Next
-        For Each ch In node.Controls
-            Set tmp = ch.Controls
+        For Each ch In node.controls
+            Set tmp = ch.controls
             If Err.Number = 0 Then q.Add ch
             Err.Clear
             If TypeName(ch) = "ComboBox" Then combos.Add ch
@@ -278,11 +278,11 @@ On Error GoTo 0
     note = CStr(ws.Cells(R, cNote).value)
 
     On Error Resume Next
-    For Each box In target.Controls
+    For Each box In target.controls
         If TypeName(box) = "TextBox" Then
             If box.multiline Or box.Height > bestH Then Set noteCtl = box: bestH = box.Height
         ElseIf TypeName(box) = "Frame" Then
-            For Each subCtl In box.Controls
+            For Each subCtl In box.controls
                 If TypeName(subCtl) = "TextBox" Then
                     If subCtl.multiline Or subCtl.Height > bestH Then Set noteCtl = subCtl: bestH = subCtl.Height
                 End If
@@ -308,10 +308,10 @@ End Sub
 
 
 Public Sub SetPainHeights(ByVal h As Single)
-    With frmEval.Controls("Frame12")
-        .Controls("fraPainFactors").Height = h
-        .Controls("fraPainSite").Height = h
-        Debug.Print "[heights]", .Controls("fraPainFactors").Height, .Controls("fraPainSite").Height
+    With frmEval.controls("Frame12")
+        .controls("fraPainFactors").Height = h
+        .controls("fraPainSite").Height = h
+        Debug.Print "[heights]", .controls("fraPainFactors").Height, .controls("fraPainSite").Height
     End With
 End Sub
 
@@ -319,10 +319,10 @@ End Sub
 
 Public Sub PlacePainFactorsBesideSite()
     Dim z As MSForms.Frame, pf As MSForms.Frame, ps As MSForms.Frame, lb As MSForms.label
-    Set z = frmEval.Controls("Frame12")
-    Set pf = z.Controls("fraPainFactors")    ' 誘因・軽減因子（枠）
-    Set ps = z.Controls("fraPainSite")       ' 疼痛部位（枠）
-    Set lb = z.Controls("lblPainFactors")    ' ラベル
+    Set z = frmEval.controls("Frame12")
+    Set pf = z.controls("fraPainFactors")    ' 誘因・軽減因子（枠）
+    Set ps = z.controls("fraPainSite")       ' 疼痛部位（枠）
+    Set lb = z.controls("lblPainFactors")    ' ラベル
 
     Dim m As Single, avail As Single
     m = 12                                   ' 余白

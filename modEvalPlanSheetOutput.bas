@@ -140,25 +140,28 @@ End Function
 
 Private Function BuildHomeEnvText(ByVal owner As Object) As String
     Dim names As Variant
-    names = Array("chkBIHomeEnv_Entrance", "chkBIHomeEnv_Genkan", "chkBIHomeEnv_IndoorStep", "chkBIHomeEnv_Stairs", "chkBIHomeEnv_Handrail", "chkBIHomeEnv_Slope", "chkBIHomeEnv_NarrowPath")
-
+    names = TryGetHomeEnvControlNames()
+    If IsEmpty(names) Then names = CollectHomeEnvCheckNames(owner)
+    
     Dim labels As Collection
     Set labels = New Collection
 
-    Dim i As Long
-    For i = LBound(names) To UBound(names)
-        Dim ctl As Object
-        Set ctl = FindControlByName(owner, CStr(names(i)))
-        If Not ctl Is Nothing Then
-            If GetCheckValueSafe(ctl) Then labels.Add NzText(GetControlCaptionSafe(ctl), "")
-        End If
-    Next i
-
+    If Not IsEmpty(names) Then
+        Dim i As Long
+        For i = LBound(names) To UBound(names)
+            Dim ctl As Object
+            Set ctl = FindControlByName(owner, CStr(names(i)))
+            If Not ctl Is Nothing Then
+                If GetCheckValueSafe(ctl) Then labels.Add NzText(GetControlCaptionSafe(ctl), "")
+            End If
+        Next i
+    End If
+    
     Dim text As String
     text = JoinCollection(labels, "、")
 
     Dim note As String
-    note = GetCtrlTextSafeAny(owner, "txtHomeNote", "txtBIHomeEnvNote")
+    note = GetCtrlTextSafeAny(owner, "txtBIHomeEnvNote", "txtHomeNote")
     If Len(note) > 0 Then
         If Len(text) > 0 Then
             text = text & "。備考：" & note
@@ -169,6 +172,65 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
 
     BuildHomeEnvText = text
 End Function
+
+Private Function TryGetHomeEnvControlNames() As Variant
+    On Error Resume Next
+    TryGetHomeEnvControlNames = Application.Run("modEvalIOEntry.HomeEnvControlNames")
+    If Err.Number <> 0 Then
+        Err.Clear
+        TryGetHomeEnvControlNames = Application.Run("HomeEnvControlNames")
+    End If
+    On Error GoTo 0
+End Function
+
+Private Function CollectHomeEnvCheckNames(ByVal owner As Object) As Variant
+    Dim names As Collection
+    Set names = New Collection
+    CollectHomeEnvCheckNamesFromContainer owner, names
+    If names.count = 0 Then Exit Function
+
+    Dim arr() As String
+    ReDim arr(0 To names.count - 1)
+
+    Dim i As Long
+    For i = 1 To names.count
+        arr(i - 1) = CStr(names(i))
+    Next i
+    CollectHomeEnvCheckNames = arr
+End Function
+
+Private Sub CollectHomeEnvCheckNamesFromContainer(ByVal container As Object, ByVal names As Collection)
+    If container Is Nothing Then Exit Sub
+
+    Dim controls As Object
+    Set controls = Nothing
+    On Error Resume Next
+    Set controls = container.controls
+    On Error GoTo 0
+    If controls Is Nothing Then Exit Sub
+
+    Dim ctl As Object
+    For Each ctl In controls
+        Dim isCheck As Boolean
+        Dim tagText As String
+        isCheck = (StrComp(TypeName(ctl), "CheckBox", vbTextCompare) = 0)
+        tagText = NzText(GetControlTagSafe(ctl), "")
+
+        If isCheck Then
+            If Len(tagText) >= Len("BI.HomeEnv.") Then
+                If StrComp(Left$(tagText, Len("BI.HomeEnv.")), "BI.HomeEnv.", vbTextCompare) = 0 Then
+                    On Error Resume Next
+                    names.Add CStr(ctl.name), CStr(ctl.name)
+                    On Error GoTo 0
+                End If
+            End If
+        End If
+
+        CollectHomeEnvCheckNamesFromContainer ctl, names
+    Next ctl
+End Sub
+
+
 
 Private Function FormatWarekiFull(ByVal dateText As String) As String
     Dim dt As Date

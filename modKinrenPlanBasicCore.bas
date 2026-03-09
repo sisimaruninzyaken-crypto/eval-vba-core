@@ -584,10 +584,10 @@ Public Function GetLowerMMTMap_FromFrmEval() As Object
     
     Set dict = CreateObject("Scripting.Dictionary")
     
-    Set mp = frmEval.Controls("MultiPage1").Pages(2).Controls("mpMMTChild")
+    Set mp = frmEval.controls("MultiPage1").Pages(2).controls("mpMMTChild")
     Set p = mp.Pages(1) ' ‰ºŽˆ
     
-    For Each c In p.Controls
+    For Each c In p.controls
         If TypeName(c) = "Label" Then
             If Left$(c.name, 4) = "lbl_" Then
                 nm = CStr(c.caption)
@@ -612,7 +612,7 @@ End Function
 Private Function GetMMTValueSafe(ByVal container As Object, ByVal cboName As String) As Double
     On Error GoTo EH
     Dim v As String
-    v = Trim$(container.Controls(cboName).value & "")
+    v = Trim$(container.controls(cboName).value & "")
     If Len(v) = 0 Then
         GetMMTValueSafe = 99
         Exit Function

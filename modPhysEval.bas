@@ -58,12 +58,12 @@ Public Sub PlaceMemoBelow( _
 
     ' 既存のメモとラベルを除去  ← ここ、半角の " に！
     On Error Resume Next
-    If ControlExists(host, memoName) Then host.Controls.Remove memoName
+    If ControlExists(host, memoName) Then host.controls.Remove memoName
 
     Dim i As Long
-    For i = host.Controls.count - 1 To 0 Step -1
-        If host.Controls(i).name = memoName & "_lbl" Then
-        host.Controls.Remove i
+    For i = host.controls.count - 1 To 0 Step -1
+        If host.controls(i).name = memoName & "_lbl" Then
+        host.controls.Remove i
         Exit For
     End If
 Next i
@@ -87,7 +87,7 @@ If memoTop > safeTopMax Then memoTop = safeTopMax
 
 ' 見出しラベル
 Dim lbl As MSForms.label
-Set lbl = host.Controls.Add("Forms.Label.1", memoName & "_lbl")
+Set lbl = host.controls.Add("Forms.Label.1", memoName & "_lbl")
 With lbl
     .caption = labelText
     .Left = PAD_X
@@ -101,7 +101,7 @@ End With
 ' 固定下寄せはやめる：備考欄は「評価項目の直下(yBottom)」に置き、縦サイズは MEMO_DESIRED_H を上限にして下に伸びすぎないようにする（2026-01）
 ' テキストボックス本体
 Dim txt As MSForms.TextBox, hCalc As Single
-Set txt = host.Controls.Add("Forms.TextBox.1", memoName)
+Set txt = host.controls.Add("Forms.TextBox.1", memoName)
 With txt
     .Left = PAD_X
     .Top = lbl.Top + ROW_H
@@ -200,7 +200,7 @@ Private Function EnsurePhysMulti(owner As frmEval) As MSForms.MultiPage
     End If
 
     Dim c As Control
-    For Each c In host.Controls
+    For Each c In host.controls
         If TypeOf c Is MSForms.MultiPage Then
             If c.name = MP_PHYS_NAME Then
                 Set EnsurePhysMulti = c
@@ -209,7 +209,7 @@ Private Function EnsurePhysMulti(owner As frmEval) As MSForms.MultiPage
         End If
     Next
 
-    Set EnsurePhysMulti = host.Controls.Add("Forms.MultiPage.1")
+    Set EnsurePhysMulti = host.controls.Add("Forms.MultiPage.1")
     With EnsurePhysMulti
         .name = MP_PHYS_NAME
         .Left = PAD_X
@@ -228,7 +228,7 @@ End Function
 
 Private Function FindHostByName(frm As frmEval, hostName As String) As MSForms.Frame
     Dim c As Control
-    For Each c In frm.Controls
+    For Each c In frm.controls
         If TypeOf c Is MSForms.Frame Then
             If c.name = hostName Then Set FindHostByName = c: Exit Function
         End If
@@ -250,7 +250,7 @@ End Function
 Public Function EnsureHostFrame(pg As MSForms.Page) As MSForms.Frame
 
     Dim c As Control
-    For Each c In pg.Controls
+    For Each c In pg.controls
         If TypeOf c Is MSForms.Frame Then
             Set EnsureHostFrame = c
             Exit Function
@@ -259,7 +259,7 @@ Public Function EnsureHostFrame(pg As MSForms.Page) As MSForms.Frame
 
     ' ★ ここから下は「初回のみ」
     Dim f As MSForms.Frame
-    Set f = pg.Controls.Add("Forms.Frame.1")
+    Set f = pg.controls.Add("Forms.Frame.1")
     With f
     .caption = ""
     .Left = PAD_X
@@ -304,23 +304,23 @@ End Sub
 
 Private Function AddHeaderRow(host As MSForms.Frame, title As String, y As Single) As Single
     Dim hTitle As MSForms.label, hR As MSForms.label, hL As MSForms.label
-    Set hTitle = host.Controls.Add("Forms.Label.1")
+    Set hTitle = host.controls.Add("Forms.Label.1")
     With hTitle: .caption = title: .Left = PAD_X: .Top = y: .Width = COL1_W: .Height = ROW_H: .Font.Bold = True: End With
-    Set hR = host.Controls.Add("Forms.Label.1")
+    Set hR = host.controls.Add("Forms.Label.1")
     With hR: .caption = "右": .Left = PAD_X + COL1_W + 8: .Top = y: .Width = COL_EDT_W: .Height = ROW_H: .TextAlign = fmTextAlignCenter: .Font.Bold = True: End With
-    Set hL = host.Controls.Add("Forms.Label.1")
+    Set hL = host.controls.Add("Forms.Label.1")
     With hL: .caption = "左": .Left = hR.Left + COL_EDT_W + 8: .Top = y: .Width = COL_EDT_W: .Height = ROW_H: .TextAlign = fmTextAlignCenter: .Font.Bold = True: End With
     AddHeaderRow = y + ROW_H + 2
 End Function
 
 Private Function AddMMTRow(owner As frmEval, host As MSForms.Frame, muscle As String, y As Single) As Single
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl: .caption = muscle: .Left = PAD_X: .Top = y: .Width = COL1_W: .Height = ROW_H: End With
 
     Dim cboR As MSForms.ComboBox, cboL As MSForms.ComboBox
-    Set cboR = host.Controls.Add("Forms.ComboBox.1")
-    Set cboL = host.Controls.Add("Forms.ComboBox.1")
+    Set cboR = host.controls.Add("Forms.ComboBox.1")
+    Set cboL = host.controls.Add("Forms.ComboBox.1")
 
     SetupMMTCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = y
     SetupMMTCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = y
@@ -350,12 +350,12 @@ End Sub
 
 Private Function AddSensoryRow(host As MSForms.Frame, itemKey As String, y As Single) As Single
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl: .caption = Replace(itemKey, "_", " / "): .Left = PAD_X: .Top = y: .Width = COL1_W: .Height = ROW_H: End With
 
     Dim cboR As MSForms.ComboBox, cboL As MSForms.ComboBox
-    Set cboR = host.Controls.Add("Forms.ComboBox.1")
-    Set cboL = host.Controls.Add("Forms.ComboBox.1")
+    Set cboR = host.controls.Add("Forms.ComboBox.1")
+    Set cboL = host.controls.Add("Forms.ComboBox.1")
     SetupSensoryCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = y
     SetupSensoryCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = y
 
@@ -379,12 +379,12 @@ End Sub
 
 Private Function AddMASRow(host As MSForms.Frame, groupName As String, y As Single) As Single
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl: .caption = groupName: .Left = PAD_X: .Top = y: .Width = COL1_W: .Height = ROW_H: End With
 
     Dim cboR As MSForms.ComboBox, cboL As MSForms.ComboBox
-    Set cboR = host.Controls.Add("Forms.ComboBox.1")
-    Set cboL = host.Controls.Add("Forms.ComboBox.1")
+    Set cboR = host.controls.Add("Forms.ComboBox.1")
+    Set cboL = host.controls.Add("Forms.ComboBox.1")
     SetupMASCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = y
     SetupMASCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = y
 
@@ -410,12 +410,12 @@ End Sub
 
 Private Function AddReflexRow(host As MSForms.Frame, reflexName As String, y As Single) As Single
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl: .caption = reflexName: .Left = PAD_X: .Top = y: .Width = COL1_W: .Height = ROW_H: End With
 
     Dim cboR As MSForms.ComboBox, cboL As MSForms.ComboBox
-    Set cboR = host.Controls.Add("Forms.ComboBox.1")
-    Set cboL = host.Controls.Add("Forms.ComboBox.1")
+    Set cboR = host.controls.Add("Forms.ComboBox.1")
+    Set cboL = host.controls.Add("Forms.ComboBox.1")
     SetupReflexCombo cboR: cboR.Left = PAD_X + COL1_W + 8: cboR.Top = y
     SetupReflexCombo cboL: cboL.Left = cboR.Left + COL_EDT_W + 8: cboL.Top = y
 
@@ -442,7 +442,7 @@ Private Function AddDeformText(owner As frmEval, host As MSForms.Frame, y As Sin
     Dim lbl As MSForms.label, txt As MSForms.TextBox
 
     ' ラベル（←他と同じ列幅を使う）
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = "変形（所見）"
         .Left = PAD_X
@@ -452,7 +452,7 @@ Private Function AddDeformText(owner As frmEval, host As MSForms.Frame, y As Sin
     End With
 
     ' テキスト（←入力列の開始位置にスナップ）
-    Set txt = host.Controls.Add("Forms.TextBox.1")
+    Set txt = host.controls.Add("Forms.TextBox.1")
     With txt
         .Left = PAD_X + COL1_W + 8      ' ★統一！
         .Top = y
@@ -489,7 +489,7 @@ Private Function AddPainRow(owner As frmEval, host As MSForms.Frame, y As Single
 
     ' ラベル「疼痛（部位）」
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = "疼痛（部位）"
         .Left = PAD_X: .Top = y
@@ -498,13 +498,13 @@ Private Function AddPainRow(owner As frmEval, host As MSForms.Frame, y As Single
 
     ' 右側に NRS（ラベル＋コンボ）を先に配置して基準にする
     Dim lblN As MSForms.label, cbo As MSForms.ComboBox
-    Set lblN = host.Controls.Add("Forms.Label.1")
+    Set lblN = host.controls.Add("Forms.Label.1")
     With lblN
         .caption = "NRS"
         .Top = y: .Width = NRS_LBL_W: .Height = ROW_H
     End With
 
-    Set cbo = host.Controls.Add("Forms.ComboBox.1")
+    Set cbo = host.controls.Add("Forms.ComboBox.1")
     With cbo
         .Top = y: .Width = NRS_CBO_W: .Height = ROW_H
         .Style = fmStyleDropDownList
@@ -523,7 +523,7 @@ Private Function AddPainRow(owner As frmEval, host As MSForms.Frame, y As Single
 
     ' 部位テキストは「入力列開始」から NRS 手前までを自動幅で
     Dim txt As MSForms.TextBox
-    Set txt = host.Controls.Add("Forms.TextBox.1")
+    Set txt = host.controls.Add("Forms.TextBox.1")
     With txt
         .Top = y
         .Left = PAD_X + COL1_W + GAP_X
@@ -546,7 +546,7 @@ End Function
 
 Private Sub AddNotesBox(owner As frmEval, host As MSForms.Frame, keyPrefix As String)
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = "備考（自由記述）"
         .Left = PAD_X
@@ -555,7 +555,7 @@ Private Sub AddNotesBox(owner As frmEval, host As MSForms.Frame, keyPrefix As St
     End With
 
     Dim txt As MSForms.TextBox
-    Set txt = host.Controls.Add("Forms.TextBox.1")
+    Set txt = host.controls.Add("Forms.TextBox.1")
     With txt
         .Left = lbl.Left + lbl.Width + 8
          Dim availW As Single
@@ -593,7 +593,7 @@ End Function
 
 Private Function FindMultiPageRecursive(parent As Object) As MSForms.MultiPage
     Dim c As Control
-    For Each c In parent.Controls
+    For Each c In parent.controls
         If TypeOf c Is MSForms.MultiPage Then
             Debug.Print "  [hit] MP Name=" & c.name & " (Parent=" & TypeName(parent) & ")"
             If Not IsKnownMpADL(c) Then
@@ -668,13 +668,13 @@ Public Sub EnsurePhysicalFunctionTabs_Root(owner As frmEval)
     ' ページ内に“子タブ用”のMultiPage（mpPhys）を追加/取得
     Dim mp As MSForms.MultiPage
     Dim c As Control
-    For Each c In host.Controls
+    For Each c In host.controls
         If TypeOf c Is MSForms.MultiPage Then
             If c.name = MP_PHYS_NAME Then Set mp = c: Exit For
         End If
     Next
     If mp Is Nothing Then
-        Set mp = host.Controls.Add("Forms.MultiPage.1")
+        Set mp = host.controls.Add("Forms.MultiPage.1")
         With mp
             .name = MP_PHYS_NAME
             .Left = PAD_X
@@ -726,7 +726,7 @@ End Sub
 Private Sub DumpMP_Recur(parent As Object, ByVal depth As Long)
     Dim c As Control, i As Long, pad$
     pad = String$(depth * 2, " ")
-    For Each c In parent.Controls
+    For Each c In parent.controls
         If TypeOf c Is MSForms.MultiPage Then
             On Error Resume Next
             Debug.Print pad & "MP Name=" & c.name & " Pages=" & c.Pages.count
@@ -761,13 +761,13 @@ Public Sub EnsurePhysicalFunctionTabs_Under(owner As frmEval, root As MSForms.Mu
         ' --- 子タブ MultiPage（mpPhys）を作る or 取得 ---
     Dim mp As MSForms.MultiPage
     Dim c As Control
-    For Each c In host.Controls
+    For Each c In host.controls
         If TypeOf c Is MSForms.MultiPage Then
             If c.name = MP_PHYS_NAME Then Set mp = c: Exit For
         End If
     Next
     If mp Is Nothing Then
-        Set mp = host.Controls.Add("Forms.MultiPage.1")
+        Set mp = host.controls.Add("Forms.MultiPage.1")
         With mp
             .name = MP_PHYS_NAME
             .Left = PAD_X
@@ -870,7 +870,7 @@ End Sub
 '=== そのフレーム内で一番下の位置（Top+Height）を返す ===
 Private Function GetContentBottom(host As MSForms.Frame) As Single
     Dim c As Control, bottom As Single
-    For Each c In host.Controls
+    For Each c In host.controls
         If c.Visible Then
             If c.Top + c.Height > bottom Then bottom = c.Top + c.Height
         End If
@@ -893,7 +893,7 @@ Private Function AddROMRow_Compact( _
 Dim yPix As Single: yPix = PX(y)
 
 Dim txtR As MSForms.TextBox, txtL As MSForms.TextBox
-Set txtR = host.Controls.Add("Forms.TextBox.1")
+Set txtR = host.controls.Add("Forms.TextBox.1")
 With txtR
     .Left = PX(xR)
     .Top = yPix
@@ -903,7 +903,7 @@ With txtR
     .IMEMode = fmIMEModeDisable
 End With
 
-Set txtL = host.Controls.Add("Forms.TextBox.1")
+Set txtL = host.controls.Add("Forms.TextBox.1")
 With txtL
     .Left = PX(xL)
     .Top = yPix
@@ -932,7 +932,7 @@ End Sub
 ' 見出し（【肩】など）
 Private Function ROM_AddHeader(host As MSForms.Frame, title As String, y0 As Single) As Single
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = "【" & title & "】"
         .Left = PAD_X: .Top = y0: .Width = COL1_W: .Height = ROM_ROW_H
@@ -956,7 +956,7 @@ Private Function AddROMDirHeader_Compact(host As MSForms.Frame, y0 As Single) As
 
     Dim lblR As MSForms.label, lblL As MSForms.label
 
-    Set lblR = host.Controls.Add("Forms.Label.1")
+    Set lblR = host.controls.Add("Forms.Label.1")
     With lblR
         .caption = "R"
         .Left = PX(xR)                        ' ← ここに PX
@@ -967,7 +967,7 @@ Private Function AddROMDirHeader_Compact(host As MSForms.Frame, y0 As Single) As
         .Font.Bold = True
     End With
 
-    Set lblL = host.Controls.Add("Forms.Label.1")
+    Set lblL = host.controls.Add("Forms.Label.1")
     With lblL
         .caption = "L"
         .Left = PX(xL)                        ' ← ここに PX
@@ -992,9 +992,9 @@ Public Sub BuildROMSection_TwoCols(host As MSForms.Frame)
 
     ' 既存配置があれば除去（重複描画防止）
     On Error Resume Next
-    host.Controls.Remove "fraROM_Upper"
-    host.Controls.Remove "fraROM_Lower"
-    host.Controls.Remove "txtROMMemo"
+    host.controls.Remove "fraROM_Upper"
+    host.controls.Remove "fraROM_Lower"
+    host.controls.Remove "txtROMMemo"
     On Error GoTo 0
 
     ' ←ここは残す：On Error GoTo 0 の直後から差し替え
@@ -1007,7 +1007,7 @@ colW = PX((W - (PAD_X * 2) - COL_GAP_X) / 2)
 Dim frUL As MSForms.Frame, frLL As MSForms.Frame
 
 ' 左列フレーム（上肢）
-Set frUL = host.Controls.Add("Forms.Frame.1", "fraROM_Upper")
+Set frUL = host.controls.Add("Forms.Frame.1", "fraROM_Upper")
 With frUL
     .caption = ""
     .Left = PX(PAD_X)                 ' ★整数丸め
@@ -1019,7 +1019,7 @@ With frUL
 End With
 
 ' 右列フレーム（下肢）
-Set frLL = host.Controls.Add("Forms.Frame.1", "fraROM_Lower")
+Set frLL = host.controls.Add("Forms.Frame.1", "fraROM_Lower")
 With frLL
     .caption = ""
     .Left = PX(PAD_X + colW + COL_GAP_X)  ' ★整数丸め
@@ -1189,7 +1189,7 @@ Private Sub NormalizeRomColumns(host As MSForms.Frame)
     Dim W As Single: W = PX(ROM_COL_EDT_W)
 
     Dim c As Control
-    For Each c In host.Controls
+    For Each c In host.controls
         Select Case TypeName(c)
             Case "TextBox"
                 ' タグに「右」「左」が入るようにしておく（③参照）
@@ -1237,7 +1237,7 @@ End Sub
 '---- 小物：行ビルダ（見出し／コンボ行／チェック行）----
 Private Function AddSectionTitle(host As MSForms.Frame, ttl As String, y As Single) As Single
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = ttl
         .Left = PX(PAD_X)
@@ -1258,7 +1258,7 @@ Private Function AddComboRow(host As MSForms.Frame, cap As String, nameCombo As 
     xCombo = PX(PAD_X + wCaption + 8)
 
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = cap
         .Left = xCaption
@@ -1269,7 +1269,7 @@ Private Function AddComboRow(host As MSForms.Frame, cap As String, nameCombo As 
     End With
 
     Dim cbo As MSForms.ComboBox
-    Set cbo = host.Controls.Add("Forms.ComboBox.1", nameCombo, True)
+    Set cbo = host.controls.Add("Forms.ComboBox.1", nameCombo, True)
     With cbo
         .Left = xCombo
         .Top = PX(y)
@@ -1289,7 +1289,7 @@ Private Function AddCheckRow(host As MSForms.Frame, cap As String, nameChk As St
     xChk = PX(PAD_X + wCaption + 8)
 
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = cap
         .Left = xCaption
@@ -1300,7 +1300,7 @@ Private Function AddCheckRow(host As MSForms.Frame, cap As String, nameChk As St
     End With
 
     Dim chk As MSForms.CheckBox
-    Set chk = host.Controls.Add("Forms.CheckBox.1", nameChk, True)
+    Set chk = host.controls.Add("Forms.CheckBox.1", nameChk, True)
     With chk
         .caption = "有"
         .Left = xChk
@@ -1320,7 +1320,7 @@ Public Sub BuildROMTabs(host As MSForms.Frame)
     Debug.Print "[ROM] BuildROMTabs called"
 
     Dim mp As MSForms.MultiPage
-    Set mp = host.Controls.Add("Forms.MultiPage.1", "mpROM")
+    Set mp = host.controls.Add("Forms.MultiPage.1", "mpROM")
     With mp
         .Left = PX(PAD_X)
         .Top = PX(PAD_Y)
@@ -1422,7 +1422,7 @@ Private Function BuildRomJointBlock(host As MSForms.Frame, _
             motions As Variant, y0 As Single) As Single
 
     Dim fr As MSForms.Frame
-    Set fr = host.Controls.Add("Forms.Frame.1")
+    Set fr = host.controls.Add("Forms.Frame.1")
     With fr
         .caption = jointTitle
         .Left = PX(PAD_X)
@@ -1440,13 +1440,13 @@ Private Function BuildRomJointBlock(host As MSForms.Frame, _
     xL = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W)
 
     Dim lblR As MSForms.label, lblL As MSForms.label
-    Set lblR = fr.Controls.Add("Forms.Label.1")
+    Set lblR = fr.controls.Add("Forms.Label.1")
     With lblR
         .caption = "R": .Left = xR: .Top = PX(ROM_GROUP_PAD)
         .Width = ROM_COL_EDT_W: .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter: .Font.Bold = True
     End With
-    Set lblL = fr.Controls.Add("Forms.Label.1")
+    Set lblL = fr.controls.Add("Forms.Label.1")
     With lblL
         .caption = "L": .Left = xL: .Top = PX(ROM_GROUP_PAD)
         .Width = ROM_COL_EDT_W: .Height = ROM_ROW_H
@@ -1477,7 +1477,7 @@ Private Function BuildRomMotionRow(host As MSForms.Frame, _
         y0 As Single, xName As Single, xR As Single, xL As Single) As Single
 
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = GetMotionCaption(jointKey, motionKey)
         .Left = xName: .Top = PX(y0)
@@ -1488,7 +1488,7 @@ Private Function BuildRomMotionRow(host As MSForms.Frame, _
 
     Dim tR As MSForms.TextBox, tL As MSForms.TextBox
     ' 右（R）
-Set tR = host.Controls.Add("Forms.TextBox.1", _
+Set tR = host.controls.Add("Forms.TextBox.1", _
     "txtROM_" & region & "_" & jointKey & "_" & motionKey & "_R")
 With tR
     .Left = xR: .Top = PX(y0)
@@ -1498,7 +1498,7 @@ With tR
 End With
 
 ' 左（L）
-Set tL = host.Controls.Add("Forms.TextBox.1", _
+Set tL = host.controls.Add("Forms.TextBox.1", _
     "txtROM_" & region & "_" & jointKey & "_" & motionKey & "_L")
 With tL
     .Left = xL: .Top = PX(y0)
@@ -1559,7 +1559,7 @@ End Function
 Private Sub AttachTxtImeHookInFrame(fr As MSForms.Frame)
     On Error Resume Next
     Dim ctl As MSForms.Control
-    For Each ctl In fr.Controls
+    For Each ctl In fr.controls
         If TypeOf ctl Is MSForms.TextBox Then
             Dim Hook As TxtImeHook
             Set Hook = New TxtImeHook

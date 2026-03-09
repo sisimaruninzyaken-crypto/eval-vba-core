@@ -95,14 +95,14 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
     Next cand
     
     ' 2) Frame を走査して特徴で推定
-    For i = 0 To pg.Controls.count - 1
-        Set c = pg.Controls(i)
+    For i = 0 To pg.controls.count - 1
+        Set c = pg.controls(i)
         If TypeName(c) = "Frame" Then
             
             ' mpMMTChild を持っているか（アクセスエラーもあり得るのでガード）
             Set mpProbe = Nothing
             On Error Resume Next
-            Set mpProbe = c.Controls("mpMMTChild")
+            Set mpProbe = c.controls("mpMMTChild")
             On Error GoTo 0
             
             If Not mpProbe Is Nothing Then
@@ -115,9 +115,9 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
             
             ' MultiPage 子を持っているか
             On Error Resume Next
-            If c.Controls.count > 0 Then
-                For j = 0 To c.Controls.count - 1
-                    If TypeName(c.Controls(j)) = "MultiPage" Then
+            If c.controls.count > 0 Then
+                For j = 0 To c.controls.count - 1
+                    If TypeName(c.controls(j)) = "MultiPage" Then
 #If APP_DEBUG Then
                         Debug.Print "[MMT][HOST] inferred=" & c.name & " (has MultiPage child)"
 #End If
@@ -143,14 +143,14 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
     If host Is Nothing Then Exit Function
     
     On Error Resume Next
-    Set mp = host.Controls("mpMMTChild")
+    Set mp = host.controls("mpMMTChild")
     On Error GoTo 0
     
     If mp Is Nothing Then
         On Error Resume Next
-        For i = 0 To host.Controls.count - 1
-            If TypeName(host.Controls(i)) = "MultiPage" Then
-                Set mp = host.Controls(i)
+        For i = 0 To host.controls.count - 1
+            If TypeName(host.controls(i)) = "MultiPage" Then
+                Set mp = host.controls(i)
                 Exit For
             End If
         Next i
@@ -159,7 +159,7 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
     
     If mp Is Nothing Then
         On Error Resume Next
-        Set mp = host.Controls.Add("Forms.MultiPage.1", "mpMMTChild", True)
+        Set mp = host.controls.Add("Forms.MultiPage.1", "mpMMTChild", True)
         On Error GoTo 0
         
         If mp Is Nothing Then Exit Function
@@ -191,7 +191,7 @@ Public Function GetMMTPage(ByVal frm As Object) As Object
     If frm Is Nothing Then Exit Function
 
     ' フォーム直下の MultiPage を総なめ
-    For Each ctl In frm.Controls
+    For Each ctl In frm.controls
         If TypeName(ctl) = "MultiPage" Then
             Dim i As Long
             For i = 0 To ctl.Pages.count - 1
@@ -211,7 +211,7 @@ Private Function PageHasMMTSignature(ByVal pg As Object) As Boolean
     If pg Is Nothing Then Exit Function
 
     ' 「mpMMTChild」や「Frame9」など、MMTページ固有の痕跡で判定
-    For Each c In pg.Controls
+    For Each c In pg.controls
         If LCase$(c.name) = "mpmmtchild" Then
             PageHasMMTSignature = True
             Exit Function
@@ -231,7 +231,7 @@ End Function
 Private Sub MakeCbo(ByVal pg As Object, ByVal nm As String, _
                     ByVal L As Single, ByVal t As Single, ByVal W As Single, ByVal h As Single)
     Dim o As MSForms.ComboBox
-    Set o = pg.Controls.Add("Forms.ComboBox.1", nm, True)
+    Set o = pg.controls.Add("Forms.ComboBox.1", nm, True)
     o.Left = L: o.Top = t: o.Width = W: o.Height = h
     o.Style = MSForms.fmStyleDropDownList: o.BoundColumn = 1
     o.List = Split("0,1,2,3,4,5", ","): o.tag = "MMTGEN"
@@ -241,7 +241,7 @@ End Sub
 Private Sub MakeLbl(ByVal pg As Object, ByVal nm As String, ByVal cap As String, _
                     ByVal L As Single, ByVal t As Single, ByVal W As Single, ByVal h As Single)
     Dim o As MSForms.label
-    Set o = pg.Controls.Add("Forms.Label.1", nm, True)
+    Set o = pg.controls.Add("Forms.Label.1", nm, True)
     o.caption = cap: o.Left = L: o.Top = t: o.Width = W: o.Height = h: o.tag = "MMTGEN"
 End Sub
 
@@ -269,9 +269,9 @@ End Sub
 '--- 自動生成（MMTGEN）だけ掃除 ---
 Private Sub MMT_ClearGen(ByVal pg As Object)
     Dim idx As Long
-    For idx = pg.Controls.count - 1 To 0 Step -1
-        If Left$(pg.Controls(idx).tag & "", 6) = "MMTGEN" Then
-            pg.Controls.Remove pg.Controls(idx).name
+    For idx = pg.controls.count - 1 To 0 Step -1
+        If Left$(pg.controls(idx).tag & "", 6) = "MMTGEN" Then
+            pg.controls.Remove pg.controls(idx).name
         End If
     Next
 End Sub
@@ -282,7 +282,7 @@ Private Sub MMT_ClearMMTCombos(ByVal mp As MSForms.MultiPage)
     Dim c As Object  '（ControlでもOK）
 
     For Each pg In mp.Pages
-        For Each c In pg.Controls
+        For Each c In pg.controls
             If TypeName(c) = "ComboBox" Then
                 On Error Resume Next
                 c.ListIndex = -1   '選択解除（DropDownListでも有効）
@@ -329,7 +329,7 @@ Private Function MMT_SaveToString() As String
     ReDim parts(0 To 0): n = -1
 
     For p = 0 To mp.Pages.count - 1
-        For Each c In mp.Pages(p).Controls
+        For Each c In mp.Pages(p).controls
             If TypeName(c) = "ComboBox" Then
                 Dim nm As String, side As String
                 If Left$(c.name, 5) = "cboR_" Then
@@ -344,7 +344,7 @@ Private Function MMT_SaveToString() As String
                     Dim rVal As String, lVal As String
                     rVal = CStr(c.value)
                     On Error Resume Next
-                    lVal = CStr(mp.Pages(p).Controls("cboL_" & nm).value)
+                    lVal = CStr(mp.Pages(p).controls("cboL_" & nm).value)
                     On Error GoTo 0
 
                     n = n + 1
@@ -456,8 +456,8 @@ Private Sub MMT_LoadFromString_Core(ByVal s As String)
         ' 名前規則：cboR_ / cboL_ ＋ 項目名
         Set cboR = Nothing: Set cboL = Nothing
         On Error Resume Next
-        Set cboR = p.Controls("cboR_" & key)
-        Set cboL = p.Controls("cboL_" & key)
+        Set cboR = p.controls("cboR_" & key)
+        Set cboL = p.controls("cboL_" & key)
         On Error GoTo 0
 
         foundR = Not cboR Is Nothing
@@ -540,6 +540,6 @@ End Function
 
 Private Function SafeGetControl(ByVal parent As Object, ByVal nm As String) As Object
     On Error Resume Next
-    Set SafeGetControl = parent.Controls(nm)
+    Set SafeGetControl = parent.controls(nm)
     On Error GoTo 0
 End Function

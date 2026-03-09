@@ -45,7 +45,7 @@ End Sub
 ' ---- 行ビルダ(Private) ----
 Private Function AddSectionTitle_(host As MSForms.Frame, ttl As String, y As Single) As Single
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = ttl
         .Left = PX(PAD_X)
@@ -64,7 +64,7 @@ Private Function AddComboRow_(host As MSForms.Frame, cap As String, ctlName As S
     xCap = PX(PAD_X):  xCombo = PX(PAD_X + wCap + 8)
 
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = cap
         .Left = xCap: .Top = PX(y)
@@ -73,7 +73,7 @@ Private Function AddComboRow_(host As MSForms.Frame, cap As String, ctlName As S
     End With
 
     Dim cbo As MSForms.ComboBox
-    Set cbo = host.Controls.Add("Forms.ComboBox.1", ctlName, True)
+    Set cbo = host.controls.Add("Forms.ComboBox.1", ctlName, True)
     With cbo
         .Left = xCombo: .Top = PX(y)
         .Width = wCombo: .Height = ROW_H
@@ -89,7 +89,7 @@ Private Function AddCheckRow_(host As MSForms.Frame, cap As String, ctlName As S
     wCap = PX(COL1_W): xCap = PX(PAD_X): xChk = PX(PAD_X + wCap + 8)
 
     Dim lbl As MSForms.label
-    Set lbl = host.Controls.Add("Forms.Label.1")
+    Set lbl = host.controls.Add("Forms.Label.1")
     With lbl
         .caption = cap
         .Left = xCap: .Top = PX(y)
@@ -98,7 +98,7 @@ Private Function AddCheckRow_(host As MSForms.Frame, cap As String, ctlName As S
     End With
 
     Dim chk As MSForms.CheckBox
-    Set chk = host.Controls.Add("Forms.CheckBox.1", ctlName, True)
+    Set chk = host.controls.Add("Forms.CheckBox.1", ctlName, True)
     With chk
         .caption = "有"
         .Left = xChk: .Top = PX(y)

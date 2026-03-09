@@ -88,11 +88,11 @@ s = ReadStr_Compat("IO_Pain", hubRow, ws)
     
      
 
-    Set pg = owner.Controls("mpPhys").Pages(4)
+    Set pg = owner.controls("mpPhys").Pages(4)
     If pg Is Nothing Then Exit Sub
 ' ---- Combo: 発症/期間単位/日内変動 ----
 t = IO_GetVal(s, "cmbPainOnset")
-If Len(t) > 0 Then pg.Controls("cmbPainOnset").value = t
+If Len(t) > 0 Then pg.controls("cmbPainOnset").value = t
 
 ' ★持続期間（数字：txtPainDuration）を読み込み
 t = IO_GetVal(s, "txtPainDuration")
@@ -103,11 +103,11 @@ Debug.Print "[txtDur-Test]", "hubRow=", hubRow, " val=", t
 
 If Len(t) > 0 Then
     On Error Resume Next
-    pg.Controls("txtPainDuration").text = t
+    pg.controls("txtPainDuration").text = t
     On Error GoTo 0
 End If
 
-Debug.Print "[txtDur-AfterSet]", "[" & pg.Controls("txtPainDuration").text & "]"
+Debug.Print "[txtDur-AfterSet]", "[" & pg.controls("txtPainDuration").text & "]"
 
 
 
@@ -116,10 +116,10 @@ Debug.Print "[txtDur-AfterSet]", "[" & pg.Controls("txtPainDuration").text & "]"
 
 
 t = IO_GetVal(s, "cmbPainDurationUnit")
-If Len(t) > 0 Then pg.Controls("cmbPainDurationUnit").value = t
+If Len(t) > 0 Then pg.controls("cmbPainDurationUnit").value = t
 
 t = IO_GetVal(s, "cmbPainDayPeriod")
-If Len(t) > 0 Then pg.Controls("cmbPainDayPeriod").value = t
+If Len(t) > 0 Then pg.controls("cmbPainDayPeriod").value = t
 
 
     ' 最新行（IO/NOTE基準）
@@ -136,15 +136,15 @@ altVAS = ""
 
 ' いったんクリア
 On Error Resume Next
-pg.Controls("fraVAS").Controls("txtVAS").text = ""
-pg.Controls("fraVAS").Controls("sldVAS").value = 0
+pg.controls("fraVAS").controls("txtVAS").text = ""
+pg.controls("fraVAS").controls("sldVAS").value = 0
 On Error GoTo 0
 
 If Len(t) = 0 And IsNumeric(altVAS) Then t = Trim$(altVAS)
 If Len(t) > 0 Then
     On Error Resume Next
-    pg.Controls("fraVAS").Controls("txtVAS").text = t
-    pg.Controls("fraVAS").Controls("sldVAS").value = CLng(t)
+    pg.controls("fraVAS").controls("txtVAS").text = t
+    pg.controls("fraVAS").controls("sldVAS").value = CLng(t)
     On Error GoTo 0
 End If
 
@@ -183,11 +183,11 @@ Private Sub RestorePainFactors(ByVal container As Object, ByVal slash As String)
     Dim want As Object: Set want = MakeSetFromSlash(slash)
     Dim c As Object, base As String
     ' いったん全解除
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "CheckBox" Then c.value = False
     Next
     ' 該当のみ True
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "CheckBox" Then
             base = c.name
             If LCase$(Left$(base, 3)) = "chk" Then base = Mid$(base, 4)
@@ -214,7 +214,7 @@ Debug.Print "[PAIN][MinLists] hubRow=", hubRow   ' ←ログは残してOK
 s = ReadStr_Compat("IO_Pain", hubRow, ws)
 
 On Error Resume Next
-Set pg = owner.Controls("mpPhys").Pages(4)
+Set pg = owner.controls("mpPhys").Pages(4)
 On Error GoTo 0
 If pg Is Nothing Then Exit Sub
 
@@ -236,16 +236,16 @@ Debug.Print "[DBG-PainFactors-RAW]"; IO_GetVal(s, "PainFactors")
 ' ---- ListBox : PainQual / PainSite ----
 t = IO_GetVal(s, "PainQual")
 On Error Resume Next
-RestoreListBoxSelections pg.Controls("lstPainQual"), t
+RestoreListBoxSelections pg.controls("lstPainQual"), t
 
     t = IO_GetVal(s, "PainSite")
-    RestoreListBoxSelections pg.Controls("lstPainSite"), t
+    RestoreListBoxSelections pg.controls("lstPainSite"), t
     On Error GoTo 0
 
     ' ---- PainFactors : fraPainFactors 配下の CheckBox (Name一致) ----
     t = IO_GetVal(s, "PainFactors")
     On Error Resume Next
-    RestorePainFactors pg.Controls("fraPainFactors"), t
+    RestorePainFactors pg.controls("fraPainFactors"), t
     On Error GoTo 0
 
     
@@ -257,7 +257,7 @@ End Sub
 '=== [TEMP] Pain UI Selection Probe ====================================
 Private Function FindByNameRecursive(container As Object, ByVal target As String) As Object
     Dim c As Object, R As Object
-    For Each c In container.Controls
+    For Each c In container.controls
         If StrComp(CStr(c.name), target, vbBinaryCompare) = 0 Then Set FindByNameRecursive = c: Exit Function
         If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
             Set R = FindByNameRecursive(c, target)
@@ -271,7 +271,7 @@ End Function
 '=== [TEMP] Pain IO Load (NOTE) ========================================
 Private Function FindLargestTextBoxOnPage(pg As Object) As MSForms.TextBox
     Dim c As Object, area As Double, bestArea As Double
-    For Each c In pg.Controls
+    For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
             area = c.Width * c.Height
             If area > bestArea Then
@@ -305,7 +305,7 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
     Dim c As Object
 
     ' 再帰探索
-    For Each c In pg.Controls
+    For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
             If InStr(1, c.name, "Memo", vbTextCompare) > 0 Then
                 Set FindNoteTextBox = c
@@ -321,7 +321,7 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
     Next
 
     ' MultiLine 優先（VAS配下は除外）
-    For Each c In pg.Controls
+    For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
             If SafeIsMultiLine(c) And Not IsUnderVAS(c) Then
                 Set FindNoteTextBox = c
@@ -337,7 +337,7 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
 
     ' 最大面積（VAS配下除外）
     bestArea = -1
-    For Each c In pg.Controls
+    For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
             If Not IsUnderVAS(c) Then
                 If c.Width * c.Height > bestArea Then
@@ -369,9 +369,9 @@ End Function
 ' fraVAS 配下かどうかを厳密判定（オブジェクト参照で再帰）
 Private Function IsUnderVAS(target As Object) As Boolean
     Dim pg As Object, vas As Object
-    Set pg = frmEval.Controls("mpPhys").Pages(4)
+    Set pg = frmEval.controls("mpPhys").Pages(4)
     On Error Resume Next
-    Set vas = pg.Controls("fraVAS")
+    Set vas = pg.controls("fraVAS")
     On Error GoTo 0
     If vas Is Nothing Then Exit Function
     IsUnderVAS = IsDescendantOf(vas, target)
@@ -379,7 +379,7 @@ End Function
 
 Private Function IsDescendantOf(container As Object, target As Object) As Boolean
     Dim c As Object
-    For Each c In container.Controls
+    For Each c In container.controls
         If c Is target Then IsDescendantOf = True: Exit Function
         If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
             If IsDescendantOf(c, target) Then IsDescendantOf = True: Exit Function
@@ -398,7 +398,7 @@ Private Sub LoadPainFromSheet_Note(ByVal owner As Object)
     lr = ws.Cells(ws.rows.count, 1).End(xlUp).row
     noteText = CStr(ws.Cells(lr, COL_NOTE).value)
 
-    Set pg = owner.Controls("mpPhys").Pages(4)
+    Set pg = owner.controls("mpPhys").Pages(4)
     If pg Is Nothing Then Exit Sub
 
     Set tb = FindNoteTextBox(pg)
@@ -429,19 +429,19 @@ ioText = ReadStr_Compat("IO_Pain", hubRow, ws)
 'noteText = CStr(ws.Cells(hubRow, 108).value)
 
 
-    Set pg = owner.Controls("mpPhys").Pages(4)
+    Set pg = owner.controls("mpPhys").Pages(4)
     If pg Is Nothing Then Exit Sub
 
    LoadPainFromSheet_MinCombos owner
-Debug.Print "[After-MinCombos]", pg.Controls("txtPainDuration").text
+Debug.Print "[After-MinCombos]", pg.controls("txtPainDuration").text
 
 LoadPainFromSheet_MinLists owner
-Debug.Print "[After-MinLists]", pg.Controls("txtPainDuration").text
+Debug.Print "[After-MinLists]", pg.controls("txtPainDuration").text
 
 'LoadPainFromSheet_Note owner
-Debug.Print "[After-Note]", pg.Controls("txtPainDuration").text
+Debug.Print "[After-Note]", pg.controls("txtPainDuration").text
 
-Debug.Print "[After-PainCore-End]", frmEval.Controls("mpPhys").Pages(4).Controls("txtPainDuration").text
+Debug.Print "[After-PainCore-End]", frmEval.controls("mpPhys").Pages(4).controls("txtPainDuration").text
 
 
 End Sub
@@ -470,56 +470,56 @@ Public Sub Debug_LoadVAS_FromLatest(ByVal owner As Object)
     t = IO_GetVal(s, "VAS")
     alt = CStr(ws.Cells(lr, 157).value)
 
-    Set pg = owner.Controls("mpPhys").Pages(4)
+    Set pg = owner.controls("mpPhys").Pages(4)
 
     Debug.Print "[VAS-DBG] lr=", lr, "| IO.VAS=", t, "| NOTE=", alt
 
     ' まずクリア
     On Error Resume Next
-    pg.Controls("fraVAS").Controls("txtVAS").text = ""
-    pg.Controls("fraVAS").Controls("sldVAS").value = 0
+    pg.controls("fraVAS").controls("txtVAS").text = ""
+    pg.controls("fraVAS").controls("sldVAS").value = 0
     On Error GoTo 0
 
     ' IOにあればそれを、無ければNOTE数値を適用
     If Len(t) = 0 And IsNumeric(alt) Then t = Trim$(alt)
     If Len(t) > 0 Then
         On Error Resume Next
-        pg.Controls("fraVAS").Controls("txtVAS").text = t
-        pg.Controls("fraVAS").Controls("sldVAS").value = CLng(t)
+        pg.controls("fraVAS").controls("txtVAS").text = t
+        pg.controls("fraVAS").controls("sldVAS").value = CLng(t)
         On Error GoTo 0
     End If
 
-    Debug.Print "[VAS-DBG-After]", pg.Controls("fraVAS").Controls("txtVAS").text, pg.Controls("fraVAS").Controls("sldVAS").value
+    Debug.Print "[VAS-DBG-After]", pg.controls("fraVAS").controls("txtVAS").text, pg.controls("fraVAS").controls("sldVAS").value
 End Sub
 '======================================================================
 
 '=== [TEMP] Pain UI Clear (起動時は空で開始) ===========================
 Public Sub ClearPainUI(ByVal owner As Object)
     Dim pg As Object, c As Object, lb As MSForms.ListBox
-    Set pg = owner.Controls("mpPhys").Pages(4)
+    Set pg = owner.controls("mpPhys").Pages(4)
     If pg Is Nothing Then Exit Sub
 
     ' --- Combo / Text ---
     On Error Resume Next
-    pg.Controls("cmbPainOnset").value = ""
-    pg.Controls("cmbPainDurationUnit").value = ""
-    pg.Controls("cmbPainDayPeriod").value = ""
-    pg.Controls("txtPainDuration").text = ""
+    pg.controls("cmbPainOnset").value = ""
+    pg.controls("cmbPainDurationUnit").value = ""
+    pg.controls("cmbPainDayPeriod").value = ""
+    pg.controls("txtPainDuration").text = ""
     On Error GoTo 0
 
     ' --- VAS ---
     On Error Resume Next
-    pg.Controls("fraVAS").Controls("txtVAS").text = ""
-    pg.Controls("fraVAS").Controls("sldVAS").value = 0
+    pg.controls("fraVAS").controls("txtVAS").text = ""
+    pg.controls("fraVAS").controls("sldVAS").value = 0
     On Error GoTo 0
 
     ' --- ListBox 全解除 ---
     On Error Resume Next
-    Set lb = pg.Controls("lstPainQual")
+    Set lb = pg.controls("lstPainQual")
     If Not lb Is Nothing Then
         Dim i As Long: For i = 0 To lb.ListCount - 1: lb.Selected(i) = False: Next
     End If
-    Set lb = pg.Controls("lstPainSite")
+    Set lb = pg.controls("lstPainSite")
     If Not lb Is Nothing Then
         For i = 0 To lb.ListCount - 1: lb.Selected(i) = False: Next
     End If
@@ -528,7 +528,7 @@ Public Sub ClearPainUI(ByVal owner As Object)
 
     ' [Pain-UI] ensure no default selection (DO NOT REMOVE)
 On Error Resume Next
-pg.Controls("lstPainQual").ListIndex = -1: pg.Controls("lstPainSite").ListIndex = -1
+pg.controls("lstPainQual").ListIndex = -1: pg.controls("lstPainSite").ListIndex = -1
 On Error GoTo 0
 
 
@@ -539,7 +539,7 @@ End Sub
 
 Private Sub ClearChecksRecursive(container As Object)
     Dim c As Object
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "CheckBox" Then c.value = False
         If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then ClearChecksRecursive c
     Next

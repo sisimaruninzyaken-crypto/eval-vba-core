@@ -25,7 +25,7 @@ Private Function ReadFrmEvalControlText(ByVal controlName As String) As String
     If VBA.UserForms.count > 0 Then
         For Each frm In VBA.UserForms
             If TypeName(frm) = "frmEval" Then
-                ReadFrmEvalControlText = Trim$(CStr(frm.Controls(controlName).value))
+                ReadFrmEvalControlText = Trim$(CStr(frm.controls(controlName).value))
                 Exit Function
             End If
         Next frm

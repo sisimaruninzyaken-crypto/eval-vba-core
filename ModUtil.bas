@@ -18,7 +18,7 @@ Public Function FindCtlDeep(ByVal container As Object, ByVal ctlName As String) 
     Dim c As Object, pg As MSForms.Page
     On Error Resume Next
 
-    For Each c In container.Controls
+    For Each c In container.controls
         If StrComp(c.name, ctlName, vbTextCompare) = 0 Then
             Set FindCtlDeep = c
             Exit Function

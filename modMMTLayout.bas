@@ -1,12 +1,12 @@
 Attribute VB_Name = "modMMTLayout"
 Public Sub Resize_MMTChildHost_ToPage()
     
-    Debug.Print "[MMTResize] pgInside=", frmEval.Controls("mpPhys").Pages(1).InsideWidth, frmEval.Controls("mpPhys").Pages(1).InsideHeight
+    Debug.Print "[MMTResize] pgInside=", frmEval.controls("mpPhys").Pages(1).InsideWidth, frmEval.controls("mpPhys").Pages(1).InsideHeight
 
     
     Dim mp As Object, pg As Object, host As Object, child As Object
 
-    Set mp = frmEval.Controls("mpPhys")
+    Set mp = frmEval.controls("mpPhys")
     mp.value = 1
     DoEvents
 

@@ -168,20 +168,20 @@ End Sub
 
 Public Sub AddHeaderArchiveDeleteButton()
     Dim f As Object: Set f = frmEval
-    Dim hdr As MSForms.Frame: Set hdr = f.Controls("frHeader")
+    Dim hdr As MSForms.Frame: Set hdr = f.controls("frHeader")
 
     Dim btn As MSForms.CommandButton
 
     On Error Resume Next
-    Set btn = hdr.Controls("cmdArchiveDelete")
+    Set btn = hdr.controls("cmdArchiveDelete")
     On Error GoTo 0
 
     If btn Is Nothing Then
-        Set btn = hdr.Controls.Add("Forms.CommandButton.1", "cmdArchiveDelete", True)
+        Set btn = hdr.controls.Add("Forms.CommandButton.1", "cmdArchiveDelete", True)
         btn.caption = "èIóπé“çÌèú"
         btn.Width = 90
-        btn.Height = hdr.Controls("txtHdrPID").Height
-        btn.Top = hdr.Controls("txtHdrPID").Top
+        btn.Height = hdr.controls("txtHdrPID").Height
+        btn.Top = hdr.controls("txtHdrPID").Top
         btn.Left = 8
     End If
 End Sub

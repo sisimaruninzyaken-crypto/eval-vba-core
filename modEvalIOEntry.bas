@@ -487,7 +487,7 @@ End If
 
 Dim diffOnly As Boolean
 On Error Resume Next
-diffOnly = CBool(owner.Controls("chkDiffOnly").value)  ' 無ければ False のまま
+diffOnly = CBool(owner.controls("chkDiffOnly").value)  ' 無ければ False のまま
 On Error GoTo 0
 
 If False Then ' diffOnly And Len(nm) > 0 Then
@@ -629,7 +629,7 @@ End Function
 Private Sub CountMainFormTextInputs(owner As Object, ByRef totalCount As Long, ByRef blankCount As Long)
     Dim dailyRoot As Object
     On Error Resume Next
-    Set dailyRoot = owner.Controls("fraDailyLog")
+    Set dailyRoot = owner.controls("fraDailyLog")
     On Error GoTo 0
 
     CountTextInputsRecursive owner, dailyRoot, totalCount, blankCount
@@ -637,7 +637,7 @@ End Sub
 
 Private Sub CountTextInputsRecursive(ByVal container As Object, ByVal excludedRoot As Object, ByRef totalCount As Long, ByRef blankCount As Long)
     Dim ctrl As Object
-    For Each ctrl In container.Controls
+    For Each ctrl In container.controls
         If Not excludedRoot Is Nothing Then
             If IsDescendantControl(ctrl, excludedRoot) Then GoTo NextControl
         End If
@@ -652,7 +652,7 @@ Private Sub CountTextInputsRecursive(ByVal container As Object, ByVal excludedRo
 
         On Error Resume Next
         Dim childCount As Long
-        childCount = ctrl.Controls.count
+        childCount = ctrl.controls.count
         If Err.Number = 0 And childCount > 0 Then
             On Error GoTo 0
             CountTextInputsRecursive ctrl, excludedRoot, totalCount, blankCount
@@ -794,12 +794,12 @@ Private Function GetHdrKanaText(owner As Object) As String
     Dim c As Object
 
     On Error Resume Next
-    Set c = owner.Controls("frHeader").Controls("txtHdrKana")
+    Set c = owner.controls("frHeader").controls("txtHdrKana")
     On Error GoTo 0
 
     If c Is Nothing Then
         On Error Resume Next
-        Set c = owner.Controls("txtHdrKana")
+        Set c = owner.controls("txtHdrKana")
         On Error GoTo 0
     End If
 
@@ -816,12 +816,12 @@ Private Sub SetHdrKanaText(owner As Object, ByVal v As Variant)
     Dim c As Object
 
     On Error Resume Next
-    Set c = owner.Controls("frHeader").Controls("txtHdrKana")
+    Set c = owner.controls("frHeader").controls("txtHdrKana")
     On Error GoTo 0
 
     If c Is Nothing Then
         On Error Resume Next
-        Set c = owner.Controls("txtHdrKana")
+        Set c = owner.controls("txtHdrKana")
         On Error GoTo 0
     End If
 
@@ -1110,7 +1110,7 @@ End Function
 ' ラベル「ID」の右にある TextBox から値を取得（コントロール名に依存しない）
 Public Function GetID_FromBasicInfo(ByVal owner As Object) As String
     On Error Resume Next
-    GetID_FromBasicInfo = Trim$(CStr(owner.Controls("frHeader").Controls("txtHdrPID").value))
+    GetID_FromBasicInfo = Trim$(CStr(owner.controls("frHeader").controls("txtHdrPID").value))
     On Error GoTo 0
 End Function
 
@@ -1132,13 +1132,13 @@ Public Function GetTextByLabelInFrame(ByVal frm As Object, ByVal labelCaption As
     If frm Is Nothing Then Exit Function
     On Error Resume Next
     Dim HasControls As Boolean
-    HasControls = Not (frm.Controls Is Nothing)
+    HasControls = Not (frm.controls Is Nothing)
     On Error GoTo 0
     If Not HasControls Then Exit Function
 
     ' --- 以下は今のロジックそのまま ---
     Dim lb As Object, ctl As Object
-    For Each ctl In frm.Controls
+    For Each ctl In frm.controls
         If TypeName(ctl) = "Label" Then
             If InStr(1, CStr(ctl.caption), labelCaption, vbTextCompare) > 0 Then
                 Set lb = ctl: Exit For
@@ -1149,7 +1149,7 @@ Public Function GetTextByLabelInFrame(ByVal frm As Object, ByVal labelCaption As
 
     Dim best As Object, bestScore As Double
     bestScore = 1E+20
-    For Each ctl In frm.Controls
+    For Each ctl In frm.controls
         If TypeName(ctl) = "TextBox" Then
             Dim dy As Double: dy = Abs((ctl.Top + ctl.Height / 2) - (lb.Top + lb.Height / 2))
             If dy <= lb.Height Then
@@ -1181,11 +1181,11 @@ Private Function FindFrameByCaptionDeep_Walk(ByVal container As Object, ByVal ca
         Next pg
     End If
 
-    Dim tmp As Object: Set tmp = container.Controls
+    Dim tmp As Object: Set tmp = container.controls
     If Err.Number <> 0 Then Err.Clear: Exit Function
 
     Dim ctl As Object
-    For Each ctl In container.Controls
+    For Each ctl In container.controls
         Select Case TypeName(ctl)
             Case "Frame"
                 If InStr(1, CStr(ctl.caption), captionLike, vbTextCompare) > 0 Then
@@ -1200,7 +1200,7 @@ Private Function FindFrameByCaptionDeep_Walk(ByVal container As Object, ByVal ca
 
             Case Else
                 Err.Clear
-                Set tmp = ctl.Controls
+                Set tmp = ctl.controls
                 If Err.Number = 0 Then
                     Set FindFrameByCaptionDeep_Walk = FindFrameByCaptionDeep_Walk(ctl, captionLike)
                     If Not FindFrameByCaptionDeep_Walk Is Nothing Then Exit Function
@@ -1432,13 +1432,13 @@ Private Function FindControlDeep(ByVal parent As Object, ByVal targetName As Str
 
     ' 3) 直下に同名があれば取得（存在しない型でも例外にしない）
     On Error Resume Next
-    Set hit = parent.Controls(targetName)
+    Set hit = parent.controls(targetName)
     On Error GoTo 0
     If Not hit Is Nothing Then Set FindControlDeep = hit: Exit Function
 
     ' 4) 子コントロールを再帰走査（Controls を持たない型はスキップ）
     On Error Resume Next
-    For Each c In parent.Controls
+    For Each c In parent.controls
         Err.Clear
         Set hit = FindControlDeep(c, targetName)
         If Not hit Is Nothing Then Set FindControlDeep = hit: Exit Function
@@ -1450,11 +1450,11 @@ End Function
 ' 代表キャプションから親フレームを推定
 Private Function FindGroupByAnyCaption(frm As Object, captions As Variant) As Object
     Dim cont As Object, c As Object, cap As Variant
-    For Each cont In frm.Controls
+    For Each cont In frm.controls
         On Error Resume Next
         ' コンテナ（Frame/Pageなど）だけ調べる
-        If Not cont.Controls Is Nothing Then
-            For Each c In cont.Controls
+        If Not cont.controls Is Nothing Then
+            For Each c In cont.controls
                 If TypeName(c) = "CheckBox" Then
                     For Each cap In captions
                         If Trim$(c.caption) = CStr(cap) Then
@@ -1471,7 +1471,7 @@ End Function
 ' 名前→無ければ代表キャプションで補助具/リスクのフレームを取得
 Private Function ResolveGroup(frm As Object, targetName As String, isAids As Boolean) As Object
     ' 1) 名前で探す（自前のFindControlDeepを使う）
-    Set ResolveGroup = frm.Controls(targetName)
+    Set ResolveGroup = frm.controls(targetName)
     If Not ResolveGroup Is Nothing Then Exit Function
 
     ' 2) キャプションから推定
@@ -1490,7 +1490,7 @@ Public Function SerializeChecks(frm As Object, targetName As String, Optional is
     If grp Is Nothing Then Exit Function
 
     Dim s As String, c As Object
-    For Each c In grp.Controls
+    For Each c In grp.controls
         If TypeName(c) = "CheckBox" Then
             If c.value = True Then
                 If LenB(s) > 0 Then s = s & ","
@@ -1515,7 +1515,7 @@ Public Sub DeserializeChecks(frm As Object, targetName As String, ByVal csv As S
     End If
 
     Dim c As Object
-    For Each c In grp.Controls
+    For Each c In grp.controls
         If TypeName(c) = "CheckBox" Then
             c.value = dict.exists(Trim$(c.caption))
         End If
@@ -1535,7 +1535,7 @@ End Function
 
 Private Function GetBool(owner As Object, ctlName As String, Optional defaultValue As Boolean = True) As Boolean
     On Error Resume Next
-    GetBool = CBool(owner.Controls(ctlName).value)
+    GetBool = CBool(owner.controls(ctlName).value)
     If Err.Number <> 0 Then GetBool = defaultValue
     On Error GoTo 0
 End Function
@@ -1903,7 +1903,7 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner
     If Len(vLevel) > 0 Then
         ' Tag="WalkIndepLevel" のコンボを探して値を戻す
         Set cLvl = Nothing
-        For Each c In owner.Controls
+        For Each c In owner.controls
             If TypeName(c) = "ComboBox" Then
                 If c.tag = "WalkIndepLevel" Then
                     Set cLvl = c
@@ -1932,7 +1932,7 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner
     If Not cmb Is Nothing Then cmb.value = v
 
     ' --- 安定性チェック（chkWalkStab_*）を一度全部OFF ---
-    For Each c In owner.Controls
+    For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If StrComp(Left$(nm, 12), "chkWalkStab_", vbTextCompare) = 0 Then
@@ -1974,7 +1974,7 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner A
     If Len(s) = 0 Then Exit Sub
 
     ' まず、RLA 関連のチェック・レベルを全部リセット
-    For Each c In owner.Controls
+    For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If InStr(1, nm, "RLA_", vbTextCompare) = 1 Then
@@ -2012,7 +2012,7 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner A
                 Dim cap As String
                 cap = Trim$(parts(i))
                 If Len(cap) > 0 Then
-                    For Each c In owner.Controls
+                    For Each c In owner.controls
                         If TypeName(c) = "CheckBox" Then
                             nm = CStr(c.name)
                             If InStr(1, nm, "RLA_" & CStr(phase) & "_", vbTextCompare) = 1 Then
@@ -2028,7 +2028,7 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner A
 
         ' --- レベル（OptionButton：GroupName=phase & Caption一致でON） ---
         If Len(level) > 0 Then
-            For Each c In owner.Controls
+            For Each c In owner.controls
                 If TypeName(c) = "OptionButton" Then
                     If StrComp(c.groupName, CStr(phase), vbTextCompare) = 0 Then
                         If CStr(c.caption) = level Then
@@ -2057,7 +2057,7 @@ Public Sub Load_WalkAbnFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner A
     If Len(s) = 0 Then Exit Sub
 
     ' 一旦、fraWalkAbn_* の全チェックをOFFにする
-    For Each c In owner.Controls
+    For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If InStr(1, nm, "fraWalkAbn_", vbTextCompare) = 1 Then
@@ -2106,14 +2106,14 @@ End Sub
 
 Private Function FindControlRecursive(parent As Object, name As String) As Object
     Dim ctl As Object
-    For Each ctl In parent.Controls
+    For Each ctl In parent.controls
         If StrComp(ctl.name, name, vbTextCompare) = 0 Then
             Set FindControlRecursive = ctl
             Exit Function
         End If
         ' Frame や MultiPage の場合は再帰検索
         On Error Resume Next
-        If ctl.Controls.count > 0 Then
+        If ctl.controls.count > 0 Then
             Dim subCtl As Object
             Set subCtl = FindControlRecursive(ctl, name)
             If Not subCtl Is Nothing Then
@@ -2144,7 +2144,7 @@ Public Function Build_WalkIndep_IO(owner As Object) As String
 Set cLvl = FindControlRecursive(owner, "cmbWalkIndep")
 If cLvl Is Nothing Then
     ' タグで検索する（今回の正式ルート）
-    For Each c In owner.Controls
+    For Each c In owner.controls
         If TypeName(c) = "ComboBox" Then
             If c.tag = "WalkIndepLevel" Then
                 Set cLvl = c
@@ -2159,14 +2159,14 @@ If Not cLvl Is Nothing Then vLevel = Trim$(cLvl.value)
 
     ' 距離・屋外・速度
     On Error Resume Next
-    vDist = Trim$(owner.Controls("cmbWalkDistance").value)
-    vOut = Trim$(owner.Controls("cmbWalkOutdoor").value)
-    vSpeed = Trim$(owner.Controls("cmbWalkSpeed").value)
+    vDist = Trim$(owner.controls("cmbWalkDistance").value)
+    vOut = Trim$(owner.controls("cmbWalkOutdoor").value)
+    vSpeed = Trim$(owner.controls("cmbWalkSpeed").value)
     On Error GoTo 0
 
     ' 安定性チェック（chkWalkStab_～ を全部拾う）
     Set hits = New Collection
-    For Each c In owner.Controls
+    For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If StrComp(Left$(nm, 12), "chkWalkStab_", vbTextCompare) = 0 Then
@@ -2206,7 +2206,7 @@ Public Function Build_WalkAbn_IO(owner As Object) As String
     
     Set hits = New Collection
     
-    For Each c In owner.Controls
+    For Each c In owner.controls
         ' fraWalkAbn_?_chk? という名前の CheckBox だけ拾う
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
@@ -2278,7 +2278,7 @@ Public Function Build_WalkRLA_IO(owner As Object) As String
         level = ""
 
         ' --- チェック（RLA_<phase>_～）を拾う ---
-        For Each c In owner.Controls
+        For Each c In owner.controls
             If TypeName(c) = "CheckBox" Then
                 nm = CStr(c.name)
                 If InStr(1, nm, "RLA_" & CStr(phase) & "_", vbTextCompare) = 1 Then
@@ -2298,7 +2298,7 @@ Public Function Build_WalkRLA_IO(owner As Object) As String
         End If
 
         ' --- レベル（OptionButton, GroupName=phase）を拾う ---
-        For Each c In owner.Controls
+        For Each c In owner.controls
             If TypeName(c) = "OptionButton" Then
                 If StrComp(c.groupName, CStr(phase), vbTextCompare) = 0 Then
                     If c.value = True Then
@@ -2363,8 +2363,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 記憶
     col = HeaderCol_Compat("IO_Cog_Memory", ws)
     If col > 0 Then
-        v = frm.Controls("Frame31").Controls("mpCogMental") _
-        .Pages("pgCognition").Controls("cmbCogMemory").value
+        v = frm.controls("Frame31").controls("mpCogMental") _
+        .Pages("pgCognition").controls("cmbCogMemory").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2373,8 +2373,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 注意
     col = HeaderCol_Compat("IO_Cog_Attention", ws)
     If col > 0 Then
-        v = frm.Controls("Frame31").Controls("mpCogMental") _
-        .Pages("pgCognition").Controls("cmbCogAttention").value
+        v = frm.controls("Frame31").controls("mpCogMental") _
+        .Pages("pgCognition").controls("cmbCogAttention").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2383,8 +2383,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 見当識
     col = HeaderCol_Compat("IO_Cog_Orientation", ws)
     If col > 0 Then
-            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgCognition").Controls("cmbCogOrientation").value
+            v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgCognition").controls("cmbCogOrientation").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2393,8 +2393,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 判断
     col = HeaderCol_Compat("IO_Cog_Judgement", ws)
     If col > 0 Then
-            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgCognition").Controls("cmbCogJudgement").value
+            v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgCognition").controls("cmbCogJudgement").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2403,8 +2403,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 遂行機能
     col = HeaderCol_Compat("IO_Cog_Executive", ws)
     If col > 0 Then
-            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgCognition").Controls("cmbCogExecutive").value
+            v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgCognition").controls("cmbCogExecutive").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2413,8 +2413,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 言語
     col = HeaderCol_Compat("IO_Cog_Language", ws)
     If col > 0 Then
-            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgCognition").Controls("cmbCogLanguage").value
+            v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgCognition").controls("cmbCogLanguage").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2424,8 +2424,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     
     col = HeaderCol_Compat("IO_Cog_DementiaType", ws)
     If col > 0 Then
-            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgCognition").Controls("cmbDementiaType").value
+            v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgCognition").controls("cmbDementiaType").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2433,8 +2433,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     
     col = HeaderCol_Compat("IO_Cog_DementiaNote", ws)
     If col > 0 Then
-           v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgCognition").Controls("txtDementiaNote").text
+           v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgCognition").controls("txtDementiaNote").text
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2443,8 +2443,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
         '=== 認知：BPSD（チェックが入っている項目を | 区切りで保存） ===
     
     bpsd = ""
-    With frm.Controls("Frame31").Controls("mpCogMental").Pages("pgCognition")
-        For Each c In .Controls
+    With frm.controls("Frame31").controls("mpCogMental").Pages("pgCognition")
+        For Each c In .controls
             If TypeName(c) = "CheckBox" Then
                 If c.value = True Then
                     If Len(bpsd) > 0 Then bpsd = bpsd & "|"
@@ -2465,8 +2465,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 気分
     col = HeaderCol_Compat("IO_Mental_Mood", ws)
     If col > 0 Then
-            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgMental").Controls("cmbMood").value
+            v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgMental").controls("cmbMood").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2475,8 +2475,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 意欲
     col = HeaderCol_Compat("IO_Mental_Motivation", ws)
     If col > 0 Then
-            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgMental").Controls("cmbMotivation").value
+            v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgMental").controls("cmbMotivation").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2485,8 +2485,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 不安
     col = HeaderCol_Compat("IO_Mental_Anxiety", ws)
     If col > 0 Then
-            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgMental").Controls("cmbAnxiety").value
+            v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgMental").controls("cmbAnxiety").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2495,8 +2495,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 対人関係
     col = HeaderCol_Compat("IO_Mental_Relation", ws)
     If col > 0 Then
-            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgMental").Controls("cmbRelation").value
+            v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgMental").controls("cmbRelation").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2505,8 +2505,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 睡眠
     col = HeaderCol_Compat("IO_Mental_Sleep", ws)
     If col > 0 Then
-            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgMental").Controls("cmbSleep").value
+            v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgMental").controls("cmbSleep").value
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2515,8 +2515,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     ' 精神面・備考
     col = HeaderCol_Compat("IO_Mental_Note", ws)
     If col > 0 Then
-           v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgMental").Controls("txtMentalNote").text
+           v = frm.controls("Frame31").controls("mpCogMental") _
+            .Pages("pgMental").controls("txtMentalNote").text
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2557,47 +2557,47 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal R As Long, owner 
 
     '=== UI ルート取得（絶対名を前提）===
     Set f = owner.Frame31
-    Set mp = f.Controls("mpCogMental")
+    Set mp = f.controls("mpCogMental")
     Set pgCog = mp.Pages("pgCognition")
     Set pgMental = mp.Pages("pgMental")
 
     '=== 認知側 combobox 群 ===
     v = ws.Cells(R, COL_COG_MEMORY).value
     If IsNull(v) Then v = ""
-    pgCog.Controls("cmbCogMemory").value = v
+    pgCog.controls("cmbCogMemory").value = v
 
     v = ws.Cells(R, COL_COG_ATTENTION).value
     If IsNull(v) Then v = ""
-    pgCog.Controls("cmbCogAttention").value = v
+    pgCog.controls("cmbCogAttention").value = v
 
     v = ws.Cells(R, COL_COG_ORIENTATION).value
     If IsNull(v) Then v = ""
-    pgCog.Controls("cmbCogOrientation").value = v
+    pgCog.controls("cmbCogOrientation").value = v
 
     v = ws.Cells(R, COL_COG_JUDGEMENT).value
     If IsNull(v) Then v = ""
-    pgCog.Controls("cmbCogJudgement").value = v
+    pgCog.controls("cmbCogJudgement").value = v
 
     v = ws.Cells(R, COL_COG_EXECUTIVE).value
     If IsNull(v) Then v = ""
-    pgCog.Controls("cmbCogExecutive").value = v
+    pgCog.controls("cmbCogExecutive").value = v
 
     v = ws.Cells(R, COL_COG_LANGUAGE).value
     If IsNull(v) Then v = ""
-    pgCog.Controls("cmbCogLanguage").value = v
+    pgCog.controls("cmbCogLanguage").value = v
 
     v = ws.Cells(R, COL_COG_DEMENTIA).value
     If IsNull(v) Then v = ""
-    pgCog.Controls("cmbDementiaType").value = v
+    pgCog.controls("cmbDementiaType").value = v
 
     v = ws.Cells(R, COL_COG_DEM_NOTE).value
     If IsNull(v) Then v = ""
-    pgCog.Controls("txtDementiaNote").text = v
+    pgCog.controls("txtDementiaNote").text = v
 
     '=== BPSD（chkBPSD0?10）===
     ' 1) 全部一度クリア
     For i = 0 To 10
-        Set chk = pgCog.Controls("chkBPSD" & CStr(i))
+        Set chk = pgCog.controls("chkBPSD" & CStr(i))
         chk.value = False
     Next i
 
@@ -2607,7 +2607,7 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal R As Long, owner 
         arr = Split(s, "|")
         For i = LBound(arr) To UBound(arr)
             For j = 0 To 10
-                Set chk = pgCog.Controls("chkBPSD" & CStr(j))
+                Set chk = pgCog.controls("chkBPSD" & CStr(j))
                 If chk.caption = arr(i) Then
                     chk.value = True
                     Exit For
@@ -2619,27 +2619,27 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal R As Long, owner 
     '=== 精神面 combobox / note ===
     v = ws.Cells(R, COL_MENTAL_MOOD).value
     If IsNull(v) Then v = ""
-    pgMental.Controls("cmbMood").value = v
+    pgMental.controls("cmbMood").value = v
 
     v = ws.Cells(R, COL_MENTAL_MOTIV).value
     If IsNull(v) Then v = ""
-    pgMental.Controls("cmbMotivation").value = v
+    pgMental.controls("cmbMotivation").value = v
 
     v = ws.Cells(R, COL_MENTAL_ANXIETY).value
     If IsNull(v) Then v = ""
-    pgMental.Controls("cmbAnxiety").value = v
+    pgMental.controls("cmbAnxiety").value = v
 
     v = ws.Cells(R, COL_MENTAL_RELATION).value
     If IsNull(v) Then v = ""
-    pgMental.Controls("cmbRelation").value = v
+    pgMental.controls("cmbRelation").value = v
 
     v = ws.Cells(R, COL_MENTAL_SLEEP).value
     If IsNull(v) Then v = ""
-    pgMental.Controls("cmbSleep").value = v
+    pgMental.controls("cmbSleep").value = v
 
     v = ws.Cells(R, COL_MENTAL_NOTE).value
     If IsNull(v) Then v = ""
-    pgMental.Controls("txtMentalNote").text = v
+    pgMental.controls("txtMentalNote").text = v
 End Sub
 
 
@@ -2692,12 +2692,12 @@ Public Sub Save_DailyLog_FromForm(owner As Object)
     R = lastRow + 1
 
     '--- フォーム上のコントロール取得 ---
-    Set txtName = owner.Controls("txtName")          ' 利用者名（frmEval 共通）
-    Set f = owner.Controls("fraDailyLog")            ' モニタリング用フレーム
+    Set txtName = owner.controls("txtName")          ' 利用者名（frmEval 共通）
+    Set f = owner.controls("fraDailyLog")            ' モニタリング用フレーム
 
-    Set txtDate = f.Controls("txtDailyDate")         ' 記録日
-    Set txtStaff = f.Controls("txtDailyStaff")       ' 記録者
-    Set txtNote = f.Controls("txtDailyNote")         ' 記録内容
+    Set txtDate = f.controls("txtDailyDate")         ' 記録日
+    Set txtStaff = f.controls("txtDailyStaff")       ' 記録者
+    Set txtNote = f.controls("txtDailyNote")         ' 記録内容
 
     '--- DailyLog シートへ保存 ---
     ws.Cells(R, 1).value = CStr(txtDate.value)
@@ -2743,11 +2743,11 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     End If
 
     '--- フォーム上のコントロール取得 ---
-    Set txtName = owner.Controls("txtName")
-    Set f = owner.Controls("fraDailyLog")
-    Set txtDate = f.Controls("txtDailyDate")
-    Set txtStaff = f.Controls("txtDailyStaff")
-    Set txtNote = f.Controls("txtDailyNote")
+    Set txtName = owner.controls("txtName")
+    Set f = owner.controls("fraDailyLog")
+    Set txtDate = f.controls("txtDailyDate")
+    Set txtStaff = f.controls("txtDailyStaff")
+    Set txtNote = f.controls("txtDailyNote")
 
     targetName = Trim$(CStr(txtName.value))
     If targetName = "" Then
@@ -2811,13 +2811,13 @@ Public Sub SaveDailyLog_Append(owner As Object)
 
     Set wb = ThisWorkbook
     Set ws = wb.Worksheets("DailyLog")  ' ★ 日々の記録シート名（変えるならここ）
-    Set f = owner.Controls("fraDailyLog")
+    Set f = owner.controls("fraDailyLog")
 
     '--- 入力値取得 ---
-    dt = f.Controls("txtDailyDate").value
-    nm = Trim$(owner.Controls("frHeader").Controls("txtHdrName").value)
-    staff = Trim$(f.Controls("txtDailyStaff").value)
-    note = f.Controls("txtDailyNote").value
+    dt = f.controls("txtDailyDate").value
+    nm = Trim$(owner.controls("frHeader").controls("txtHdrName").value)
+    staff = Trim$(f.controls("txtDailyStaff").value)
+    note = f.controls("txtDailyNote").value
 
     '--- 入力チェック ---
     If nm = "" Then
@@ -2840,7 +2840,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
     '--- 書き込み ---
     ws.Cells(R, 1).value = CDate(dt)   ' 記録日
     ws.Cells(R, 2).value = nm          ' 利用者名
-    ws.Cells(R, 3).value = Trim$(owner.Controls("frHeader").Controls("txtHdrPID").value) ' ★ID
+    ws.Cells(R, 3).value = Trim$(owner.controls("frHeader").controls("txtHdrPID").value) ' ★ID
     ws.Cells(R, 4).value = staff       ' 記録者
     ws.Cells(R, 5).value = note        ' 記録内容
 
@@ -2983,7 +2983,7 @@ End Sub
 
 Private Sub Walk(ByVal parent As Object)
     Dim c As Object
-    For Each c In parent.Controls
+    For Each c In parent.controls
         DumpIfIDLike c
         If HasControls(c) Then Walk c
     Next
@@ -2992,7 +2992,7 @@ End Sub
 Private Function HasControls(ByVal o As Object) As Boolean
     On Error Resume Next
     Dim n As Long
-    n = o.Controls.count
+    n = o.controls.count
     HasControls = (Err.Number = 0 And n > 0)
     Err.Clear
     On Error GoTo 0
