@@ -604,6 +604,7 @@ Private Function MainSaveTextboxHeaderMap() As Variant
     MainSaveTextboxHeaderMap = Array( _
         Array("評価日", "txtEDate"), _
         Array("年齢", "txtAge"), _
+        Array("生年月日", "txtBirth"), _
         Array("Basic.Name", "txtName"), _
         Array("評価者", "txtEvaluator"), _
         Array("評価者職種", "txtEvaluatorJob"), _
@@ -883,6 +884,7 @@ Public Sub SaveBasicInfoToSheet_FromMe(ws As Worksheet, R As Long, owner As Obje
 map = Array( _
     Array("評価日", "txtEDate"), _
     Array("年齢", "txtAge"), _
+    Array("生年月日", "txtBirth"), _
     Array("性別", "cboSex"), _
     Array("Basic.Name", "txtName"), _
     Array("評価者", "txtEvaluator"), _
@@ -902,6 +904,7 @@ map = Array( _
     Array("合併疾患", "txtComplications") _
 )
 
+    Call EnsureHeaderCol(ws, "N")
 
     '--- 既存のループ：単一値を書き込み ---
     Dim i As Long, head As String, ctl As String, c As Long, v As String
@@ -970,6 +973,7 @@ Public Sub LoadBasicInfoFromSheet_FromMe(ws As Worksheet, ByVal R As Long, owner
 map = Array( _
     Array("評価日", "txtEDate"), _
     Array("年齢", "txtAge"), _
+    Array("生年月日", "txtBirth"), _
     Array("性別", "cboSex"), _
     Array("Basic.Name", "txtName"), _
     Array("評価者", "txtEvaluator"), _
