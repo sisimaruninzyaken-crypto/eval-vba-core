@@ -103,7 +103,7 @@ sh.HPageBreaks.Add Before:=sh.rows(117)  '3枚目開始
 
 
 #If APP_DEBUG Then
-    Debug.Print "HPageBreaks=" & sh.HPageBreaks.Count
+    Debug.Print "HPageBreaks=" & sh.HPageBreaks.count
 #End If
 
 
@@ -147,7 +147,7 @@ Private Sub AddSingleSeriesChart_FromIO( _
     With co.Chart
         .ChartType = xlLineMarkers
         .HasTitle = True
-        .chartTitle.Text = chartTitle
+        .chartTitle.text = chartTitle
 
 
         .SeriesCollection.NewSeries
@@ -156,9 +156,9 @@ Private Sub AddSingleSeriesChart_FromIO( _
         .SeriesCollection(1).values = vals
 
         .Axes(xlCategory).HasTitle = True
-        .Axes(xlCategory).AxisTitle.Text = "日付"
+        .Axes(xlCategory).AxisTitle.text = "日付"
         .Axes(xlValue).HasTitle = True
-        .Axes(xlValue).AxisTitle.Text = yUnit
+        .Axes(xlValue).AxisTitle.text = yUnit
         
         .HasLegend = True
         .Legend.Position = xlLegendPositionTop
@@ -195,7 +195,7 @@ Private Sub AddGripChart_FromIO( _
     With co.Chart
         .ChartType = xlLineMarkers
         .HasTitle = True
-        .chartTitle.Text = chartTitle
+        .chartTitle.text = chartTitle
 
 
         .SeriesCollection.NewSeries
@@ -209,9 +209,9 @@ Private Sub AddGripChart_FromIO( _
         .SeriesCollection(2).values = vL
 
         .Axes(xlCategory).HasTitle = True
-        .Axes(xlCategory).AxisTitle.Text = "日付"
+        .Axes(xlCategory).AxisTitle.text = "日付"
         .Axes(xlValue).HasTitle = True
-        .Axes(xlValue).AxisTitle.Text = yUnit
+        .Axes(xlValue).AxisTitle.text = yUnit
         
         .HasLegend = True
         .Legend.Position = xlLegendPositionTop
@@ -236,7 +236,7 @@ Private Sub CollectSeries_FromIO( _
     Dim s As String, v As String
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lastR = ws.Cells(ws.rows.Count, 89).End(xlUp).row ' 89=氏名
+    lastR = ws.Cells(ws.rows.count, 89).End(xlUp).row ' 89=氏名
 
     cnt = 0
     For R = 2 To lastR
@@ -287,7 +287,7 @@ Private Sub CollectGrip_FromIO( _
     Dim s As String, sr As String, sl As String
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lastR = ws.Cells(ws.rows.Count, 89).End(xlUp).row
+    lastR = ws.Cells(ws.rows.count, 89).End(xlUp).row
 
     cnt = 0
     For R = 2 To lastR
@@ -534,7 +534,7 @@ Private Sub PutBoxOnRange(ByVal sh As Worksheet, ByVal boxName As String, ByVal 
             .MarginRight = 6
             .MarginTop = 6
             .MarginBottom = 6
-            .TextRange.Text = txt
+            .TextRange.text = txt
             .TextRange.Font.name = "Meiryo UI"
             .TextRange.Font.Size = 10.5
         End With

@@ -16,7 +16,7 @@ End Sub
 Private Sub DumpChildren(ByVal parent As Object, ByVal path As String)
     Dim i As Long, c As Object
     On Error Resume Next
-    For i = 0 To parent.Controls.Count - 1
+    For i = 0 To parent.Controls.count - 1
         Set c = parent.Controls(i)
         If Not c Is Nothing Then
             Dim tp$, nm$, cap$
@@ -27,7 +27,7 @@ Private Sub DumpChildren(ByVal parent As Object, ByVal path As String)
                 DumpChildren c, path & "." & nm
             ElseIf tp = "MultiPage" Then
                 Dim p As Integer
-                For p = 0 To c.Pages.Count - 1
+                For p = 0 To c.Pages.count - 1
                     DumpChildren c.Pages(p), path & "." & nm & ".Page(" & p & ")"
                 Next
             ElseIf tp = "Page" Then
@@ -133,7 +133,7 @@ End Function
 
 Private Function HasControls(obj As Object) As Boolean
     On Error Resume Next
-    HasControls = (obj.Controls.Count >= 0)
+    HasControls = (obj.Controls.count >= 0)
 End Function
 
 Private Function SafeCaption(o As Object) As String

@@ -10,7 +10,7 @@ Public Sub Posture_ListOnce()
     ' どれかのMultiPageを見つける（名前に依存しない）
     For Each c In uf.Controls
         If TypeName(c) = "MultiPage" Then Set mp = c: Exit For
-        If c.Controls.Count >= 0 Then
+        If c.Controls.count >= 0 Then
             For Each y In c.Controls
                 If TypeName(y) = "MultiPage" Then Set mp = y: Exit For
             Next
@@ -25,7 +25,7 @@ Public Sub Posture_ListOnce()
     ' ページ直下と1階層内側（Frameなど）を列挙
     For Each c In pg.Controls
         Debug.Print TypeName(c), "|", SafeName1(c), "|", SafeCap1(c)
-        If c.Controls.Count >= 0 Then
+        If c.Controls.count >= 0 Then
             For Each y In c.Controls
                 Debug.Print "  -", TypeName(y), "|", SafeName1(y), "|", SafeCap1(y)
             Next

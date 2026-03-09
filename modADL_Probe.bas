@@ -6,7 +6,7 @@ Private Function GetRightComboByLabelCaptionIn(p As MSForms.Page, ByVal cap As S
     Dim i As Long, lb As MSForms.label, c As Control, best As MSForms.ComboBox
     Dim dy As Double, bestDx As Double: bestDx = 1E+30
     ' 1) Caption一致ラベルを探す
-    For i = 0 To p.Controls.Count - 1
+    For i = 0 To p.Controls.count - 1
         If TypeName(p.Controls(i)) = "Label" Then
             Set lb = p.Controls(i)
             If lb.caption = cap Then
@@ -65,9 +65,9 @@ Public Sub Snapshot_ADL_Once()
     ' --- BI (#0) ---
     Set p = mp.Pages(0)
     s = ""
-    v = p.Controls("txtBITotal").Text: s = s & "BITotal=" & v & "|"
+    v = p.Controls("txtBITotal").text: s = s & "BITotal=" & v & "|"
     For i = 0 To 9
-        v = p.Controls("cmbBI_" & i).Text
+        v = p.Controls("cmbBI_" & i).text
         s = s & "BI_" & i & "=" & v & "|"
     Next i
     
@@ -114,28 +114,28 @@ Else
     s = s & "BI_HomeEnv_6=0|"
 End If
 
-s = s & "BI_HomeEnv_Note=" & mp.Pages(0).Controls("txtBIHomeEnvNote").Text & "|"
+s = s & "BI_HomeEnv_Note=" & mp.Pages(0).Controls("txtBIHomeEnvNote").text & "|"
 
     ' --- IADL (#1) ---
     Set p = mp.Pages(1)
     For i = 0 To 8
-        v = p.Controls("cmbIADL_" & i).Text
+        v = p.Controls("cmbIADL_" & i).text
         s = s & "IADL_" & i & "=" & v & "|"
     Next i
-    v = p.Controls("txtIADLNote").Text
+    v = p.Controls("txtIADLNote").text
     s = s & "IADLNote=" & v & "|"
 
     ' --- 起居動作 (#2) ---
     Set p = mp.Pages(2)
-    s = s & "Kyo_Roll=" & p.Controls("cmbKyo_Roll").Text & "|"
-    s = s & "Kyo_SitUp=" & p.Controls("cmbKyo_SitUp").Text & "|"
-    s = s & "Kyo_SitHold=" & p.Controls("cmbKyo_SitHold").Text & "|"
+    s = s & "Kyo_Roll=" & p.Controls("cmbKyo_Roll").text & "|"
+    s = s & "Kyo_SitUp=" & p.Controls("cmbKyo_SitUp").text & "|"
+    s = s & "Kyo_SitHold=" & p.Controls("cmbKyo_SitHold").text & "|"
 
     Call ResolveKyoUnnamedCombos(cmbSU, cmbSH)
-    If Not cmbSU Is Nothing Then s = s & "Kyo_StandUp=" & cmbSU.Text & "|" Else Debug.Print "[WARN] 立ち上がり 未解決"
-    If Not cmbSH Is Nothing Then s = s & "Kyo_StandHold=" & cmbSH.Text & "|" Else Debug.Print "[WARN] 立位保持 未解決"
+    If Not cmbSU Is Nothing Then s = s & "Kyo_StandUp=" & cmbSU.text & "|" Else Debug.Print "[WARN] 立ち上がり 未解決"
+    If Not cmbSH Is Nothing Then s = s & "Kyo_StandHold=" & cmbSH.text & "|" Else Debug.Print "[WARN] 立位保持 未解決"
 
-    s = s & "Kyo_Note=" & p.Controls("txtKyoNote").Text
+    s = s & "Kyo_Note=" & p.Controls("txtKyoNote").text
 
     Debug.Print "[ADL.IO] "; s
     Debug.Print "[ADL.IO.Len] "; Len(s)
@@ -161,9 +161,9 @@ Public Function Build_ADL_IO() As String
     ' --- BI (#0) ---
     Set p = mp.Pages(0)
     s = ""
-    v = p.Controls("txtBITotal").Text: s = s & "BITotal=" & v & "|"
+    v = p.Controls("txtBITotal").text: s = s & "BITotal=" & v & "|"
     For i = 0 To 9
-        v = p.Controls("cmbBI_" & i).Text
+        v = p.Controls("cmbBI_" & i).text
         s = s & "BI_" & i & "=" & v & "|"
     Next i
     
@@ -210,31 +210,31 @@ Else
     s = s & "BI_HomeEnv_6=0|"
 End If
 
-s = s & "BI_HomeEnv_Note=" & mp.Pages(0).Controls("txtBIHomeEnvNote").Text & "|"
+s = s & "BI_HomeEnv_Note=" & mp.Pages(0).Controls("txtBIHomeEnvNote").text & "|"
 
 
     ' --- IADL (#1) ---
     Set p = mp.Pages(1)
     For i = 0 To 8
-        v = p.Controls("cmbIADL_" & i).Text
+        v = p.Controls("cmbIADL_" & i).text
         s = s & "IADL_" & i & "=" & v & "|"
     Next i
-    v = p.Controls("txtIADLNote").Text
+    v = p.Controls("txtIADLNote").text
     s = s & "IADLNote=" & v & "|"
 
     ' --- 起居動作 (#2) ---
     Set p = mp.Pages(2)
-    s = s & "Kyo_Roll=" & p.Controls("cmbKyo_Roll").Text & "|"
-    s = s & "Kyo_SitUp=" & p.Controls("cmbKyo_SitUp").Text & "|"
-    s = s & "Kyo_SitHold=" & p.Controls("cmbKyo_SitHold").Text & "|"
+    s = s & "Kyo_Roll=" & p.Controls("cmbKyo_Roll").text & "|"
+    s = s & "Kyo_SitUp=" & p.Controls("cmbKyo_SitUp").text & "|"
+    s = s & "Kyo_SitHold=" & p.Controls("cmbKyo_SitHold").text & "|"
 
     ' 無名コンボ解決（立ち上がり／立位保持）
     Set cmbSU = GetRightComboByLabelCaptionIn(p, "立ち上がり")
     Set cmbSH = GetRightComboByLabelCaptionIn(p, "立位保持")
-    If Not cmbSU Is Nothing Then s = s & "Kyo_StandUp=" & cmbSU.Text & "|"
-    If Not cmbSH Is Nothing Then s = s & "Kyo_StandHold=" & cmbSH.Text & "|"
+    If Not cmbSU Is Nothing Then s = s & "Kyo_StandUp=" & cmbSU.text & "|"
+    If Not cmbSH Is Nothing Then s = s & "Kyo_StandHold=" & cmbSH.text & "|"
 
-    s = s & "Kyo_Note=" & p.Controls("txtKyoNote").Text
+    s = s & "Kyo_Note=" & p.Controls("txtKyoNote").text
 
     Build_ADL_IO = s
 End Function
@@ -256,7 +256,7 @@ Public Sub Save_ADL_Once()
 
 
     ' 追記行を決定（ヘッダの次行から開始）
-    R = ws.Cells(ws.rows.Count, c).End(xlUp).row: If R < 2 Then R = 2 Else R = R + 1
+    R = ws.Cells(ws.rows.count, c).End(xlUp).row: If R < 2 Then R = 2 Else R = R + 1
 
 
     ' IO生成 → 書き込み
@@ -276,7 +276,7 @@ Public Function EnsureHeader(ws As Worksheet, ByVal header As String) As Long
     Dim m As Variant, lastCol As Long
     m = Application.Match(header, ws.rows(1), 0)
     If IsError(m) Then
-        lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+        lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
         If lastCol < 1 Then lastCol = 1
         ws.Cells(1, lastCol + 1).value = header
         EnsureHeader = lastCol + 1
@@ -301,7 +301,7 @@ Public Sub Load_ADL_Latest()
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
     c = EnsureHeader(ws, "IO_ADL")
-    R = ws.Cells(ws.rows.Count, c).End(xlUp).row
+    R = ws.Cells(ws.rows.count, c).End(xlUp).row
     If R < 2 Then Exit Sub    ' データなし
 
     s = ReadStr_Compat("IO_ADL", R, ws)
@@ -330,7 +330,7 @@ Public Sub Load_ADL_Latest()
         Select Case k
             
     ' --- BI (#0) ---
-    Case "BITotal":                 mp.Pages(0).Controls("txtBITotal").Text = v
+    Case "BITotal":                 mp.Pages(0).Controls("txtBITotal").text = v
     Case "BI_0":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_0"), v
     Case "BI_1":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_1"), v
     Case "BI_2":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_2"), v
@@ -349,7 +349,7 @@ Public Sub Load_ADL_Latest()
     Case "BI_HomeEnv_4":            mp.Pages(0).Controls("chkBIHomeEnv_Handrail").value = (v = "1")
     Case "BI_HomeEnv_5":            mp.Pages(0).Controls("chkBIHomeEnv_Slope").value = (v = "1")
     Case "BI_HomeEnv_6":            mp.Pages(0).Controls("chkBIHomeEnv_NarrowPath").value = (v = "1")
-    Case "BI_HomeEnv_Note":         mp.Pages(0).Controls("txtBIHomeEnvNote").Text = v
+    Case "BI_HomeEnv_Note":         mp.Pages(0).Controls("txtBIHomeEnvNote").text = v
 
 
     ' --- IADL (#1) ---
@@ -362,7 +362,7 @@ Public Sub Load_ADL_Latest()
     Case "IADL_6":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_6"), v
     Case "IADL_7":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_7"), v
     Case "IADL_8":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_8"), v
-    Case "IADLNote":                mp.Pages(1).Controls("txtIADLNote").Text = v
+    Case "IADLNote":                mp.Pages(1).Controls("txtIADLNote").text = v
 
     ' --- 起居動作 (#2) ---
     Case "Kyo_Roll":                SafeSetComboValue mp.Pages(2).Controls("cmbKyo_Roll"), v
@@ -370,7 +370,7 @@ Public Sub Load_ADL_Latest()
     Case "Kyo_SitHold":             SafeSetComboValue mp.Pages(2).Controls("cmbKyo_SitHold"), v
     Case "Kyo_StandUp":             If Not cmbSU Is Nothing Then SafeSetComboValue cmbSU, v
     Case "Kyo_StandHold":           If Not cmbSH Is Nothing Then SafeSetComboValue cmbSH, v
-    Case "Kyo_Note":                mp.Pages(2).Controls("txtKyoNote").Text = v
+    Case "Kyo_Note":                mp.Pages(2).Controls("txtKyoNote").text = v
 End Select
 
         n = n + 1
@@ -390,7 +390,7 @@ Public Sub SaveAndReload_ADL()
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
     c = EnsureHeader(ws, "IO_ADL")
-    R = ws.Cells(ws.rows.Count, c).End(xlUp).row
+    R = ws.Cells(ws.rows.count, c).End(xlUp).row
     s = ReadStr_Compat("IO_Sensory", R, ws)
     Debug.Print "[ADL.SaveLoad] Row=" & R & " Col=" & c & " | Len=" & Len(s)
 End Sub
@@ -404,7 +404,7 @@ Public Sub PreRelease_ADL_Checklist()
     Dim ws As Worksheet, c As Long, R As Long, s As String
     Set ws = ThisWorkbook.Worksheets("EvalData")
     c = EnsureHeader(ws, "IO_ADL")
-    R = ws.Cells(ws.rows.Count, c).End(xlUp).row
+    R = ws.Cells(ws.rows.count, c).End(xlUp).row
     If R < 2 Then Debug.Print "[ADL.Check] データなし": Exit Sub
 
     s = ReadStr_Compat("IO_Sensory", R, ws)
@@ -616,7 +616,7 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, R As Long, owner As Object)
 
         Select Case k
             ' --- BI (#0) ---
-            Case "BITotal":                 mp.Pages(0).Controls("txtBITotal").Text = v
+            Case "BITotal":                 mp.Pages(0).Controls("txtBITotal").text = v
             Case "BI_0":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_0"), v
             Case "BI_1":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_1"), v
             Case "BI_2":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_2"), v
@@ -638,7 +638,7 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, R As Long, owner As Object)
             Case "IADL_6":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_6"), v
             Case "IADL_7":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_7"), v
             Case "IADL_8":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_8"), v
-            Case "IADLNote":                mp.Pages(1).Controls("txtIADLNote").Text = v
+            Case "IADLNote":                mp.Pages(1).Controls("txtIADLNote").text = v
 
             ' --- 起居動作 (#2) ---
             Case "Kyo_Roll":                SafeSetComboValue mp.Pages(2).Controls("cmbKyo_Roll"), v
@@ -646,7 +646,7 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, R As Long, owner As Object)
             Case "Kyo_SitHold":             SafeSetComboValue mp.Pages(2).Controls("cmbKyo_SitHold"), v
             Case "Kyo_StandUp":             If Not cmbSU Is Nothing Then SafeSetComboValue cmbSU, v
             Case "Kyo_StandHold":           If Not cmbSH Is Nothing Then SafeSetComboValue cmbSH, v
-            Case "Kyo_Note":                mp.Pages(2).Controls("txtKyoNote").Text = v
+            Case "Kyo_Note":                mp.Pages(2).Controls("txtKyoNote").text = v
         End Select
 
         n = n + 1

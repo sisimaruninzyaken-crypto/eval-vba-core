@@ -85,7 +85,7 @@ Private Sub DumpMultiPagePages(ByVal mp As Object, ByVal depth As Long)
     On Error GoTo EH
 
     Dim i As Long, pg As Object
-    For i = 0 To mp.Pages.Count - 1
+    For i = 0 To mp.Pages.count - 1
         Set pg = mp.Pages(i)
 #If APP_DEBUG Then
         Debug.Print Ind(depth) & "* Page(" & i & ") Name=" & pg.name & _
@@ -106,7 +106,7 @@ End Sub
 Private Function HasControls(ByVal o As Object) As Boolean
     On Error GoTo EH
     Dim n As Long
-    n = o.Controls.Count
+    n = o.Controls.count
     HasControls = (n >= 0)
     Exit Function
 EH:
@@ -209,7 +209,7 @@ Private Sub DumpPages_ToFile(ByVal mp As Object, ByVal depth As Long, ByVal ff A
     On Error GoTo EH
     Dim i As Long, pg As Object
 
-    For i = 0 To mp.Pages.Count - 1
+    For i = 0 To mp.Pages.count - 1
         Set pg = mp.Pages(i)
 
         Print #ff, Ind(depth) & "* Page(" & i & ") Name=" & pg.name & _
@@ -293,7 +293,7 @@ Public Sub Diag_MultiPagePages(ByVal uf As Object, ByVal mpName As String)
     Dim mp As Object
     Set mp = uf.Controls(mpName)
 
-    Debug.Print "[MP]"; mpName; " Type=" & TypeName(mp); " PagesCount=" & mp.Pages.Count
+    Debug.Print "[MP]"; mpName; " Type=" & TypeName(mp); " PagesCount=" & mp.Pages.count
     
     
     
@@ -326,7 +326,7 @@ Public Sub DumpMP_PageTopControls(ByVal uf As Object, ByVal mpName As String)
     On Error GoTo EH
 
     Dim mp As Object: Set mp = uf.Controls(mpName)
-    Debug.Print "[MP TOP] " & mpName & " Pages=" & mp.Pages.Count
+    Debug.Print "[MP TOP] " & mpName & " Pages=" & mp.Pages.count
 
     Dim pg As Object, i As Long
     i = 0
@@ -348,7 +348,7 @@ End Sub
 
 Private Function PgCtlCount(ByVal pg As Object) As Long
     On Error GoTo EH
-    PgCtlCount = pg.Controls.Count
+    PgCtlCount = pg.Controls.count
     Exit Function
 EH:
     PgCtlCount = -1
@@ -361,7 +361,7 @@ Public Sub DumpMP_PageCounts(ByVal uf As Object, ByVal mpName As String)
     On Error GoTo EH
 
     Dim mp As Object: Set mp = uf.Controls(mpName)
-    Debug.Print "[MP COUNTS] " & mpName & " Pages=" & mp.Pages.Count
+    Debug.Print "[MP COUNTS] " & mpName & " Pages=" & mp.Pages.count
 
     Dim pg As Object, i As Long
     i = 0
@@ -613,7 +613,7 @@ End Sub
 Public Sub Diag_mpPhys_PageCounts()
     Dim mp As Object
     Set mp = frmEval.Controls("mpPhys")
-    Debug.Print "[MP COUNTS] mpPhys Pages=" & mp.Pages.Count
+    Debug.Print "[MP COUNTS] mpPhys Pages=" & mp.Pages.count
 
     Dim pg As Object, i As Long
     i = 0
@@ -631,7 +631,7 @@ Public Sub Diag_frKyo_ComboIndex()
     Set f = frmEval.Controls("MultiPage1").Pages(3).Controls("Frame4") _
                 .Controls("mpADL").Pages(2).Controls("frKyo")
 
-    For i = 0 To f.Controls.Count - 1
+    For i = 0 To f.Controls.count - 1
         Set c = f.Controls(i)
         If TypeName(c) = "ComboBox" Then
             Debug.Print i, "[" & c.name & "]", c.Left, c.Top
@@ -730,32 +730,32 @@ Public Sub Dump_AllLayout_Snapshot()
     Set mp1 = frmEval.Controls("MultiPage1")
 
     Dim i As Long
-    For i = 0 To mp1.Pages.Count - 1
+    For i = 0 To mp1.Pages.count - 1
         Set pg = mp1.Pages(i)
         DumpTreeByParent_ToFile pg
     Next i
 
     '--- 2) Page3 -> Frame3 -> mpPhys (6ページ) ---
     Set mpPhys = mp1.Pages(2).Controls("Frame3").Controls("mpPhys")
-    For i = 0 To mpPhys.Pages.Count - 1
+    For i = 0 To mpPhys.Pages.count - 1
         DumpTreeByParent_ToFile mpPhys.Pages(i)
     Next i
 
     '--- 3) Page4 -> Frame4 -> mpADL (3ページ) ---
     Set mpADL = mp1.Pages(3).Controls("Frame4").Controls("mpADL")
-    For i = 0 To mpADL.Pages.Count - 1
+    For i = 0 To mpADL.Pages.count - 1
         DumpTreeByParent_ToFile mpADL.Pages(i)
     Next i
 
     '--- 4) Page6 -> Frame6 -> MultiPage2 (3ページ) ---
     Set mp2 = mp1.Pages(5).Controls("Frame6").Controls("MultiPage2")
-    For i = 0 To mp2.Pages.Count - 1
+    For i = 0 To mp2.Pages.count - 1
         DumpTreeByParent_ToFile mp2.Pages(i)
     Next i
 
     '--- 5) MultiPage2 の Page9 -> Frame26 -> MultiPage3 (2ページ) ---
     Set mp3 = mp2.Pages(1).Controls("Frame26").Controls("MultiPage3")
-    For i = 0 To mp3.Pages.Count - 1
+    For i = 0 To mp3.Pages.count - 1
         DumpTreeByParent_ToFile mp3.Pages(i)
     Next i
 

@@ -78,7 +78,7 @@ End If
 Dim pg As Object, t As String
 Set ws = ThisWorkbook.Worksheets("EvalData")
 
-hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.Text))
+hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.text))
 lr = hubRow                        '（Debug.Printで lr を使うなら合わせておく）
 s = ReadStr_Compat("IO_Pain", hubRow, ws)
 
@@ -103,11 +103,11 @@ Debug.Print "[txtDur-Test]", "hubRow=", hubRow, " val=", t
 
 If Len(t) > 0 Then
     On Error Resume Next
-    pg.Controls("txtPainDuration").Text = t
+    pg.Controls("txtPainDuration").text = t
     On Error GoTo 0
 End If
 
-Debug.Print "[txtDur-AfterSet]", "[" & pg.Controls("txtPainDuration").Text & "]"
+Debug.Print "[txtDur-AfterSet]", "[" & pg.Controls("txtPainDuration").text & "]"
 
 
 
@@ -123,7 +123,7 @@ If Len(t) > 0 Then pg.Controls("cmbPainDayPeriod").value = t
 
 
     ' 最新行（IO/NOTE基準）
-lr = WorksheetFunction.Max(ws.Cells(ws.rows.Count, 156).End(xlUp).row, ws.Cells(ws.rows.Count, 157).End(xlUp).row)
+lr = WorksheetFunction.Max(ws.Cells(ws.rows.count, 156).End(xlUp).row, ws.Cells(ws.rows.count, 157).End(xlUp).row)
 
 
 
@@ -136,14 +136,14 @@ altVAS = ""
 
 ' いったんクリア
 On Error Resume Next
-pg.Controls("fraVAS").Controls("txtVAS").Text = ""
+pg.Controls("fraVAS").Controls("txtVAS").text = ""
 pg.Controls("fraVAS").Controls("sldVAS").value = 0
 On Error GoTo 0
 
 If Len(t) = 0 And IsNumeric(altVAS) Then t = Trim$(altVAS)
 If Len(t) > 0 Then
     On Error Resume Next
-    pg.Controls("fraVAS").Controls("txtVAS").Text = t
+    pg.Controls("fraVAS").Controls("txtVAS").text = t
     pg.Controls("fraVAS").Controls("sldVAS").value = CLng(t)
     On Error GoTo 0
 End If
@@ -207,7 +207,7 @@ Private Sub LoadPainFromSheet_MinLists(ByVal owner As Object)
  Set ws = ThisWorkbook.Worksheets("EvalData")
 
 Dim hubRow As Long
-hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.Text))
+hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.text))
 
 Debug.Print "[PAIN][MinLists] hubRow=", hubRow   ' ←ログは残してOK
 
@@ -395,7 +395,7 @@ Private Sub LoadPainFromSheet_Note(ByVal owner As Object)
     Dim pg As Object, tb As MSForms.TextBox
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lr = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    lr = ws.Cells(ws.rows.count, 1).End(xlUp).row
     noteText = CStr(ws.Cells(lr, COL_NOTE).value)
 
     Set pg = owner.Controls("mpPhys").Pages(4)
@@ -403,7 +403,7 @@ Private Sub LoadPainFromSheet_Note(ByVal owner As Object)
 
     Set tb = FindNoteTextBox(pg)
     If tb Is Nothing Or IsUnderVAS(tb) Or tb.name = "txtPainDuration" Then Exit Sub
-    If Not tb Is Nothing Then tb.Text = noteText
+    If Not tb Is Nothing Then tb.text = noteText
 
    
 End Sub
@@ -422,7 +422,7 @@ Private Sub LoadPainFromSheet(ByVal owner As Object)
     Dim pg As Object
     Set ws = ThisWorkbook.Worksheets("EvalData")
     Dim hubRow As Long
-hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.Text))
+hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.text))
 
 
 ioText = ReadStr_Compat("IO_Pain", hubRow, ws)
@@ -433,15 +433,15 @@ ioText = ReadStr_Compat("IO_Pain", hubRow, ws)
     If pg Is Nothing Then Exit Sub
 
    LoadPainFromSheet_MinCombos owner
-Debug.Print "[After-MinCombos]", pg.Controls("txtPainDuration").Text
+Debug.Print "[After-MinCombos]", pg.Controls("txtPainDuration").text
 
 LoadPainFromSheet_MinLists owner
-Debug.Print "[After-MinLists]", pg.Controls("txtPainDuration").Text
+Debug.Print "[After-MinLists]", pg.Controls("txtPainDuration").text
 
 'LoadPainFromSheet_Note owner
-Debug.Print "[After-Note]", pg.Controls("txtPainDuration").Text
+Debug.Print "[After-Note]", pg.Controls("txtPainDuration").text
 
-Debug.Print "[After-PainCore-End]", frmEval.Controls("mpPhys").Pages(4).Controls("txtPainDuration").Text
+Debug.Print "[After-PainCore-End]", frmEval.Controls("mpPhys").Pages(4).Controls("txtPainDuration").text
 
 
 End Sub
@@ -454,7 +454,7 @@ End Sub
 
 '=== [TEMP] Latest row helper (IO/NOTE基準) ============================
 Private Function LatestRowIO(ByVal ws As Worksheet) As Long
-    LatestRowIO = WorksheetFunction.Max(ws.Cells(ws.rows.Count, 156).End(xlUp).row, ws.Cells(ws.rows.Count, 157).End(xlUp).row)
+    LatestRowIO = WorksheetFunction.Max(ws.Cells(ws.rows.count, 156).End(xlUp).row, ws.Cells(ws.rows.count, 157).End(xlUp).row)
 
 End Function
 '======================================================================
@@ -465,7 +465,7 @@ Public Sub Debug_LoadVAS_FromLatest(ByVal owner As Object)
     Dim ws As Worksheet, lr As Long, s As String, t As String, alt As String
     Dim pg As Object
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lr = WorksheetFunction.Max(ws.Cells(ws.rows.Count, 156).End(xlUp).row, ws.Cells(ws.rows.Count, 157).End(xlUp).row)
+    lr = WorksheetFunction.Max(ws.Cells(ws.rows.count, 156).End(xlUp).row, ws.Cells(ws.rows.count, 157).End(xlUp).row)
     s = CStr(ws.Cells(lr, 156).value)
     t = IO_GetVal(s, "VAS")
     alt = CStr(ws.Cells(lr, 157).value)
@@ -476,7 +476,7 @@ Public Sub Debug_LoadVAS_FromLatest(ByVal owner As Object)
 
     ' まずクリア
     On Error Resume Next
-    pg.Controls("fraVAS").Controls("txtVAS").Text = ""
+    pg.Controls("fraVAS").Controls("txtVAS").text = ""
     pg.Controls("fraVAS").Controls("sldVAS").value = 0
     On Error GoTo 0
 
@@ -484,12 +484,12 @@ Public Sub Debug_LoadVAS_FromLatest(ByVal owner As Object)
     If Len(t) = 0 And IsNumeric(alt) Then t = Trim$(alt)
     If Len(t) > 0 Then
         On Error Resume Next
-        pg.Controls("fraVAS").Controls("txtVAS").Text = t
+        pg.Controls("fraVAS").Controls("txtVAS").text = t
         pg.Controls("fraVAS").Controls("sldVAS").value = CLng(t)
         On Error GoTo 0
     End If
 
-    Debug.Print "[VAS-DBG-After]", pg.Controls("fraVAS").Controls("txtVAS").Text, pg.Controls("fraVAS").Controls("sldVAS").value
+    Debug.Print "[VAS-DBG-After]", pg.Controls("fraVAS").Controls("txtVAS").text, pg.Controls("fraVAS").Controls("sldVAS").value
 End Sub
 '======================================================================
 
@@ -504,12 +504,12 @@ Public Sub ClearPainUI(ByVal owner As Object)
     pg.Controls("cmbPainOnset").value = ""
     pg.Controls("cmbPainDurationUnit").value = ""
     pg.Controls("cmbPainDayPeriod").value = ""
-    pg.Controls("txtPainDuration").Text = ""
+    pg.Controls("txtPainDuration").text = ""
     On Error GoTo 0
 
     ' --- VAS ---
     On Error Resume Next
-    pg.Controls("fraVAS").Controls("txtVAS").Text = ""
+    pg.Controls("fraVAS").Controls("txtVAS").text = ""
     pg.Controls("fraVAS").Controls("sldVAS").value = 0
     On Error GoTo 0
 

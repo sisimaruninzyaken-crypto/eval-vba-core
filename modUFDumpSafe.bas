@@ -86,9 +86,9 @@ Private Sub DumpMultiPage_Safe(ByVal ws As Object, ByVal mp As MSForms.MultiPage
     On Error GoTo ErrH
 
     Dim i As Long
-    ws.WriteLine Indent(depth) & "(Pages.Count=" & mp.Pages.Count & ")"
+    ws.WriteLine Indent(depth) & "(Pages.Count=" & mp.Pages.count & ")"
 
-    For i = 0 To mp.Pages.Count - 1
+    For i = 0 To mp.Pages.count - 1
         Dim pg As MSForms.Page
         Set pg = mp.Pages(i)
 

@@ -208,7 +208,7 @@ Public Sub LoadAllSectionsFromSheet(ws As Worksheet, R As Long, owner As Object)
     Dim rLatest As Long
 
     ' ★同じ名前なら、その人の「最新行」に読み込み行を差し替える
-         nm = Trim$(owner.txtName.Text)
+         nm = Trim$(owner.txtName.text)
 
     ' ★フォーム側が空なら、シートの氏名セルから拾う
     If Len(nm) = 0 Then
@@ -297,7 +297,7 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
 
     EnsureFormLoaded
     Dim ws As Worksheet: Set ws = EnsureEvalSheet(EVAL_SHEET_NAME)
-    Dim nm As String: nm = Trim$(owner.txtName.Text)
+    Dim nm As String: nm = Trim$(owner.txtName.text)
     Dim R As Long
     Dim r2 As Long
 
@@ -355,7 +355,7 @@ Public Function FindLatestRowByName(ws As Worksheet, nameText As String) As Long
     If c = 0 Then c = FindHeaderCol(ws, "名前")
     If c = 0 Then Exit Function
 
-    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, c).End(xlUp).row
+    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, c).End(xlUp).row
     Dim R As Long
     For R = lastRow To 2 Step -1      ' 1行目は見出し想定
         If NormalizeName(CStr(ws.Cells(R, c).value)) = NormalizeName(nameText) Then
@@ -375,7 +375,7 @@ Public Function CountRowsByName(ws As Worksheet, nameText As String) As Long
     If c = 0 Then Exit Function
 
     Dim lastRow As Long, R As Long
-    lastRow = ws.Cells(ws.rows.Count, c).End(xlUp).row
+    lastRow = ws.Cells(ws.rows.count, c).End(xlUp).row
 
     For R = 2 To lastRow
         If StrComp(CStr(ws.Cells(R, c).value), nameText, vbTextCompare) = 0 Then
@@ -402,7 +402,7 @@ Public Function FindLatestRowByNameAndID( _
     If cID = 0 Then Exit Function
 
     Dim lastRow As Long, R As Long
-    lastRow = ws.Cells(ws.rows.Count, cName).End(xlUp).row
+    lastRow = ws.Cells(ws.rows.count, cName).End(xlUp).row
 
     ' 下から探す＝最新優先
     For R = lastRow To 2 Step -1
@@ -433,7 +433,7 @@ Private Function EnsureEvalSheet(sheetName As String) As Worksheet
     Set EnsureEvalSheet = ThisWorkbook.Worksheets(sheetName)
     On Error GoTo 0
     If EnsureEvalSheet Is Nothing Then
-        Set EnsureEvalSheet = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.Count))
+        Set EnsureEvalSheet = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
         On Error Resume Next
         EnsureEvalSheet.name = sheetName   ' 既存名ならExcelが自動リネーム
         On Error GoTo 0
@@ -473,7 +473,7 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
 
     t "[ENTRY] Save to", ws.name, "row", R
     ' ★変更点のみ保存（chkDiffOnly=ONなら前回値を事前コピー）
-Dim nm As String: nm = Trim$(owner.txtName.Text)
+Dim nm As String: nm = Trim$(owner.txtName.text)
 If Len(nm) = 0 Then MsgBox "氏名を入力してから保存してください。", vbExclamation: Exit Sub
 
 Dim warnMessage As String
@@ -494,7 +494,7 @@ If False Then ' diffOnly And Len(nm) > 0 Then
     Dim rOld As Long: rOld = FindLatestRowByName(ws, nm)
     If rOld > 0 Then
         Dim lastCol As Long
-        lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+        lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
         ws.Range(ws.Cells(R, 1), ws.Cells(R, lastCol)).value = _
             ws.Range(ws.Cells(rOld, 1), ws.Cells(rOld, lastCol)).value
     End If
@@ -652,7 +652,7 @@ Private Sub CountTextInputsRecursive(ByVal container As Object, ByVal excludedRo
 
         On Error Resume Next
         Dim childCount As Long
-        childCount = ctrl.Controls.Count
+        childCount = ctrl.Controls.count
         If Err.Number = 0 And childCount > 0 Then
             On Error GoTo 0
             CountTextInputsRecursive ctrl, excludedRoot, totalCount, blankCount
@@ -699,7 +699,7 @@ Private Function EnsureHeaderCol(ws As Worksheet, header As String) As Long
     Dim f As Range
     Set f = ws.rows(1).Find(What:=header, LookAt:=xlWhole)
     If f Is Nothing Then
-        EnsureHeaderCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column + IIf(ws.Cells(1, 1).value <> "", 1, 0)
+        EnsureHeaderCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + IIf(ws.Cells(1, 1).value <> "", 1, 0)
         If EnsureHeaderCol = 0 Then EnsureHeaderCol = 1
         ws.Cells(1, EnsureHeaderCol).value = header
     Else
@@ -895,7 +895,7 @@ map = Array( _
         head = CStr(map(i)(0)):  ctl = CStr(map(i)(1))
         v = GetCtlTextGeneric(owner, ctl)
         If Len(v) > 0 Then
-            c = FindColByHeaderExact(ws, head): If c = 0 Then c = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column + 1: ws.Cells(1, c).value = head
+            c = FindColByHeaderExact(ws, head): If c = 0 Then c = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1: ws.Cells(1, c).value = head
             ws.Cells(R, c).value = v
             Debug.Print "[BASIC][SAVE]", head, "->", v
         End If
@@ -1069,7 +1069,7 @@ End Function
 
 ' 見出しから列番号（完全一致）
 Public Function FindColByHeaderExact(ByVal ws As Worksheet, ByVal headerName As String) As Long
-    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim c As Long
     For c = 1 To lastCol
         If StrComp(Trim$(CStr(ws.Cells(1, c).value)), headerName, vbTextCompare) = 0 Then
@@ -1084,12 +1084,12 @@ Public Function GetOrCreateRowByID(ByVal ws As Worksheet, ByVal idVal As String)
     Dim idCol As Long: idCol = FindColByHeaderExact(ws, "Basic.ID")
     If idCol = 0 Then
         ' 旧来の命名ならここで作る
-        idCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column + 1
+        idCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1
         ws.Cells(1, idCol).value = "Basic.ID"
     End If
     If Len(idVal) = 0 Then Err.Raise 5, , "IDが空です。"
 
-    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, idCol).End(xlUp).row
+    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, idCol).End(xlUp).row
     Dim R As Long
     For R = 2 To lastRow
         If CStr(ws.Cells(R, idCol).value) = idVal Then
@@ -1295,7 +1295,7 @@ End Sub
 
 ' エイリアス改名（衝突時はマージして旧列を削除）
 Private Sub ApplyAliasesMerge_Basic(ByVal ws As Worksheet, ByVal d As Object)
-    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim j As Long
     For j = lastCol To 1 Step -1
         Dim h As String: h = Trim$(CStr(ws.Cells(1, j).value))
@@ -1305,7 +1305,7 @@ Private Sub ApplyAliasesMerge_Basic(ByVal ws As Worksheet, ByVal d As Object)
             Dim dstCol As Long: dstCol = modSchema.FindColByHeaderExact(ws, dst)
             If dstCol > 0 And dstCol <> j Then
                 ' マージ（空欄だけ埋める）
-                Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, j).End(xlUp).row
+                Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, j).End(xlUp).row
                 Dim R As Long
                 For R = 2 To lastRow
                     If Len(ws.Cells(R, dstCol).value) = 0 And Len(ws.Cells(R, j).value) > 0 Then
@@ -1323,7 +1323,7 @@ End Sub
 
 Private Sub EnsureHeaderExists(ByVal ws As Worksheet, ByVal hdr As String)
     If modSchema.FindColByHeaderExact(ws, hdr) = 0 Then
-        Dim lc As Long: lc = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+        Dim lc As Long: lc = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
         ws.Cells(1, lc + 1).value = hdr
     End If
 End Sub
@@ -1347,11 +1347,11 @@ Public Function GetOrCreateRowByID_Basic(ByVal ws As Worksheet, ByVal idVal As S
     If idCol = 0 Then idCol = FindColByHeaderExact(ws, "BasicInfo_ID")
     If idCol = 0 Then
         ' 無ければ Basic.ID を作る（既存に合わせてOK・後でスキーマ統一可）
-        idCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column + 1
+        idCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1
         ws.Cells(1, idCol).value = "Basic.ID"
     End If
 
-    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, idCol).End(xlUp).row
+    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, idCol).End(xlUp).row
     Dim R As Long
     For R = 2 To lastRow
         If CStr(ws.Cells(R, idCol).value) = idVal Then GetOrCreateRowByID_Basic = R: Exit Function
@@ -1524,7 +1524,7 @@ End Sub
 
 ' IDの最大値+1
 Public Function NextID(ws As Worksheet, ByVal cID As Long) As Long
-    Dim last As Long: last = ws.Cells(ws.rows.Count, cID).End(xlUp).row
+    Dim last As Long: last = ws.Cells(ws.rows.count, cID).End(xlUp).row
     If last < 2 Then NextID = 1: Exit Function
     On Error Resume Next
     NextID = WorksheetFunction.Max(ws.Range(ws.Cells(2, cID), ws.Cells(last, cID))) + 1
@@ -1553,7 +1553,7 @@ Private Sub Mirror_SensoryIO(ws As Worksheet, ByVal R As Long)
     Dim m As Variant, lastCol As Long
     m = Application.Match("IO_Sensory", ws.rows(1), 0)
     If IsError(m) Then
-        lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+        lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
         If lastCol < 1 Then lastCol = 1
         ws.Cells(1, lastCol + 1).value = "IO_Sensory"
         cDst = lastCol + 1
@@ -1605,19 +1605,19 @@ Public Sub Debug_Sensory_ADL_Raw(ByVal ws As Worksheet, ByVal R As Long)
     Debug.Print "=== [RAW SENSE/ADL] row=" & R & " ==="
 
     If Not IsError(cSense) Then
-        Debug.Print "SENSE_IO(col" & cSense & ") =", ws.Cells(R, cSense).Text
+        Debug.Print "SENSE_IO(col" & cSense & ") =", ws.Cells(R, cSense).text
     Else
         Debug.Print "SENSE_IO: <no header>"
     End If
 
     If Not IsError(cADL) Then
-        Debug.Print "IO_ADL(col" & cADL & ") =", ws.Cells(R, cADL).Text
+        Debug.Print "IO_ADL(col" & cADL & ") =", ws.Cells(R, cADL).text
     Else
         Debug.Print "IO_ADL: <no header>"
     End If
 
     If Not IsError(cIOSense) Then
-        Debug.Print "IO_Sensory(col" & cIOSense & ") =", ws.Cells(R, cIOSense).Text
+        Debug.Print "IO_Sensory(col" & cIOSense & ") =", ws.Cells(R, cIOSense).text
     Else
         Debug.Print "IO_Sensory: <no header>"
     End If
@@ -1652,7 +1652,7 @@ Public Sub Debug_Find_IO_Sense_ADL_Sample(ByVal ws As Worksheet)
     Dim sSense As String
     Dim sADL As String
 
-    lastRow = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
 
     For R = 2 To lastRow
         sSense = Trim$(ws.Cells(R, 152).value) 'SENSE_IO
@@ -1703,7 +1703,7 @@ Public Sub Debug_ROMRow_Values(ByVal R As Long)
     Dim hit As Long
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
 
     Debug.Print "=== [ROM VALUES row=" & R & "] ==="
     For c = 1 To lastCol
@@ -1733,7 +1733,7 @@ Public Sub Debug_Find_IO_ROM_Header()
     Dim h As String
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
 
     Debug.Print "=== [FIND IO_ROM HEADER] ==="
     For c = 1 To lastCol
@@ -1754,7 +1754,7 @@ Public Sub Debug_Find_ROM_SampleRow()
     Dim h As String, v As String
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lastRow = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
 
     Debug.Print "=== [ROM SAMPLE ROW SEARCH] ==="
     For R = 2 To lastRow
@@ -1783,7 +1783,7 @@ Public Sub Cleanup_ExtraROMColumns()
     Dim h As String
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
 
     ' 本来使うROMブロックより右側だけをゴミ候補とする（とりあえず300列以降）
     For c = lastCol To 261 Step -1
@@ -2113,7 +2113,7 @@ Private Function FindControlRecursive(parent As Object, name As String) As Objec
         End If
         ' Frame や MultiPage の場合は再帰検索
         On Error Resume Next
-        If ctl.Controls.Count > 0 Then
+        If ctl.Controls.count > 0 Then
             Dim subCtl As Object
             Set subCtl = FindControlRecursive(ctl, name)
             If Not subCtl Is Nothing Then
@@ -2179,7 +2179,7 @@ If Not cLvl Is Nothing Then vLevel = Trim$(cLvl.value)
     Next c
 
     ' 安定性のチェック名を「/」区切りで1本の文字列にまとめる
-    For i = 1 To hits.Count
+    For i = 1 To hits.count
         If i > 1 Then stab = stab & "/"
         stab = stab & hits(i)
     Next i
@@ -2219,14 +2219,14 @@ Public Function Build_WalkAbn_IO(owner As Object) As String
     Next c
     
     ' 1つもチェックが無ければ空文字を返す
-    If hits.Count = 0 Then
+    If hits.count = 0 Then
         Build_WalkAbn_IO = ""
         Exit Function
     End If
     
     ' fraWalkAbn_A_chk0|fraWalkAbn_A_chk3|… という形で連結
     Dim i As Long
-    For i = 1 To hits.Count
+    For i = 1 To hits.count
         If i > 1 Then s = s & "|"
         s = s & hits(i)
     Next i
@@ -2290,8 +2290,8 @@ Public Function Build_WalkRLA_IO(owner As Object) As String
         Next c
 
         ' 問題リストを "/" 区切りで 1 本にする
-        If probs.Count > 0 Then
-            For i = 1 To probs.Count
+        If probs.count > 0 Then
+            For i = 1 To probs.count
                 If i > 1 Then probsStr = probsStr & "/"
                 probsStr = probsStr & probs(i)
             Next i
@@ -2434,7 +2434,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     col = HeaderCol_Compat("IO_Cog_DementiaNote", ws)
     If col > 0 Then
            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgCognition").Controls("txtDementiaNote").Text
+            .Pages("pgCognition").Controls("txtDementiaNote").text
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2516,7 +2516,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     col = HeaderCol_Compat("IO_Mental_Note", ws)
     If col > 0 Then
            v = frm.Controls("Frame31").Controls("mpCogMental") _
-            .Pages("pgMental").Controls("txtMentalNote").Text
+            .Pages("pgMental").Controls("txtMentalNote").text
 
         If IsNull(v) Then v = ""
         ws.Cells(R, col).value = v
@@ -2592,7 +2592,7 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal R As Long, owner 
 
     v = ws.Cells(R, COL_COG_DEM_NOTE).value
     If IsNull(v) Then v = ""
-    pgCog.Controls("txtDementiaNote").Text = v
+    pgCog.Controls("txtDementiaNote").text = v
 
     '=== BPSD（chkBPSD0?10）===
     ' 1) 全部一度クリア
@@ -2639,7 +2639,7 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal R As Long, owner 
 
     v = ws.Cells(R, COL_MENTAL_NOTE).value
     If IsNull(v) Then v = ""
-    pgMental.Controls("txtMentalNote").Text = v
+    pgMental.Controls("txtMentalNote").text = v
 End Sub
 
 
@@ -2666,7 +2666,7 @@ Public Sub Save_DailyLog_FromForm(owner As Object)
     Next sh
 
     If ws Is Nothing Then
-        Set ws = wb.Worksheets.Add(After:=wb.Worksheets(wb.Worksheets.Count))
+        Set ws = wb.Worksheets.Add(After:=wb.Worksheets(wb.Worksheets.count))
         ws.name = "DailyLog"
         ws.Range("A1").value = "記録日"
         ws.Range("B1").value = "利用者名"
@@ -2687,7 +2687,7 @@ Public Sub Save_DailyLog_FromForm(owner As Object)
     End If
 
     '--- 書き込み行を決定（最終行の次） ---
-    lastRow = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
     If lastRow < 1 Then lastRow = 1
     R = lastRow + 1
 
@@ -2756,7 +2756,7 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     End If
 
     '--- 該当利用者の「最新（いちばん下）」の行を探す ---
-    lastRow = ws.Cells(ws.rows.Count, 2).End(xlUp).row   ' B列＝利用者名
+    lastRow = ws.Cells(ws.rows.count, 2).End(xlUp).row   ' B列＝利用者名
     If lastRow < 2 Then
 
         Exit Sub
@@ -2835,7 +2835,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
     End If
 
     '--- 追記行を決める（1行目に見出しがある前提）---
-    R = ws.Cells(ws.rows.Count, 1).End(xlUp).row + 1
+    R = ws.Cells(ws.rows.count, 1).End(xlUp).row + 1
 
     '--- 書き込み ---
     ws.Cells(R, 1).value = CDate(dt)   ' 記録日
@@ -2992,7 +2992,7 @@ End Sub
 Private Function HasControls(ByVal o As Object) As Boolean
     On Error Resume Next
     Dim n As Long
-    n = o.Controls.Count
+    n = o.Controls.count
     HasControls = (Err.Number = 0 And n > 0)
     Err.Clear
     On Error GoTo 0

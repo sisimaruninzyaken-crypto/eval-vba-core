@@ -255,7 +255,7 @@ Private Function ScoreToStrengthBand(ByVal itemScores As Object) As String
         ScoreToStrengthBand = "unknown"
         Exit Function
     End If
-    If itemScores.Count = 0 Then
+    If itemScores.count = 0 Then
         ScoreToStrengthBand = "unknown"
         Exit Function
     End If
@@ -264,7 +264,7 @@ Private Function ScoreToStrengthBand(ByVal itemScores As Object) As String
         total = total + CDbl(itemScores(k))
     Next k
 
-    avg = total / CDbl(itemScores.Count)
+    avg = total / CDbl(itemScores.count)
 
     If avg < 2# Then
         ScoreToStrengthBand = "severe"
@@ -326,12 +326,12 @@ Private Function GetRomLimitTags() As String
     AddRomLimitTag ws, look, rLatest, "ROM_Upper_Shoulder_IR_R", 50, "Shoulder_IR_R", tags
     AddRomLimitTag ws, look, rLatest, "ROM_Upper_Shoulder_IR_L", 50, "Shoulder_IR_L", tags
     
-    If tags.Count = 0 Then Exit Function
+    If tags.count = 0 Then Exit Function
 
     Dim arr() As String
     Dim i As Long
-    ReDim arr(0 To tags.Count - 1)
-    For i = 1 To tags.Count
+    ReDim arr(0 To tags.count - 1)
+    For i = 1 To tags.count
         arr(i - 1) = CStr(tags(i))
     Next i
 
@@ -562,11 +562,11 @@ Private Function GetBILowItems() As String
 NextI:
     Next i
 
-    If parts.Count = 0 Then Exit Function
+    If parts.count = 0 Then Exit Function
 
     Dim arr() As String
-    ReDim arr(0 To parts.Count - 1)
-    For i = 1 To parts.Count
+    ReDim arr(0 To parts.count - 1)
+    For i = 1 To parts.count
         arr(i - 1) = CStr(parts(i))
     Next i
 
@@ -583,7 +583,7 @@ Private Function GetBedMobilityBand() As String
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
 
-    nm = Trim$(frmEval.Controls("txtName").Text)
+    nm = Trim$(frmEval.Controls("txtName").text)
     If LenB(nm) = 0 Then Exit Function
 
     ' ※あなたの既存 FindLatestRowByName を使う前提（NormalizeName含む版でOK）

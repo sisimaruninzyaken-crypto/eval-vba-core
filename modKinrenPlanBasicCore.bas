@@ -214,7 +214,7 @@ Public Function FilterMMTMap(ByVal mmtMap As Object, ByVal activityLong As Strin
         End If
     Next i
 
-    If filtered.Count = 0 Then
+    If filtered.count = 0 Then
         Set FilterMMTMap = mmtMap
     Else
         Set FilterMMTMap = filtered

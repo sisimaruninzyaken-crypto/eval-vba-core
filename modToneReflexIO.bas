@@ -10,7 +10,7 @@ Private Const SEP_RL  As String = ","
 ' 筋緊張・反射（痙縮含む） 保存：TONE_IO / TONE_NOTE
 '========================================================
 Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
-    If owner Is Nothing Then If VBA.UserForms.Count > 0 Then Set owner = VBA.UserForms(0)
+    If owner Is Nothing Then If VBA.UserForms.count > 0 Then Set owner = VBA.UserForms(0)
 
     Dim ctl As Object, mp As Object, pg As Object, target As Object
     Dim q As New Collection, node As Object, ch As Object, tmp As Object
@@ -35,7 +35,7 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal o
 
     ' 2) 対象ページ内の ComboBox を収集（Frame内も掘る）
     q.Add target
-    Do While q.Count > 0
+    Do While q.count > 0
         Set node = q(1): q.Remove 1
         On Error Resume Next
         For Each ch In node.Controls
@@ -46,16 +46,16 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal o
         Next ch
         On Error GoTo 0
     Loop
-    If combos.Count = 0 Then Exit Sub
+    If combos.count = 0 Then Exit Sub
 
     ' 3) 重複除去 → Top/Left で安定ソート
     Dim seen As Object: Set seen = CreateObject("Scripting.Dictionary"): seen.CompareMode = 1
     Dim uniq As New Collection, i As Long, j As Long
-    For i = 1 To combos.Count
+    For i = 1 To combos.count
         If Not seen.exists(combos(i).name) Then seen(combos(i).name) = True: uniq.Add combos(i)
     Next i
-    Dim arr() As Object: ReDim arr(1 To uniq.Count)
-    For i = 1 To uniq.Count: Set arr(i) = uniq(i): Next i
+    Dim arr() As Object: ReDim arr(1 To uniq.count)
+    For i = 1 To uniq.count: Set arr(i) = uniq(i): Next i
 
     Const tol As Single = 6
     For i = 1 To UBound(arr) - 1
@@ -80,10 +80,10 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal o
         If pos + 1 > UBound(arr) Then Exit For
 
         ' 右（R）この1行を差し替え
-vR = CStr(arr(pos).value): If Len(vR) = 0 Then vR = CStr(arr(pos).Text)
+vR = CStr(arr(pos).value): If Len(vR) = 0 Then vR = CStr(arr(pos).text)
 
 ' 左（L）この1行を差し替え
-vL = CStr(arr(pos + 1).value): If Len(vL) = 0 Then vL = CStr(arr(pos + 1).Text)
+vL = CStr(arr(pos + 1).value): If Len(vL) = 0 Then vL = CStr(arr(pos + 1).text)
 
 
         If Len(s) > 0 Then s = s & SEP_REC
@@ -118,7 +118,7 @@ vL = CStr(arr(pos + 1).value): If Len(vL) = 0 Then vL = CStr(arr(pos + 1).Text)
     Next box
     On Error GoTo 0
 
-    If Not noteCtl Is Nothing Then note = CStr(noteCtl.Text) Else note = ""
+    If Not noteCtl Is Nothing Then note = CStr(noteCtl.text) Else note = ""
     cNote = EnsureHeaderCol(ws, "TONE_NOTE")
     ws.Cells(R, cNote).value = note
     Debug.Print "[TONE][SAVE][NOTE] row=" & R & " col=" & cNote & " len=" & Len(note)
@@ -129,7 +129,7 @@ End Sub
 ' 筋緊張・反射（痙縮含む） 読み込み：TONE_IO / TONE_NOTE
 '========================================================
 Public Sub LoadToneReflexFromSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
-    If owner Is Nothing Then If VBA.UserForms.Count > 0 Then Set owner = VBA.UserForms(0)
+    If owner Is Nothing Then If VBA.UserForms.count > 0 Then Set owner = VBA.UserForms(0)
 
     Dim ctl As Object, mp As Object, pg As Object, target As Object
     ' 1) 「筋緊張」or「反射」を含むページを特定
@@ -176,7 +176,7 @@ cont:
     Dim q As New Collection, node As Object, ch As Object, tmp As Object
     Dim combos As New Collection
     q.Add target
-    Do While q.Count > 0
+    Do While q.count > 0
         Set node = q(1): q.Remove 1
         On Error Resume Next
         For Each ch In node.Controls
@@ -187,15 +187,15 @@ cont:
         Next ch
         On Error GoTo 0
     Loop
-    If combos.Count = 0 Then Exit Sub
+    If combos.count = 0 Then Exit Sub
 
     Dim seen As Object: Set seen = CreateObject("Scripting.Dictionary"): seen.CompareMode = 1
     Dim uniq As New Collection, i As Long, j As Long
-    For i = 1 To combos.Count
+    For i = 1 To combos.count
         If Not seen.exists(combos(i).name) Then seen(combos(i).name) = True: uniq.Add combos(i)
     Next i
-    Dim arr() As Object: ReDim arr(1 To uniq.Count)
-    For i = 1 To uniq.Count: Set arr(i) = uniq(i): Next i
+    Dim arr() As Object: ReDim arr(1 To uniq.count)
+    For i = 1 To uniq.count: Set arr(i) = uniq(i): Next i
 
     Const tol As Single = 6
     For i = 1 To UBound(arr) - 1
@@ -291,7 +291,7 @@ On Error GoTo 0
     Next box
     On Error GoTo 0
 
-    If Not noteCtl Is Nothing Then noteCtl.Text = note
+    If Not noteCtl Is Nothing Then noteCtl.text = note
     Debug.Print "[TONE][LOAD][NOTE] row=" & R & " col=" & cNote & " len=" & Len(note) & _
                 IIf(noteCtl Is Nothing, " (target textbox not found)", " -> " & noteCtl.name & " H=" & bestH)
 

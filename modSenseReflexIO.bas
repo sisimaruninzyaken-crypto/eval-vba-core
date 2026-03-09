@@ -25,7 +25,7 @@ Public Function SerializeRL(container As Object) As String
 
     ' 幅優先でコンテナ配下を総なめ（Frame/Pages含む）
     q.Add container
-    Do While q.Count > 0
+    Do While q.count > 0
         Set node = q(1): q.Remove 1
         On Error Resume Next
 
@@ -158,7 +158,7 @@ Public Sub SaveSensoryToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owne
 
     ' ② target 配下を幅優先で走査して ComboBox をすべて収集（Frame の中も掘る）
     q.Add target
-    Do While q.Count > 0
+    Do While q.count > 0
         Set node = q(1): q.Remove 1
         On Error Resume Next
         For Each ch In node.Controls
@@ -175,18 +175,18 @@ Public Sub SaveSensoryToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owne
     Loop
 
     ' ③ 位置で安定ソート（Top → Left）。行ずれ吸収のため Top は±6の許容で比較
-    If combos.Count = 0 Then
+    If combos.count = 0 Then
         s = "" ' 何も無ければ空
         GoTo WRITE_OUT
     End If
 
    Dim arr() As Object, seen As Object, uniq As New Collection
 Set seen = CreateObject("Scripting.Dictionary"): seen.CompareMode = 1
-For i = 1 To combos.Count
+For i = 1 To combos.count
     If Not seen.exists(combos(i).name) Then seen(combos(i).name) = True: uniq.Add combos(i)
 Next i
-ReDim arr(1 To uniq.Count)
-For i = 1 To uniq.Count: Set arr(i) = uniq(i): Next i
+ReDim arr(1 To uniq.count)
+For i = 1 To uniq.count: Set arr(i) = uniq(i): Next i
 
 
     Const tol As Single = 6
@@ -217,7 +217,7 @@ For i = 1 To uniq.Count: Set arr(i) = uniq(i): Next i
         If arr(pos).ListIndex >= 0 Then
             vR = CStr(arr(pos).List(arr(pos).ListIndex, 0))
         Else
-            vR = CStr(arr(pos).Text)
+            vR = CStr(arr(pos).text)
             If Len(vR) = 0 Then vR = CStr(arr(pos).value)
         End If
 
@@ -226,7 +226,7 @@ For i = 1 To uniq.Count: Set arr(i) = uniq(i): Next i
             If arr(pos + 1).ListIndex >= 0 Then
                 vL = CStr(arr(pos + 1).List(arr(pos + 1).ListIndex, 0))
             Else
-                vL = CStr(arr(pos + 1).Text)
+                vL = CStr(arr(pos + 1).text)
                 If Len(vL) = 0 Then vL = CStr(arr(pos + 1).value)
             End If
         Else
@@ -274,7 +274,7 @@ For Each box In target.Controls
 Next box
 On Error GoTo 0
 
-If Not noteCtl Is Nothing Then note = CStr(noteCtl.Text) Else note = ""
+If Not noteCtl Is Nothing Then note = CStr(noteCtl.text) Else note = ""
 
 Dim cNote As Long
 cNote = EnsureHeaderCol(ws, "SENSE_NOTE")
@@ -352,7 +352,7 @@ End Sub
 Public Sub LoadSensoryFromSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
     
     If owner Is Nothing Then
-    If VBA.UserForms.Count > 0 Then Set owner = VBA.UserForms(0)
+    If VBA.UserForms.count > 0 Then Set owner = VBA.UserForms(0)
 End If
 
     
@@ -399,7 +399,7 @@ cont:
     Dim q As New Collection, node As Object, ch As Object, tmp As Object
     Dim combos As New Collection
     q.Add target
-    Do While q.Count > 0
+    Do While q.count > 0
         Set node = q(1): q.Remove 1
         On Error Resume Next
         For Each ch In node.Controls
@@ -412,14 +412,14 @@ cont:
     Loop
 
     ' 4) 重複除去→Top→Leftで安定ソート
-    If combos.Count = 0 Then Exit Sub
+    If combos.count = 0 Then Exit Sub
     Dim seen As Object: Set seen = CreateObject("Scripting.Dictionary"): seen.CompareMode = 1
     Dim uniq As New Collection, i As Long, j As Long
-    For i = 1 To combos.Count
+    For i = 1 To combos.count
         If Not seen.exists(combos(i).name) Then seen(combos(i).name) = True: uniq.Add combos(i)
     Next i
-    Dim arr() As Object: ReDim arr(1 To uniq.Count)
-    For i = 1 To uniq.Count: Set arr(i) = uniq(i): Next i
+    Dim arr() As Object: ReDim arr(1 To uniq.count)
+    For i = 1 To uniq.count: Set arr(i) = uniq(i): Next i
 
     Const tol As Single = 6
     For i = 1 To UBound(arr) - 1
@@ -507,7 +507,7 @@ Next box
 On Error GoTo 0
 
 If Not noteCtl Is Nothing Then
-    noteCtl.Text = note
+    noteCtl.text = note
     
 Else
     Debug.Print "[SENSE][LOAD][NOTE] row=" & R & " col=" & cNote & " len=" & Len(note) & " (target textbox not found)"

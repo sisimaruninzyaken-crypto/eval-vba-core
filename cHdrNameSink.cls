@@ -54,8 +54,8 @@ End If
             If lb.ListCount > 0 Then
                 If lb.ListIndex < 0 Then lb.ListIndex = 0
 
-                frmEval.Controls("frHeader").Controls("txtHdrName").Text = lb.List(lb.ListIndex, 0)
-                frmEval.Controls("txtName").Text = frmEval.Controls("frHeader").Controls("txtHdrName").Text
+                frmEval.Controls("frHeader").Controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
+                frmEval.Controls("txtName").text = frmEval.Controls("frHeader").Controls("txtHdrName").text
                 lb.Visible = False
             End If
         End If
@@ -64,7 +64,7 @@ End If
 End If
         
     ' ヘッダ → 裏口同期（既存ロジック駆動）
-    frmEval.Controls("txtName").Text = tb.Text
+    frmEval.Controls("txtName").text = tb.text
 
     ' 候補BOXを確実に出す
     frmEval.EnsureNameSuggestList

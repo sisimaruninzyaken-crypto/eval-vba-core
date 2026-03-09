@@ -26,7 +26,7 @@ Private Function GetOrCreateSheet(ByVal wb As Workbook, ByVal sheetName As Strin
     Set ws = wb.Worksheets(sheetName)
     On Error GoTo 0
     If ws Is Nothing Then
-        Set ws = wb.Worksheets.Add(After:=wb.Worksheets(wb.Worksheets.Count))
+        Set ws = wb.Worksheets.Add(After:=wb.Worksheets(wb.Worksheets.count))
         On Error Resume Next
         ws.name = sheetName
         On Error GoTo 0
@@ -45,7 +45,7 @@ Public Sub DeleteClientFrom_EvalData_ByName()
     Dim nameCol As Long: nameCol = 89 'CK
 
     Dim lastRow As Long
-    lastRow = ws.Cells(ws.rows.Count, nameCol).End(xlUp).row
+    lastRow = ws.Cells(ws.rows.count, nameCol).End(xlUp).row
 
     Dim cnt As Long: cnt = 0
     Dim R As Long
@@ -74,7 +74,7 @@ Public Sub ArchiveAndDelete_EvalData_ByName()
     Const NAME_COL As Long = 89 'CK（氏名）
 
     Dim lastRow As Long
-    lastRow = ws.Cells(ws.rows.Count, NAME_COL).End(xlUp).row
+    lastRow = ws.Cells(ws.rows.count, NAME_COL).End(xlUp).row
     If lastRow < 2 Then
         MsgBox "EvalData にデータ行がありません。", vbExclamation
         Exit Sub
@@ -134,7 +134,7 @@ End If
         If CStr(ws.Cells(R, NAME_COL).value) = nm And (pid = "" Or CStr(ws.Cells(R, ID_COL).value) = pid) Then
             ' 行退避（A:FW の行）
             Dim nextA As Long
-            nextA = wsA.Cells(wsA.rows.Count, 1).End(xlUp).row + 1
+            nextA = wsA.Cells(wsA.rows.count, 1).End(xlUp).row + 1
             ws.Range("A" & R & ":FW" & R).Copy Destination:=wsA.Range("A" & nextA)
 
             ' 元から削除
@@ -194,7 +194,7 @@ Public Function GetLatestID_ForName(ByVal ws As Worksheet, ByVal nm As String, B
     Dim lastRow As Long, R As Long
     Dim idS As String
     
-    lastRow = ws.Cells(ws.rows.Count, nameCol).End(xlUp).row
+    lastRow = ws.Cells(ws.rows.count, nameCol).End(xlUp).row
     
     For R = lastRow To 2 Step -1
         If CStr(ws.Cells(R, nameCol).value) = nm Then

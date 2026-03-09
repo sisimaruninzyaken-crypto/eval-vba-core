@@ -96,7 +96,7 @@ Public Function LatestRowByHeader(ByVal wantName As String, Optional ByVal ws As
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim c As Long: c = HeaderCol(wantName, ws)
     If c = 0 Then LatestRowByHeader = 0: Exit Function
-    LatestRowByHeader = ws.Cells(ws.rows.Count, c).End(xlUp).row
+    LatestRowByHeader = ws.Cells(ws.rows.count, c).End(xlUp).row
 End Function
 
 
@@ -240,7 +240,7 @@ Public Function RecentRowsByID(ByVal targetID As Variant, Optional ByVal n As Lo
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim cID As Long: cID = HeaderCol("ID", ws)
     If cID = 0 Or n <= 0 Then RecentRowsByID = Array(): Exit Function
-    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, cID).End(xlUp).row
+    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, cID).End(xlUp).row
     Dim rowsOut() As Long, R As Long, hit As Long
     ReDim rowsOut(0 To 0): hit = 0
     For R = lastRow To 2 Step -1

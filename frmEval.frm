@@ -102,7 +102,7 @@ Public Sub SyncAgeFromBirth()
     On Error GoTo EH
 
     Dim s As String
-    s = Trim$(Me.Controls("txtBirth").Text)
+    s = Trim$(Me.Controls("txtBirth").text)
     If Len(s) = 0 Then Exit Sub
 
     ' yyyy/mm/dd, yyyy-mm-dd を想定（DateValueに寄せる）
@@ -113,7 +113,7 @@ Dim d As String
 d = Replace$(Replace$(s, "/", ""), ".", "")
 If Len(d) = 8 And IsNumeric(d) Then
     s = Left$(d, 4) & "/" & Mid$(d, 5, 2) & "/" & Right$(d, 2)
-    Me.Controls("txtBirth").Text = s
+    Me.Controls("txtBirth").text = s
 End If
 
 Dim dt As Date
@@ -129,7 +129,7 @@ dt = DateValue(s)
         age = age - 1
     End If
 
-    Me.Controls("txtAge").Text = CStr(age)
+    Me.Controls("txtAge").text = CStr(age)
 
 #If APP_DEBUG Then
     Debug.Print "[SyncAgeFromBirth] birth=", Format$(dt, "yyyy/mm/dd"), " age=", age
@@ -216,11 +216,11 @@ End Sub
 ' 既存の保存処理で参照されるラッパー（見た目と挙動は変えない）
 Private Function CtrlText(ByVal ctrlName As String) As String
     On Error Resume Next
-    CtrlText = Trim$(Me.Controls(ctrlName).Text & "")
+    CtrlText = Trim$(Me.Controls(ctrlName).text & "")
 End Function
 Private Sub SetCtrlText(ByVal ctrlName As String, ByVal v As String)
     On Error Resume Next
-    Me.Controls(ctrlName).Text = v
+    Me.Controls(ctrlName).text = v
 End Sub
 
 '=== ここから 画面作成ヘルパーの最小実装 =========================
@@ -400,7 +400,7 @@ Private Sub BuildAssistiveChecksInWalkEval(ByVal assistiveCsv As String)
     If frTarget Is Nothing Then Exit Sub
 
     Dim i As Long
-    For i = frTarget.Controls.Count - 1 To 0 Step -1
+    For i = frTarget.Controls.count - 1 To 0 Step -1
         If TypeName(frTarget.Controls(i)) = "CheckBox" Then
             If frTarget.Controls(i).tag = "AssistiveGroup" Then
                 frTarget.Controls.Remove frTarget.Controls(i).name
@@ -410,7 +410,7 @@ Private Sub BuildAssistiveChecksInWalkEval(ByVal assistiveCsv As String)
 
     Dim maxBottom As Single
     maxBottom = 0
-    For i = 0 To frTarget.Controls.Count - 1
+    For i = 0 To frTarget.Controls.count - 1
         With frTarget.Controls(i)
             If .Top + .Height > maxBottom Then maxBottom = .Top + .Height
         End With
@@ -652,7 +652,7 @@ Private Function CollectCandidatesByNameLocal(ByVal ws As Worksheet, _
 
     Dim key As String: key = NormName(pname)
 
-    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, nameCol).End(xlUp).row
+    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, nameCol).End(xlUp).row
     Dim tmp As New Collection
     Dim R As Long, nm As String
     For R = 2 To lastRow
@@ -660,10 +660,10 @@ Private Function CollectCandidatesByNameLocal(ByVal ws As Worksheet, _
         If NormName(nm) = key Then tmp.Add R
     Next
 
-    If tmp.Count = 0 Then Exit Function
+    If tmp.count = 0 Then Exit Function
 
-    Dim a() As Long: ReDim a(1 To tmp.Count)
-    For R = 1 To tmp.Count
+    Dim a() As Long: ReDim a(1 To tmp.count)
+    For R = 1 To tmp.count
         a(R) = CLng(tmp(R))
     Next
     CollectCandidatesByNameLocal = a
@@ -862,7 +862,7 @@ Private Sub NormalizeNumericInContainer(container As Object)
             Case "TextBox", "ComboBox"
                 If ShouldBeNumericField(c) Then
                     On Error Resume Next
-                    c.Text = StrConv(c.Text, vbNarrow) ' 全角→半角
+                    c.text = StrConv(c.text, vbNarrow) ' 全角→半角
                     On Error GoTo 0
                 End If
 
@@ -881,7 +881,7 @@ End Sub
 
 Private Function HasControls(o As Object) As Boolean
     On Error Resume Next
-    Dim t As Long: t = o.Controls.Count
+    Dim t As Long: t = o.Controls.count
     HasControls = (Err.Number = 0)
     Err.Clear
     On Error GoTo 0
@@ -926,7 +926,7 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
 
     Dim pgMove As MSForms.Page: Set pgMove = FindPageByCaption(mp, "日常生活動作")
     If pgMove Is Nothing Then
-        If mp.Pages.Count >= 3 Then
+        If mp.Pages.count >= 3 Then
             Set pgMove = mp.Pages(2) ' フォールバック
         Else
             Exit Function
@@ -947,7 +947,7 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
 
     ' 3) host 内の MultiPage だけを全消去（ほかは触らない）
     Dim i As Long
-    For i = host.Controls.Count - 1 To 0 Step -1
+    For i = host.Controls.count - 1 To 0 Step -1
         If TypeName(host.Controls(i)) = "MultiPage" Then
             host.Controls.Remove host.Controls(i).name
         End If
@@ -955,7 +955,7 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
 
     ' 4) mpADL を作成＆3枚保証（0:BI / 1:IADL / 2:起居動作）
     Set mpADL = host.Controls.Add("Forms.MultiPage.1", "mpADL")
-    Trace "mpADL ready; pages=" & mpADL.Pages.Count, "BI/IADL"
+    Trace "mpADL ready; pages=" & mpADL.Pages.count, "BI/IADL"
 
     With mpADL
         .Left = 12
@@ -965,13 +965,13 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
         .Style = fmTabStyleTabs
         AttachMPHook mpADL
     End With
-    Do While mpADL.Pages.Count < 3: mpADL.Pages.Add: Loop
+    Do While mpADL.Pages.count < 3: mpADL.Pages.Add: Loop
     mpADL.Pages(0).caption = "バーサルインデックス"
     mpADL.Pages(1).caption = "IADL"
     mpADL.Pages(2).caption = "起居動作"
     
     
-Trace "EnsureBI_IADL end; pages=" & mpADL.Pages.Count, "BI/IADL"
+Trace "EnsureBI_IADL end; pages=" & mpADL.Pages.count, "BI/IADL"
 Set EnsureBI_IADL = mpADL
 
     ' 5) 起居動作タブのUI
@@ -984,7 +984,7 @@ Set EnsureBI_IADL = mpADL
     ' 一旦クリアしてから作成（空／重複どちらにも対応）
     Dim iCtl As Long
     
-     For iCtl = pBI.Controls.Count - 1 To 0 Step -1
+     For iCtl = pBI.Controls.count - 1 To 0 Step -1
     If Left(pBI.Controls(iCtl).name, 5) = "lblBI" _
     Or Left(pBI.Controls(iCtl).name, 5) = "cmbBI" _
     Or pBI.Controls(iCtl).name = "txtBITotal" _
@@ -1142,7 +1142,7 @@ frHomeEnv.Height = txtHomeNote.Top + txtHomeNote.Height + 12
 
     '======================== IADL（9項目） ========================
     Dim pIADL As MSForms.Page: Set pIADL = mpADL.Pages(1)
-    For iCtl = pIADL.Controls.Count - 1 To 0 Step -1
+    For iCtl = pIADL.Controls.count - 1 To 0 Step -1
         pIADL.Controls.Remove pIADL.Controls(iCtl).name
     Next
 
@@ -1324,7 +1324,7 @@ Public Sub RecalcBI()
     For Each ctrl In Me.Controls
         If TypeOf ctrl Is MSForms.MultiPage Then
             Set mpADL = ctrl
-            If mpADL.Pages.Count > 0 Then
+            If mpADL.Pages.count > 0 Then
                 If mpADL.Pages(0).caption = "バーサルインデックス" Then
                     Exit For
                 End If
@@ -1401,7 +1401,7 @@ End Sub
 Private Sub RemoveAllMpADL()
     Dim i As Long, c As Control
     ' フォーム直下
-    For i = Me.Controls.Count - 1 To 0 Step -1
+    For i = Me.Controls.count - 1 To 0 Step -1
         If TypeName(Me.Controls(i)) = "MultiPage" Then
             If Me.Controls(i).name = "mpADL" Then
                 Me.Controls.Remove Me.Controls(i).name
@@ -1415,7 +1415,7 @@ Private Sub RemoveAllMpADL()
         If TypeName(c) = "MultiPage" Then Set mp = c: Exit For
     Next c
     If Not mp Is Nothing Then
-        For i = 0 To mp.Pages.Count - 1
+        For i = 0 To mp.Pages.count - 1
             For Each c In mp.Pages(i).Controls
                 If TypeName(c) = "MultiPage" Then
                     If c.name = "mpADL" Then mp.Pages(i).Controls.Remove c.name
@@ -1575,7 +1575,7 @@ End Function
 '―― 子コントロール全削除（生成前に一度だけ）
 Private Sub ClearChildren(fr As MSForms.Frame)
     Dim i As Long
-    For i = fr.Controls.Count - 1 To 0 Step -1
+    For i = fr.Controls.count - 1 To 0 Step -1
         fr.Controls.Remove fr.Controls(i).name
     Next
 End Sub
@@ -1765,10 +1765,10 @@ End Sub
 
 Private Function RequiredOk() As Boolean
     On Error Resume Next
-    RequiredOk = (Len(Trim$(Me.Controls("txtPID").Text)) > 0) _
-        And (Len(Trim$(Me.Controls("txtName").Text)) > 0) _
-        And IsNumeric(Me.Controls("txtAge").Text) _
-        And (val(Me.Controls("txtAge").Text) >= 0)
+    RequiredOk = (Len(Trim$(Me.Controls("txtPID").text)) > 0) _
+        And (Len(Trim$(Me.Controls("txtName").text)) > 0) _
+        And IsNumeric(Me.Controls("txtAge").text) _
+        And (val(Me.Controls("txtAge").text) >= 0)
 End Function
 
 Private Sub RefreshSaveEnabled()
@@ -1780,7 +1780,7 @@ Private Sub txtPID_Change():  RefreshSaveEnabled: End Sub
 Private Sub txtHdrName_Change()
      EnsureNameSuggestList
 
-     Me.Controls("txtName").Text = Me.Controls("frHeader").Controls("txtHdrName").Text
+     Me.Controls("txtName").text = Me.Controls("frHeader").Controls("txtHdrName").text
      Me.UpdateNameSuggest
 
      UpdateNameSuggest
@@ -1811,7 +1811,7 @@ Public Sub UpdateNameSuggest()
     On Error Resume Next
         Dim i As Long
         Set lb = Nothing
-           For i = Me.Controls.Count - 1 To 0 Step -1
+           For i = Me.Controls.count - 1 To 0 Step -1
            If Me.Controls(i).name = "lstNameSuggest" Then
         Set lb = Me.Controls(i)
         Exit For
@@ -1826,7 +1826,7 @@ Next i
     End If
 
 
-    key = Trim$(tb.Text)
+    key = Trim$(tb.text)
     keyN = NormalizeName(key)
 
     lb.Clear
@@ -1847,7 +1847,7 @@ Next i
     If cID = 0 Then cID = FindHeaderColLocal(ws, "PID")
 
 
-    lastRow = ws.Cells(ws.rows.Count, cName).End(xlUp).row
+    lastRow = ws.Cells(ws.rows.count, cName).End(xlUp).row
 
     ' 2列にして、2列目（ID）は非表示運用（表示文字列に併記する）
     lb.ColumnCount = 2
@@ -1901,7 +1901,7 @@ End Sub
 
 Private Function FindHeaderColLocal(ws As Worksheet, headerText As String) As Long
     Dim c As Long, lastCol As Long
-    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
 
     For c = 1 To lastCol
         If CStr(ws.Cells(1, c).value) = headerText Then
@@ -1953,7 +1953,7 @@ Private Function EnsureEvalData() As Worksheet
 
     If ws Is Nothing Then
         Set ws = ThisWorkbook.Worksheets.Add( _
-                 After:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.Count))
+                 After:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.count))
         ws.name = sh
     End If
 
@@ -1962,7 +1962,7 @@ End Function
 
 Private Sub EnsureJapaneseHeaderRow(ws As Worksheet)
     If Application.WorksheetFunction.CountA(ws.rows(2)) = 0 Then
-        Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+        Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
         Dim c As Long
         For c = 1 To lastCol
             Select Case CStr(ws.Cells(1, c).value)
@@ -1992,7 +1992,7 @@ Private Function FindLastRowByPID(ByVal pid As String, ByVal ws As Worksheet) As
 
     If IsError(colPID) Or IsError(colDate) Then Exit Function
 
-    Dim last As Long: last = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    Dim last As Long: last = ws.Cells(ws.rows.count, 1).End(xlUp).row
 
     Dim bestRow As Long
     Dim bestD As Date, bestHasTs As Boolean, bestTs As Date
@@ -2064,7 +2064,7 @@ Private Function CollectFormData() As Object
     For Each c In Me.Controls
         Select Case TypeName(c)
             Case "MultiPage"
-                For j = 0 To c.Pages.Count - 1
+                For j = 0 To c.Pages.count - 1
                     Dim p As MSForms.Page: Set p = c.Pages(j)
                     Dim co As MSForms.Control
                     For Each co In p.Controls
@@ -2111,7 +2111,7 @@ End Function
 Private Sub CollectOne(ByRef d As Object, ByVal ctl As MSForms.Control)
     If Len(ctl.tag & "") = 0 Then Exit Sub
     Select Case TypeName(ctl)
-        Case "TextBox", "ComboBox": d(ctl.tag) = ctl.Text
+        Case "TextBox", "ComboBox": d(ctl.tag) = ctl.text
         Case "CheckBox"
             If ctl.tag <> "AssistiveGroup" And ctl.tag <> "RiskGroup" Then
                 d(ctl.tag) = IIf(ctl.value, "有", "無")
@@ -2182,7 +2182,7 @@ End Function
 '========================
 Private Function CheckRange(frm As Object, ByVal nm As String, ByVal lo As Double, ByVal hi As Double, ByVal message As String, ByRef sb As String) As Boolean
     If Not FnHasControl(nm) Then CheckRange = True: Exit Function
-    Dim t As String: t = Trim$(frm.Controls(nm).Text & "")
+    Dim t As String: t = Trim$(frm.Controls(nm).text & "")
     If t = "" Then CheckRange = True: Exit Function
     If Not IsNumeric(t) Then sb = sb & "・" & message & vbCrLf: CheckRange = False: Exit Function
     Dim v As Double: v = CDbl(t)
@@ -2194,18 +2194,18 @@ Private Function ValidateForm(ByRef errmsg As String) As Boolean
     Dim ok As Boolean: ok = True
     Dim sb As String: sb = ""
 
-    If FnHasControl("txtName") Then If Trim$(Me.Controls("txtName").Text) = "" Then ok = False: sb = sb & "・氏名を入力してください。" & vbCrLf
+    If FnHasControl("txtName") Then If Trim$(Me.Controls("txtName").text) = "" Then ok = False: sb = sb & "・氏名を入力してください。" & vbCrLf
     If FnHasControl("txtAge") Then
-        If Trim$(Me.Controls("txtAge").Text) = "" Or Not IsNumeric(Me.Controls("txtAge").Text) Then
+        If Trim$(Me.Controls("txtAge").text) = "" Or Not IsNumeric(Me.Controls("txtAge").text) Then
             ok = False: sb = sb & "・年齢を数値で入力してください。" & vbCrLf
-        ElseIf val(Me.Controls("txtAge").Text) < 0 Or val(Me.Controls("txtAge").Text) > 120 Then
+        ElseIf val(Me.Controls("txtAge").text) < 0 Or val(Me.Controls("txtAge").text) > 120 Then
             ok = False: sb = sb & "・年齢は0～120で入力してください。" & vbCrLf
         End If
     End If
 
     ' 評価日チェック
     If FnHasControl("txtEDate") Then
-        If Not IsDate(Me.Controls("txtEDate").Text) Then
+        If Not IsDate(Me.Controls("txtEDate").text) Then
             ok = False: sb = sb & "・評価日を正しい日付（yyyy/mm/dd 等）で入力してください。" & vbCrLf
         End If
     End If
@@ -2223,7 +2223,7 @@ End Function
 
 Private Sub btnSaveCtl_Click()
     Call SyncAgeFromBirth
-    Me.Controls("txtName").Text = Me.Controls("txtHdrName").Text
+    Me.Controls("txtName").text = Me.Controls("txtHdrName").text
     SaveEvaluation_Append_From Me
 End Sub
 
@@ -2232,11 +2232,11 @@ End Sub
 '=== frmEval：前回読込ボタン 完全貼り替え ============================
 Private Sub btnLoadPrevCtl_Click()
 
-Me.Controls("txtName").Text = Me.Controls("txtHdrName").Text
+Me.Controls("txtName").text = Me.Controls("txtHdrName").text
 
 Dim pname As String
 On Error Resume Next
-pname = Trim$(Me.Controls("txtName").Text)
+pname = Trim$(Me.Controls("txtName").text)
 On Error GoTo 0
 If Len(pname) = 0 Then
     MsgBox "氏名を入力してください。", vbExclamation
@@ -2263,7 +2263,7 @@ If cName = 0 Then
 End If
 
 Dim rr As Long
-For rr = ws.Cells(ws.rows.Count, cName).End(xlUp).row To 2 Step -1
+For rr = ws.Cells(ws.rows.count, cName).End(xlUp).row To 2 Step -1
     If Trim$(CStr(ws.Cells(rr, cName).value)) = pname Then
         R = rr
         Exit For
@@ -2321,7 +2321,7 @@ Private Function FindRowByNameWithPickLocal(ws As Worksheet, nameText As String,
     If colDate = 0 Then colDate = modEvalIOEntry.FindColByHeaderExact(ws, "更新日")
     If colDate = 0 Then colDate = modEvalIOEntry.FindColByHeaderExact(ws, "作成日")
 
-    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, colName).End(xlUp).row
+    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, colName).End(xlUp).row
     Dim rows() As Long, cnt As Long, R As Long
     ReDim rows(1 To maxCount)
 
@@ -2433,7 +2433,7 @@ End Function
 Private Function NzTxt(tb As MSForms.TextBox) As String
     On Error Resume Next
     NzTxt = ""
-    If Not tb Is Nothing Then NzTxt = Trim$(tb.Text)
+    If Not tb Is Nothing Then NzTxt = Trim$(tb.text)
 End Function
 
 Private Sub SetComboByValue(ByVal cbo As MSForms.ComboBox, ByVal v As String)
@@ -2454,12 +2454,12 @@ End Sub
 '=== ここから補助関数群（frmEval ローカル） ============================
 Private Function FxGetText(ByVal ctrlName As String) As String
     On Error Resume Next
-    FxGetText = Trim$(Me.Controls(ctrlName).Text)
+    FxGetText = Trim$(Me.Controls(ctrlName).text)
 End Function
 
 Private Sub FxSetText(ByVal ctrlName As String, ByVal value As String)
     On Error Resume Next
-    Me.Controls(ctrlName).Text = value
+    Me.Controls(ctrlName).text = value
 End Sub
 
 Private Function GetOrCreateEvalSheet() As Worksheet
@@ -2468,7 +2468,7 @@ Private Function GetOrCreateEvalSheet() As Worksheet
     Set ws = ThisWorkbook.Worksheets("EvalData")
     On Error GoTo 0
     If ws Is Nothing Then
-        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.Count))
+        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
         ws.name = "EvalData"
     End If
     Set GetOrCreateEvalSheet = ws
@@ -2478,7 +2478,7 @@ Private Function BuildHeaderLookupLocal(ByVal ws As Worksheet) As Object
     Dim dict As Object: Set dict = CreateObject("Scripting.Dictionary")
     dict.CompareMode = 1 'TextCompare
 
-    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim c As Long, k1 As String, k2 As String
     For c = 1 To IIf(lastCol > 0, lastCol, 1)
         k1 = NormalizeKeyLocal(CStr(ws.Cells(1, c).value))
@@ -2499,7 +2499,7 @@ Private Function EnsureHeaderColumnLocal(ByVal ws As Worksheet, ByVal look As Ob
     Dim col As Long: col = ResolveColumnLocal(look, key)
     If col > 0 Then EnsureHeaderColumnLocal = col: Exit Function
 
-    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     If lastCol = 1 And Len(CStr(ws.Cells(1, 1).value)) = 0 Then lastCol = 0
 
     col = lastCol + 1
@@ -2523,7 +2523,7 @@ Private Function FindLastRowByPIDLocal(ByVal ws As Worksheet, ByVal look As Obje
     Dim tsCol As Long: tsCol = EnsureHeaderColumnLocal(ws, look, "Timestamp")
     Dim dtCol As Long: dtCol = EnsureHeaderColumnLocal(ws, look, "Basic.EvalDate")
 
-    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, idCol).End(xlUp).row
+    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, idCol).End(xlUp).row
     Dim R As Long, pick As Long, best As Date, curTs As Date, curDt As Date
 
     For R = 3 To lastRow
@@ -2552,7 +2552,7 @@ Private Function FindLastRowByNameLocal(ByVal ws As Worksheet, _
     Dim tsCol As Long:   tsCol = ResolveColOrCreate(ws, look, "Timestamp")
     Dim dtCol As Long:   dtCol = ResolveColOrCreate(ws, look, "Basic.EvalDate", "評価日", "EvalDate")
 
-    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, nameCol).End(xlUp).row
+    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, nameCol).End(xlUp).row
     Dim R As Long, pick As Long, best As Date, curTs As Date, curDt As Date
 
     For R = 3 To lastRow
@@ -2576,7 +2576,7 @@ End Function
 
 
 Private Function NextDataRowLocal(ByVal ws As Worksheet) As Long
-    Dim R As Long: R = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    Dim R As Long: R = ws.Cells(ws.rows.count, 1).End(xlUp).row
     If R < 3 Then R = 2
     NextDataRowLocal = R + 1
 End Function
@@ -2662,7 +2662,7 @@ Private Sub CleanDefaultPages(mp As MSForms.MultiPage)
     On Error Resume Next
     Dim i As Long
     ' キャプションが "Page" で始まるページを後ろから削除
-    For i = mp.Pages.Count - 1 To 0 Step -1
+    For i = mp.Pages.count - 1 To 0 Step -1
         If Left$(mp.Pages(i).caption, 4) = "Page" Then
             mp.Pages.Remove i
         End If
@@ -2789,26 +2789,26 @@ Private Sub FindHeaderButtonsByPosition(container As Object, _
         ByRef bSave As MSForms.CommandButton, ByRef bLoad As MSForms.CommandButton)
     Dim arr As New Collection, i As Long
     GatherButtons container, arr
-    If arr.Count = 0 Then Exit Sub
+    If arr.count = 0 Then Exit Sub
 
     Dim minTop As Single: minTop = 1E+20
-    For i = 1 To arr.Count
+    For i = 1 To arr.count
         If arr(i).Top < minTop Then minTop = arr(i).Top
     Next
 
     Dim cand As New Collection
-    For i = 1 To arr.Count
+    For i = 1 To arr.count
         If arr(i).Top <= minTop + 10 Then cand.Add arr(i)   '最上段±10px
     Next
     ' キーワードで優先判定
-    For i = 1 To cand.Count
+    For i = 1 To cand.count
         Dim cap As String: cap = Replace(CStr(cand(i).caption), vbCrLf, "")
         If InStr(cap, "保存") > 0 Then Set bSave = cand(i)
         If InStr(cap, "読") > 0 Or InStr(cap, "込") > 0 Then Set bLoad = cand(i)
     Next
     ' まだ空いていたら右側２つを割り当て
     Dim right1 As MSForms.CommandButton, right2 As MSForms.CommandButton
-    For i = 1 To cand.Count
+    For i = 1 To cand.count
         If right1 Is Nothing Or cand(i).Left > right1.Left Then
             Set right2 = right1
             Set right1 = cand(i)
@@ -2991,7 +2991,7 @@ Me.Left = Application.Left + (Application.Width - Me.Width) / 2: Me.Top = Applic
 
     Call LegacyInit
 #If APP_DEBUG Then
-    Debug.Print "[PostInit] CtlCount=" & Me.Controls.Count
+    Debug.Print "[PostInit] CtlCount=" & Me.Controls.count
 #End If
 
 TidyBaseLayout_Once
@@ -3193,7 +3193,7 @@ Me.StartUpPosition = 1      ' CenterOwner（任意：中央に出したい場合）
         .Style = fmTabStyleTabs
     End With
     ' 安全策：最低2ページを保証（環境差対策）
-    If mp.Pages.Count = 0 Then mp.Pages.Add: mp.Pages.Add
+    If mp.Pages.count = 0 Then mp.Pages.Add: mp.Pages.Add
 
     ' 先頭2枚は既存
 mp.Pages(0).caption = "基本情報"
@@ -3246,7 +3246,7 @@ Trace "RemoveAllMpADL() done", "Initialize"
 Trace "EnsureBI_IADL() call", "Initialize"
 Dim mpADL As MSForms.MultiPage
 Set mpADL = EnsureBI_IADL()
-Trace "EnsureBI_IADL() returned; pages=" & mpADL.Pages.Count, "Initialize"
+Trace "EnsureBI_IADL() returned; pages=" & mpADL.Pages.count, "Initialize"
 
 
 ' --- 起居動作ページのUIを作る ---
@@ -3317,7 +3317,7 @@ With mpWalk
 End With
 
 ' ページ(0),(1)を触る前に2枚保証
-Do While mpWalk.Pages.Count < 2
+Do While mpWalk.Pages.count < 2
     mpWalk.Pages.Add
 Loop
 mpWalk.Pages(0).caption = "自立度"
@@ -3480,7 +3480,7 @@ RecalcBI
     btnLoadPrevCtl.Top = tbPID.Top
     CreateLabel fBasic, "評価日", COL_RX, y
     Dim tbED As MSForms.TextBox: Set tbED = CreateTextBox(fBasic, COL_RX + lblW, y, 120, 0, False, "txtEDate", "EvalDate")
-    tbED.Text = Format(Date, "yyyy/mm/dd")
+    tbED.text = Format(Date, "yyyy/mm/dd")
     CreateLabel fBasic, "評価者", COL_RX + lblW + 130, y
     Dim tbEva As MSForms.TextBox: Set tbEva = CreateTextBox(fBasic, COL_RX + lblW + 180, y, 90, 0, False, "txtEvaluator", "Basic.Evaluator")
     tbEva.Font.Size = 8
@@ -3643,7 +3643,7 @@ Dim ctlZ As Object, mpZ As MSForms.MultiPage, iZ As Long, capZ As String
 For Each ctlZ In Me.Controls
     If TypeName(ctlZ) = "MultiPage" Then
         Set mpZ = ctlZ
-        For iZ = mpZ.Pages.Count - 1 To 0 Step -1
+        For iZ = mpZ.Pages.count - 1 To 0 Step -1
             capZ = CStr(mpZ.Pages(iZ).caption)
             If capZ = "Page14" Or capZ = "Page15" Then mpZ.Pages.Remove iZ
         Next iZ
@@ -3683,7 +3683,7 @@ If Not pgN Is Nothing Then
 
     ' 子コンテナを含めて深さ優先で探索
     stk.Add pgN
-    Do While stk.Count > 0
+    Do While stk.count > 0
         Set parent = stk(1): stk.Remove 1
         On Error Resume Next
         For Each ctl In parent.Controls
@@ -3728,7 +3728,7 @@ Set rootPg = Nothing
 For Each c0 In Me.Controls
     If TypeName(c0) = "MultiPage" Then
         Set mp0 = c0
-        For i0 = 0 To mp0.Pages.Count - 1
+        For i0 = 0 To mp0.Pages.count - 1
             If InStr(1, CStr(mp0.Pages(i0).caption), "ROM", vbTextCompare) > 0 _
                Or InStr(1, CStr(mp0.Pages(i0).caption), "主要関節", vbTextCompare) > 0 Then
                 Set rootPg = mp0.Pages(i0): Exit For
@@ -3740,12 +3740,12 @@ Next c0
 If rootPg Is Nothing Then Exit Sub
 qH.Add rootPg
 
-Do While qH.Count > 0
+Do While qH.count > 0
     Set parentH = qH(1): qH.Remove 1
 
     If TypeName(parentH) = "MultiPage" Then
         ' MultiPage は Controls を持たないので Pages を個別に辿る
-        For iH = 0 To parentH.Pages.Count - 1
+        For iH = 0 To parentH.Pages.count - 1
             qH.Add parentH.Pages(iH)
         Next iH
     Else
@@ -3756,7 +3756,7 @@ Do While qH.Count > 0
     Case "Frame", "Page"
         qH.Add ctlH                      ' 子コンテナを辿る
     Case "MultiPage"
-        For iH = 0 To ctlH.Pages.Count - 1
+        For iH = 0 To ctlH.Pages.count - 1
             qH.Add ctlH.Pages(iH)        ' ページを個別に辿る
         Next iH
     Case "Label"
@@ -4050,7 +4050,7 @@ Public Sub AddVASUI()
     tb.Left = 8
     tb.Top = 10
     tb.Width = 40
-    tb.Text = "0"
+    tb.text = "0"
 
     ' スクロールバー（横）0?100
     Set sb = fr.Controls.Add("Forms.ScrollBar.1", "sldVAS", True)
@@ -4070,7 +4070,7 @@ Private Sub mVAS_Change()
     On Error Resume Next
     Dim v As Long
     v = mVAS.value
-    Me.Controls("fraVAS").Controls("txtVAS").Text = CStr(v)
+    Me.Controls("fraVAS").Controls("txtVAS").text = CStr(v)
 
 End Sub
 
@@ -4131,7 +4131,7 @@ Public Sub AddPainCourseUI()
     lb.Left = 260: lb.Top = 10: lb.AutoSize = True
 
     Set tb = fr.Controls.Add("Forms.TextBox.1", "txtPainDuration", True)
-    tb.Left = lb.Left + 36: tb.Top = 8: tb.Width = 40: tb.Text = ""
+    tb.Left = lb.Left + 36: tb.Top = 8: tb.Width = 40: tb.text = ""
 
     Set cB = fr.Controls.Add("Forms.ComboBox.1", "cmbPainDurationUnit", True)
     cB.Left = tb.Left + tb.Width + 6: cB.Top = 8: cB.Width = 70
@@ -4226,11 +4226,11 @@ Public Sub SummarizePainUI()
     Set lbQ = fr.Controls("lstPainQual")
     Set lbS = fr.Controls("fraPainSite").Controls("lstPainSite")
     Set frF = fr.Controls("fraPainFactors")
-    vas = fr.Controls("fraVAS").Controls("txtVAS").Text
-    onset = fr.Controls("fraPainCourse").Controls("cmbPainOnset").Text
-    dura = fr.Controls("fraPainCourse").Controls("txtPainDuration").Text
-    unit = fr.Controls("fraPainCourse").Controls("cmbPainDurationUnit").Text
-    day = fr.Controls("fraPainCourse").Controls("cmbPainDayPeriod").Text
+    vas = fr.Controls("fraVAS").Controls("txtVAS").text
+    onset = fr.Controls("fraPainCourse").Controls("cmbPainOnset").text
+    dura = fr.Controls("fraPainCourse").Controls("txtPainDuration").text
+    unit = fr.Controls("fraPainCourse").Controls("cmbPainDurationUnit").text
+    day = fr.Controls("fraPainCourse").Controls("cmbPainDayPeriod").text
     On Error GoTo 0
 
     ' 痛みの性質
@@ -4275,7 +4275,7 @@ Public Sub SummarizePainUI()
 
     ' メモへ反映
     On Error Resume Next
-    Me.Controls("Frame12").Controls("txtPainMemo").Text = s
+    Me.Controls("Frame12").Controls("txtPainMemo").text = s
 End Sub
 
 
@@ -5357,7 +5357,7 @@ Public Sub BuildCogMentalUI_Simple()
     End If
 
     ' いったん中身を全部クリア（元のラベル／コンボ／既存マルチページも含めて）
-    Do While f.Controls.Count > 0
+    Do While f.Controls.count > 0
         f.Controls.Remove f.Controls(0).name
     Loop
 
@@ -5375,7 +5375,7 @@ Public Sub BuildCogMentalUI_Simple()
 
 
     ' 既存ページを全部消してから2ページ作成
-    Do While mp.Pages.Count > 0
+    Do While mp.Pages.count > 0
         mp.Pages.Remove 0
     Loop
 
@@ -5428,7 +5428,7 @@ Public Sub BuildCog_CognitionCore()
     End If
     
     ' 既存コントロールをクリア（やり直し用）
-    Do While pg.Controls.Count > 0
+    Do While pg.Controls.count > 0
         pg.Controls.Remove pg.Controls(0).name
     Loop
     
@@ -5630,7 +5630,7 @@ Public Sub BuildCog_DementiaBlock()
     
        ' いったん、既存の認知症ブロックを消す（やり直し用）
     Dim i As Long
-    For i = pg.Controls.Count - 1 To 0 Step -1
+    For i = pg.Controls.count - 1 To 0 Step -1
         With pg.Controls(i)
             If .name = "lblDementiaType" _
                Or .name = "cmbDementiaType" _
@@ -5734,7 +5734,7 @@ Public Sub BuildCog_BPSD()
     
     ' --- 既存BPSDコントロール削除 ---
     Dim c As MSForms.Control
-    For i = pg.Controls.Count - 1 To 0 Step -1
+    For i = pg.Controls.count - 1 To 0 Step -1
         If TypeName(pg.Controls(i)) = "CheckBox" _
            Or pg.Controls(i).name Like "lblBPSD*" Then
             pg.Controls.Remove pg.Controls(i).name
@@ -5823,7 +5823,7 @@ Public Sub BuildCog_MentalBlock()
     
     ' 既存クリア（やり直し用）
     Dim i As Long
-    For i = pg.Controls.Count - 1 To 0 Step -1
+    For i = pg.Controls.count - 1 To 0 Step -1
         pg.Controls.Remove pg.Controls(i).name
     Next i
     
@@ -5983,7 +5983,7 @@ Private Sub BuildDailyLogTab()
     Set mp = Me.Controls("MultiPage1")
 
     '=== すでに「日々の記録」タブがあるか確認（冪等用）===
-    For i = 0 To mp.Pages.Count - 1
+    For i = 0 To mp.Pages.count - 1
         If mp.Pages(i).caption = "日々の記録" Then
             exists = True
             Set pg = mp.Pages(i)
@@ -6676,7 +6676,7 @@ Private Function GetDailyLogFrame() As MSForms.Frame
     End If
 
     ' 「日々の記録」ページを探す
-    For i = 0 To mp.Pages.Count - 1
+    For i = 0 To mp.Pages.count - 1
         If mp.Pages(i).caption = "日々の記録" Then
             Set pg = mp.Pages(i)
             Exit For
@@ -6802,7 +6802,7 @@ Private Sub GetPageUsableArea( _
     If mp Is Nothing Then Exit Sub
 
     If pageIndex < 0 Then Exit Sub
-    If pageIndex > mp.Pages.Count - 1 Then Exit Sub
+    If pageIndex > mp.Pages.count - 1 Then Exit Sub
 
     ' 今は MultiPage 全体を「ページの利用可能領域」として返す
     ' （余白やタブ分のマイナスは、後で AlignRootFrame 側で調整する）
@@ -6823,7 +6823,7 @@ Private Sub AlignRootFrameToPage(ByVal pageIndex As Long, root As MSForms.Frame)
     Set mp = GetMainMultiPage()
     If mp Is Nothing Then Exit Sub
     If root Is Nothing Then Exit Sub
-    If pageIndex < 0 Or pageIndex > mp.Pages.Count - 1 Then Exit Sub
+    If pageIndex < 0 Or pageIndex > mp.Pages.count - 1 Then Exit Sub
 
     Set pg = mp.Pages(pageIndex)
 
@@ -6896,7 +6896,7 @@ Private Function GetPageRootFrame(ByVal pageIndex As Long) As MSForms.Frame
     Set mp = GetMainMultiPage()
     If mp Is Nothing Then Exit Function
 
-    If pageIndex < 0 Or pageIndex > mp.Pages.Count - 1 Then Exit Function
+    If pageIndex < 0 Or pageIndex > mp.Pages.count - 1 Then Exit Function
 
     Set pg = mp.Pages(pageIndex)
     If pg.caption = "認知・精神" Then
@@ -6932,7 +6932,7 @@ Public Sub Apply_AlignRoot_All()
     Set mp = GetMainMultiPage()
     If mp Is Nothing Then Exit Sub
 
-    For i = 0 To mp.Pages.Count - 1
+    For i = 0 To mp.Pages.count - 1
         Set root = GetPageRootFrame(i)
         If Not root Is Nothing Then
             AlignRootFrameToPage i, root
@@ -7454,7 +7454,7 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
     
 
     Set ws = ThisWorkbook.Worksheets("DailyLog")
-    lastRow = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
     
     pid = Trim$(Me.Controls("frHeader").Controls("txtHdrPID").value)
     cntSameName = Application.WorksheetFunction.CountIf(ws.Range("B:B"), nm)
@@ -7531,7 +7531,7 @@ End Sub
 
 Private Sub txtHdrName_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
     ' ヘッダ入力 → 裏口へ同期（既存ロジック駆動のため）
-    Me.Controls("txtName").Text = Me.Controls("frHeader").Controls("txtHdrName").Text
+    Me.Controls("txtName").text = Me.Controls("frHeader").Controls("txtHdrName").text
 
     ' 候補BOX確保 → 更新
     EnsureNameSuggestList
@@ -7548,10 +7548,10 @@ Private Sub lstNameSuggest_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
     If lb.ListIndex < 0 Then Exit Sub
 
     ' ヘッダの氏名だけ反映
-    Me.Controls("frHeader").Controls("txtHdrName").Text = lb.List(lb.ListIndex, 0)
+    Me.Controls("frHeader").Controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
 
     ' 裏口同期（既存ロジック用）
-    Me.Controls("txtName").Text = Me.Controls("frHeader").Controls("txtHdrName").Text
+    Me.Controls("txtName").text = Me.Controls("frHeader").Controls("txtHdrName").text
 
     lb.Visible = False
 End Sub

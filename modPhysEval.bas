@@ -61,7 +61,7 @@ Public Sub PlaceMemoBelow( _
     If ControlExists(host, memoName) Then host.Controls.Remove memoName
 
     Dim i As Long
-    For i = host.Controls.Count - 1 To 0 Step -1
+    For i = host.Controls.count - 1 To 0 Step -1
         If host.Controls(i).name = memoName & "_lbl" Then
         host.Controls.Remove i
         Exit For
@@ -237,7 +237,7 @@ End Function
 
 Private Function FindOrAddPage(mp As MSForms.MultiPage, captionText As String) As MSForms.Page
     Dim i As Long
-    For i = 0 To mp.Pages.Count - 1
+    For i = 0 To mp.Pages.count - 1
         If mp.Pages(i).caption = captionText Then
             Set FindOrAddPage = mp.Pages(i)
             Exit Function
@@ -623,7 +623,7 @@ Private Function IsKnownMpADL(mp As MSForms.MultiPage) As Boolean
         IsKnownMpADL = True
         Exit Function
     End If
-    If mp.Pages.Count >= 3 Then
+    If mp.Pages.count >= 3 Then
         Dim c0$, c1$, c2$
         c0 = mp.Pages(0).caption
         c1 = mp.Pages(1).caption
@@ -652,7 +652,7 @@ Public Sub EnsurePhysicalFunctionTabs_Root(owner As frmEval)
         MsgBox "最上段のMultiPageが見つかりません。イミディエイト(CTRL+G)のログを教えてください。"
         Exit Sub
     Else
-        Debug.Print "[phys] root found: Name=" & root.name & ", Pages=" & root.Pages.Count
+        Debug.Print "[phys] root found: Name=" & root.name & ", Pages=" & root.Pages.count
     End If
    
 
@@ -729,8 +729,8 @@ Private Sub DumpMP_Recur(parent As Object, ByVal depth As Long)
     For Each c In parent.Controls
         If TypeOf c Is MSForms.MultiPage Then
             On Error Resume Next
-            Debug.Print pad & "MP Name=" & c.name & " Pages=" & c.Pages.Count
-            For i = 0 To c.Pages.Count - 1
+            Debug.Print pad & "MP Name=" & c.name & " Pages=" & c.Pages.count
+            For i = 0 To c.Pages.count - 1
                 Debug.Print pad & "  - Page(" & i & "): " & c.Pages(i).caption
             Next
             On Error GoTo 0
@@ -836,7 +836,7 @@ End Sub
 Private Sub CleanDefaultPages(mp As MSForms.MultiPage)
     On Error Resume Next
     Dim i As Long
-    For i = mp.Pages.Count - 1 To 0 Step -1
+    For i = mp.Pages.count - 1 To 0 Step -1
         If Left$(mp.Pages(i).caption, 4) = "Page" Then
             mp.Pages.Remove i
         End If

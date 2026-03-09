@@ -154,7 +154,7 @@ End Sub
 ' ====== 既存ヘッダにエイリアス適用（改名） ======
 ' ====== 既存ヘッダにエイリアス適用（改名／マージ対応） ======
 Private Sub ApplyHeaderAliases(ByVal ws As Worksheet, ByVal dictAlias As Object, ByVal dryRun As Boolean)
-    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim j As Long
     For j = lastCol To 1 Step -1      ' 右→左に走査：後ろからの方が列削除に強い
         Dim srcHdr As String: srcHdr = Trim$(CStr(ws.Cells(1, j).value))
@@ -168,7 +168,7 @@ Private Sub ApplyHeaderAliases(ByVal ws As Worksheet, ByVal dictAlias As Object,
                 Dim dstCol As Long: dstCol = FindColByHeaderExact(ws, dstHdr)
                 If dstCol > 0 And dstCol <> j Then
                     ' 既にターゲット列が存在：空欄を埋める形でマージし、旧列を削除
-                    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.Count, j).End(xlUp).row
+                    Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, j).End(xlUp).row
                     Dim R As Long
                     For R = 2 To lastRow
                         If Len(ws.Cells(R, dstCol).value) = 0 And Len(ws.Cells(R, j).value) > 0 Then
@@ -188,7 +188,7 @@ End Sub
 
 ' 完全一致で見出し列番号を返す（無ければ0）
 Public Function FindColByHeaderExact(ByVal ws As Worksheet, ByVal headerName As String) As Long
-    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim c As Long
     For c = 1 To lastCol
         If StrComp(Trim$(CStr(ws.Cells(1, c).value)), headerName, vbTextCompare) = 0 Then
@@ -209,7 +209,7 @@ Private Sub EnsureHeaders(ByVal ws As Worksheet, ByVal desired As Collection, By
             Debug.Print "[SCHEMA][ADD] " & CStr(nm)
             If Not dryRun Then
                 Dim lastCol As Long
-                lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+                lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
                 ws.Cells(1, lastCol + 1).value = CStr(nm)
             End If
         End If
@@ -220,7 +220,7 @@ End Sub
 Private Function CurrentHeaderSet(ByVal ws As Worksheet) As Object
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary")
     d.CompareMode = 1
-    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim j As Long
     For j = 1 To lastCol
         Dim h As String: h = Trim$(CStr(ws.Cells(1, j).value))
@@ -242,15 +242,15 @@ Private Sub ReorderPostureBlock(ByVal ws As Worksheet, ByVal desired As Collecti
             targetCols.Add CLng(hdrIdx(CStr(nm)))
         End If
     Next nm
-    If targetCols.Count = 0 Then
+    If targetCols.count = 0 Then
         Debug.Print "[SCHEMA][ORDER] 姿勢_* の既存列が見つかりません。"
         Exit Sub
     End If
 
     ' 姿勢ブロックの現在の最小・最大位置
     Dim minC As Long, maxC As Long, i As Long
-    minC = Columns.Count: maxC = 0
-    For i = 1 To targetCols.Count
+    minC = Columns.count: maxC = 0
+    For i = 1 To targetCols.count
         minC = IIf(targetCols(i) < minC, targetCols(i), minC)
         maxC = IIf(targetCols(i) > maxC, targetCols(i), maxC)
     Next i
@@ -267,7 +267,7 @@ Private Sub ReorderPostureBlock(ByVal ws As Worksheet, ByVal desired As Collecti
 
     Set nameToCol = CurrentHeaderSet(ws) ' 最新化
     Dim k As Long
-    For k = desiredExisting.Count To 1 Step -1
+    For k = desiredExisting.count To 1 Step -1
         Dim hName As String: hName = desiredExisting(k)
         Dim fromCol As Long: fromCol = CLng(nameToCol(hName))
         If fromCol <> curPos Then
@@ -303,7 +303,7 @@ Public Sub ListUnknownPostureHeaders()
     Dim v
     For Each v In desired: allow(CStr(v)) = True: Next
 
-    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim j As Long, h As String, unknown As Object: Set unknown = CreateObject("Scripting.Dictionary"): unknown.CompareMode = 1
     For j = 1 To lastCol
         h = Trim$(CStr(ws.Cells(1, j).value))
@@ -314,7 +314,7 @@ Public Sub ListUnknownPostureHeaders()
         End If
     Next j
 
-    If unknown.Count = 0 Then
+    If unknown.count = 0 Then
         Debug.Print "[SCHEMA][CHECK] 姿勢_* の未知列はありません。"
     Else
         Dim k: For Each k In unknown.keys

@@ -7,12 +7,12 @@ Public Sub RunHdrProbe()
     Debug.Print "=== HDR PROBE START ==="
 
     ' frmEvalが開いてなければ開く（既に開いてればそのまま）
-    If VBA.UserForms.Count = 0 Then
+    If VBA.UserForms.count = 0 Then
         frmEval.Show vbModeless
         DoEvents
     End If
 
-    Debug.Print "[Form] Controls.Count=" & frmEval.Controls.Count
+    Debug.Print "[Form] Controls.Count=" & frmEval.Controls.count
 
     Debug.Print "[frHeader] Type=" & TypeName(frmEval.Controls("frHeader"))
     Debug.Print "[frHeader] InsideW=" & frmEval.Controls("frHeader").InsideWidth & _

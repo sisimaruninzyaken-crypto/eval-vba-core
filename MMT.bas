@@ -95,7 +95,7 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
     Next cand
     
     ' 2) Frame を走査して特徴で推定
-    For i = 0 To pg.Controls.Count - 1
+    For i = 0 To pg.Controls.count - 1
         Set c = pg.Controls(i)
         If TypeName(c) = "Frame" Then
             
@@ -115,8 +115,8 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
             
             ' MultiPage 子を持っているか
             On Error Resume Next
-            If c.Controls.Count > 0 Then
-                For j = 0 To c.Controls.Count - 1
+            If c.Controls.count > 0 Then
+                For j = 0 To c.Controls.count - 1
                     If TypeName(c.Controls(j)) = "MultiPage" Then
 #If APP_DEBUG Then
                         Debug.Print "[MMT][HOST] inferred=" & c.name & " (has MultiPage child)"
@@ -148,7 +148,7 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
     
     If mp Is Nothing Then
         On Error Resume Next
-        For i = 0 To host.Controls.Count - 1
+        For i = 0 To host.Controls.count - 1
             If TypeName(host.Controls(i)) = "MultiPage" Then
                 Set mp = host.Controls(i)
                 Exit For
@@ -172,8 +172,8 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
         mp.Pages.Add.caption = ChrW(&H4E0B) & ChrW(&H80A2)
     End If
     
-    If mp.Pages.Count < 2 Then
-        Do While mp.Pages.Count < 2
+    If mp.Pages.count < 2 Then
+        Do While mp.Pages.count < 2
             mp.Pages.Add
         Loop
     End If
@@ -194,7 +194,7 @@ Public Function GetMMTPage(ByVal frm As Object) As Object
     For Each ctl In frm.Controls
         If TypeName(ctl) = "MultiPage" Then
             Dim i As Long
-            For i = 0 To ctl.Pages.Count - 1
+            For i = 0 To ctl.Pages.count - 1
                 Set pg = ctl.Pages(i)
                 If PageHasMMTSignature(pg) Then
                     Set GetMMTPage = pg
@@ -269,7 +269,7 @@ End Sub
 '--- 自動生成（MMTGEN）だけ掃除 ---
 Private Sub MMT_ClearGen(ByVal pg As Object)
     Dim idx As Long
-    For idx = pg.Controls.Count - 1 To 0 Step -1
+    For idx = pg.Controls.count - 1 To 0 Step -1
         If Left$(pg.Controls(idx).tag & "", 6) = "MMTGEN" Then
             pg.Controls.Remove pg.Controls(idx).name
         End If
@@ -302,7 +302,7 @@ Public Sub SaveMMTToSheet(ws As Worksheet, R As Long, owner As Object)
     ' 1) ヘッダー列（MMT_IO）を用意
     c = FindColByHeaderExact(ws, "MMT_IO")
     If c = 0 Then
-        c = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column + 1
+        c = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1
         ws.Cells(1, c).value = "MMT_IO"
     End If
 
@@ -328,7 +328,7 @@ Private Function MMT_SaveToString() As String
 
     ReDim parts(0 To 0): n = -1
 
-    For p = 0 To mp.Pages.Count - 1
+    For p = 0 To mp.Pages.count - 1
         For Each c In mp.Pages(p).Controls
             If TypeName(c) = "ComboBox" Then
                 Dim nm As String, side As String
@@ -446,7 +446,7 @@ Private Sub MMT_LoadFromString_Core(ByVal s As String)
         vR = IIf(UBound(f) >= 2, CStr(f(2)), "")
         vL = IIf(UBound(f) >= 3, CStr(f(3)), "")
 
-        If side < 0 Or side > mp.Pages.Count - 1 Then
+        If side < 0 Or side > mp.Pages.count - 1 Then
             Debug.Print "[LOAD][MMT] side不正: "; side; " / key="; key
             GoTo cont
         End If
@@ -499,7 +499,7 @@ Public Function EnsureHeaderCol(ws As Worksheet, header As String) As Long
     Dim c As Long
     c = FindColByHeaderExact(ws, header)
     If c = 0 Then
-        c = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column + 1
+        c = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1
         ws.Cells(1, c).value = header
     End If
     EnsureHeaderCol = c
@@ -512,7 +512,7 @@ End Function
 '=== 見出し列「MMT_IO」を探す（無ければ作る） ===
 Private Function FindOrCreateHeader(ByVal ws As Worksheet, ByVal header As String) As Long
     Dim lastCol As Long, c As Long
-    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     For c = 1 To lastCol
         If CStr(ws.Cells(1, c).value) = header Then
             FindOrCreateHeader = c

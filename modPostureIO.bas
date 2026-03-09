@@ -176,12 +176,12 @@ End Function
 ' --- 備考：ラベル「備考」と同じ親内のTextBoxを拾う ---
 Private Function GetTextByLabelCaption(owner As Object, ByVal labelCap As String) As String
     Dim tb As Object: Set tb = FindTextBoxNearLabel_(owner, labelCap)
-    If Not tb Is Nothing Then GetTextByLabelCaption = CStr(tb.Text)
+    If Not tb Is Nothing Then GetTextByLabelCaption = CStr(tb.text)
 End Function
 
 Private Sub SetTextByLabelCaption(owner As Object, ByVal labelCap As String, ByVal s As String)
     Dim tb As Object: Set tb = FindTextBoxNearLabel_(owner, labelCap)
-    If Not tb Is Nothing Then tb.Text = s
+    If Not tb Is Nothing Then tb.text = s
 End Sub
 
 ' ラベルのCaption一致→同じ親（Frameなど）内のTextBoxを返す（最初の1つ）
@@ -207,7 +207,7 @@ End Function
 ' 子を持つかの判定（安全版）
 Private Function HasControls__(obj As Object) As Boolean
     On Error Resume Next
-    HasControls__ = (obj.Controls.Count >= 0)
+    HasControls__ = (obj.Controls.count >= 0)
 End Function
 
 ' --- 姿勢用ローカル: 見出し列を確保して列番号を返す ---
@@ -223,7 +223,7 @@ Private Function EnsureHeaderCol_Posture(ws As Worksheet, ByVal header As String
     If Application.WorksheetFunction.CountA(ws.rows(1)) = 0 Then
         lastCol = 0
     Else
-        lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+        lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     End If
     ws.Cells(1, lastCol + 1).value = header
     EnsureHeaderCol_Posture = lastCol + 1
@@ -373,7 +373,7 @@ Private Function GetTextInFrameByLabelCaption_(owner As Object, ByVal frameCap A
         If TypeName(c) = "Label" Then
             If InStr(1, Trim$(c.caption), Trim$(labelCap), vbTextCompare) > 0 Then
                 For Each inner In fr.Controls
-                    If TypeName(inner) = "TextBox" Then GetTextInFrameByLabelCaption_ = CStr(inner.Text): Exit Function
+                    If TypeName(inner) = "TextBox" Then GetTextInFrameByLabelCaption_ = CStr(inner.text): Exit Function
                 Next
             End If
         End If
@@ -388,7 +388,7 @@ Private Sub SetTextInFrameByLabelCaption_(owner As Object, ByVal frameCap As Str
         If TypeName(c) = "Label" Then
             If InStr(1, Trim$(c.caption), Trim$(labelCap), vbTextCompare) > 0 Then
                 For Each inner In fr.Controls
-                    If TypeName(inner) = "TextBox" Then inner.Text = s: Exit Sub
+                    If TypeName(inner) = "TextBox" Then inner.text = s: Exit Sub
                 Next
             End If
         End If
@@ -476,6 +476,6 @@ End Function
 
 Private Function HasControls_(obj As Object) As Boolean
     On Error Resume Next
-    HasControls_ = (obj.Controls.Count >= 0)
+    HasControls_ = (obj.Controls.count >= 0)
 End Function
 

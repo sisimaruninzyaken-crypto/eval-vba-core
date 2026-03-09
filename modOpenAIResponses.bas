@@ -174,8 +174,8 @@ Private Function BuildBasicUserPrompt(ByVal planStructure As Object) As String
         lines.Add CStr(k) & ": " & CStr(planStructure(k))
     Next k
 
-    ReDim arr(1 To lines.Count)
-    For i = 1 To lines.Count
+    ReDim arr(1 To lines.count)
+    For i = 1 To lines.count
         arr(i) = lines(i)
     Next i
 

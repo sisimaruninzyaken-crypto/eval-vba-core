@@ -85,7 +85,7 @@ Private Sub LoadROMblock(ws As Worksheet, rowNum As Long, owner As Object, look 
             ctl = "txtROM_" & layer & "_" & joint & "_" & CStr(m) & "_" & CStr(side)
             col = ResolveColumn(look, hdr)                          ' 無ければスキップ
             Dim v As String: v = ReadStr_Compat(hdr, rowNum, ws)
-If Len(v) > 0 Then FindCtlDeep(owner, ctl).Text = v
+If Len(v) > 0 Then FindCtlDeep(owner, ctl).text = v
 
         Next side
     Next m
@@ -106,7 +106,7 @@ Private Sub LoadROMMemo(ws As Worksheet, rowNum As Long, owner As Object, look A
     hdr = "ROM_" & layer & "_Memo"
     ctl = "txtROM_" & layer & "_Memo"
     col = ResolveColumn(look, hdr)
-    If col > 0 Then FindCtlDeep(owner, ctl).Text = ws.Cells(rowNum, col).value
+    If col > 0 Then FindCtlDeep(owner, ctl).text = ws.Cells(rowNum, col).value
 End Sub
 
 
@@ -140,7 +140,7 @@ Private Function HeaderColEnsure(ws As Worksheet, ByVal header As String) As Lon
     Dim m As Variant, lastCol As Long
     m = Application.Match(header, ws.rows(1), 0)
     If IsError(m) Then
-        lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+        lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
         If lastCol < 1 Then lastCol = 1
         ws.Cells(1, lastCol + 1).value = header
         HeaderColEnsure = lastCol + 1
@@ -158,7 +158,7 @@ Public Sub Debug_ShowROM_Abd_R()
     If ctl Is Nothing Then
         Debug.Print "[ROMCTL] txtROM_Upper_Shoulder_Abd_R not found"
     Else
-        Debug.Print "[ROMCTL] Name=" & ctl.name & " Text='" & ctl.Text & "'"
+        Debug.Print "[ROMCTL] Name=" & ctl.name & " Text='" & ctl.text & "'"
     End If
 End Sub
 

@@ -41,7 +41,7 @@ Dim ws As Worksheet
             Dim d As Object, i As Long
             Set d = comp.Designer
             If Not d Is Nothing Then
-                For i = 0 To d.Controls.Count - 1
+                For i = 0 To d.Controls.count - 1
                     ws.Cells(R, 2).value = "Ctrl"
                     ws.Cells(R, 3).value = TypeName(d.Controls(i))
                     ws.Cells(R, 4).value = d.Controls(i).name
@@ -115,10 +115,10 @@ Public Sub Validate_App()
         ok = False
         Debug.Print "[NG] mpADL がありません"
     Else
-        If mp.Pages.Count < 3 Then ok = False: Debug.Print "[NG] mpADL Pages.Count < 3"
-        If mp.Pages.Count >= 1 Then If mp.Pages(0).caption <> CAP_BI Then ok = False: Debug.Print "[NG] Page0 Caption≠" & CAP_BI
-        If mp.Pages.Count >= 2 Then If mp.Pages(1).caption <> CAP_IADL Then ok = False: Debug.Print "[NG] Page1 Caption≠" & CAP_IADL
-        If mp.Pages.Count >= 3 Then If mp.Pages(2).caption <> CAP_KYO Then ok = False: Debug.Print "[NG] Page2 Caption≠" & CAP_KYO
+        If mp.Pages.count < 3 Then ok = False: Debug.Print "[NG] mpADL Pages.Count < 3"
+        If mp.Pages.count >= 1 Then If mp.Pages(0).caption <> CAP_BI Then ok = False: Debug.Print "[NG] Page0 Caption≠" & CAP_BI
+        If mp.Pages.count >= 2 Then If mp.Pages(1).caption <> CAP_IADL Then ok = False: Debug.Print "[NG] Page1 Caption≠" & CAP_IADL
+        If mp.Pages.count >= 3 Then If mp.Pages(2).caption <> CAP_KYO Then ok = False: Debug.Print "[NG] Page2 Caption≠" & CAP_KYO
     End If
 
     MsgBox IIf(ok, "Validate OK：構成は想定どおりです。", _

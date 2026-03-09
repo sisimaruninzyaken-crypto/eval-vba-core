@@ -75,7 +75,7 @@ End If
    'Call frmEval.EnsureHeaderLoadPrevButton
 
     '--- value sync (one-way preview) ---
-    txt.Text = f.Controls("txtName").Text
+    txt.text = f.Controls("txtName").text
 
     '--- position: [éÅñº][txt] [cmdClearHeader][cmdSaveHeader][cmdCloseHeader] ---
     txt.Top = btn.Top + (btn.Height - txt.Height) / 2
@@ -116,7 +116,7 @@ End If
     End If
 
     '--- value sync (one-way preview) ---
-    txtID.Text = f.Controls("txtPID").Text
+    txtID.text = f.Controls("txtPID").text
 
     '--- position: [ID][txt] [éÅñº][txt] [buttons...] ---
     txtID.Top = btn.Top + (btn.Height - txtID.Height) / 2

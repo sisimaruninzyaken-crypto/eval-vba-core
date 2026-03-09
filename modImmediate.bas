@@ -72,7 +72,7 @@ Public Sub ROM_AlignFix_Set20()
     ' --- ROMページ特定 ---
     For Each c In frmEval.Controls
         If TypeName(c) = "MultiPage" Then
-            For i = 0 To c.Pages.Count - 1
+            For i = 0 To c.Pages.count - 1
                 If InStr(1, CStr(c.Pages(i).caption), "ROM", vbTextCompare) > 0 _
                 Or InStr(1, CStr(c.Pages(i).caption), "主要関節", vbTextCompare) > 0 Then
                     Set mp = c: Set pg = c.Pages(i): Exit For
@@ -175,7 +175,7 @@ Public Sub ROM_NoteFix_Once()
     For Each c In frmEval.Controls
         If TypeName(c) = "MultiPage" Then
             Set mp = c
-            For i = 0 To mp.Pages.Count - 1
+            For i = 0 To mp.Pages.count - 1
                 If InStr(1, CStr(mp.Pages(i).caption), "ROM", vbTextCompare) > 0 _
                 Or InStr(1, CStr(mp.Pages(i).caption), "主要関節", vbTextCompare) > 0 Then
                     Set pg = mp.Pages(i): Exit For
@@ -276,7 +276,7 @@ Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
     ' ?? ROMページを特定（Captionに ROM / ＲＯＭ / 主要関節 / 関節可動域 を含む）??
     For Each mp In frmEval.Controls
         If TypeName(mp) = "MultiPage" Then
-            For i = 0 To mp.Pages.Count - 1
+            For i = 0 To mp.Pages.count - 1
                 Set pg = mp.Pages(i)
                 If (InStr(1, CStr(pg.caption), "ROM", vbTextCompare) > 0) _
                    Or (InStr(1, CStr(pg.caption), "ＲＯＭ", vbTextCompare) > 0) _
@@ -294,8 +294,8 @@ Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
     Set stk = New Collection
     stk.Add pg
 
-    Do While stk.Count > 0
-        Set cont = stk(stk.Count): stk.Remove stk.Count
+    Do While stk.count > 0
+        Set cont = stk(stk.count): stk.Remove stk.count
 
         On Error Resume Next
         For Each c In cont.Controls
@@ -304,7 +304,7 @@ Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
                 Case "Frame", "Page"
                     stk.Add c
                 Case "MultiPage"
-                    For j = 0 To c.Pages.Count - 1
+                    For j = 0 To c.Pages.count - 1
                         stk.Add c.Pages(j)
                     Next
             End Select
@@ -345,7 +345,7 @@ Public Sub ROM_VerifyOnce()
     ' ROMページ特定
     For Each mp In frmEval.Controls
         If TypeName(mp) = "MultiPage" Then
-            For i = 0 To mp.Pages.Count - 1
+            For i = 0 To mp.Pages.count - 1
                 cap = CStr(mp.Pages(i).caption)
                 If InStr(1, cap, "ROM", vbTextCompare) > 0 Or _
                    InStr(1, cap, "ＲＯＭ", vbTextCompare) > 0 Or _
@@ -388,7 +388,7 @@ Public Sub ROM_Fix_TextBoxHeight_Recursive_OnROM_Once()
     ' ROMページを特定
     For Each mp In frmEval.Controls
         If TypeName(mp) = "MultiPage" Then
-            For i = 0 To mp.Pages.Count - 1
+            For i = 0 To mp.Pages.count - 1
                 Set pg = mp.Pages(i)
                 If InStr(1, CStr(pg.caption), "ROM", vbTextCompare) > 0 _
                    Or InStr(1, CStr(pg.caption), "ＲＯＭ", vbTextCompare) > 0 _
@@ -414,7 +414,7 @@ Private Sub FixTextBoxHeightRecursive(cont As Object, h As Single)
             Case "Frame", "Page"
                 Call FixTextBoxHeightRecursive(c, h)
             Case "MultiPage"
-                For j = 0 To c.Pages.Count - 1
+                For j = 0 To c.Pages.count - 1
                     Call FixTextBoxHeightRecursive(c.Pages(j), h)
                 Next
             Case "TextBox"
@@ -433,7 +433,7 @@ Private Function GetMMTPage() As Object
     For Each c In frmEval.Controls
         If TypeName(c) = "MultiPage" Then
             Set mp = c
-            For i = 0 To mp.Pages.Count - 1
+            For i = 0 To mp.Pages.count - 1
                 Dim cap As String
                 cap = mp.Pages(i).caption
                 If InStr(cap, "MMT") > 0 Or InStr(cap, "筋力") > 0 Then
@@ -449,7 +449,7 @@ End Function
 '--- 自動生成タグのものだけ削除 ---
 Private Sub MMT_ClearGen(pg As Object)
     Dim idx As Long
-    For idx = pg.Controls.Count - 1 To 0 Step -1
+    For idx = pg.Controls.count - 1 To 0 Step -1
         If Left$(pg.Controls(idx).tag & "", 6) = "MMTGEN" Then
             pg.Controls.Remove pg.Controls(idx).name
         End If
@@ -537,7 +537,7 @@ Private Function FindMMT_MultiPage(ByRef mp As Object, ByRef idx As Long) As Boo
     Dim c As Object, i As Long
     For Each c In frmEval.Controls
         If TypeName(c) = "MultiPage" Then
-            For i = 0 To c.Pages.Count - 1
+            For i = 0 To c.Pages.count - 1
                 Dim cap$: cap = c.Pages(i).caption
                 If InStr(cap, "MMT") > 0 Or InStr(cap, "筋力") > 0 Then
                     Set mp = c: idx = i: FindMMT_MultiPage = True: Exit Function
@@ -550,20 +550,20 @@ End Function
 '--- 指定位置にページを用意（あれば再利用） ---
 Private Function EnsurePage(mp As Object, title As String, atIndex As Long) As Object
     Dim i As Long
-    For i = 0 To mp.Pages.Count - 1
+    For i = 0 To mp.Pages.count - 1
         If mp.Pages(i).caption = title Then Set EnsurePage = mp.Pages(i): Exit Function
     Next
     Dim pg As Object
     Set pg = mp.Pages.Add
     pg.caption = title
-    If atIndex >= 0 And atIndex < mp.Pages.Count Then mp.Pages(mp.Pages.Count - 1).Index = atIndex
+    If atIndex >= 0 And atIndex < mp.Pages.count Then mp.Pages(mp.Pages.count - 1).Index = atIndex
     Set EnsurePage = pg
 End Function
 
 '--- 自動生成の掃除 ---
 Private Sub ClearGenerated(pg As Object)
     Dim j As Long
-    For j = pg.Controls.Count - 1 To 0 Step -1
+    For j = pg.Controls.count - 1 To 0 Step -1
         If Left$(pg.Controls(j).tag & "", 6) = "MMTGEN" Then pg.Controls.Remove pg.Controls(j).name
     Next
 End Sub
@@ -777,15 +777,15 @@ End Sub
 
 
 Public Sub Verify_MonthlyExport_OpensWorkbook()
-    Debug.Print "Before: ActiveWB=" & ActiveWorkbook.name & "  Count=" & Workbooks.Count
+    Debug.Print "Before: ActiveWB=" & ActiveWorkbook.name & "  Count=" & Workbooks.count
 
     ' いま使ってる呼び出しと同じ
     Call ExportMonitoring_ToMonthlyWorkbook( _
-        CDate(frmEval.Controls("txtDailyDate").Text), _
-        frmEval.Controls("frHeader").Controls("txtHdrName").Text, _
-        frmEval.Controls("txtMonthlyMonitoringDraft").Text)
+        CDate(frmEval.Controls("txtDailyDate").text), _
+        frmEval.Controls("frHeader").Controls("txtHdrName").text, _
+        frmEval.Controls("txtMonthlyMonitoringDraft").text)
 
-    Debug.Print "After:  ActiveWB=" & ActiveWorkbook.name & "  Count=" & Workbooks.Count
+    Debug.Print "After:  ActiveWB=" & ActiveWorkbook.name & "  Count=" & Workbooks.count
 
     ' 開いているブック名を列挙
     ListOpenWorkbooks

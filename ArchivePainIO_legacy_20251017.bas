@@ -27,7 +27,7 @@ Public Sub SavePainToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner A
 
     Dim pg As Object
     On Error Resume Next
-    Set pg = owner.Controls.Item("mpPhys").Pages(4)   ' 疼痛（部位／NRS）
+    Set pg = owner.Controls.item("mpPhys").Pages(4)   ' 疼痛（部位／NRS）
     On Error GoTo 0
     If pg Is Nothing Then
     
@@ -41,7 +41,7 @@ End If
     Set combos = New Collection
     CollectCombos pg, combos  ' Page直下＋Frame内のComboBoxを再帰収集
 
-    If combos.Count = 0 Then
+    If combos.count = 0 Then
        
 
     End If
@@ -92,7 +92,7 @@ End If
         ' === 持続期間（数字：txtPainDuration）を単独キーとして保存 ===
     Dim durText As String
     On Error Resume Next
-    durText = CStr(pg.Controls("txtPainDuration").Text)
+    durText = CStr(pg.Controls("txtPainDuration").text)
     On Error GoTo 0
     If Len(Trim$(durText)) > 0 Then
         parts.Add "txtPainDuration" & SEP_KV & " " & durText
@@ -127,9 +127,9 @@ Next
 ' === CheckBox（Trueのみ）をまとめて保存 ===
 Dim factors As Collection: Set factors = New Collection
 CollectChecksRecursive pg, factors
-If factors.Count > 0 Then
+If factors.count > 0 Then
     Dim uniq As Object: Set uniq = CreateObject("Scripting.Dictionary")
-    Dim ii As Long: For ii = 1 To factors.Count: uniq(factors(ii)) = 1: Next
+    Dim ii As Long: For ii = 1 To factors.count: uniq(factors(ii)) = 1: Next
     parts.Add "PainFactors" & SEP_KV & " " & Join(uniq.keys, "/")
 End If
 
@@ -141,7 +141,7 @@ End If
 ' === VAS（0 でも保存） ===
 Dim vasText As String
 On Error Resume Next
-vasText = CStr(pg.Controls("fraVAS").Controls("txtVAS").Text)   ' TextBox 優先
+vasText = CStr(pg.Controls("fraVAS").Controls("txtVAS").text)   ' TextBox 優先
 If Len(vasText) = 0 Then vasText = CStr(pg.Controls("fraVAS").Controls("sldVAS").value)  ' ScrollBar 代替
 On Error GoTo 0
 
@@ -184,7 +184,7 @@ Private Function FindTargetMultiPage(ByVal owner As Object, ByVal hint As String
     For Each ctl In owner.Controls
         If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
-            For i = 0 To mp.Pages.Count - 1
+            For i = 0 To mp.Pages.count - 1
                 If InStr(1, mp.Pages(i).caption, hint, vbTextCompare) > 0 Then
                     Set outPage = mp.Pages(i)
                     Set FindTargetMultiPage = mp
@@ -212,8 +212,8 @@ End Sub
 Private Function ControlsToArray(ByVal bag As Collection) As Variant
     Dim i As Long, o As Object
     Dim arr() As Variant
-    ReDim arr(0 To bag.Count - 1)
-    For i = 1 To bag.Count
+    ReDim arr(0 To bag.count - 1)
+    For i = 1 To bag.count
         Set o = bag(i)
        Set arr(i - 1) = CreateMap4("Name", o.name, "Top", CLng(o.Top), "Left", CLng(o.Left), "Ref", o)
 
@@ -251,7 +251,7 @@ Private Function ComboValueText(ByVal cbo As Object) As String
     End If
     If LenB(t) = 0 Then
         ' 未登録値が入っているケースに備えてTextも見る
-        t = CStr(cbo.Text)
+        t = CStr(cbo.text)
     End If
     ComboValueText = t
 End Function
@@ -268,7 +268,7 @@ Private Function LargestTextBoxValue(ByVal container As Object) As String
             If LenB(s) > 0 And area = 0 Then LargestTextBoxValue = s ' ネスト側で決まったら採用
         End If
     Next
-    If Not best Is Nothing Then LargestTextBoxValue = CStr(best.Text)
+    If Not best Is Nothing Then LargestTextBoxValue = CStr(best.text)
 End Function
 
 '―― 小物ユーティリティ ―――――――――――――――――――――――――――――――――――――
@@ -278,8 +278,8 @@ End Function
 
 Private Function JoinCollection(ByVal c As Collection, ByVal sep As String) As String
     Dim i As Long, s() As String
-    ReDim s(1 To c.Count)
-    For i = 1 To c.Count: s(i) = CStr(c(i)): Next
+    ReDim s(1 To c.count)
+    For i = 1 To c.count: s(i) = CStr(c(i)): Next
     JoinCollection = Join(s, sep)
 End Function
 
@@ -319,10 +319,10 @@ Set pg = uf.mpPhys.Pages(4)
     Debug.Print "[Page]", pg.caption
     For Each f In pg.Controls
         If TypeName(f) = "Frame" Then
-            Debug.Print "[Frame]", f.name, "count", f.Controls.Count
+            Debug.Print "[Frame]", f.name, "count", f.Controls.count
             For Each c In f.Controls
                 If TypeName(c) = "CheckBox" Then Debug.Print "  [Chk]", c.name, c.value
-                If TypeName(c) = "Frame" Then Debug.Print "  [SubFrame]", c.name, "count", c.Controls.Count
+                If TypeName(c) = "Frame" Then Debug.Print "  [SubFrame]", c.name, "count", c.Controls.count
             Next
         End If
     Next
@@ -339,7 +339,7 @@ Public Sub SavePain_CheckOnce()
     ' 直近行のIO/NOTEを数値表示
     Dim ws As Worksheet, lr As Long
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lr = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    lr = ws.Cells(ws.rows.count, 1).End(xlUp).row
     Debug.Print "[LastRow]", lr
     Debug.Print "[IO]", Left$(CStr(ws.Cells(lr, 156).value), 180)
     Debug.Print "[NOTE]", Left$(CStr(ws.Cells(lr, 157).value), 120)
@@ -350,7 +350,7 @@ End Sub
 Public Sub SavePain_AppendTest_Once()
     Dim uf As Object: Set uf = frmEval
     On Error Resume Next
-    uf.txtName.Text = "検証Append"
+    uf.txtName.text = "検証Append"
     uf.Controls("chkDiffOnly").value = False
     On Error GoTo 0
 
@@ -360,7 +360,7 @@ Public Sub SavePain_AppendTest_Once()
     ' 直近行のIO/NOTEを可視化
     Dim ws As Worksheet, lr As Long
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lr = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    lr = ws.Cells(ws.rows.count, 1).End(xlUp).row
     Debug.Print "[LastRow]", lr
     Debug.Print "[IO]", Left$(CStr(ws.Cells(lr, 156).value), 180)
     Debug.Print "[NOTE]", Left$(CStr(ws.Cells(lr, 157).value), 120)
@@ -385,7 +385,7 @@ End Sub
 Public Sub SavePain_FillAndAppend_Once()
     Dim uf As Object: Set uf = frmEval
     On Error Resume Next
-    uf.txtName.Text = "検証Append3"
+    uf.txtName.text = "検証Append3"
     uf.Controls("chkDiffOnly").value = False
     With uf.Controls("mpPhys").Pages(4)
         .Controls("cmbPainOnset").ListIndex = 0
@@ -402,7 +402,7 @@ Public Sub SavePain_FillAndAppend_Once()
 
     Dim ws As Worksheet, lr As Long
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    lr = ws.Cells(ws.rows.Count, 1).End(xlUp).row
+    lr = ws.Cells(ws.rows.count, 1).End(xlUp).row
     Debug.Print "[LastRow]", lr
     Debug.Print "[IO]", Left$(CStr(ws.Cells(lr, 156).value), 180)
     Debug.Print "[NOTE]", Left$(CStr(ws.Cells(lr, 157).value), 120)
@@ -415,7 +415,7 @@ End Sub
 Private Function GetCtlVal(o As Object) As String
     On Error Resume Next
     GetCtlVal = "" & o.value
-    If Len(GetCtlVal) = 0 Then GetCtlVal = "" & o.Text
+    If Len(GetCtlVal) = 0 Then GetCtlVal = "" & o.text
     On Error GoTo 0
 End Function
 

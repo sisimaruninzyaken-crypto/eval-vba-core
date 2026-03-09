@@ -1,7 +1,7 @@
 Attribute VB_Name = "modEvalPrintPackLatest"
 Public Sub Run_PrintPack_LatestRow()
     Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("EvalData")
-    Dim lastR As Long: lastR = ws.Cells(ws.rows.Count, 89).End(xlUp).row
+    Dim lastR As Long: lastR = ws.Cells(ws.rows.count, 89).End(xlUp).row
 
     Dim R As Long, d As Variant, latest As Date, lastHit As Long
     latest = 0

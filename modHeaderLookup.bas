@@ -2,7 +2,7 @@ Attribute VB_Name = "modHeaderLookup"
 '=== ÉwÉbÉ_åüçıÅEçÏê¨ ==================
 Public Function BuildHeaderLookup(ws As Worksheet) As Object
     Dim dict As Object: Set dict = CreateObject("Scripting.Dictionary")
-    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim c As Long
     For c = 1 To lastCol
         Dim key As String: key = Trim$(CStr(ws.Cells(1, c).value))
@@ -22,7 +22,7 @@ End Function
 Public Function EnsureHeaderColumn(ws As Worksheet, look As Object, key As String) As Long
     Dim c As Long: c = ResolveColumn(look, key)
     If c = 0 Then
-        c = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column + 1
+        c = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1
         ws.Cells(1, c).value = key
         look(key) = c
     End If

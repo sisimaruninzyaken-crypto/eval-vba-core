@@ -19,7 +19,7 @@ Public Sub Cleanup_DuplicateROMHeaders_KeepRightmost()
     Application.ScreenUpdating = False
     Application.Calculation = xlCalculationManual
 
-    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
 
     ' 1) ROM_* の位置を全走査
     For c = 1 To lastCol
@@ -36,12 +36,12 @@ Public Sub Cleanup_DuplicateROMHeaders_KeepRightmost()
     Dim toDel As New Collection
     Dim k As Variant, i As Long, keepCol As Long
     For Each k In map.keys
-        If map(k).Count > 1 Then
+        If map(k).count > 1 Then
             keepCol = -1
-            For i = 1 To map(k).Count
+            For i = 1 To map(k).count
                 If map(k)(i) > keepCol Then keepCol = map(k)(i)
             Next i
-            For i = 1 To map(k).Count
+            For i = 1 To map(k).count
                 If map(k)(i) <> keepCol Then toDel.Add CLng(map(k)(i))
             Next i
         End If
@@ -49,7 +49,7 @@ Public Sub Cleanup_DuplicateROMHeaders_KeepRightmost()
 
     ' 3) 降順で削除
     Dim arr() As Long, n As Long
-    n = toDel.Count
+    n = toDel.count
     If n > 0 Then
         ReDim arr(1 To n)
         For i = 1 To n
@@ -78,7 +78,7 @@ End Sub
 ' 見出しが完全一致する「一番右の列番号」を返すユーティリティ
 Public Function HeaderCol_Compat_Rightmost(ByVal name As String, ByVal ws As Worksheet) As Long
     Dim lastCol As Long, c As Long
-    lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
+    lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     For c = lastCol To 1 Step -1
         If StrComp(CStr(ws.Cells(1, c).value), name, vbTextCompare) = 0 Then
             HeaderCol_Compat_Rightmost = c
@@ -280,7 +280,7 @@ End Sub
 Public Function HasControls(ByVal o As Object) As Boolean
     On Error GoTo EH
     Dim n As Long
-    n = o.Controls.Count
+    n = o.Controls.count
     HasControls = (n >= 0)
     Exit Function
 EH:
@@ -300,7 +300,7 @@ Public Sub Verify_POST_TagUniqueness()
     dup = dup + CountDupTagsInFrame(seen, f35)
     dup = dup + CountDupTagsInFrame(seen, f36)
 
-    Debug.Print "[VERIFY POST TAG UNIQUE] DUP=" & dup & " UNIQUE=" & seen.Count
+    Debug.Print "[VERIFY POST TAG UNIQUE] DUP=" & dup & " UNIQUE=" & seen.count
 End Sub
 
 Private Function CountDupTagsInFrame(ByVal seen As Object, ByVal fr As Object) As Long
@@ -392,7 +392,7 @@ Private Function GetTagText(ByVal tagName As String) As String
     For Each c In fr.Controls
         If c.parent Is fr Then
             If TypeName(c) = "TextBox" And CStr(c.tag) = tagName Then
-                GetTagText = Replace$(CStr(c.Text), vbCrLf, " ")
+                GetTagText = Replace$(CStr(c.text), vbCrLf, " ")
                 Exit Function
             End If
         End If
@@ -403,7 +403,7 @@ Private Function GetTagText(ByVal tagName As String) As String
     For Each c In fr.Controls
         If c.parent Is fr Then
             If TypeName(c) = "TextBox" And CStr(c.tag) = tagName Then
-                GetTagText = Replace$(CStr(c.Text), vbCrLf, " ")
+                GetTagText = Replace$(CStr(c.text), vbCrLf, " ")
                 Exit Function
             End If
         End If
@@ -416,8 +416,8 @@ Public Function AsLongArray(ByVal v As Variant) As Variant
     If IsArray(v) Then AsLongArray = v: Exit Function
     If IsObject(v) Then
         Dim i As Long, arr() As Long
-        ReDim arr(1 To v.Count)
-        For i = 1 To v.Count
+        ReDim arr(1 To v.count)
+        For i = 1 To v.count
             arr(i) = CLng(v(i))
         Next
         AsLongArray = arr
@@ -474,7 +474,7 @@ End Function
 Public Sub ExportMonitoring_ToMonthlyWorkbook(ByVal dailyDate As Date, ByVal clientName As String, ByVal bodyText As String)
     
     If Len(Trim$(clientName)) = 0 Then
-        clientName = frmEval.Controls("frHeader").Controls("txtHdrName").Text
+        clientName = frmEval.Controls("frHeader").Controls("txtHdrName").text
     End If
 
     
@@ -527,14 +527,14 @@ End If
 
 
     ' テンプレ Monitoring をこの月ブックへコピー
-    ThisWorkbook.Worksheets("Monitoring").Copy After:=wbNew.Worksheets(wbNew.Worksheets.Count)
-    Set wsNew = wbNew.Worksheets(wbNew.Worksheets.Count)
+    ThisWorkbook.Worksheets("Monitoring").Copy After:=wbNew.Worksheets(wbNew.Worksheets.count)
+    Set wsNew = wbNew.Worksheets(wbNew.Worksheets.count)
     
     
     Dim c As Long, firstCol As Long, lastCol As Long
 With ThisWorkbook.Worksheets("Monitoring").UsedRange
     firstCol = .Column
-    lastCol = .Column + .Columns.Count - 1
+    lastCol = .Column + .Columns.count - 1
 End With
 
 With ThisWorkbook.Worksheets("Monitoring")
@@ -655,7 +655,7 @@ Application.PrintCommunication = True
 
     Dim R As Long, lastRow As Long
 With ThisWorkbook.Worksheets("Monitoring").UsedRange
-    lastRow = .row + .rows.Count - 1
+    lastRow = .row + .rows.count - 1
 End With
 
 With ThisWorkbook.Worksheets("Monitoring")
