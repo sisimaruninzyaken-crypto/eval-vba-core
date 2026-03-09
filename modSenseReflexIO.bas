@@ -114,25 +114,25 @@ End Sub
 
 
 '--- 列 I/O（ヘッダは可変） ---
-Public Sub SaveRLToSheet(ws As Worksheet, ByVal R As Long, ByVal header As String, container As Object)
+Public Sub SaveRLToSheet(ws As Worksheet, ByVal r As Long, ByVal header As String, container As Object)
     Dim c As Long, s As String
     c = EnsureHeaderCol(ws, header)
     s = SerializeRL(container)
-    ws.Cells(R, c).value = s
-    Debug.Print "[RL][SAVE] row=" & R & " col=" & c & " len=" & Len(s)
+    ws.Cells(r, c).value = s
+    Debug.Print "[RL][SAVE] row=" & r & " col=" & c & " len=" & Len(s)
 End Sub
 
-Public Sub LoadRLFromSheet(ws As Worksheet, ByVal R As Long, ByVal header As String, container As Object)
+Public Sub LoadRLFromSheet(ws As Worksheet, ByVal r As Long, ByVal header As String, container As Object)
     Dim c As Long, s As String
     c = EnsureHeaderCol(ws, header)
-    s = ReadStr_Compat("IO_Sensory", R, ws)
-    Debug.Print "[RL][LOAD] row=" & R & " col=" & c & " len=" & Len(s)
+    s = ReadStr_Compat("IO_Sensory", r, ws)
+    Debug.Print "[RL][LOAD] row=" & r & " col=" & c & " len=" & Len(s)
     Call DeserializeRL(container, s)
 End Sub
 '==== /modSenseReflexIO ====
 
 
-Public Sub SaveSensoryToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub SaveSensoryToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim ctl As Object, mp As Object, pg As Object, target As Object
     Dim q As New Collection, node As Object, ch As Object, tmp As Object
     Dim combos As New Collection
@@ -246,8 +246,8 @@ For i = 1 To uniq.count: Set arr(i) = uniq(i): Next i
 WRITE_OUT:
     ' ⑤ シート書き出し（IO_Sensory に今回組み立てた s を保存）
     c = EnsureHeader(ws, "IO_Sensory")
-    ws.Cells(R, c).value = s
-    Debug.Print "[SENSE][SAVE] row=" & R & " col=" & c & " len=" & Len(s)
+    ws.Cells(r, c).value = s
+    Debug.Print "[SENSE][SAVE] row=" & r & " col=" & c & " len=" & Len(s)
 
 
 ' --- SENSE 備考を保存（SENSE_NOTE） ---
@@ -278,8 +278,8 @@ If Not noteCtl Is Nothing Then note = CStr(noteCtl.text) Else note = ""
 
 Dim cNote As Long
 cNote = EnsureHeaderCol(ws, "SENSE_NOTE")
-ws.Cells(R, cNote).value = note
-Debug.Print "[SENSE][SAVE][NOTE] row=" & R & " col=" & cNote & " len=" & Len(note) & _
+ws.Cells(r, cNote).value = note
+Debug.Print "[SENSE][SAVE][NOTE] row=" & r & " col=" & cNote & " len=" & Len(note) & _
             " <- " & IIf(noteCtl Is Nothing, "(not found)", TypeName(noteCtl) & ":" & noteCtl.name & " H=" & bestH)
 
 End Sub
@@ -349,7 +349,7 @@ Public Sub TraceSensoryComboNames(owner As Object)
     Next ctl
 End Sub
 
-Public Sub LoadSensoryFromSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub LoadSensoryFromSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     
     If owner Is Nothing Then
     If VBA.UserForms.count > 0 Then Set owner = VBA.UserForms(0)
@@ -379,8 +379,8 @@ End If
     If target Is Nothing Then Set target = owner
 
     ' 2) シートから SENSE_IO 取得→辞書にパース（R/LともValueで扱う）
-    s = ReadStr_Compat("IO_Sensory", R, ws)
-    s = ReadStr_Compat("IO_Sensory", R, ws)
+    s = ReadStr_Compat("IO_Sensory", r, ws)
+    s = ReadStr_Compat("IO_Sensory", r, ws)
     
     If Len(s) > 0 Then
         recs = Split(s, SEP_REC) ' "|" 区切り
@@ -485,7 +485,7 @@ Dim box As Object, subCtl As Object, noteCtl As Object
 Dim bestH As Single: bestH = 0
 
 cNote = EnsureHeaderCol(ws, "SENSE_NOTE")
-note = CStr(ws.Cells(R, cNote).value)
+note = CStr(ws.Cells(r, cNote).value)
 
 On Error Resume Next
 ' ページ内で MultiLine または最も背の高い TextBox を選ぶ
@@ -510,7 +510,7 @@ If Not noteCtl Is Nothing Then
     noteCtl.text = note
     
 Else
-    Debug.Print "[SENSE][LOAD][NOTE] row=" & R & " col=" & cNote & " len=" & Len(note) & " (target textbox not found)"
+    Debug.Print "[SENSE][LOAD][NOTE] row=" & r & " col=" & cNote & " len=" & Len(note) & " (target textbox not found)"
 End If
 
     

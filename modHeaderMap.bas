@@ -30,24 +30,24 @@ End Function
 
 
 '=== Read String by Header (新旧ヘッダ対応でセル文字列取得) ===
-Public Function ReadStr(ByVal wantName As String, ByVal R As Long, Optional ByVal ws As Worksheet) As String
+Public Function ReadStr(ByVal wantName As String, ByVal r As Long, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim c As Long: c = HeaderCol(wantName, ws)
-    If c > 0 Then ReadStr = CStr(ws.Cells(R, c).value) Else ReadStr = vbNullString
+    If c > 0 Then ReadStr = CStr(ws.Cells(r, c).value) Else ReadStr = vbNullString
 End Function
 
 
 
 '=== Sensory IO accessor (保存値の取得：新旧ヘッダ吸収済) ===
-Public Function GetSavedSensoryIO(ByVal R As Long, Optional ByVal ws As Worksheet) As String
-    GetSavedSensoryIO = ReadStr("IO_Sensory", R, ws)
+Public Function GetSavedSensoryIO(ByVal r As Long, Optional ByVal ws As Worksheet) As String
+    GetSavedSensoryIO = ReadStr("IO_Sensory", r, ws)
 End Function
 
 
 
 
 '=== ROM IO accessor (保存値の取得：見出し "ROM_*" を横断) ===
-Public Function GetSavedROMIO(ByVal R As Long, Optional ByVal ws As Worksheet) As String
+Public Function GetSavedROMIO(ByVal r As Long, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
 
     Dim buf As String
@@ -58,7 +58,7 @@ Public Function GetSavedROMIO(ByVal R As Long, Optional ByVal ws As Worksheet) A
     ' 1) IO_ROM 列があれば、それを最優先で使う
     m = Application.Match("IO_ROM", ws.rows(1), 0)
     If Not IsError(m) Then
-        buf = CStr(ws.Cells(R, CLng(m)).value)
+        buf = CStr(ws.Cells(r, CLng(m)).value)
         If Len(buf) > 0 Then
             GetSavedROMIO = buf
             Exit Function
@@ -70,7 +70,7 @@ Public Function GetSavedROMIO(ByVal R As Long, Optional ByVal ws As Worksheet) A
     For c = 160 To 213
         h = CStr(ws.Cells(1, c).value)
         If LCase$(Left$(h, 4)) = "rom_" Then
-            v = CStr(ws.Cells(R, c).value)
+            v = CStr(ws.Cells(r, c).value)
             If Len(v) > 0 Then
                 If Len(buf) > 0 Then buf = buf & "|"
                 buf = buf & h & "=" & v
@@ -85,8 +85,8 @@ End Function
 
 
 '=== ADL IO accessor (保存値の取得：新旧ヘッダ吸収済) ===
-Public Function GetSavedADLIO(ByVal R As Long, Optional ByVal ws As Worksheet) As String
-    GetSavedADLIO = ReadStr("IO_ADL", R, ws)
+Public Function GetSavedADLIO(ByVal r As Long, Optional ByVal ws As Worksheet) As String
+    GetSavedADLIO = ReadStr("IO_ADL", r, ws)
 End Function
 
 
@@ -104,9 +104,9 @@ End Function
 '=== ADL loader (Raw)：最新行のIO_ADL文字列を返す ===
 Public Function LoadLatestADLNow_Raw(Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
-    Dim R As Long: R = LatestRowByHeader("IO_ADL", ws)
-    If R <= 0 Then Exit Function
-    LoadLatestADLNow_Raw = GetSavedADLIO(R, ws)
+    Dim r As Long: r = LatestRowByHeader("IO_ADL", ws)
+    If r <= 0 Then Exit Function
+    LoadLatestADLNow_Raw = GetSavedADLIO(r, ws)
 End Function
 
 
@@ -130,9 +130,9 @@ End Function
 '=== Sensory loader (Raw)：最新行のSENSE_IO文字列を返す ===
 Public Function LoadLatestSensoryNow_Raw(Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
-    Dim R As Long: R = LatestRowByHeader("IO_Sensory", ws)
-    If R <= 0 Then Exit Function
-    LoadLatestSensoryNow_Raw = GetSavedSensoryIO(R, ws)
+    Dim r As Long: r = LatestRowByHeader("IO_Sensory", ws)
+    If r <= 0 Then Exit Function
+    LoadLatestSensoryNow_Raw = GetSavedSensoryIO(r, ws)
 End Function
 
 
@@ -157,9 +157,9 @@ End Function
 '=== ROM loader (Raw)：最新行のROM_*群をまとめて返す ===
 Public Function LoadLatestROMNow_Raw(Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
-    Dim R As Long: R = LatestRowByHeader("ROM_Upper_Shoulder_Flex_R", ws)
-    If R <= 0 Then Exit Function
-    LoadLatestROMNow_Raw = GetSavedROMIO(R, ws)
+    Dim r As Long: r = LatestRowByHeader("ROM_Upper_Shoulder_Flex_R", ws)
+    If r <= 0 Then Exit Function
+    LoadLatestROMNow_Raw = GetSavedROMIO(r, ws)
 End Function
 
 
@@ -185,9 +185,9 @@ End Function
 '=== MMT loader (Raw)：最新行のMMT_IOを返す ===
 Public Function LoadLatestMMTNow_Raw(Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
-    Dim R As Long: R = LatestRowByHeader("IO_MMT", ws)
-    If R <= 0 Then Exit Function
-    LoadLatestMMTNow_Raw = ReadStr("IO_MMT", R, ws)
+    Dim r As Long: r = LatestRowByHeader("IO_MMT", ws)
+    If r <= 0 Then Exit Function
+    LoadLatestMMTNow_Raw = ReadStr("IO_MMT", r, ws)
 End Function
 
 '=== MMT loader (Get by Key)：IO_MMT文字列から key の値を返す ===
@@ -209,9 +209,9 @@ End Function
 '=== Tone loader (Raw)：最新行のTONE_IOを返す ===
 Public Function LoadLatestToneNow_Raw(Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
-    Dim R As Long: R = LatestRowByHeader("IO_Tone", ws)
-    If R <= 0 Then Exit Function
-    LoadLatestToneNow_Raw = ReadStr("IO_Tone", R, ws)
+    Dim r As Long: r = LatestRowByHeader("IO_Tone", ws)
+    If r <= 0 Then Exit Function
+    LoadLatestToneNow_Raw = ReadStr("IO_Tone", r, ws)
 End Function
 
 '=== Tone loader (Get by Key)：IO_Tone文字列から key の値を返す ===
@@ -241,12 +241,12 @@ Public Function RecentRowsByID(ByVal targetID As Variant, Optional ByVal n As Lo
     Dim cID As Long: cID = HeaderCol("ID", ws)
     If cID = 0 Or n <= 0 Then RecentRowsByID = Array(): Exit Function
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, cID).End(xlUp).row
-    Dim rowsOut() As Long, R As Long, hit As Long
+    Dim rowsOut() As Long, r As Long, hit As Long
     ReDim rowsOut(0 To 0): hit = 0
-    For R = lastRow To 2 Step -1
-        If ws.Cells(R, cID).value = targetID Then
+    For r = lastRow To 2 Step -1
+        If ws.Cells(r, cID).value = targetID Then
             If hit > 0 Then ReDim Preserve rowsOut(0 To hit)
-            rowsOut(hit) = R
+            rowsOut(hit) = r
             hit = hit + 1
             If hit >= n Then Exit For
         End If
@@ -262,7 +262,7 @@ End Function
 '=== Preview: 指定IDの直近N件を安全に一覧出力（UI前の最終確認） ===
 Public Sub Preview_RecentEvalRows(ByVal targetID As Variant, ByVal n As Long, Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
-    Dim arr As Variant, i As Long, R As Long
+    Dim arr As Variant, i As Long, r As Long
     arr = RecentRowsByID(targetID, n, ws)
 
     ' 空配列に安全対応
@@ -277,14 +277,14 @@ Public Sub Preview_RecentEvalRows(ByVal targetID As Variant, ByVal n As Long, Op
 
     Debug.Print "=== [Recent] ID=" & targetID & " ==="
     For i = LBound(arr) To UBound(arr)
-        R = arr(i)
-        Debug.Print "r=" & R & _
-            " | ROM=" & Len(GetSavedROMIO(R, ws)) & _
-            " | SENSE=" & Len(GetSavedSensoryIO(R, ws)) & _
-            " | MMT=" & Len(ReadStr("IO_MMT", R, ws)) & _
-            " | TONE=" & Len(ReadStr("IO_Tone", R, ws)) & _
-            " | ADL=" & Len(GetSavedADLIO(R, ws)) & _
-            " | PAIN=" & Len(ReadStr("IO_Pain", R, ws))
+        r = arr(i)
+        Debug.Print "r=" & r & _
+            " | ROM=" & Len(GetSavedROMIO(r, ws)) & _
+            " | SENSE=" & Len(GetSavedSensoryIO(r, ws)) & _
+            " | MMT=" & Len(ReadStr("IO_MMT", r, ws)) & _
+            " | TONE=" & Len(ReadStr("IO_Tone", r, ws)) & _
+            " | ADL=" & Len(GetSavedADLIO(r, ws)) & _
+            " | PAIN=" & Len(ReadStr("IO_Pain", r, ws))
     Next i
     Debug.Print "=== /Recent ==="
 End Sub
@@ -292,7 +292,7 @@ End Sub
 
 
 '=== Unified dispatcher: 選択行の評価データを一括読込 ===
-Public Sub LoadSelectedEvalRow(ByVal R As Long, Optional ByVal ws As Worksheet)
+Public Sub LoadSelectedEvalRow(ByVal r As Long, Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
 
 End Sub
@@ -433,25 +433,25 @@ End Function
 
 
 '=== ReadStr_Compat：新旧ヘッダ名を吸収して r 行の値を返す（ROMは特別扱い） ===
-Public Function ReadStr_Compat(ByVal wantName As String, ByVal R As Long, Optional ByVal ws As Worksheet) As String
+Public Function ReadStr_Compat(ByVal wantName As String, ByVal r As Long, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
 
     ' 行番号が不正なら即空返し（PickRecentRowByID が 0 の場合など）
-    If R <= 0 Then
+    If r <= 0 Then
         ReadStr_Compat = vbNullString
         Exit Function
     End If
 
     ' ROM は複数列（ROM_*）なので特別ルートで連結取得
     If StrComp(wantName, "IO_ROM", vbTextCompare) = 0 Then
-        ReadStr_Compat = GetSavedROMIO(R, ws)
+        ReadStr_Compat = GetSavedROMIO(r, ws)
         Exit Function
     End If
 
     ' それ以外はヘッダ互換で単一セル読取
     Dim c As Long: c = HeaderCol_Compat(wantName, ws)
     If c > 0 Then
-        ReadStr_Compat = CStr(ws.Cells(R, c).value)
+        ReadStr_Compat = CStr(ws.Cells(r, c).value)
     Else
         ReadStr_Compat = vbNullString
     End If

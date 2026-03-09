@@ -28,6 +28,16 @@ Attribute VB_Name = "modEvalIOEntry"
 Option Explicit
 
 Public Const EVAL_SHEET_NAME As String = "EvalData"
+Private Const EVAL_INDEX_SHEET_NAME As String = "EvalIndex"
+Private Const EVAL_HISTORY_SHEET_PREFIX As String = "EV_"
+Private Const HDR_ROWNO As String = "RowNo"
+Private Const HDR_USER_ID As String = "UserID"
+Private Const HDR_NAME As String = "Name"
+Private Const HDR_KANA As String = "Kana"
+Private Const HDR_SHEET As String = "SheetName"
+Private Const HDR_FIRST_EVAL As String = "FirstEvalDate"
+Private Const HDR_LATEST_EVAL As String = "LatestEvalDate"
+Private Const HDR_RECORD_COUNT As String = "RecordCount"
 Public mDailyLogManual As Boolean    ' 日々の記録の手動保存フラグ
 
 
@@ -68,13 +78,13 @@ Private Sub IO_T(ParamArray a())
     Debug.Print Format(Now, "hh:nn:ss"), s
 End Sub
 
-Private Sub IO_SafeRunSave(procName As String, ws As Worksheet, R As Long, owner As Object)
+Private Sub IO_SafeRunSave(procName As String, ws As Worksheet, r As Long, owner As Object)
     On Error GoTo EH
     IO_T "[RUN] target", procName
 
     
     IO_T "[SAVE] call", procName
-    Application.Run procName, ws, R, owner
+    Application.Run procName, ws, r, owner
     IO_T "[SAVE] ok", procName
     Exit Sub
 EH:
@@ -82,21 +92,16 @@ EH:
     Err.Clear
 End Sub
 
-Private Sub IO_SafeRunLoad(procName As String, ws As Worksheet, R As Long, owner As Object)
+Private Sub IO_SafeRunLoad(procName As String, ws As Worksheet, r As Long, owner As Object)
     On Error GoTo EH
     IO_T "[LOAD] call", procName
-    Application.Run procName, ws, R, owner
+    Application.Run procName, ws, r, owner
     IO_T "[LOAD] ok", procName
     Exit Sub
 EH:
     IO_T "[LOAD] NG", procName, "Err", Err.Number, Err.Description
     Err.Clear
 End Sub
-
-
-
-
-
 
 
 Private Sub t(ParamArray a())
@@ -138,7 +143,7 @@ End Sub
 '======================== 実体：全部まとめて呼ぶ ========================
 
 ' ===== すべて保存 =====
-Public Sub SaveAllSectionsToSheet(ws As Worksheet, R As Long, owner As Object)
+Public Sub SaveAllSectionsToSheet(ws As Worksheet, r As Long, owner As Object)
 
 
    ' 保存ハブ：EvalData 1 行分にまとめて書き込む
@@ -155,33 +160,33 @@ Public Sub SaveAllSectionsToSheet(ws As Worksheet, R As Long, owner As Object)
    
 
     ' 基本情報（このモジュール内の実装）
-    Call SaveBasicInfoToSheet_FromMe(ws, R, owner)
+    Call SaveBasicInfoToSheet_FromMe(ws, r, owner)
 
 
 
     ' 麻痺 / ROM（既にOK）
-    IO_SafeRunSave "SaveParalysisToSheet", ws, R, owner
-    IO_SafeRunSave "SaveROMToSheet", ws, R, owner
-    IO_SafeRunSave "SavePostureToSheet", ws, R, owner
+    IO_SafeRunSave "SaveParalysisToSheet", ws, r, owner
+    IO_SafeRunSave "SaveROMToSheet", ws, r, owner
+    IO_SafeRunSave "SavePostureToSheet", ws, r, owner
     
 
 
     ' 必要になったら順次ON
-    IO_SafeRunSave "SaveMMTToSheet", ws, R, owner
-    IO_SafeRunSave "SaveSensoryToSheet", ws, R, owner
+    IO_SafeRunSave "SaveMMTToSheet", ws, r, owner
+    IO_SafeRunSave "SaveSensoryToSheet", ws, r, owner
      'Call Mirror_SensoryIO(ws, r)    'Legacy互換：現行仕様では未使用のため停止
-    IO_SafeRunSave "modToneReflexIO.SaveToneReflexToSheet", ws, R, owner
+    IO_SafeRunSave "modToneReflexIO.SaveToneReflexToSheet", ws, r, owner
   
 
-    Call SavePainToSheet(ws, R, owner)
-     Call Save_TestEvalToSheet(ws, R, owner)
-     Call Save_WalkIndepToSheet(ws, R, owner)  '★歩行自立度 IO_WalkIndep 保存
-     Call Save_WalkAbnToSheet(ws, R, owner)    '★異常歩行 IO_WalkAbn 保存
-     Call Save_WalkRLAToSheet(ws, R, owner)    '★RLA IO_WalkRLA 保存
+    Call SavePainToSheet(ws, r, owner)
+     Call Save_TestEvalToSheet(ws, r, owner)
+     Call Save_WalkIndepToSheet(ws, r, owner)  '★歩行自立度 IO_WalkIndep 保存
+     Call Save_WalkAbnToSheet(ws, r, owner)    '★異常歩行 IO_WalkAbn 保存
+     Call Save_WalkRLAToSheet(ws, r, owner)    '★RLA IO_WalkRLA 保存
 
 
 
-Call Save_ADL_AtRow(ws, R)
+Call Save_ADL_AtRow(ws, r)
 
 
 
@@ -202,7 +207,7 @@ End Sub
 '         （読み込み仕様の一元管理のため）
 '       * 各セクションの UI レイアウト調整はここでは行わない
 '====================================================================
-Public Sub LoadAllSectionsFromSheet(ws As Worksheet, R As Long, owner As Object)
+Public Sub LoadAllSectionsFromSheet(ws As Worksheet, r As Long, owner As Object)
 
     Dim nm As String
     Dim rLatest As Long
@@ -220,16 +225,16 @@ Public Sub LoadAllSectionsFromSheet(ws As Worksheet, R As Long, owner As Object)
 
 
         If cName > 0 Then
-            nm = Trim$(CStr(ws.Cells(R, cName).value))
+            nm = Trim$(CStr(ws.Cells(r, cName).value))
         End If
     End If
     
     
 
     ' ★入口で r が指定されている場合は尊重する（ここで上書きしない）
-If R < 2 And Len(nm) > 0 Then
+If r < 2 And Len(nm) > 0 Then
     rLatest = FindLatestRowByName(ws, nm)
-    If rLatest > 0 Then R = rLatest
+    If rLatest > 0 Then r = rLatest
 End If
 
 
@@ -238,46 +243,46 @@ End If
    ' 麻痺 / ROM / 姿勢の読込は LoadBasicInfoFromSheet_FromMe 内で
     ' chkLoadParalysis / chkLoadROM / chkLoadPosture に応じて実施
     
-    Call LoadBasicInfoFromSheet_FromMe(ws, R, owner)
-    IO_SafeRunLoad "Load_ADL_FromRow", ws, R, owner
+    Call LoadBasicInfoFromSheet_FromMe(ws, r, owner)
+    IO_SafeRunLoad "Load_ADL_FromRow", ws, r, owner
    
 
 
     
     'Call LoadParalysisFromSheet(ws, r, owner)
     'Call LoadROMFromSheet(ws, r, owner)
-    Call LoadSensoryFromSheet(ws, R, owner)
+    Call LoadSensoryFromSheet(ws, r, owner)
     'Call LoadPostureFromSheet(ws, r, owner)
     
    
-    Call Load_TestEvalFromSheet(ws, R, owner)
-    Call Load_WalkIndepFromSheet(ws, R, owner)
-    Call Load_WalkAbnFromSheet(ws, R, owner)
-    Call Load_WalkRLAFromSheet(ws, R, owner)   '★RLA読み込み
+    Call Load_TestEvalFromSheet(ws, r, owner)
+    Call Load_WalkIndepFromSheet(ws, r, owner)
+    Call Load_WalkAbnFromSheet(ws, r, owner)
+    Call Load_WalkRLAFromSheet(ws, r, owner)   '★RLA読み込み
 
     'Call MMT.LoadMMTFromSheet(ws, r, owner)
-    Call modToneReflexIO.LoadToneReflexFromSheet(ws, R, owner)
+    Call modToneReflexIO.LoadToneReflexFromSheet(ws, r, owner)
 
 
    
 
-    IO_SafeRunLoad "LoadPainFromSheet", ws, R, owner
+    IO_SafeRunLoad "LoadPainFromSheet", ws, r, owner
     
     ' 補助具
 Dim cA As Long
 cA = FindHeaderCol(ws, "補助具")
 If cA > 0 Then
-    DeserializeChecks owner, "Frame33", CStr(ws.Cells(R, cA).value), True   ' 補助具
+    DeserializeChecks owner, "Frame33", CStr(ws.Cells(r, cA).value), True   ' 補助具
 End If
 
 ' リスク
 Dim cR As Long
 cR = FindHeaderCol(ws, "リスク")
 If cR > 0 Then
-    DeserializeChecks owner, "Frame34", CStr(ws.Cells(R, cR).value), False  ' リスク
+    DeserializeChecks owner, "Frame34", CStr(ws.Cells(r, cR).value), False  ' リスク
 End If
     
-        Call Load_CognitionMental_FromRow(ws, R, owner)
+        Call Load_CognitionMental_FromRow(ws, r, owner)
         'Load_DailyLog_Latest_FromForm owner
         
 End Sub
@@ -296,9 +301,26 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
 
 
     EnsureFormLoaded
+    Dim wsTarget As Worksheet
+    Dim resolveMessage As String
+    If ResolveUserHistorySheet(owner, False, wsTarget, resolveMessage) Then
+        Dim validRow As Long
+        validRow = GetLatestValidEvalRow(wsTarget)
+        If validRow = 0 Then
+            MsgBox "Yuko na hyokabi o motsu rireki ga nai tame yomikomi dekinai", vbExclamation
+            Exit Sub
+        End If
+        LoadAllSectionsFromSheet wsTarget, validRow, owner
+        Exit Sub
+    ElseIf Len(resolveMessage) > 0 Then
+        MsgBox resolveMessage, vbExclamation
+        Exit Sub
+    End If
+    
+    
     Dim ws As Worksheet: Set ws = EnsureEvalSheet(EVAL_SHEET_NAME)
     Dim nm As String: nm = Trim$(owner.txtName.text)
-    Dim R As Long
+    Dim r As Long
     Dim r2 As Long
 
     If Len(nm) = 0 Then
@@ -307,9 +329,9 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
     End If
     
     
-    R = FindLatestRowByName(ws, nm)   ' ★この1行を追加
+    r = FindLatestRowByName(ws, nm)   ' ★この1行を追加
     
-    Debug.Print "r=" & R
+    Debug.Print "r=" & r
 
     
 
@@ -319,7 +341,7 @@ idVal = Trim$(GetID_FromBasicInfo(owner))
 
 If Len(idVal) > 0 Then
     r2 = FindLatestRowByNameAndID(ws, nm, idVal)
-    If r2 > 0 Then R = r2
+    If r2 > 0 Then r = r2
 End If
 
 
@@ -335,14 +357,14 @@ End If
         MsgBox "氏名列が見つかりません。", vbExclamation
         Exit Sub
     End If
-    If StrComp(NormalizeName(CStr(ws.Cells(R, cName).value)), NormalizeName(nm), vbTextCompare) <> 0 Then
+    If StrComp(NormalizeName(CStr(ws.Cells(r, cName).value)), NormalizeName(nm), vbTextCompare) <> 0 Then
         MsgBox "選択行の氏名が入力名と一致しません。読み込みを中止します。", vbExclamation
         Exit Sub
     End If
     ' ★ここまで
 
-    t "[ENTRY] Load by NAME", ws.name, "row", R
-    LoadAllSectionsFromSheet ws, R, owner
+    t "[ENTRY] Load by NAME", ws.name, "row", r
+    LoadAllSectionsFromSheet ws, r, owner
 End Sub
 
 
@@ -356,13 +378,13 @@ Public Function FindLatestRowByName(ws As Worksheet, nameText As String) As Long
     If c = 0 Then Exit Function
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, c).End(xlUp).row
-    Dim R As Long
-    For R = lastRow To 2 Step -1      ' 1行目は見出し想定
-        If NormalizeName(CStr(ws.Cells(R, c).value)) = NormalizeName(nameText) Then
-            FindLatestRowByName = R
+    Dim r As Long
+    For r = lastRow To 2 Step -1      ' 1行目は見出し想定
+        If NormalizeName(CStr(ws.Cells(r, c).value)) = NormalizeName(nameText) Then
+            FindLatestRowByName = r
             Exit Function
         End If
-    Next R
+    Next r
 End Function
 
 
@@ -374,14 +396,14 @@ Public Function CountRowsByName(ws As Worksheet, nameText As String) As Long
     If c = 0 Then c = FindHeaderCol(ws, "名前")
     If c = 0 Then Exit Function
 
-    Dim lastRow As Long, R As Long
+    Dim lastRow As Long, r As Long
     lastRow = ws.Cells(ws.rows.count, c).End(xlUp).row
 
-    For R = 2 To lastRow
-        If StrComp(CStr(ws.Cells(R, c).value), nameText, vbTextCompare) = 0 Then
+    For r = 2 To lastRow
+        If StrComp(CStr(ws.Cells(r, c).value), nameText, vbTextCompare) = 0 Then
             CountRowsByName = CountRowsByName + 1
         End If
-    Next R
+    Next r
 End Function
 
 
@@ -401,18 +423,18 @@ Public Function FindLatestRowByNameAndID( _
     If cID = 0 Then cID = FindColByHeaderExact(ws, "ID")
     If cID = 0 Then Exit Function
 
-    Dim lastRow As Long, R As Long
+    Dim lastRow As Long, r As Long
     lastRow = ws.Cells(ws.rows.count, cName).End(xlUp).row
 
     ' 下から探す＝最新優先
-    For R = lastRow To 2 Step -1
-        If StrComp(CStr(ws.Cells(R, cName).value), nameText, vbTextCompare) = 0 Then
-            If StrComp(CStr(ws.Cells(R, cID).value), idVal, vbTextCompare) = 0 Then
-                FindLatestRowByNameAndID = R
+    For r = lastRow To 2 Step -1
+        If StrComp(CStr(ws.Cells(r, cName).value), nameText, vbTextCompare) = 0 Then
+            If StrComp(CStr(ws.Cells(r, cID).value), idVal, vbTextCompare) = 0 Then
+                FindLatestRowByNameAndID = r
                 Exit Function
             End If
         End If
-    Next R
+    Next r
 End Function
 
 
@@ -466,12 +488,34 @@ End Function
 
 
 Public Sub SaveEvaluation_Append_From(owner As Object)
+    Dim wsTarget As Worksheet
+    Dim resolveMessage As String
+    If ResolveUserHistorySheet(owner, True, wsTarget, resolveMessage) Then
+        EnsureHistorySheetInitialized wsTarget
+        Dim appendRow As Long: appendRow = NextAppendRow(wsTarget)
+        wsTarget.Cells(appendRow, EnsureHeader(wsTarget, HDR_ROWNO)).value = appendRow - 1
+        SaveAllSectionsToSheet wsTarget, appendRow, owner
+        Save_CognitionMental_AtRow wsTarget, appendRow, frmEval
+        MirrorBasicRow wsTarget, appendRow
+        Dim idxRow As Long
+        idxRow = FindEvalIndexRowBySheetName(EnsureEvalIndexSheet(), wsTarget.name)
+        If idxRow > 0 Then
+            UpdateEvalIndexMetadata owner, idxRow, wsTarget.name
+            UpdateEvalIndexStats idxRow, wsTarget
+        End If
+        Exit Sub
+    ElseIf Len(resolveMessage) > 0 Then
+        MsgBox resolveMessage, vbExclamation
+        Exit Sub
+    End If
+
+
     Dim ws As Worksheet: Set ws = EnsureEvalSheet(EVAL_SHEET_NAME)
-    Dim R As Long: R = NextAppendRow(ws)
+    Dim r As Long: r = NextAppendRow(ws)
     'r = WorksheetFunction.Max(ws.Cells(ws.rows.Count, 156).End(xlUp).row, ws.Cells(ws.rows.Count, 157).End(xlUp).row) + 1
 
 
-    t "[ENTRY] Save to", ws.name, "row", R
+    t "[ENTRY] Save to", ws.name, "row", r
     ' ★変更点のみ保存（chkDiffOnly=ONなら前回値を事前コピー）
 Dim nm As String: nm = Trim$(owner.txtName.text)
 If Len(nm) = 0 Then MsgBox "氏名を入力してから保存してください。", vbExclamation: Exit Sub
@@ -495,7 +539,7 @@ If False Then ' diffOnly And Len(nm) > 0 Then
     If rOld > 0 Then
         Dim lastCol As Long
         lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
-        ws.Range(ws.Cells(R, 1), ws.Cells(R, lastCol)).value = _
+        ws.Range(ws.Cells(r, 1), ws.Cells(r, lastCol)).value = _
             ws.Range(ws.Cells(rOld, 1), ws.Cells(rOld, lastCol)).value
     End If
 End If
@@ -506,18 +550,18 @@ cName = FindColByHeaderExact(ws, "氏名"): If cName = 0 Then cName = FindColByHea
 
 
 
-If cName > 0 Then ws.Cells(R, cName).value = nm
+If cName > 0 Then ws.Cells(r, cName).value = nm
 
- ws.Cells(R, 1).value = R
+ ws.Cells(r, 1).value = r
   
-    SaveAllSectionsToSheet ws, R, owner
+    SaveAllSectionsToSheet ws, r, owner
     t "[ENTRY] Save done"
     
     
-        Save_CognitionMental_AtRow ws, R, frmEval
+        Save_CognitionMental_AtRow ws, r, frmEval
         'Save_DailyLog_FromForm owner
         
-        Call MirrorBasicRow(ws, R)
+        Call MirrorBasicRow(ws, r)
 
     
 End Sub
@@ -858,6 +902,20 @@ EH:
     Err.Clear
 End Sub
 
+Private Sub WriteBirthTextCell(ByVal target As Range, ByVal birthText As String)
+    On Error Resume Next
+    target.NumberFormat = "@"
+    On Error GoTo 0
+    target.Value2 = CStr(birthText)
+End Sub
+
+Private Function ReadBirthTextCell(ByVal target As Range) As String
+    Dim s As String
+    s = CStr(target.text)
+    If Len(s) = 0 Then s = CStr(target.Value2)
+    If Len(s) > 0 And Left$(s, 1) = "'" Then s = Mid$(s, 2)
+    ReadBirthTextCell = s
+End Function
 
 '====================================================================
 ' BasicInfo IO セクション（評価日・氏名・年齢・Needs 等）
@@ -872,9 +930,9 @@ End Sub
 
 
 ' --- 保存 ---
-Public Sub SaveBasicInfoToSheet_FromMe(ws As Worksheet, R As Long, owner As Object)
+Public Sub SaveBasicInfoToSheet_FromMe(ws As Worksheet, r As Long, owner As Object)
     
-    Debug.Print "[Basic] Enter_SaveBasicInfo | ws=" & ws.name & " | r=" & R
+    Debug.Print "[Basic] Enter_SaveBasicInfo | ws=" & ws.name & " | r=" & r
 
     SyncAgeBeforeBasicSave owner
     
@@ -913,45 +971,50 @@ map = Array( _
         v = GetCtlTextGeneric(owner, ctl)
         If Len(v) > 0 Then
             c = FindColByHeaderExact(ws, head): If c = 0 Then c = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1: ws.Cells(1, c).value = head
-            ws.Cells(R, c).value = v
+            If ctl = "txtBirth" Then
+                WriteBirthTextCell ws.Cells(r, c), v
+            Else
+                ws.Cells(r, c).value = v
+            End If
             Debug.Print "[BASIC][SAVE]", head, "->", v
         End If
     Next i
     
     c = EnsureHeader(ws, "住宅状況")
-    ws.Cells(R, c).value = SerializeNamedChecks(owner, HomeEnvControlNames())
+    ws.Cells(r, c).value = SerializeNamedChecks(owner, HomeEnvControlNames())
 
 
     c = EnsureHeader(ws, "Basic.NameKana")
-    ws.Cells(R, c).value = GetHdrKanaText(owner)
-    Debug.Print "[BASIC][SAVE] Basic.NameKana ->", CStr(ws.Cells(R, c).value)
+    ws.Cells(r, c).value = GetHdrKanaText(owner)
+    Debug.Print "[BASIC][SAVE] Basic.NameKana ->", CStr(ws.Cells(r, c).value)
     
     Dim idVal As String: idVal = GetID_FromBasicInfo(owner)
-    If Len(idVal) > 0 Then ws.Cells(R, EnsureHeader(ws, "Basic.ID")).value = idVal
-
+    If Len(idVal) > 0 Then ws.Cells(r, EnsureHeader(ws, "Basic.ID")).value = idVal
+    ws.Cells(r, EnsureHeader(ws, "Basic.EvalDate")).value = GetCtlTextGeneric(owner, "txtEDate")
+    
 
     '--- ここから追記：チェック群のCSV保存（補助具／リスク）※ループの“後ろ” ---
     Dim s As String
     c = EnsureHeader(ws, "補助具")
 s = SerializeChecks(owner, "Frame33", True)
 Debug.Print "[BASIC][SAVE] 補助具 ->", s, " @col=", c
-ws.Cells(R, c).value = s
+ws.Cells(r, c).value = s
 c = EnsureHeader(ws, HDR_AIDS_CHECKS)
-ws.Cells(R, c).value = s
+ws.Cells(r, c).value = s
 
    c = EnsureHeader(ws, "リスク")
 s = SerializeChecks(owner, "Frame34", False)
 Debug.Print "[BASIC][SAVE] リスク ->", s, " @col=", c
-ws.Cells(R, c).value = s
+ws.Cells(r, c).value = s
 
 c = EnsureHeader(ws, HDR_RISK_CHECKS)
-ws.Cells(R, c).value = s
+ws.Cells(r, c).value = s
 
 c = EnsureHeader(ws, HDR_HOMEENV_CHECKS)
-ws.Cells(R, c).value = SerializeNamedChecks(owner, HomeEnvControlNames())
+ws.Cells(r, c).value = SerializeNamedChecks(owner, HomeEnvControlNames())
 
 c = EnsureHeader(ws, HDR_HOMEENV_NOTE)
-ws.Cells(R, c).value = GetCtlTextGeneric(owner, "txtBIHomeEnvNote")
+ws.Cells(r, c).value = GetCtlTextGeneric(owner, "txtBIHomeEnvNote")
 
     
     
@@ -963,10 +1026,10 @@ End Sub
 
 
 ' --- 読込 ---
-Public Sub LoadBasicInfoFromSheet_FromMe(ws As Worksheet, ByVal R As Long, owner As Object)
+Public Sub LoadBasicInfoFromSheet_FromMe(ws As Worksheet, ByVal r As Long, owner As Object)
 
     On Error GoTo EH
-    Debug.Print "[TRACE] Enter LoadBasicInfoFromSheet_FromMe r=" & R
+    Debug.Print "[TRACE] Enter LoadBasicInfoFromSheet_FromMe r=" & r
 
     '--- 単一値のマッピング ---
     Dim map As Variant
@@ -1003,7 +1066,11 @@ map = Array( _
 
         c = FindHeaderCol(ws, head)
         If c > 0 Then
-            v = ws.Cells(R, c).value
+            If ctl = "txtBirth" Then
+                v = ReadBirthTextCell(ws.Cells(r, c))
+            Else
+                v = ws.Cells(r, c).value
+            End If
             If Left$(ctl, 3) = "cbo" Then
                 SetComboSafely owner, ctl, CStr(v)
             Else
@@ -1015,13 +1082,13 @@ map = Array( _
         Next i
 
     c = FindHeaderCol(ws, "住宅状況")
-    If c > 0 Then DeserializeNamedChecks owner, HomeEnvControlNames(), CStr(ws.Cells(R, c).value)
+    If c > 0 Then DeserializeNamedChecks owner, HomeEnvControlNames(), CStr(ws.Cells(r, c).value)
 
     c = FindHeaderCol(ws, "Basic.NameKana")
-    If c > 0 Then SetHdrKanaText owner, ws.Cells(R, c).value
+    If c > 0 Then SetHdrKanaText owner, ws.Cells(r, c).value
 
     c = FindHeaderCol(ws, "Basic.NameKana")
-    If c > 0 Then SetHdrKanaText owner, ws.Cells(R, c).value
+    If c > 0 Then SetHdrKanaText owner, ws.Cells(r, c).value
 
     '--- チェック群の復元（補助具／リスク） ---
     Dim csv As String
@@ -1029,40 +1096,40 @@ map = Array( _
     ' 補助具
 c = FindHeaderCol(ws, "補助具")
 If c > 0 Then
-    csv = CStr(ws.Cells(R, c).value)
+    csv = CStr(ws.Cells(r, c).value)
     DeserializeChecks owner, "Frame33", csv, True
 End If
 
 ' リスク
 c = FindHeaderCol(ws, "リスク")
 If c > 0 Then
-    csv = CStr(ws.Cells(R, c).value)
+    csv = CStr(ws.Cells(r, c).value)
     DeserializeChecks owner, "Frame34", csv, False
 End If
 
 c = FindHeaderColAny(ws, Array(HDR_AIDS_CHECKS, "?"))
-If c > 0 Then DeserializeChecks owner, "Frame33", CStr(ws.Cells(R, c).value), True
+If c > 0 Then DeserializeChecks owner, "Frame33", CStr(ws.Cells(r, c).value), True
 
 c = FindHeaderColAny(ws, Array(HDR_RISK_CHECKS, "XN"))
-If c > 0 Then DeserializeChecks owner, "Frame34", CStr(ws.Cells(R, c).value), False
+If c > 0 Then DeserializeChecks owner, "Frame34", CStr(ws.Cells(r, c).value), False
 
 c = FindHeaderCol(ws, HDR_HOMEENV_CHECKS)
-If c > 0 Then DeserializeNamedChecks owner, HomeEnvControlNames(), CStr(ws.Cells(R, c).value)
+If c > 0 Then DeserializeNamedChecks owner, HomeEnvControlNames(), CStr(ws.Cells(r, c).value)
 
 c = FindHeaderCol(ws, HDR_HOMEENV_NOTE)
-If c > 0 Then SetCtlValueSafe owner, "txtBIHomeEnvNote", ws.Cells(R, c).value
+If c > 0 Then SetCtlValueSafe owner, "txtBIHomeEnvNote", ws.Cells(r, c).value
 
 
 
 
-If GetBool(owner, "chkLoadParalysis", True) Then Call IO_SafeRunLoad("LoadParalysisFromSheet", ws, R, owner)
-If GetBool(owner, "chkLoadROM", True) Then Call IO_SafeRunLoad("LoadROMFromSheet", ws, R, owner)
+If GetBool(owner, "chkLoadParalysis", True) Then Call IO_SafeRunLoad("LoadParalysisFromSheet", ws, r, owner)
+If GetBool(owner, "chkLoadROM", True) Then Call IO_SafeRunLoad("LoadROMFromSheet", ws, r, owner)
 Debug.Print "[TRACE] About to run POSTURE"
-If GetBool(owner, "chkLoadPosture", True) Then Call IO_SafeRunLoad("LoadPostureFromSheet", ws, R, owner)
+If GetBool(owner, "chkLoadPosture", True) Then Call IO_SafeRunLoad("LoadPostureFromSheet", ws, r, owner)
 Debug.Print "[TRACE] Done POSTURE"
 
 Debug.Print "[TRACE] About to run MMT"
-Call MMT.LoadMMTFromSheet(ws, R, owner)
+Call MMT.LoadMMTFromSheet(ws, r, owner)
 Debug.Print "[TRACE] Done MMT"
 ExitHere:
     Exit Sub
@@ -1108,17 +1175,17 @@ Public Function GetOrCreateRowByID(ByVal ws As Worksheet, ByVal idVal As String)
     If Len(idVal) = 0 Then Err.Raise 5, , "IDが空です。"
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, idCol).End(xlUp).row
-    Dim R As Long
-    For R = 2 To lastRow
-        If CStr(ws.Cells(R, idCol).value) = idVal Then
-            GetOrCreateRowByID = R
+    Dim r As Long
+    For r = 2 To lastRow
+        If CStr(ws.Cells(r, idCol).value) = idVal Then
+            GetOrCreateRowByID = r
             Exit Function
         End If
-    Next R
+    Next r
     ' 無ければ新規行
-    R = lastRow + 1
-    ws.Cells(R, idCol).value = idVal
-    GetOrCreateRowByID = R
+    r = lastRow + 1
+    ws.Cells(r, idCol).value = idVal
+    GetOrCreateRowByID = r
 End Function
 
 
@@ -1324,12 +1391,12 @@ Private Sub ApplyAliasesMerge_Basic(ByVal ws As Worksheet, ByVal d As Object)
             If dstCol > 0 And dstCol <> j Then
                 ' マージ（空欄だけ埋める）
                 Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, j).End(xlUp).row
-                Dim R As Long
-                For R = 2 To lastRow
-                    If Len(ws.Cells(R, dstCol).value) = 0 And Len(ws.Cells(R, j).value) > 0 Then
-                        ws.Cells(R, dstCol).value = ws.Cells(R, j).value
+                Dim r As Long
+                For r = 2 To lastRow
+                    If Len(ws.Cells(r, dstCol).value) = 0 And Len(ws.Cells(r, j).value) > 0 Then
+                        ws.Cells(r, dstCol).value = ws.Cells(r, j).value
                     End If
-                Next R
+                Next r
                 ws.Columns(j).Delete
             Else
                 ws.Cells(1, j).value = dst
@@ -1370,14 +1437,14 @@ Public Function GetOrCreateRowByID_Basic(ByVal ws As Worksheet, ByVal idVal As S
     End If
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, idCol).End(xlUp).row
-    Dim R As Long
-    For R = 2 To lastRow
-        If CStr(ws.Cells(R, idCol).value) = idVal Then GetOrCreateRowByID_Basic = R: Exit Function
-    Next R
+    Dim r As Long
+    For r = 2 To lastRow
+        If CStr(ws.Cells(r, idCol).value) = idVal Then GetOrCreateRowByID_Basic = r: Exit Function
+    Next r
 
-    R = lastRow + 1
-    ws.Cells(R, idCol).value = idVal
-    GetOrCreateRowByID_Basic = R
+    r = lastRow + 1
+    ws.Cells(r, idCol).value = idVal
+    GetOrCreateRowByID_Basic = r
 End Function
 
 
@@ -1562,7 +1629,7 @@ End Function
 
 
 '=== Compat: SENSE_IO を IO_Sensory にミラー（行 r のみ） ===
-Private Sub Mirror_SensoryIO(ws As Worksheet, ByVal R As Long)
+Private Sub Mirror_SensoryIO(ws As Worksheet, ByVal r As Long)
     Dim cSrc As Variant, cDst As Long
     cSrc = Application.Match("SENSE_IO", ws.rows(1), 0)
     If IsError(cSrc) Then Exit Sub
@@ -1579,7 +1646,7 @@ Private Sub Mirror_SensoryIO(ws As Worksheet, ByVal R As Long)
         cDst = CLng(m)
     End If
 
-    ws.Cells(R, cDst).Value2 = CStr(ws.Cells(R, CLng(cSrc)).value)
+    ws.Cells(r, cDst).Value2 = CStr(ws.Cells(r, CLng(cSrc)).value)
 End Sub
 
 
@@ -1592,19 +1659,19 @@ End Sub
 
 
 
-Public Sub Debug_IO_Sensory_ADL_Snapshot(ByVal ws As Worksheet, ByVal R As Long)
+Public Sub Debug_IO_Sensory_ADL_Snapshot(ByVal ws As Worksheet, ByVal r As Long)
 #If APP_DEBUG Then
     Dim s As String
 
-    s = ReadStr_Compat("IO_Sensory", R, ws)
+    s = ReadStr_Compat("IO_Sensory", r, ws)
     Debug.Print "[SENSE][IO]", _
-                "row=" & R, _
+                "row=" & r, _
                 "| len=" & Len(s), _
                 "| head=" & Left$(s, 200)
 
-    s = ReadStr_Compat("IO_ADL", R, ws)
+    s = ReadStr_Compat("IO_ADL", r, ws)
     Debug.Print "[ADL][IO]", _
-                "row=" & R, _
+                "row=" & r, _
                 "| len=" & Len(s), _
                 "| head=" & Left$(s, 200)
 #End If
@@ -1612,7 +1679,7 @@ End Sub
 
 
 
-Public Sub Debug_Sensory_ADL_Raw(ByVal ws As Worksheet, ByVal R As Long)
+Public Sub Debug_Sensory_ADL_Raw(ByVal ws As Worksheet, ByVal r As Long)
     Dim cSense As Variant, cADL As Variant, cIOSense As Variant
     Dim lastCol As Long
 
@@ -1620,29 +1687,29 @@ Public Sub Debug_Sensory_ADL_Raw(ByVal ws As Worksheet, ByVal R As Long)
     cADL = Application.Match("IO_ADL", ws.rows(1), 0)
     cIOSense = Application.Match("IO_Sensory", ws.rows(1), 0)
 
-    Debug.Print "=== [RAW SENSE/ADL] row=" & R & " ==="
+    Debug.Print "=== [RAW SENSE/ADL] row=" & r & " ==="
 
     If Not IsError(cSense) Then
-        Debug.Print "SENSE_IO(col" & cSense & ") =", ws.Cells(R, cSense).text
+        Debug.Print "SENSE_IO(col" & cSense & ") =", ws.Cells(r, cSense).text
     Else
         Debug.Print "SENSE_IO: <no header>"
     End If
 
     If Not IsError(cADL) Then
-        Debug.Print "IO_ADL(col" & cADL & ") =", ws.Cells(R, cADL).text
+        Debug.Print "IO_ADL(col" & cADL & ") =", ws.Cells(r, cADL).text
     Else
         Debug.Print "IO_ADL: <no header>"
     End If
 
     If Not IsError(cIOSense) Then
-        Debug.Print "IO_Sensory(col" & cIOSense & ") =", ws.Cells(R, cIOSense).text
+        Debug.Print "IO_Sensory(col" & cIOSense & ") =", ws.Cells(r, cIOSense).text
     Else
         Debug.Print "IO_Sensory: <no header>"
     End If
 
     ' 近傍確認（構造見る用）
-    Debug.Print "SENSE近傍(146-155)=", Join(Application.Transpose(Application.Transpose(ws.Range(ws.Cells(R, 146), ws.Cells(R, 155)).value)), " | ")
-    Debug.Print "ADL近傍  (156-165)=", Join(Application.Transpose(Application.Transpose(ws.Range(ws.Cells(R, 156), ws.Cells(R, 165)).value)), " | ")
+    Debug.Print "SENSE近傍(146-155)=", Join(Application.Transpose(Application.Transpose(ws.Range(ws.Cells(r, 146), ws.Cells(r, 155)).value)), " | ")
+    Debug.Print "ADL近傍  (156-165)=", Join(Application.Transpose(Application.Transpose(ws.Range(ws.Cells(r, 156), ws.Cells(r, 165)).value)), " | ")
 
     Debug.Print "=== [/RAW SENSE/ADL] ==="
 End Sub
@@ -1666,25 +1733,25 @@ End Sub
 
 Public Sub Debug_Find_IO_Sense_ADL_Sample(ByVal ws As Worksheet)
     Dim lastRow As Long
-    Dim R As Long
+    Dim r As Long
     Dim sSense As String
     Dim sADL As String
 
     lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
 
-    For R = 2 To lastRow
-        sSense = Trim$(ws.Cells(R, 152).value) 'SENSE_IO
-        sADL = Trim$(ws.Cells(R, 159).value)   'IO_ADL
+    For r = 2 To lastRow
+        sSense = Trim$(ws.Cells(r, 152).value) 'SENSE_IO
+        sADL = Trim$(ws.Cells(r, 159).value)   'IO_ADL
 
         If Len(sSense) > 0 Or Len(sADL) > 0 Then
-            Debug.Print "=== [Found IO Sample] row=" & R & " ==="
+            Debug.Print "=== [Found IO Sample] row=" & r & " ==="
             Debug.Print "SENSE_IO:", Left$(sSense, 200)
             Debug.Print "IO_ADL:", Left$(sADL, 200)
             Exit For
         End If
-    Next R
+    Next r
 
-    If R > lastRow Then
+    If r > lastRow Then
         Debug.Print "=== [No SENSE_IO / IO_ADL found] ==="
     End If
 End Sub
@@ -1713,7 +1780,7 @@ End Sub
 
 
 
-Public Sub Debug_ROMRow_Values(ByVal R As Long)
+Public Sub Debug_ROMRow_Values(ByVal r As Long)
     Dim ws As Worksheet
     Dim lastCol As Long
     Dim c As Long
@@ -1723,11 +1790,11 @@ Public Sub Debug_ROMRow_Values(ByVal R As Long)
     Set ws = ThisWorkbook.Worksheets("EvalData")
     lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
 
-    Debug.Print "=== [ROM VALUES row=" & R & "] ==="
+    Debug.Print "=== [ROM VALUES row=" & r & "] ==="
     For c = 1 To lastCol
         h = CStr(ws.Cells(1, c).value)
         If LCase$(Left$(h, 4)) = "rom_" Then
-            v = CStr(ws.Cells(R, c).value)
+            v = CStr(ws.Cells(r, c).value)
             If Len(v) > 0 Then
                 Debug.Print c, h, v
                 hit = hit + 1
@@ -1768,26 +1835,26 @@ End Sub
 Public Sub Debug_Find_ROM_SampleRow()
     Dim ws As Worksheet
     Dim lastRow As Long
-    Dim R As Long, c As Long
+    Dim r As Long, c As Long
     Dim h As String, v As String
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
     lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
 
     Debug.Print "=== [ROM SAMPLE ROW SEARCH] ==="
-    For R = 2 To lastRow
+    For r = 2 To lastRow
         For c = 158 To 260
             h = CStr(ws.Cells(1, c).value)
             If LCase$(Left$(h, 4)) = "rom_" Then
-                v = CStr(ws.Cells(R, c).value)
+                v = CStr(ws.Cells(r, c).value)
                 If Len(v) > 0 Then
-                    Debug.Print "row=" & R & ", col=" & c & ", header=" & h
+                    Debug.Print "row=" & r & ", col=" & c & ", header=" & h
                     Debug.Print "=== [/ROM SAMPLE ROW SEARCH] ==="
                     Exit Sub
                 End If
             End If
         Next c
-    Next R
+    Next r
 
     Debug.Print "(no ROM_* values found in 158-260)"
     Debug.Print "=== [/ROM SAMPLE ROW SEARCH] ==="
@@ -1847,12 +1914,12 @@ End Function
 
 
 
-Public Sub Save_TestEvalToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub Save_TestEvalToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim c As Long
     Dim s As String
 
     If ws Is Nothing Then Exit Sub
-    If R < 2 Then R = 2
+    If r < 2 Then r = 2
 
     ' IO_TestEval 用の列を確保
     c = EnsureHeader(ws, "IO_TestEval")
@@ -1861,8 +1928,8 @@ Public Sub Save_TestEvalToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal ow
     s = Build_TestEval_IO(owner)
 
         ' 指定行に上書き保存
-    ws.Cells(R, c).Value2 = CStr(s)
-    ws.Cells(R, 181).value = val(owner.txtTUG.value)
+    ws.Cells(r, c).Value2 = CStr(s)
+    ws.Cells(r, 181).value = val(owner.txtTUG.value)
 
 
 End Sub
@@ -1870,9 +1937,9 @@ End Sub
 
 
 
-Public Sub Load_TestEvalFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub Load_TestEvalFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner As Object)
       Dim s As String
-    s = ReadStr_Compat("IO_TestEval", R, ws)
+    s = ReadStr_Compat("IO_TestEval", r, ws)
 
     If Len(s) > 0 Then s = Replace(s, "=", ": ")
 
@@ -1890,13 +1957,13 @@ Public Sub Load_TestEvalFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner 
     ' txtGripR / txtGripL / txtSemi に流し込む
     
     
-    ws.Cells(R, 181).value = val(owner.txtTUG.value)
+    ws.Cells(r, 181).value = val(owner.txtTUG.value)
 
     
    
 End Sub
 
-Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim s As String
     Dim v As String
     Dim cmb As Object
@@ -1909,7 +1976,7 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner
 
 
        ' IO_WalkIndep の文字列を取得
-    s = ReadStr_Compat("IO_WalkIndep", R, ws)
+    s = ReadStr_Compat("IO_WalkIndep", r, ws)
 
     If Len(s) = 0 Then Exit Sub
 
@@ -1975,7 +2042,7 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner
     End If
 End Sub
 
-Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim s As String
     Dim phases As Variant
     Dim phase As Variant
@@ -1987,7 +2054,7 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner A
     Dim nm As String
 
     ' IO_WalkRLA の文字列を取得
-    s = ReadStr_Compat("IO_WalkRLA", R, ws)
+    s = ReadStr_Compat("IO_WalkRLA", r, ws)
 
     If Len(s) = 0 Then Exit Sub
 
@@ -2061,7 +2128,7 @@ End Sub
 
 
 
-Public Sub Load_WalkAbnFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub Load_WalkAbnFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim s As String
     Dim v As String
     Dim parts() As String
@@ -2070,7 +2137,7 @@ Public Sub Load_WalkAbnFromSheet(ws As Worksheet, ByVal R As Long, ByVal owner A
     Dim c As Object
 
     ' IO_WalkAbn の文字列取得
-    s = ReadStr_Compat("IO_WalkAbn", R, ws)
+    s = ReadStr_Compat("IO_WalkAbn", r, ws)
 
     If Len(s) = 0 Then Exit Sub
 
@@ -2103,12 +2170,12 @@ End Sub
 
 
 
-Public Sub Save_WalkIndepToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub Save_WalkIndepToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim c As Long
     Dim s As String
 
     If ws Is Nothing Then Exit Sub
-    If R < 2 Then R = 2
+    If r < 2 Then r = 2
 
     ' IO_WalkIndep 用の列を確保
     c = EnsureHeader(ws, "IO_WalkIndep")
@@ -2117,7 +2184,7 @@ Public Sub Save_WalkIndepToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal o
     s = Build_WalkIndep_IO(owner)
 
     ' 指定行に上書き保存
-    ws.Cells(R, c).Value2 = CStr(s)
+    ws.Cells(r, c).Value2 = CStr(s)
 
 End Sub
 
@@ -2253,12 +2320,12 @@ Public Function Build_WalkAbn_IO(owner As Object) As String
 End Function
 
 
-Public Sub Save_WalkAbnToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub Save_WalkAbnToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim c As Long
     Dim s As String
 
     If ws Is Nothing Then Exit Sub
-    If R < 2 Then R = 2
+    If r < 2 Then r = 2
 
     ' IO_WalkAbn 用の列を確保
     c = EnsureHeader(ws, "IO_WalkAbn")
@@ -2267,7 +2334,7 @@ Public Sub Save_WalkAbnToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal own
     s = Build_WalkAbn_IO(owner)
 
     ' 指定行に上書き保存
-    ws.Cells(R, c).Value2 = CStr(s)
+    ws.Cells(r, c).Value2 = CStr(s)
 
 End Sub
 
@@ -2345,12 +2412,12 @@ End Function
 
 
 
-Public Sub Save_WalkRLAToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub Save_WalkRLAToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim c As Long
     Dim s As String
 
     If ws Is Nothing Then Exit Sub
-    If R < 2 Then R = 2
+    If r < 2 Then r = 2
 
     ' IO_WalkRLA 用の列を確保（列4にヘッダ IO_WalkRLA がある前提）
     c = EnsureHeader(ws, "IO_WalkRLA")
@@ -2359,14 +2426,14 @@ Public Sub Save_WalkRLAToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal own
     s = Build_WalkRLA_IO(owner)
 
     ' 指定行に上書き保存
-    ws.Cells(R, c).Value2 = CStr(s)
+    ws.Cells(r, c).Value2 = CStr(s)
 
 End Sub
 
 
 
 
-Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Object)
+Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Object)
     Dim frm As Object
     Dim col As Long
     Dim v As Variant
@@ -2385,7 +2452,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
         .Pages("pgCognition").controls("cmbCogMemory").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     ' 注意
@@ -2395,7 +2462,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
         .Pages("pgCognition").controls("cmbCogAttention").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     ' 見当識
@@ -2405,7 +2472,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgCognition").controls("cmbCogOrientation").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     ' 判断
@@ -2415,7 +2482,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgCognition").controls("cmbCogJudgement").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     ' 遂行機能
@@ -2425,7 +2492,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgCognition").controls("cmbCogExecutive").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     ' 言語
@@ -2435,7 +2502,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgCognition").controls("cmbCogLanguage").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     '=== 認知：認知症の種類＋備考 ==============================
@@ -2446,7 +2513,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgCognition").controls("cmbDementiaType").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     col = HeaderCol_Compat("IO_Cog_DementiaNote", ws)
@@ -2455,7 +2522,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgCognition").controls("txtDementiaNote").text
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
         '=== 認知：BPSD（チェックが入っている項目を | 区切りで保存） ===
@@ -2474,7 +2541,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
     
     col = HeaderCol_Compat("IO_Cog_BPSD", ws)
     If col > 0 Then
-        ws.Cells(R, col).value = bpsd
+        ws.Cells(r, col).value = bpsd
     End If
 
     
@@ -2487,7 +2554,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgMental").controls("cmbMood").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     ' 意欲
@@ -2497,7 +2564,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgMental").controls("cmbMotivation").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     ' 不安
@@ -2507,7 +2574,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgMental").controls("cmbAnxiety").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     ' 対人関係
@@ -2517,7 +2584,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgMental").controls("cmbRelation").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     ' 睡眠
@@ -2527,7 +2594,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgMental").controls("cmbSleep").value
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
     
     ' 精神面・備考
@@ -2537,7 +2604,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, R As Long, owner As Objec
             .Pages("pgMental").controls("txtMentalNote").text
 
         If IsNull(v) Then v = ""
-        ws.Cells(R, col).value = v
+        ws.Cells(r, col).value = v
     End If
 End Sub
 
@@ -2545,7 +2612,7 @@ End Sub
 
 
 
-Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal R As Long, owner As Object)
+Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner As Object)
     Const COL_COG_MEMORY       As Long = 165
     Const COL_COG_ATTENTION    As Long = 166
     Const COL_COG_ORIENTATION  As Long = 167
@@ -2580,35 +2647,35 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal R As Long, owner 
     Set pgMental = mp.Pages("pgMental")
 
     '=== 認知側 combobox 群 ===
-    v = ws.Cells(R, COL_COG_MEMORY).value
+    v = ws.Cells(r, COL_COG_MEMORY).value
     If IsNull(v) Then v = ""
     pgCog.controls("cmbCogMemory").value = v
 
-    v = ws.Cells(R, COL_COG_ATTENTION).value
+    v = ws.Cells(r, COL_COG_ATTENTION).value
     If IsNull(v) Then v = ""
     pgCog.controls("cmbCogAttention").value = v
 
-    v = ws.Cells(R, COL_COG_ORIENTATION).value
+    v = ws.Cells(r, COL_COG_ORIENTATION).value
     If IsNull(v) Then v = ""
     pgCog.controls("cmbCogOrientation").value = v
 
-    v = ws.Cells(R, COL_COG_JUDGEMENT).value
+    v = ws.Cells(r, COL_COG_JUDGEMENT).value
     If IsNull(v) Then v = ""
     pgCog.controls("cmbCogJudgement").value = v
 
-    v = ws.Cells(R, COL_COG_EXECUTIVE).value
+    v = ws.Cells(r, COL_COG_EXECUTIVE).value
     If IsNull(v) Then v = ""
     pgCog.controls("cmbCogExecutive").value = v
 
-    v = ws.Cells(R, COL_COG_LANGUAGE).value
+    v = ws.Cells(r, COL_COG_LANGUAGE).value
     If IsNull(v) Then v = ""
     pgCog.controls("cmbCogLanguage").value = v
 
-    v = ws.Cells(R, COL_COG_DEMENTIA).value
+    v = ws.Cells(r, COL_COG_DEMENTIA).value
     If IsNull(v) Then v = ""
     pgCog.controls("cmbDementiaType").value = v
 
-    v = ws.Cells(R, COL_COG_DEM_NOTE).value
+    v = ws.Cells(r, COL_COG_DEM_NOTE).value
     If IsNull(v) Then v = ""
     pgCog.controls("txtDementiaNote").text = v
 
@@ -2620,7 +2687,7 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal R As Long, owner 
     Next i
 
     ' 2) セル文字列を | で分解し、Caption と一致するチェックボックスをON
-    s = ws.Cells(R, COL_COG_BPSD).value & ""
+    s = ws.Cells(r, COL_COG_BPSD).value & ""
     If Len(s) > 0 Then
         arr = Split(s, "|")
         For i = LBound(arr) To UBound(arr)
@@ -2635,27 +2702,27 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal R As Long, owner 
     End If
 
     '=== 精神面 combobox / note ===
-    v = ws.Cells(R, COL_MENTAL_MOOD).value
+    v = ws.Cells(r, COL_MENTAL_MOOD).value
     If IsNull(v) Then v = ""
     pgMental.controls("cmbMood").value = v
 
-    v = ws.Cells(R, COL_MENTAL_MOTIV).value
+    v = ws.Cells(r, COL_MENTAL_MOTIV).value
     If IsNull(v) Then v = ""
     pgMental.controls("cmbMotivation").value = v
 
-    v = ws.Cells(R, COL_MENTAL_ANXIETY).value
+    v = ws.Cells(r, COL_MENTAL_ANXIETY).value
     If IsNull(v) Then v = ""
     pgMental.controls("cmbAnxiety").value = v
 
-    v = ws.Cells(R, COL_MENTAL_RELATION).value
+    v = ws.Cells(r, COL_MENTAL_RELATION).value
     If IsNull(v) Then v = ""
     pgMental.controls("cmbRelation").value = v
 
-    v = ws.Cells(R, COL_MENTAL_SLEEP).value
+    v = ws.Cells(r, COL_MENTAL_SLEEP).value
     If IsNull(v) Then v = ""
     pgMental.controls("cmbSleep").value = v
 
-    v = ws.Cells(R, COL_MENTAL_NOTE).value
+    v = ws.Cells(r, COL_MENTAL_NOTE).value
     If IsNull(v) Then v = ""
     pgMental.controls("txtMentalNote").text = v
 End Sub
@@ -2671,7 +2738,7 @@ Public Sub Save_DailyLog_FromForm(owner As Object)
     Dim txtStaff As Object
     Dim txtNote As Object
     Dim lastRow As Long
-    Dim R As Long
+    Dim r As Long
 
     Set wb = ThisWorkbook
 
@@ -2707,7 +2774,7 @@ Public Sub Save_DailyLog_FromForm(owner As Object)
     '--- 書き込み行を決定（最終行の次） ---
     lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
     If lastRow < 1 Then lastRow = 1
-    R = lastRow + 1
+    r = lastRow + 1
 
     '--- フォーム上のコントロール取得 ---
     Set txtName = owner.controls("txtName")          ' 利用者名（frmEval 共通）
@@ -2718,11 +2785,11 @@ Public Sub Save_DailyLog_FromForm(owner As Object)
     Set txtNote = f.controls("txtDailyNote")         ' 記録内容
 
     '--- DailyLog シートへ保存 ---
-    ws.Cells(R, 1).value = CStr(txtDate.value)
-    ws.Cells(R, 2).value = CStr(txtName.value)
-    ws.Cells(R, 3).value = CStr(txtStaff.value)
-    ws.Cells(R, 4).value = CStr(txtNote.value)
-    ws.Cells(R, 1).NumberFormatLocal = "yyyy/mm/dd"   ' ←これを追加
+    ws.Cells(r, 1).value = CStr(txtDate.value)
+    ws.Cells(r, 2).value = CStr(txtName.value)
+    ws.Cells(r, 3).value = CStr(txtStaff.value)
+    ws.Cells(r, 4).value = CStr(txtNote.value)
+    ws.Cells(r, 1).NumberFormatLocal = "yyyy/mm/dd"   ' ←これを追加
     
 
 
@@ -2741,7 +2808,7 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Dim txtStaff As Object
     Dim txtNote As Object
     Dim lastRow As Long
-    Dim R As Long
+    Dim r As Long
     Dim targetName As String
     Dim hit As Boolean
 
@@ -2781,12 +2848,12 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     End If
 
     hit = False
-    For R = lastRow To 2 Step -1
-        If Trim$(CStr(ws.Cells(R, 2).value)) = targetName Then
+    For r = lastRow To 2 Step -1
+        If Trim$(CStr(ws.Cells(r, 2).value)) = targetName Then
             hit = True
             Exit For
         End If
-    Next R
+    Next r
 
     If Not hit Then
 
@@ -2794,9 +2861,9 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     End If
 
     '--- 見つかった行をフォームへ反映 ---
-    txtDate.value = ws.Cells(R, 1).value     ' 記録日
-    txtStaff.value = ws.Cells(R, 3).value    ' 記録者
-    txtNote.value = ws.Cells(R, 4).value     ' 記録内容
+    txtDate.value = ws.Cells(r, 1).value     ' 記録日
+    txtStaff.value = ws.Cells(r, 3).value    ' 記録者
+    txtNote.value = ws.Cells(r, 4).value     ' 記録内容
 
 
 End Sub
@@ -2820,7 +2887,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
 
     Dim wb As Workbook
     Dim ws As Worksheet
-    Dim R As Long
+    Dim r As Long
     Dim f As Object
     Dim dt As Variant
     Dim nm As String
@@ -2853,14 +2920,14 @@ Public Sub SaveDailyLog_Append(owner As Object)
     End If
 
     '--- 追記行を決める（1行目に見出しがある前提）---
-    R = ws.Cells(ws.rows.count, 1).End(xlUp).row + 1
+    r = ws.Cells(ws.rows.count, 1).End(xlUp).row + 1
 
     '--- 書き込み ---
-    ws.Cells(R, 1).value = CDate(dt)   ' 記録日
-    ws.Cells(R, 2).value = nm          ' 利用者名
-    ws.Cells(R, 3).value = Trim$(owner.controls("frHeader").controls("txtHdrPID").value) ' ★ID
-    ws.Cells(R, 4).value = staff       ' 記録者
-    ws.Cells(R, 5).value = note        ' 記録内容
+    ws.Cells(r, 1).value = CDate(dt)   ' 記録日
+    ws.Cells(r, 2).value = nm          ' 利用者名
+    ws.Cells(r, 3).value = Trim$(owner.controls("frHeader").controls("txtHdrPID").value) ' ★ID
+    ws.Cells(r, 4).value = staff       ' 記録者
+    ws.Cells(r, 5).value = note        ' 記録内容
 
 End Sub
 
@@ -3030,3 +3097,171 @@ Private Sub DumpIfIDLike(ByVal c As Object)
     End If
 End Sub
 
+
+
+
+
+Private Function EvalIndexHeaders() As Variant
+    EvalIndexHeaders = Array(HDR_USER_ID, HDR_NAME, HDR_KANA, HDR_SHEET, HDR_FIRST_EVAL, HDR_LATEST_EVAL, HDR_RECORD_COUNT)
+End Function
+
+Private Function EnsureEvalIndexSheet() As Worksheet
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(EVAL_INDEX_SHEET_NAME)
+    On Error GoTo 0
+    If ws Is Nothing Then
+        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
+        ws.name = EVAL_INDEX_SHEET_NAME
+    End If
+
+    Dim headers As Variant: headers = EvalIndexHeaders()
+    Dim i As Long
+    For i = LBound(headers) To UBound(headers)
+        ws.Cells(1, i + 1).value = CStr(headers(i))
+    Next i
+
+    Set EnsureEvalIndexSheet = ws
+End Function
+
+Private Function CommonHistoryHeaders() As Variant
+    CommonHistoryHeaders = Array(HDR_ROWNO, "Basic.ID", "Basic.Name", "Basic.NameKana", "Basic.EvalDate", "Basic.Evaluator", "Basic.EvaluatorJob", "Basic.Age", "Basic.BirthDate", "Basic.Sex", "Basic.PrimaryDx", "Basic.OnsetDate", "Basic.CareLevel", "Basic.DementiaADL", "Basic.LifeStatus", "Basic.Needs.Patient", "Basic.Needs.Family", "Basic.Medical.AdmitDate", "Basic.Medical.DischargeDate", "Basic.Medical.CourseNote", "Basic.Medical.ComplicationNote", HDR_HOMEENV_CHECKS, HDR_HOMEENV_NOTE, HDR_AIDS_CHECKS, HDR_RISK_CHECKS, "IO_Cog_DementiaNote", "IO_Mental_Note")
+End Function
+
+Private Sub EnsureHistorySheetInitialized(ByVal ws As Worksheet)
+    Dim headers As Variant: headers = CommonHistoryHeaders()
+    Dim i As Long
+    For i = LBound(headers) To UBound(headers)
+        If FindColByHeaderExact(ws, CStr(headers(i))) = 0 Then
+            ws.Cells(1, ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1).value = CStr(headers(i))
+        End If
+    Next i
+End Sub
+
+Private Function NextHistorySheetName(ByVal indexWs As Worksheet) As String
+    Dim lastRow As Long: lastRow = indexWs.Cells(indexWs.rows.count, 4).End(xlUp).row
+    Dim maxNo As Long, r As Long, nm As String, n As Long
+    For r = 2 To lastRow
+        nm = CStr(indexWs.Cells(r, 4).value)
+        If Left$(nm, Len(EVAL_HISTORY_SHEET_PREFIX)) = EVAL_HISTORY_SHEET_PREFIX Then
+            On Error Resume Next
+            n = CLng(Mid$(nm, Len(EVAL_HISTORY_SHEET_PREFIX) + 1))
+            On Error GoTo 0
+            If n > maxNo Then maxNo = n
+        End If
+    Next r
+    NextHistorySheetName = EVAL_HISTORY_SHEET_PREFIX & Format$(maxNo + 1, "0000")
+End Function
+
+Private Function FindEvalIndexRowsByName(ByVal indexWs As Worksheet, ByVal nameText As String) As Collection
+    Dim c As New Collection
+    Dim lastRow As Long: lastRow = indexWs.Cells(indexWs.rows.count, 2).End(xlUp).row
+    Dim r As Long
+    For r = 2 To lastRow
+        If StrComp(NormalizeName(CStr(indexWs.Cells(r, 2).value)), NormalizeName(nameText), vbTextCompare) = 0 Then c.Add r
+    Next r
+    Set FindEvalIndexRowsByName = c
+End Function
+
+Private Function FindEvalIndexRowBySheetName(ByVal indexWs As Worksheet, ByVal sheetName As String) As Long
+    Dim lastRow As Long: lastRow = indexWs.Cells(indexWs.rows.count, 4).End(xlUp).row
+    Dim r As Long
+    For r = 2 To lastRow
+        If StrComp(CStr(indexWs.Cells(r, 4).value), sheetName, vbTextCompare) = 0 Then FindEvalIndexRowBySheetName = r: Exit Function
+    Next r
+End Function
+
+Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boolean, ByRef wsTarget As Worksheet, ByRef message As String) As Boolean
+    Dim nm As String: nm = Trim$(owner.txtName.text)
+    If Len(nm) = 0 Then message = "氏名が未入力です": Exit Function
+
+    Dim indexWs As Worksheet: Set indexWs = EnsureEvalIndexSheet()
+    Dim rowsByName As Collection: Set rowsByName = FindEvalIndexRowsByName(indexWs, nm)
+    Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
+    Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
+    Dim indexRow As Long
+
+    If rowsByName.count = 0 Then
+        If Not forSave Then message = "利用者履歴が見つかりません": Exit Function
+        indexRow = indexWs.Cells(indexWs.rows.count, 1).End(xlUp).row + 1
+        indexWs.Cells(indexRow, 1).value = idVal
+        indexWs.Cells(indexRow, 2).value = nm
+        indexWs.Cells(indexRow, 3).value = kanaVal
+        indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
+        Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
+        EnsureHistorySheetInitialized wsTarget
+        ResolveUserHistorySheet = True
+        Exit Function
+    End If
+
+    If rowsByName.count = 1 Then
+        indexRow = CLng(rowsByName(1))
+    Else
+        If Len(idVal) = 0 Then message = "同姓同名の利用者が存在するため利用者IDの指定が必要です": Exit Function
+        Dim i As Long
+        For i = 1 To rowsByName.count
+            If StrComp(CStr(indexWs.Cells(CLng(rowsByName(i)), 1).value), idVal, vbTextCompare) = 0 Then indexRow = CLng(rowsByName(i)): Exit For
+        Next i
+        If indexRow = 0 Then message = "指定された利用者IDに一致する履歴が見つかりません": Exit Function
+    End If
+
+    If Len(CStr(indexWs.Cells(indexRow, 1).value)) = 0 And Len(idVal) > 0 Then indexWs.Cells(indexRow, 1).value = idVal
+    If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
+    If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
+
+    Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
+    EnsureHistorySheetInitialized wsTarget
+    ResolveUserHistorySheet = True
+End Function
+
+Private Sub UpdateEvalIndexMetadata(ByVal owner As Object, ByVal indexRow As Long, ByVal sheetName As String)
+    Dim indexWs As Worksheet: Set indexWs = EnsureEvalIndexSheet()
+    Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
+    Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
+    If Len(Trim$(owner.txtName.text)) > 0 Then indexWs.Cells(indexRow, 2).value = Trim$(owner.txtName.text)
+    If Len(idVal) > 0 And Len(CStr(indexWs.Cells(indexRow, 1).value)) = 0 Then indexWs.Cells(indexRow, 1).value = idVal
+    If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
+    indexWs.Cells(indexRow, 4).value = sheetName
+End Sub
+
+Private Function TryParseEvalDate(ByVal v As Variant, ByRef normalizedDate As Date) As Boolean
+    On Error GoTo EH
+    If IsDate(v) Then normalizedDate = DateValue(CDate(v)): TryParseEvalDate = True
+    Exit Function
+EH:
+    TryParseEvalDate = False
+End Function
+
+Private Function GetLatestValidEvalRow(ByVal ws As Worksheet) As Long
+    Dim cEval As Long: cEval = FindColByHeaderExact(ws, "Basic.EvalDate")
+    If cEval = 0 Then Exit Function
+    Dim lastRow As Long: lastRow = LastDataRow(ws)
+    Dim r As Long, d As Date
+    For r = lastRow To 2 Step -1
+        If TryParseEvalDate(ws.Cells(r, cEval).value, d) Then GetLatestValidEvalRow = r: Exit Function
+    Next r
+End Function
+
+Private Sub UpdateEvalIndexStats(ByVal indexRow As Long, ByVal wsTarget As Worksheet)
+    Dim cEval As Long: cEval = FindColByHeaderExact(wsTarget, "Basic.EvalDate")
+    If cEval = 0 Then Exit Sub
+    Dim lastRow As Long: lastRow = LastDataRow(wsTarget)
+    Dim r As Long, d As Date, cnt As Long
+    Dim firstD As Date, latestD As Date
+    For r = 2 To lastRow
+        If TryParseEvalDate(wsTarget.Cells(r, cEval).value, d) Then
+            cnt = cnt + 1
+            If cnt = 1 Or d < firstD Then firstD = d
+            If cnt = 1 Or d > latestD Then latestD = d
+        End If
+    Next r
+    Dim indexWs As Worksheet: Set indexWs = EnsureEvalIndexSheet()
+    If cnt > 0 Then
+        indexWs.Cells(indexRow, 5).value = Format$(firstD, "yyyy/mm/dd")
+        indexWs.Cells(indexRow, 6).value = Format$(latestD, "yyyy/mm/dd")
+    Else
+        indexWs.Cells(indexRow, 5).ClearContents
+        indexWs.Cells(indexRow, 6).ClearContents
+    End If
+    indexWs.Cells(indexRow, 7).value = cnt
+End Sub

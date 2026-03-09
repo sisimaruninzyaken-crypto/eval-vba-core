@@ -3,18 +3,18 @@ Public Sub Run_PrintPack_LatestRow()
     Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("EvalData")
     Dim lastR As Long: lastR = ws.Cells(ws.rows.count, 89).End(xlUp).row
 
-    Dim R As Long, d As Variant, latest As Date, lastHit As Long
+    Dim r As Long, d As Variant, latest As Date, lastHit As Long
     latest = 0
-    For R = 2 To lastR
-        d = ws.Cells(R, 86).value
+    For r = 2 To lastR
+        d = ws.Cells(r, 86).value
         If IsDate(d) Then
             If DateValue(d) > latest Then latest = DateValue(d)
         End If
     Next
-    For R = 2 To lastR
-        d = ws.Cells(R, 86).value
+    For r = 2 To lastR
+        d = ws.Cells(r, 86).value
         If IsDate(d) Then
-            If DateValue(d) = latest Then lastHit = R
+            If DateValue(d) = latest Then lastHit = r
         End If
     Next
 

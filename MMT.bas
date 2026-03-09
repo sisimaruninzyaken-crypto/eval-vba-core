@@ -295,7 +295,7 @@ End Sub
 
 
 ' === 保存（行ベース） ===
-Public Sub SaveMMTToSheet(ws As Worksheet, R As Long, owner As Object)
+Public Sub SaveMMTToSheet(ws As Worksheet, r As Long, owner As Object)
     Dim c As Long
     Dim s As String
 
@@ -308,10 +308,10 @@ Public Sub SaveMMTToSheet(ws As Worksheet, R As Long, owner As Object)
 
     ' 2) MMTを文字列化して保存
     s = MMT_SaveToString()              ' ←既にある関数（直下に見えているもの）を使う
-    ws.Cells(R, c).value = s
+    ws.Cells(r, c).value = s
 
     ' 3) ログ
-    Debug.Print "[MMT][SAVE] row=" & R & " col=" & c & " len=" & Len(s)
+    Debug.Print "[MMT][SAVE] row=" & r & " col=" & c & " len=" & Len(s)
 End Sub
 
 '=== 子タブ(MMT) → 文字列（保存用テスト） ===
@@ -360,7 +360,7 @@ End Function
 
 
 ' === 読込（行ベース） ===
-Public Sub LoadMMTFromSheet(ws As Worksheet, R As Long, owner As Object)
+Public Sub LoadMMTFromSheet(ws As Worksheet, r As Long, owner As Object)
 
     
 
@@ -372,7 +372,7 @@ Public Sub LoadMMTFromSheet(ws As Worksheet, R As Long, owner As Object)
     Debug.Print "[MMT] col=" & c
     If c = 0 Then Exit Sub
 
-    s = ReadStr_Compat("IO_MMT", R, ws)
+    s = ReadStr_Compat("IO_MMT", r, ws)
     Debug.Print "[MMT] s.len=" & Len(s)
     If Len(s) = 0 Then Exit Sub
 

@@ -1573,8 +1573,8 @@ End Sub
 '=== LoadLatestROMNowÅi2025-10-22ìùçáî≈Åj===
 Public Sub LoadLatestROMNow(Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
-    Dim R As Long: R = LatestRowByHeader("ROM_Upper_Shoulder_Flex_R", ws)
-    If R <= 0 Then
+    Dim r As Long: r = LatestRowByHeader("ROM_Upper_Shoulder_Flex_R", ws)
+    If r <= 0 Then
         Debug.Print "[LoadROM] header not found"
         Exit Sub
     End If
@@ -1585,7 +1585,7 @@ Public Sub LoadLatestROMNow(Optional ByVal ws As Worksheet)
 
     Dim raw As String
     raw = LoadLatestROMNow_Raw(ws)
-    Debug.Print "[LoadROM] R=" & R & " Len=" & Len(raw) & " | " & Left$(raw, 60)
+    Debug.Print "[LoadROM] R=" & r & " Len=" & Len(raw) & " | " & Left$(raw, 60)
 End Sub
 
 

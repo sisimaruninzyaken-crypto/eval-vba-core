@@ -26,14 +26,14 @@ Dim ws As Worksheet
     ws.name = "PROJECT_MAP"
     On Error GoTo 0
 
-    Dim R As Long: R = 1
-    ws.Cells(R, 1).value = "Project Map (" & Format(Now, "yyyy-mm-dd hh:nn:ss") & ")": R = R + 2
+    Dim r As Long: r = 1
+    ws.Cells(r, 1).value = "Project Map (" & Format(Now, "yyyy-mm-dd hh:nn:ss") & ")": r = r + 2
 
     Dim comp As Object
     For Each comp In ThisWorkbook.VBProject.VBComponents
-        ws.Cells(R, 1).value = TypeName(comp)
-        ws.Cells(R, 2).value = comp.name
-        R = R + 1
+        ws.Cells(r, 1).value = TypeName(comp)
+        ws.Cells(r, 2).value = comp.name
+        r = r + 1
 
         'UserFormならコントロールを列挙（デザイン時）
         If comp.Type = 3 Then ' vbext_ct_MSForm
@@ -42,19 +42,19 @@ Dim ws As Worksheet
             Set d = comp.Designer
             If Not d Is Nothing Then
                 For i = 0 To d.controls.count - 1
-                    ws.Cells(R, 2).value = "Ctrl"
-                    ws.Cells(R, 3).value = TypeName(d.controls(i))
-                    ws.Cells(R, 4).value = d.controls(i).name
+                    ws.Cells(r, 2).value = "Ctrl"
+                    ws.Cells(r, 3).value = TypeName(d.controls(i))
+                    ws.Cells(r, 4).value = d.controls(i).name
                     On Error Resume Next
-                    ws.Cells(R, 5).value = d.controls(i).caption
+                    ws.Cells(r, 5).value = d.controls(i).caption
                     On Error GoTo 0
-                    R = R + 1
+                    r = r + 1
                 Next
             End If
             On Error GoTo 0
         End If
 
-        R = R + 1
+        r = r + 1
     Next
 
     ws.Columns.AutoFit

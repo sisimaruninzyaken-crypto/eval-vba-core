@@ -23,7 +23,7 @@ Private Const SEP_RL  As String = ","  ' R/L 連結
 
 
 '―― パブリックAPI（保存） ―――――――――――――――――――――――――――――――――――――――――――――
-Public Sub SavePainToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub SavePainToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
 
     Dim pg As Object
     On Error Resume Next
@@ -163,9 +163,9 @@ End If
     Debug.Print "[IO-FINAL]", outText
 
     ' 書き込み
-    ws.Cells(R, EnsureHeaderCol(ws, HEADER_IO)).value = outText
+    ws.Cells(r, EnsureHeaderCol(ws, HEADER_IO)).value = outText
     If LenB(HEADER_NOTE) > 0 Then
-        ws.Cells(R, EnsureHeaderCol(ws, HEADER_NOTE)).value = noteText
+        ws.Cells(r, EnsureHeaderCol(ws, HEADER_NOTE)).value = noteText
     End If
 
    

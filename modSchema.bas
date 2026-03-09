@@ -169,12 +169,12 @@ Private Sub ApplyHeaderAliases(ByVal ws As Worksheet, ByVal dictAlias As Object,
                 If dstCol > 0 And dstCol <> j Then
                     ' 既にターゲット列が存在：空欄を埋める形でマージし、旧列を削除
                     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, j).End(xlUp).row
-                    Dim R As Long
-                    For R = 2 To lastRow
-                        If Len(ws.Cells(R, dstCol).value) = 0 And Len(ws.Cells(R, j).value) > 0 Then
-                            ws.Cells(R, dstCol).value = ws.Cells(R, j).value
+                    Dim r As Long
+                    For r = 2 To lastRow
+                        If Len(ws.Cells(r, dstCol).value) = 0 And Len(ws.Cells(r, j).value) > 0 Then
+                            ws.Cells(r, dstCol).value = ws.Cells(r, j).value
                         End If
-                    Next R
+                    Next r
                     ws.Columns(j).Delete
                 Else
                     ' ターゲット列が無い：そのまま改名

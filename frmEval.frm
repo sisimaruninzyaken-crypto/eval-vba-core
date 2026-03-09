@@ -622,17 +622,17 @@ Private Function CollectCandidatesByNameLocal(ByVal ws As Worksheet, _
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, nameCol).End(xlUp).row
     Dim tmp As New Collection
-    Dim R As Long, nm As String
-    For R = 2 To lastRow
-        nm = CStr(ws.Cells(R, nameCol).value)
-        If NormName(nm) = key Then tmp.Add R
+    Dim r As Long, nm As String
+    For r = 2 To lastRow
+        nm = CStr(ws.Cells(r, nameCol).value)
+        If NormName(nm) = key Then tmp.Add r
     Next
 
     If tmp.count = 0 Then Exit Function
 
     Dim a() As Long: ReDim a(1 To tmp.count)
-    For R = 1 To tmp.count
-        a(R) = CLng(tmp(R))
+    For r = 1 To tmp.count
+        a(r) = CLng(tmp(r))
     Next
     CollectCandidatesByNameLocal = a
 End Function
@@ -1661,12 +1661,12 @@ Private Sub LayoutPosture()
     Dim rowH As Single:   rowH = 28
     Dim labelW As Single: labelW = Application.Max(60, colW - 110)
 
-    Dim i As Long, c As Long, R As Long, x As Single, y As Single
+    Dim i As Long, c As Long, r As Long, x As Single, y As Single
     For i = LBound(items) To UBound(items)
         c = (i - LBound(items)) \ rows
-        R = (i - LBound(items)) Mod rows
+        r = (i - LBound(items)) Mod rows
         x = 12 + c * colW
-        y = startY + R * rowH
+        y = startY + r * rowH
 
         With fr.controls("lblPost_" & CStr(i))
             .Left = x
@@ -1762,7 +1762,7 @@ Public Sub UpdateNameSuggest()
     Dim lb As MSForms.ListBox
     Dim ws As Worksheet
     Dim cName As Long, cID As Long
-    Dim lastRow As Long, R As Long
+    Dim lastRow As Long, r As Long
     Dim key As String, keyN As String
     Dim nm As String, idv As String
     Dim hit As Long
@@ -1825,12 +1825,12 @@ Next i
     seen.CompareMode = vbTextCompare
 
 
-    For R = 2 To lastRow
-        nm = CStr(ws.Cells(R, cName).value)
+    For r = 2 To lastRow
+        nm = CStr(ws.Cells(r, cName).value)
         If Len(nm) > 0 Then
             If InStr(1, NormalizeName(nm), keyN, vbTextCompare) > 0 Then
                 idv = ""
-                If cID > 0 Then idv = CStr(ws.Cells(R, cID).value)
+                If cID > 0 Then idv = CStr(ws.Cells(r, cID).value)
                 
                 
                 Dim nmKey As String
@@ -1850,7 +1850,7 @@ Next i
                 
             End If
         End If
-    Next R
+    Next r
 
     If hit > 0 Then lb.Visible = True
     
@@ -1965,31 +1965,31 @@ Private Function FindLastRowByPID(ByVal pid As String, ByVal ws As Worksheet) As
     Dim bestRow As Long
     Dim bestD As Date, bestHasTs As Boolean, bestTs As Date
 
-    Dim R As Long
-    For R = 2 To last
-        If CStr(ws.Cells(R, CLng(colPID)).value) = pid Then
-            If IsDate(ws.Cells(R, CLng(colDate)).value) Then
-                Dim d As Date: d = CDate(ws.Cells(R, CLng(colDate)).value)
+    Dim r As Long
+    For r = 2 To last
+        If CStr(ws.Cells(r, CLng(colPID)).value) = pid Then
+            If IsDate(ws.Cells(r, CLng(colDate)).value) Then
+                Dim d As Date: d = CDate(ws.Cells(r, CLng(colDate)).value)
 
                 Dim hasTs As Boolean, t As Date
-                hasTs = (Not IsError(colTS)) And IsDate(ws.Cells(R, CLng(colTS)).value)
-                If hasTs Then t = CDate(ws.Cells(R, CLng(colTS)).value)
+                hasTs = (Not IsError(colTS)) And IsDate(ws.Cells(r, CLng(colTS)).value)
+                If hasTs Then t = CDate(ws.Cells(r, CLng(colTS)).value)
 
                 If bestRow = 0 Then
-                    bestRow = R: bestD = d: bestHasTs = hasTs: If hasTs Then bestTs = t
+                    bestRow = r: bestD = d: bestHasTs = hasTs: If hasTs Then bestTs = t
                 ElseIf d > bestD Then
-                    bestRow = R: bestD = d: bestHasTs = hasTs: If hasTs Then bestTs = t
+                    bestRow = r: bestD = d: bestHasTs = hasTs: If hasTs Then bestTs = t
                 ElseIf d = bestD Then
                     If hasTs And Not bestHasTs Then
-                        bestRow = R: bestHasTs = True: bestTs = t
+                        bestRow = r: bestHasTs = True: bestTs = t
                     ElseIf hasTs And bestHasTs Then
                         If t > bestTs Then
-                            bestRow = R: bestTs = t
+                            bestRow = r: bestTs = t
                         ElseIf t = bestTs Then
-                            If R > bestRow Then bestRow = R
+                            If r > bestRow Then bestRow = r
                         End If
                     ElseIf (Not hasTs) And (Not bestHasTs) Then
-                        If R > bestRow Then bestRow = R
+                        If r > bestRow Then bestRow = r
                     End If
                 End If
             End If
@@ -2220,7 +2220,7 @@ look("IO_MMT") = HeaderCol_Compat("IO_MMT", ws)
 look("IO_Tone") = HeaderCol_Compat("IO_Tone", ws)
 
 ' ROMは複数列のため次手で別処理
-Dim R As Long
+Dim r As Long
 ws.Activate
 Dim cName As Long: cName = HeaderCol_Compat("氏名", ws)
 If cName = 0 Then cName = HeaderCol_Compat("利用者名", ws)
@@ -2233,11 +2233,11 @@ End If
 Dim rr As Long
 For rr = ws.Cells(ws.rows.count, cName).End(xlUp).row To 2 Step -1
     If Trim$(CStr(ws.Cells(rr, cName).value)) = pname Then
-        R = rr
+        r = rr
         Exit For
     End If
 Next
-If R = 0 Then
+If r = 0 Then
     MsgBox "前回データが見つかりません（氏名一致なし）: " & pname, vbExclamation
     Exit Sub
 End If
@@ -2247,9 +2247,9 @@ End If
 'If r <= 0 Then Exit Sub
 
 
-If R > 0 Then
-    Application.Run "LoadSensoryFromSheet", ThisWorkbook.Worksheets("EvalData"), R, Me
-    Application.Run "LoadMMTFromSheet", ThisWorkbook.Worksheets("EvalData"), R, Me
+If r > 0 Then
+    Application.Run "LoadSensoryFromSheet", ThisWorkbook.Worksheets("EvalData"), r, Me
+    Application.Run "LoadMMTFromSheet", ThisWorkbook.Worksheets("EvalData"), r, Me
     Application.Run "LoadLatestPainNow"
     Application.Run "Load_ADL_Latest"
 End If
@@ -2290,16 +2290,16 @@ Private Function FindRowByNameWithPickLocal(ws As Worksheet, nameText As String,
     If colDate = 0 Then colDate = modEvalIOEntry.FindColByHeaderExact(ws, "作成日")
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, colName).End(xlUp).row
-    Dim rows() As Long, cnt As Long, R As Long
+    Dim rows() As Long, cnt As Long, r As Long
     ReDim rows(1 To maxCount)
 
-    For R = lastRow To 2 Step -1
-        If ws.Cells(R, colName).value = nameText Then
+    For r = lastRow To 2 Step -1
+        If ws.Cells(r, colName).value = nameText Then
             cnt = cnt + 1
-            rows(cnt) = R
+            rows(cnt) = r
             If cnt = maxCount Then Exit For
         End If
-    Next R
+    Next r
 
     If cnt = 0 Then Exit Function
     If cnt = 1 Then
@@ -2360,23 +2360,23 @@ dtCol = RCol(ws, look, "Basic.EvalDate", "評価日", "記録日", "更新日", "作成日")
 
 
 
-    Dim i As Long, R As Long, msg As String, disp As Long
+    Dim i As Long, r As Long, msg As String, disp As Long
     msg = "同姓同名が見つかりました。読み込むデータを選択してください（番号を入力）。" & vbCrLf & vbCrLf
     For i = lb To ub
-        R = candidates(i)
+        r = candidates(i)
         disp = i - lb + 1
         msg = msg & CStr(disp) & ") "
         If dtCol > 0 Then
-            If IsDate(ws.Cells(R, dtCol).value) Then
-                msg = msg & Format$(CDate(ws.Cells(R, dtCol).value), "yyyy/mm/dd")
+            If IsDate(ws.Cells(r, dtCol).value) Then
+                msg = msg & Format$(CDate(ws.Cells(r, dtCol).value), "yyyy/mm/dd")
             Else
-                msg = msg & CStr(ws.Cells(R, dtCol).value)
+                msg = msg & CStr(ws.Cells(r, dtCol).value)
             End If
         Else
             msg = msg & "(評価日なし)"
         End If
-        If ageCol > 0 Then msg = msg & " | 年齢:" & Trim$(CStr(ws.Cells(R, ageCol).value))
-        If pidCol > 0 Then msg = msg & " | ID:" & Trim$(CStr(ws.Cells(R, pidCol).value))
+        If ageCol > 0 Then msg = msg & " | 年齢:" & Trim$(CStr(ws.Cells(r, ageCol).value))
+        If pidCol > 0 Then msg = msg & " | ID:" & Trim$(CStr(ws.Cells(r, pidCol).value))
         msg = msg & vbCrLf
     Next i
 
@@ -2492,19 +2492,19 @@ Private Function FindLastRowByPIDLocal(ByVal ws As Worksheet, ByVal look As Obje
     Dim dtCol As Long: dtCol = EnsureHeaderColumnLocal(ws, look, "Basic.EvalDate")
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, idCol).End(xlUp).row
-    Dim R As Long, pick As Long, best As Date, curTs As Date, curDt As Date
+    Dim r As Long, pick As Long, best As Date, curTs As Date, curDt As Date
 
-    For R = 3 To lastRow
-        If CStr(ws.Cells(R, idCol).value) = pid Then
+    For r = 3 To lastRow
+        If CStr(ws.Cells(r, idCol).value) = pid Then
             curTs = 0: curDt = 0
             On Error Resume Next
-            curTs = CDate(ws.Cells(R, tsCol).value)
-            curDt = CDate(ws.Cells(R, dtCol).value)
+            curTs = CDate(ws.Cells(r, tsCol).value)
+            curDt = CDate(ws.Cells(r, dtCol).value)
             On Error GoTo 0
             If curTs > 0 Then
-                If curTs > best Then best = curTs: pick = R
+                If curTs > best Then best = curTs: pick = r
             ElseIf curDt > 0 Then
-                If curDt > best Then best = curDt: pick = R
+                If curDt > best Then best = curDt: pick = r
             End If
         End If
     Next
@@ -2521,20 +2521,20 @@ Private Function FindLastRowByNameLocal(ByVal ws As Worksheet, _
     Dim dtCol As Long:   dtCol = ResolveColOrCreate(ws, look, "Basic.EvalDate", "評価日", "EvalDate")
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, nameCol).End(xlUp).row
-    Dim R As Long, pick As Long, best As Date, curTs As Date, curDt As Date
+    Dim r As Long, pick As Long, best As Date, curTs As Date, curDt As Date
 
-    For R = 3 To lastRow
-        If KeyNormalize(ws.Cells(R, nameCol).value) = KeyNormalize(pname) Then
+    For r = 3 To lastRow
+        If KeyNormalize(ws.Cells(r, nameCol).value) = KeyNormalize(pname) Then
 
             curTs = 0: curDt = 0
             On Error Resume Next
-            curTs = CDate(ws.Cells(R, tsCol).value)
-            curDt = CDate(ws.Cells(R, dtCol).value)
+            curTs = CDate(ws.Cells(r, tsCol).value)
+            curDt = CDate(ws.Cells(r, dtCol).value)
             On Error GoTo 0
             If curTs > 0 Then
-                If curTs > best Then best = curTs: pick = R
+                If curTs > best Then best = curTs: pick = r
             ElseIf curDt > 0 Then
-                If curDt > best Then best = curDt: pick = R
+                If curDt > best Then best = curDt: pick = r
             End If
         End If
     Next
@@ -2544,9 +2544,9 @@ End Function
 
 
 Private Function NextDataRowLocal(ByVal ws As Worksheet) As Long
-    Dim R As Long: R = ws.Cells(ws.rows.count, 1).End(xlUp).row
-    If R < 3 Then R = 2
-    NextDataRowLocal = R + 1
+    Dim r As Long: r = ws.Cells(ws.rows.count, 1).End(xlUp).row
+    If r < 3 Then r = 2
+    NextDataRowLocal = r + 1
 End Function
 
 Private Function GeneratePIDLocal() As String
@@ -2876,11 +2876,11 @@ If look("Basic.EvalDate") = 0 Then look("Basic.EvalDate") = modEvalIOEntry.FindC
 
     ' 3) 名前で探索（複数なら候補番号を選ばせる）
   ' ③ 名前で行番号を特定
-Dim R As Long
-R = FindRowByNameWithPickLocal(ws, pname)
+Dim r As Long
+r = FindRowByNameWithPickLocal(ws, pname)
 
 
-If R <= 0 Then
+If r <= 0 Then
     MsgBox "前回の値が見つかりません。", vbInformation
     Exit Sub
 End If
@@ -2894,7 +2894,7 @@ If cName = 0 Then
     MsgBox "氏名列が見つかりません。", vbExclamation
     Exit Sub
 End If
-If StrComp(CStr(ws.Cells(R, cName).value), pname, vbTextCompare) <> 0 Then
+If StrComp(CStr(ws.Cells(r, cName).value), pname, vbTextCompare) <> 0 Then
     MsgBox "選択行の氏名が「" & pname & "」と一致しません。読み込みを中止します。", vbExclamation
     Exit Sub
 End If
@@ -6593,20 +6593,20 @@ End Sub
 
 Private Sub mDailyList_DblClicked()
     Dim lb As MSForms.ListBox
-    Dim R As Long, c As Long
+    Dim r As Long, c As Long
     Dim buf As String
     
     ' 対象の一覧ListBoxを取得
     Set lb = Me.controls("lstDailyLogList")
     
     ' 全行・全列をタブ区切り＋改行で連結
-    For R = 0 To lb.ListCount - 1
+    For r = 0 To lb.ListCount - 1
         For c = 0 To lb.ColumnCount - 1
             If c > 0 Then buf = buf & vbTab
-            buf = buf & CStr(lb.List(R, c))
+            buf = buf & CStr(lb.List(r, c))
         Next c
         buf = buf & vbCrLf
-    Next R
+    Next r
     
     ' クリップボードへコピー
     Dim dobj As New MSForms.DataObject
@@ -7395,7 +7395,7 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
     Dim nm As String
     Dim v As Variant
     Dim dFrom As Date, dTo As Date
-    Dim lastRow As Long, R As Long
+    Dim lastRow As Long, r As Long
     Dim s As String
     Dim hit As Long
     Dim d As Date, staff As String, note As String
@@ -7434,21 +7434,21 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
       & "■ この月に記録された特記事項（時系列）" & vbCrLf
 
     hit = 0
-    For R = 2 To lastRow
-        If Trim$(ws.Cells(R, 2).value) = nm And (cntSameName = 1 Or Trim$(ws.Cells(R, 3).value) = pid) Then
-            If IsDate(ws.Cells(R, 1).value) Then
-                d = CDate(ws.Cells(R, 1).value)
+    For r = 2 To lastRow
+        If Trim$(ws.Cells(r, 2).value) = nm And (cntSameName = 1 Or Trim$(ws.Cells(r, 3).value) = pid) Then
+            If IsDate(ws.Cells(r, 1).value) Then
+                d = CDate(ws.Cells(r, 1).value)
                 If d >= dFrom And d <= dTo Then
-                    note = CStr(ws.Cells(R, 5).value)
+                    note = CStr(ws.Cells(r, 5).value)
                     If Len(Trim$(note)) > 0 Then
-                        staff = CStr(ws.Cells(R, 4).value)
+                        staff = CStr(ws.Cells(r, 4).value)
                         s = s & "・" & Format$(d, "m/d") & "（" & staff & "） " & note & vbCrLf
                         hit = hit + 1
                     End If
                 End If
             End If
         End If
-    Next R
+    Next r
 
     If hit = 0 Then
         s = s & "・（この月の記録はありません）" & vbCrLf

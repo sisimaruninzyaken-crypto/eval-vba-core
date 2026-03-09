@@ -246,7 +246,7 @@ End Function
 
 Public Sub Save_ADL_Once()
     Dim ws As Worksheet, look As Object
-    Dim s As String, R As Long, c As Long
+    Dim s As String, r As Long, c As Long
     Dim lastCol As Long
 
     Set ws = ThisWorkbook.Worksheets("EvalData")            ' 既存ヘルパ（PainIOと同じ想定）
@@ -256,14 +256,14 @@ Public Sub Save_ADL_Once()
 
 
     ' 追記行を決定（ヘッダの次行から開始）
-    R = ws.Cells(ws.rows.count, c).End(xlUp).row: If R < 2 Then R = 2 Else R = R + 1
+    r = ws.Cells(ws.rows.count, c).End(xlUp).row: If r < 2 Then r = 2 Else r = r + 1
 
 
     ' IO生成 → 書き込み
     s = Build_ADL_IO()
-    Debug.Print "[Chk]"; TypeName(ws); R; c; TypeName(ws.Cells(R, c))
+    Debug.Print "[Chk]"; TypeName(ws); r; c; TypeName(ws.Cells(r, c))
 
-ws.Cells(R, c).Value2 = CStr(s)
+ws.Cells(r, c).Value2 = CStr(s)
 
 
 
@@ -294,17 +294,17 @@ End Function
 '=== Load: EvalDataの IO_ADL 最新行を読み込み、フォームに反映 ===
 Public Sub Load_ADL_Latest()
     Dim ws As Worksheet, mp As MSForms.MultiPage, p As MSForms.Page, ctl As Control
-    Dim c As Long, R As Long, s As String
+    Dim c As Long, r As Long, s As String
     Dim parts As Variant, i As Long, n As Long
     Dim k As String, v As String
     Dim cmbSU As MSForms.ComboBox, cmbSH As MSForms.ComboBox
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
     c = EnsureHeader(ws, "IO_ADL")
-    R = ws.Cells(ws.rows.count, c).End(xlUp).row
-    If R < 2 Then Exit Sub    ' データなし
+    r = ws.Cells(ws.rows.count, c).End(xlUp).row
+    If r < 2 Then Exit Sub    ' データなし
 
-    s = ReadStr_Compat("IO_ADL", R, ws)
+    s = ReadStr_Compat("IO_ADL", r, ws)
     parts = Split(s, "|")
 
     ' mpADL 取得
@@ -377,22 +377,22 @@ End Select
 NextI:
     Next i
 
-    Debug.Print "[ADL.Load] Row=" & R & " | Pairs=" & n & " | Len=" & Len(s)
+    Debug.Print "[ADL.Load] Row=" & r & " | Pairs=" & n & " | Len=" & Len(s)
 End Sub
 
 
 
 '=== Save→Load: ADL を一発検証（EvalDataに追記→直後にフォームへ反映） ===
 Public Sub SaveAndReload_ADL()
-    Dim ws As Worksheet, c As Long, R As Long, s As String
+    Dim ws As Worksheet, c As Long, r As Long, s As String
     Call Save_ADL_Once
     Call Load_ADL_Latest
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
     c = EnsureHeader(ws, "IO_ADL")
-    R = ws.Cells(ws.rows.count, c).End(xlUp).row
-    s = ReadStr_Compat("IO_Sensory", R, ws)
-    Debug.Print "[ADL.SaveLoad] Row=" & R & " Col=" & c & " | Len=" & Len(s)
+    r = ws.Cells(ws.rows.count, c).End(xlUp).row
+    s = ReadStr_Compat("IO_Sensory", r, ws)
+    Debug.Print "[ADL.SaveLoad] Row=" & r & " Col=" & c & " | Len=" & Len(s)
 End Sub
 
 
@@ -401,14 +401,14 @@ End Sub
 
 '=== Checklist: ADL 保存/読込の健全性を一発確認 ===
 Public Sub PreRelease_ADL_Checklist()
-    Dim ws As Worksheet, c As Long, R As Long, s As String
+    Dim ws As Worksheet, c As Long, r As Long, s As String
     Set ws = ThisWorkbook.Worksheets("EvalData")
     c = EnsureHeader(ws, "IO_ADL")
-    R = ws.Cells(ws.rows.count, c).End(xlUp).row
-    If R < 2 Then Debug.Print "[ADL.Check] データなし": Exit Sub
+    r = ws.Cells(ws.rows.count, c).End(xlUp).row
+    If r < 2 Then Debug.Print "[ADL.Check] データなし": Exit Sub
 
-    s = ReadStr_Compat("IO_Sensory", R, ws)
-    Debug.Print "[ADL.Check] Col=" & c & " Row=" & R & " | Len=" & Len(s)
+    s = ReadStr_Compat("IO_Sensory", r, ws)
+    Debug.Print "[ADL.Check] Col=" & c & " Row=" & r & " | Len=" & Len(s)
 
     ' 冪等チェック：保存→読込→長さ
     Call SaveAndReload_ADL
@@ -448,16 +448,16 @@ End Sub
 
 
 '=== Save: ADL を「指定行 r」に書き込む（行は外部で決定） ===
-Public Sub Save_ADL_AtRow(ByVal ws As Worksheet, ByVal R As Long)
+Public Sub Save_ADL_AtRow(ByVal ws As Worksheet, ByVal r As Long)
     Dim c As Long, s As String
     If ws Is Nothing Then Exit Sub
-    If R < 2 Then R = 2
+    If r < 2 Then r = 2
 
     c = EnsureHeader(ws, "IO_ADL")   ' 見出し確保して列番号取得（同名が他にある場合は、その関数を使用しているモジュールのものでもOK）
     s = Build_ADL_IO                 ' 現在のフォーム値をIO化（固定順）
 
-    ws.Cells(R, c).Value2 = CStr(s)  ' 指定行に上書き保存（追記は呼び出し側でrを進める）
-    Debug.Print "[ADL.Save@Row] Row=" & R & " Col=" & c & " | Len=" & Len(s)
+    ws.Cells(r, c).Value2 = CStr(s)  ' 指定行に上書き保存（追記は呼び出し側でrを進める）
+    Debug.Print "[ADL.Save@Row] Row=" & r & " Col=" & c & " | Len=" & Len(s)
 End Sub
 
 
@@ -576,7 +576,7 @@ End Sub
 
 
 '=== Load: read IO_ADL from a specified row and apply to owner form ===
-Public Sub Load_ADL_FromRow(ws As Worksheet, R As Long, owner As Object)
+Public Sub Load_ADL_FromRow(ws As Worksheet, r As Long, owner As Object)
     Dim mp As MSForms.MultiPage, p As MSForms.Page, ctl As Control
     Dim c As Long, s As String
     Dim parts As Variant, i As Long, n As Long
@@ -585,12 +585,12 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, R As Long, owner As Object)
 
     If ws Is Nothing Then Exit Sub
     If owner Is Nothing Then Exit Sub
-    If R < 2 Then Exit Sub
+    If r < 2 Then Exit Sub
 
     c = EnsureHeader(ws, "IO_ADL")
     If c < 1 Then Exit Sub
 
-    s = ReadStr_Compat("IO_ADL", R, ws)
+    s = ReadStr_Compat("IO_ADL", r, ws)
     If Len(s) = 0 Then Exit Sub
     parts = Split(s, "|")
 
@@ -653,6 +653,6 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, R As Long, owner As Object)
 NextI:
     Next i
 
-    Debug.Print "[ADL.Load] Row=" & R & " | Pairs=" & n & " | Len=" & Len(s)
+    Debug.Print "[ADL.Load] Row=" & r & " | Pairs=" & n & " | Len=" & Len(s)
 End Sub
 

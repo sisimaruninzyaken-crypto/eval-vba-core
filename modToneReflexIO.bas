@@ -9,7 +9,7 @@ Private Const SEP_RL  As String = ","
 '========================================================
 ' 筋緊張・反射（痙縮含む） 保存：TONE_IO / TONE_NOTE
 '========================================================
-Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     If owner Is Nothing Then If VBA.UserForms.count > 0 Then Set owner = VBA.UserForms(0)
 
     Dim ctl As Object, mp As Object, pg As Object, target As Object
@@ -97,8 +97,8 @@ vL = CStr(arr(pos + 1).value): If Len(vL) = 0 Then vL = CStr(arr(pos + 1).text)
 
     ' 5) 書き出し（TONE_IO）
     Dim c As Long: c = EnsureHeaderCol(ws, "TONE_IO")
-    ws.Cells(R, c).value = s
-    Debug.Print "[TONE][SAVE] row=" & R & " col=" & c & " len=" & Len(s)
+    ws.Cells(r, c).value = s
+    Debug.Print "[TONE][SAVE] row=" & r & " col=" & c & " len=" & Len(s)
 
     ' 6) 備考（最も大きい or MultiLine TextBox）→ TONE_NOTE
     Dim noteCtl As Object, box As Object, subCtl As Object, bestH As Single: bestH = 0
@@ -120,15 +120,15 @@ vL = CStr(arr(pos + 1).value): If Len(vL) = 0 Then vL = CStr(arr(pos + 1).text)
 
     If Not noteCtl Is Nothing Then note = CStr(noteCtl.text) Else note = ""
     cNote = EnsureHeaderCol(ws, "TONE_NOTE")
-    ws.Cells(R, cNote).value = note
-    Debug.Print "[TONE][SAVE][NOTE] row=" & R & " col=" & cNote & " len=" & Len(note)
+    ws.Cells(r, cNote).value = note
+    Debug.Print "[TONE][SAVE][NOTE] row=" & r & " col=" & cNote & " len=" & Len(note)
 End Sub
 
 
 '========================================================
 ' 筋緊張・反射（痙縮含む） 読み込み：TONE_IO / TONE_NOTE
 '========================================================
-Public Sub LoadToneReflexFromSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal owner As Object)
+Public Sub LoadToneReflexFromSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     If owner Is Nothing Then If VBA.UserForms.count > 0 Then Set owner = VBA.UserForms(0)
 
     Dim ctl As Object, mp As Object, pg As Object, target As Object
@@ -154,8 +154,8 @@ Public Sub LoadToneReflexFromSheet(ByVal ws As Worksheet, ByVal R As Long, ByVal
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary"): d.CompareMode = 1
 
     c = EnsureHeaderCol(ws, "TONE_IO")
-        s = ReadStr_Compat("IO_Tone", R, ws)
-    Debug.Print "[TONE][LOAD] row=" & R & " col=" & c & " len=" & Len(s)
+        s = ReadStr_Compat("IO_Tone", r, ws)
+    Debug.Print "[TONE][LOAD] row=" & r & " col=" & c & " len=" & Len(s)
 
     If Len(s) > 0 Then
         recs = Split(s, SEP_REC)
@@ -275,7 +275,7 @@ On Error GoTo 0
     Dim noteCtl As Object, box As Object, subCtl As Object, bestH As Single: bestH = 0
 
     cNote = EnsureHeaderCol(ws, "TONE_NOTE")
-    note = CStr(ws.Cells(R, cNote).value)
+    note = CStr(ws.Cells(r, cNote).value)
 
     On Error Resume Next
     For Each box In target.controls
@@ -292,7 +292,7 @@ On Error GoTo 0
     On Error GoTo 0
 
     If Not noteCtl Is Nothing Then noteCtl.text = note
-    Debug.Print "[TONE][LOAD][NOTE] row=" & R & " col=" & cNote & " len=" & Len(note) & _
+    Debug.Print "[TONE][LOAD][NOTE] row=" & r & " col=" & cNote & " len=" & Len(note) & _
                 IIf(noteCtl Is Nothing, " (target textbox not found)", " -> " & noteCtl.name & " H=" & bestH)
 
 If TypeOf owner Is MSForms.UserForm Then owner.Repaint

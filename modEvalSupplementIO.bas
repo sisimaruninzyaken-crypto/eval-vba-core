@@ -48,13 +48,13 @@ Public Sub DeleteClientFrom_EvalData_ByName()
     lastRow = ws.Cells(ws.rows.count, nameCol).End(xlUp).row
 
     Dim cnt As Long: cnt = 0
-    Dim R As Long
-    For R = lastRow To 2 Step -1
-        If CStr(ws.Cells(R, nameCol).value) = nm Then
-            ws.rows(R).Delete
+    Dim r As Long
+    For r = lastRow To 2 Step -1
+        If CStr(ws.Cells(r, nameCol).value) = nm Then
+            ws.rows(r).Delete
             cnt = cnt + 1
         End If
-    Next R
+    Next r
 
     MsgBox "EvalData: " & cnt & " 行を削除しました。", vbInformation
 End Sub
@@ -128,20 +128,20 @@ End If
     ws.Range("A1:FW1").Copy Destination:=wsA.Range("A1")
 
     Dim moved As Long: moved = 0
-    Dim R As Long
+    Dim r As Long
 
-    For R = lastRow To 2 Step -1
-        If CStr(ws.Cells(R, NAME_COL).value) = nm And (pid = "" Or CStr(ws.Cells(R, ID_COL).value) = pid) Then
+    For r = lastRow To 2 Step -1
+        If CStr(ws.Cells(r, NAME_COL).value) = nm And (pid = "" Or CStr(ws.Cells(r, ID_COL).value) = pid) Then
             ' 行退避（A:FW の行）
             Dim nextA As Long
             nextA = wsA.Cells(wsA.rows.count, 1).End(xlUp).row + 1
-            ws.Range("A" & R & ":FW" & R).Copy Destination:=wsA.Range("A" & nextA)
+            ws.Range("A" & r & ":FW" & r).Copy Destination:=wsA.Range("A" & nextA)
 
             ' 元から削除
-            ws.rows(R).Delete
+            ws.rows(r).Delete
             moved = moved + 1
         End If
-    Next R
+    Next r
 
     ' アーカイブ保存
     Dim arcPath As String, arcFile As String
@@ -191,20 +191,20 @@ End Sub
 
 
 Public Function GetLatestID_ForName(ByVal ws As Worksheet, ByVal nm As String, ByVal nameCol As Long, ByVal idCol As Long) As String
-    Dim lastRow As Long, R As Long
+    Dim lastRow As Long, r As Long
     Dim idS As String
     
     lastRow = ws.Cells(ws.rows.count, nameCol).End(xlUp).row
     
-    For R = lastRow To 2 Step -1
-        If CStr(ws.Cells(R, nameCol).value) = nm Then
-            idS = Trim$(CStr(ws.Cells(R, idCol).value))
+    For r = lastRow To 2 Step -1
+        If CStr(ws.Cells(r, nameCol).value) = nm Then
+            idS = Trim$(CStr(ws.Cells(r, idCol).value))
             If idS <> "" Then
                 GetLatestID_ForName = idS
                 Exit Function
             End If
         End If
-    Next R
+    Next r
 End Function
 
 

@@ -179,7 +179,7 @@ Call frmEval.AdjustBottomButtons
 End Sub
 
 '=== Basic.* と旧列（氏名/評価日 など）を 1 行分だけ同期する =====================
-Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal R As Long)
+Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal r As Long)
     Dim headersBasic As Variant
     Dim headersLegacy As Variant
     Dim i As Long
@@ -200,13 +200,13 @@ Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal R As Long)
         ' どちらかの列が存在していれば同期対象
         If cB > 0 Or cL > 0 Then
             If cB > 0 Then
-                vB = ws.Cells(R, cB).value
+                vB = ws.Cells(r, cB).value
             Else
                 vB = vbNullString
             End If
 
             If cL > 0 Then
-                vL = ws.Cells(R, cL).value
+                vL = ws.Cells(r, cL).value
             Else
                 vL = vbNullString
             End If
@@ -215,9 +215,9 @@ Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal R As Long)
             ' 1) Basic 側に値があって旧列が空 → Basic → 旧列へコピー
             ' 2) Basic 側が空で旧列に値 → 旧列 → Basic へコピー
             If cB > 0 And Len(vB) > 0 And cL > 0 And Len(vL) = 0 Then
-                ws.Cells(R, cL).value = vB
+                ws.Cells(r, cL).value = vB
             ElseIf cL > 0 And Len(vL) > 0 And cB > 0 And Len(vB) = 0 Then
-                ws.Cells(R, cB).value = vL
+                ws.Cells(r, cB).value = vL
             End If
         End If
     Next i
@@ -653,15 +653,15 @@ Application.PrintCommunication = True
     
     wsNew.ResetAllPageBreaks
 
-    Dim R As Long, lastRow As Long
+    Dim r As Long, lastRow As Long
 With ThisWorkbook.Worksheets("Monitoring").UsedRange
     lastRow = .row + .rows.count - 1
 End With
 
 With ThisWorkbook.Worksheets("Monitoring")
-    For R = 1 To lastRow
-        wsNew.rows(R).RowHeight = .rows(R).RowHeight
-    Next R
+    For r = 1 To lastRow
+        wsNew.rows(r).RowHeight = .rows(r).RowHeight
+    Next r
 End With
 
 With wsNew.PageSetup
