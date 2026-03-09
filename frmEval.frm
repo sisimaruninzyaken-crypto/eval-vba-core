@@ -2202,57 +2202,7 @@ Private Sub btnLoadPrevCtl_Click()
 
 Me.controls("txtName").text = Me.controls("txtHdrName").text
 
-Dim pname As String
-On Error Resume Next
-pname = Trim$(Me.controls("txtName").text)
-On Error GoTo 0
-If Len(pname) = 0 Then
-    MsgBox "氏名を入力してください。", vbExclamation
-    Exit Sub
-End If
 
-Dim ws As Worksheet: Set ws = EnsureEvalData()
-Dim look As Object: Set look = BuildHeaderLookup(ws)
-
-look("IO_Sensory") = HeaderCol_Compat("IO_Sensory", ws)
-look("IO_ADL") = HeaderCol_Compat("IO_ADL", ws)
-look("IO_MMT") = HeaderCol_Compat("IO_MMT", ws)
-look("IO_Tone") = HeaderCol_Compat("IO_Tone", ws)
-
-' ROMは複数列のため次手で別処理
-Dim r As Long
-ws.Activate
-Dim cName As Long: cName = HeaderCol_Compat("氏名", ws)
-If cName = 0 Then cName = HeaderCol_Compat("利用者名", ws)
-If cName = 0 Then cName = HeaderCol_Compat("名前", ws)
-If cName = 0 Then
-    MsgBox "氏名列が見つかりません。", vbExclamation
-    Exit Sub
-End If
-
-Dim rr As Long
-For rr = ws.Cells(ws.rows.count, cName).End(xlUp).row To 2 Step -1
-    If Trim$(CStr(ws.Cells(rr, cName).value)) = pname Then
-        r = rr
-        Exit For
-    End If
-Next
-If r = 0 Then
-    MsgBox "前回データが見つかりません（氏名一致なし）: " & pname, vbExclamation
-    Exit Sub
-End If
-
-
-
-'If r <= 0 Then Exit Sub
-
-
-If r > 0 Then
-    Application.Run "LoadSensoryFromSheet", ThisWorkbook.Worksheets("EvalData"), r, Me
-    Application.Run "LoadMMTFromSheet", ThisWorkbook.Worksheets("EvalData"), r, Me
-    Application.Run "LoadLatestPainNow"
-    Application.Run "Load_ADL_Latest"
-End If
 
     Call modEvalIOEntry.LoadEvaluation_ByName_From(Me)
 
@@ -2833,77 +2783,7 @@ End Sub
 Private Sub cmdLoadPrev_Click()
 Debug.Print "[ENTER] cmdLoadPrev_Click", Timer
 
-
-    Dim ws As Worksheet: Set ws = modSchema.GetEvalDataSheet()
-
-    ' 1) 氏名をフォームから取得（ラベル拾い）
-    Dim frm As MSForms.Frame
-    Dim pname As String
-    Set frm = modEvalIOEntry.GetBasicInfoFrame(Me)
-    pname = GetTextByLabelInFrame(frm, "氏名")
-    If Trim$(pname) = "" Then
-        MsgBox "氏名が空です。読み込めません。", vbExclamation
-        Exit Sub
-    End If
-
-    ' 2) 参照列を準備（存在すれば使う。なければスキップでOK）
-    Dim look As Object: Set look = CreateObject("Scripting.Dictionary")
-    look.CompareMode = 1
-   ' --- 見出しの列位置を look に直書きで入れる（未定義関数は使わない） ---
-look.RemoveAll
-look.CompareMode = 1  ' vbTextCompare
-
-' 氏名
-look("Basic.Name") = modEvalIOEntry.FindColByHeaderExact(ws, "Basic.Name")
-If look("Basic.Name") = 0 Then look("Basic.Name") = modEvalIOEntry.FindColByHeaderExact(ws, "氏名")
-If look("Basic.Name") = 0 Then look("Basic.Name") = modEvalIOEntry.FindColByHeaderExact(ws, "Name")
-
-' ID（候補表示用に使うだけ）
-look("Basic.ID") = modEvalIOEntry.FindColByHeaderExact(ws, "Basic.ID")
-If look("Basic.ID") = 0 Then look("Basic.ID") = modEvalIOEntry.FindColByHeaderExact(ws, "BasicInfo_ID")
-If look("Basic.ID") = 0 Then look("Basic.ID") = modEvalIOEntry.FindColByHeaderExact(ws, "ID")
-
-' 年齢（候補表示用）
-look("Basic.Age") = modEvalIOEntry.FindColByHeaderExact(ws, "Basic.Age")
-If look("Basic.Age") = 0 Then look("Basic.Age") = modEvalIOEntry.FindColByHeaderExact(ws, "年齢")
-If look("Basic.Age") = 0 Then look("Basic.Age") = modEvalIOEntry.FindColByHeaderExact(ws, "Age")
-
-' 評価日（候補表示用）
-look("Basic.EvalDate") = modEvalIOEntry.FindColByHeaderExact(ws, "Basic.EvalDate")
-If look("Basic.EvalDate") = 0 Then look("Basic.EvalDate") = modEvalIOEntry.FindColByHeaderExact(ws, "評価日")
-If look("Basic.EvalDate") = 0 Then look("Basic.EvalDate") = modEvalIOEntry.FindColByHeaderExact(ws, "EvalDate")
-
-
-    ' 3) 名前で探索（複数なら候補番号を選ばせる）
-  ' ③ 名前で行番号を特定
-Dim r As Long
-r = FindRowByNameWithPickLocal(ws, pname)
-
-
-If r <= 0 Then
-    MsgBox "前回の値が見つかりません。", vbInformation
-    Exit Sub
-End If
-
-' ★氏名一致ガード（選択行が入力名と一致しなければ中止）
-Dim cName As Long
-cName = modEvalIOEntry.FindColByHeaderExact(ws, "氏名")
-If cName = 0 Then cName = modEvalIOEntry.FindColByHeaderExact(ws, "利用者名")
-If cName = 0 Then cName = modEvalIOEntry.FindColByHeaderExact(ws, "名前")
-If cName = 0 Then
-    MsgBox "氏名列が見つかりません。", vbExclamation
-    Exit Sub
-End If
-If StrComp(CStr(ws.Cells(r, cName).value), pname, vbTextCompare) <> 0 Then
-    MsgBox "選択行の氏名が「" & pname & "」と一致しません。読み込みを中止します。", vbExclamation
-    Exit Sub
-End If
-
-
-' 見つかったら黙って読み込み
     Call modEvalIOEntry.LoadEvaluation_ByName_From(Me)
-
-
 
 End Sub
 

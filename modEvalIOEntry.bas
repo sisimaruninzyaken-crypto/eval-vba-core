@@ -288,59 +288,14 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
         End If
         LoadAllSectionsFromSheet wsTarget, validRow, owner
         Exit Sub
-    ElseIf Len(resolveMessage) > 0 Then
+
+    End If
+
+    If Len(resolveMessage) > 0 Then
         MsgBox resolveMessage, vbExclamation
-        Exit Sub
-    End If
-    
-    
-    Dim ws As Worksheet: Set ws = EnsureEvalSheet(EVAL_SHEET_NAME)
-    Dim nm As String: nm = Trim$(owner.txtName.text)
-    Dim r As Long
-    Dim r2 As Long
-
-    If Len(nm) = 0 Then
-        MsgBox "氏名を入力してください。", vbExclamation
-        Exit Sub
-    End If
-    
-    
-    r = FindLatestRowByName(ws, nm)   ' ★この1行を追加
-    
-    Debug.Print "r=" & r
-
-    
-
-    ' --- 同姓同名回避：IDが入っていて、同名が複数ある時だけ ID を使う ---
-Dim idVal As String
-idVal = Trim$(GetID_FromBasicInfo(owner))
-
-If Len(idVal) > 0 Then
-    r2 = FindLatestRowByNameAndID(ws, nm, idVal)
-    If r2 > 0 Then r = r2
-End If
-
-
-
-
-
-    ' ★ここに追加（誤読込ガード）
-    Dim cName As Long
-    cName = FindColByHeaderExact(ws, "氏名")
-    If cName = 0 Then cName = FindColByHeaderExact(ws, "利用者名")
-    If cName = 0 Then cName = FindColByHeaderExact(ws, "名前")
-    If cName = 0 Then
-        MsgBox "氏名列が見つかりません。", vbExclamation
-        Exit Sub
-    End If
-    If StrComp(NormalizeName(CStr(ws.Cells(r, cName).value)), NormalizeName(nm), vbTextCompare) <> 0 Then
-        MsgBox "選択行の氏名が入力名と一致しません。読み込みを中止します。", vbExclamation
-        Exit Sub
     End If
     ' ★ここまで
 
-    t "[ENTRY] Load by NAME", ws.name, "row", r
-    LoadAllSectionsFromSheet ws, r, owner
 End Sub
 
 
