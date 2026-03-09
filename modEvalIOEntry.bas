@@ -3209,7 +3209,8 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
         indexRow = CLng(rowsByName(1))
     Else
     
-        message = "同姓同名の利用者が存在するため利用者IDの指定が必要です"
+        message = "同姓同名の利用者が存在するため利用者IDの指定が必要です" & _
+            BuildDuplicateNameCandidatesMessage(indexWs, rowsByName)
         Exit Function
     
     End If
@@ -3222,6 +3223,29 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     EnsureHistorySheetInitialized wsTarget
     ResolveUserHistorySheet = True
 End Function
+
+Private Function BuildDuplicateNameCandidatesMessage(ByVal indexWs As Worksheet, ByVal rowsByName As Collection) As String
+    Dim lines As String
+    Dim i As Long
+    Dim rowNo As Long
+    Dim idVal As String
+    Dim kanaVal As String
+    Dim latestVal As String
+
+    For i = 1 To rowsByName.count
+        rowNo = CLng(rowsByName(i))
+        idVal = Trim$(CStr(indexWs.Cells(rowNo, 1).value))
+        kanaVal = Trim$(CStr(indexWs.Cells(rowNo, 3).value))
+        latestVal = Trim$(CStr(indexWs.Cells(rowNo, 6).value))
+        lines = lines & "- ID: " & idVal & " / かな: " & kanaVal & " / 最新: " & latestVal
+        If i < rowsByName.count Then lines = lines & vbCrLf
+    Next i
+
+    If Len(lines) > 0 Then
+        BuildDuplicateNameCandidatesMessage = vbCrLf & vbCrLf & ":" & vbCrLf & lines
+    End If
+End Function
+
 
 Private Sub UpdateEvalIndexMetadata(ByVal owner As Object, ByVal indexRow As Long, ByVal sheetName As String)
     Dim indexWs As Worksheet: Set indexWs = EnsureEvalIndexSheet()
