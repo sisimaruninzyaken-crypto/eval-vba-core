@@ -3147,15 +3147,18 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
     Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
     Dim indexRow As Long
+    Dim newRow As Long
 
     If rowsByName.count = 0 Then
+        
         If Not forSave Then message = "利用者履歴が見つかりません": Exit Function
-        indexRow = indexWs.Cells(indexWs.rows.count, 1).End(xlUp).row + 1
-        indexWs.Cells(indexRow, 1).value = idVal
-        indexWs.Cells(indexRow, 2).value = nm
-        indexWs.Cells(indexRow, 3).value = kanaVal
-        indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
-        Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
+        newRow = NextAppendRow(indexWs)
+        indexWs.Cells(newRow, 1).value = idVal
+        indexWs.Cells(newRow, 2).value = nm
+        indexWs.Cells(newRow, 3).value = kanaVal
+        indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
+        Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
+        
         EnsureHistorySheetInitialized wsTarget
         ResolveUserHistorySheet = True
         Exit Function
@@ -3164,12 +3167,28 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     If rowsByName.count = 1 Then
         indexRow = CLng(rowsByName(1))
     Else
-        If Len(idVal) = 0 Then message = "同姓同名の利用者が存在するため利用者IDの指定が必要です": Exit Function
+       If Len(idVal) = 0 Then
+            If Not forSave Then message = "同姓同名の利用者が存在するため利用者IDの指定が必要です": Exit Function
+        End If
         Dim i As Long
         For i = 1 To rowsByName.count
             If StrComp(CStr(indexWs.Cells(CLng(rowsByName(i)), 1).value), idVal, vbTextCompare) = 0 Then indexRow = CLng(rowsByName(i)): Exit For
         Next i
-        If indexRow = 0 Then message = "指定された利用者IDに一致する履歴が見つかりません": Exit Function
+        If indexRow = 0 Then
+            If Not forSave Then message = "指定された利用者IDに一致する履歴が見つかりません": Exit Function
+            newRow = NextAppendRow(indexWs)
+            indexWs.Cells(newRow, 1).value = idVal
+            indexWs.Cells(newRow, 2).value = nm
+            indexWs.Cells(newRow, 3).value = kanaVal
+            indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
+            Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
+            EnsureHistorySheetInitialized wsTarget
+            ResolveUserHistorySheet = True
+            Exit Function
+        End If
+    
+    
+    
     End If
 
     If Len(CStr(indexWs.Cells(indexRow, 1).value)) = 0 And Len(idVal) > 0 Then indexWs.Cells(indexRow, 1).value = idVal
