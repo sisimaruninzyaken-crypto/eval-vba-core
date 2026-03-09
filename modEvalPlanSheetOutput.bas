@@ -5,6 +5,9 @@ Attribute VB_Name = "modEvalPlanSheetOutput"
 Option Explicit
 
 Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Optional ByVal planData As Object = Nothing)
+    
+    On Error GoTo EH
+    
     If ws Is Nothing Then Exit Sub
 
     Dim eraName As String
@@ -37,6 +40,13 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
 
     WriteMerged ws, "A50:AE51", GetPlanText(planData, Array("Monitoring.Change", "monitoring.change", "MonitoringChange", "changeText"))
     WriteMerged ws, "AF50:BJ51", GetPlanText(planData, Array("Monitoring.Issue", "monitoring.issue", "MonitoringIssue", "issueText"))
+
+
+    Exit Sub
+EH:
+    Err.Clear
+
+
 End Sub
 
 Private Sub WriteProgramBlocks(ByVal ws As Worksheet, ByVal planData As Object)
@@ -74,6 +84,7 @@ Private Function GetProgramItem(ByVal planData As Object, ByVal idx As Long) As 
     If IsEmpty(programs) Then programs = ResolvePath(planData, "programItems")
 
     If IsEmpty(programs) Then Exit Function
+    
     GetProgramItem = GetIndexValue(programs, idx)
 End Function
 
@@ -82,10 +93,13 @@ Private Function GetIndexValue(ByVal src As Variant, ByVal idx As Long) As Varia
     If IsObject(src) Then
         Dim t As String
         t = TypeName(src)
-        If t = "Collection" Then
-            If idx >= 1 And idx <= src.count Then GetIndexValue = src.item(idx)
+        If StrComp(t, "Collection", vbTextCompare) = 0 Then
+            If idx >= 1 And idx <= CLng(CallByName(src, "Count", VbGet)) Then
+                GetIndexValue = CallByName(src, "Item", VbGet, idx)
+            End If
             Exit Function
         End If
+        
         GetIndexValue = CallByName(src, "Item", VbGet, idx)
         Exit Function
     End If
@@ -119,11 +133,8 @@ Private Function GetPlanTextWithFallback(ByVal planData As Object, ByVal owner A
 End Function
 
 Private Function BuildHeaderDate(ByVal labelText As String, ByVal formattedDate As String) As String
-    If Len(formattedDate) = 0 Then
-        BuildHeaderDate = vbNullString
-    Else
-        BuildHeaderDate = labelText & "：" & formattedDate
-    End If
+    If Len(Trim$(formattedDate)) = 0 Then Exit Function
+    BuildHeaderDate = labelText & "：" & formattedDate
 End Function
 
 Private Function BuildMedicalDatesText(ByVal owner As Object) As String
@@ -146,16 +157,24 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
     Dim labels As Collection
     Set labels = New Collection
 
+    Dim i As Long
     If Not IsEmpty(names) Then
-        Dim i As Long
         For i = LBound(names) To UBound(names)
             Dim ctl As Object
             Set ctl = FindControlByName(owner, CStr(names(i)))
             If Not ctl Is Nothing Then
-                If GetCheckValueSafe(ctl) Then labels.Add NzText(GetControlCaptionSafe(ctl), "")
+                If GetCheckValueSafe(ctl) Then
+                    AddUniqueText labels, GetControlCaptionSafe(ctl)
+                End If
             End If
         Next i
     End If
+    
+
+    If labels.count = 0 Then
+        CollectHomeEnvCheckedCaptions owner, labels
+    End If
+    
     
     Dim text As String
     text = JoinCollection(labels, "、")
@@ -175,10 +194,14 @@ End Function
 
 Private Function TryGetHomeEnvControlNames() As Variant
     On Error Resume Next
-    TryGetHomeEnvControlNames = Application.Run("modEvalIOEntry.HomeEnvControlNames")
+    TryGetHomeEnvControlNames = Application.Run("HomeEnvControlNames")
     If Err.Number <> 0 Then
         Err.Clear
-        TryGetHomeEnvControlNames = Application.Run("HomeEnvControlNames")
+        TryGetHomeEnvControlNames = Application.Run("modEvalIOEntry.HomeEnvControlNames")
+    End If
+    If Err.Number <> 0 Then
+        Err.Clear
+        TryGetHomeEnvControlNames = Empty
     End If
     On Error GoTo 0
 End Function
@@ -190,9 +213,9 @@ Private Function CollectHomeEnvCheckNames(ByVal owner As Object) As Variant
     If names.count = 0 Then Exit Function
 
     Dim arr() As String
-    ReDim arr(0 To names.count - 1)
 
     Dim i As Long
+    ReDim arr(0 To names.count - 1)
     For i = 1 To names.count
         arr(i - 1) = CStr(names(i))
     Next i
@@ -200,36 +223,51 @@ Private Function CollectHomeEnvCheckNames(ByVal owner As Object) As Variant
 End Function
 
 Private Sub CollectHomeEnvCheckNamesFromContainer(ByVal container As Object, ByVal names As Collection)
-    If container Is Nothing Then Exit Sub
+    If ObjectIsNothingSafe(container) Then Exit Sub
 
-    Dim controls As Object
-    Set controls = Nothing
-    On Error Resume Next
-    Set controls = container.controls
-    On Error GoTo 0
-    If controls Is Nothing Then Exit Sub
-
+    Dim controlsObj As Object
+    Set controlsObj = GetControlsSafe(container)
+    If controlsObj Is Nothing Then Exit Sub
+    
+    
     Dim ctl As Object
-    For Each ctl In controls
-        Dim isCheck As Boolean
-        Dim tagText As String
-        isCheck = (StrComp(TypeName(ctl), "CheckBox", vbTextCompare) = 0)
-        tagText = NzText(GetControlTagSafe(ctl), "")
-
-        If isCheck Then
-            If Len(tagText) >= Len("BI.HomeEnv.") Then
-                If StrComp(Left$(tagText, Len("BI.HomeEnv.")), "BI.HomeEnv.", vbTextCompare) = 0 Then
-                    On Error Resume Next
-                    names.Add CStr(ctl.name), CStr(ctl.name)
-                    On Error GoTo 0
-                End If
-            End If
+    For Each ctl In controlsObj
+        If IsHomeEnvCheckControl(ctl) Then
+            On Error Resume Next
+            names.Add NzTextSafe(CallByName(ctl, "Name", VbGet)), NzTextSafe(CallByName(ctl, "Name", VbGet))
+            Err.Clear
+            On Error GoTo 0
         End If
 
         CollectHomeEnvCheckNamesFromContainer ctl, names
     Next ctl
 End Sub
 
+Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal labels As Collection)
+    If ObjectIsNothingSafe(container) Then Exit Sub
+    
+    Dim controlsObj As Object
+    Set controlsObj = GetControlsSafe(container)
+    If controlsObj Is Nothing Then Exit Sub
+
+    Dim ctl As Object
+    For Each ctl In controlsObj
+        If IsHomeEnvCheckControl(ctl) Then
+            If GetCheckValueSafe(ctl) Then AddUniqueText labels, GetControlCaptionSafe(ctl)
+        End If
+        CollectHomeEnvCheckedCaptions ctl, labels
+    Next ctl
+End Sub
+
+Private Function IsHomeEnvCheckControl(ByVal ctl As Object) As Boolean
+    If ObjectIsNothingSafe(ctl) Then Exit Function
+    If StrComp(TypeName(ctl), "CheckBox", vbTextCompare) <> 0 Then Exit Function
+
+    Dim tagText As String
+    tagText = GetControlTagSafe(ctl)
+    If Len(tagText) < Len("BI.HomeEnv.") Then Exit Function
+    IsHomeEnvCheckControl = (StrComp(Left$(tagText, Len("BI.HomeEnv.")), "BI.HomeEnv.", vbTextCompare) = 0)
+End Function
 
 
 Private Function FormatWarekiFull(ByVal dateText As String) As String
@@ -275,7 +313,7 @@ End Sub
 
 Private Function ParseWarekiInput(ByVal src As String, ByRef era As String, ByRef y As Long, ByRef m As Long, ByRef d As Long) As Boolean
     Dim s As String
-    s = Trim$(NzText(src))
+    s = Trim$(NzTextSafe(src))
     If Len(s) = 0 Then Exit Function
 
     era = ExtractEraName(s)
@@ -306,13 +344,12 @@ Private Function ExtractNumbers(ByVal s As String) As Variant
         ch = Mid$(s, i, 1)
         If ch Like "[0-9]" Then
             buf = buf & ch
-        Else
-            If Len(buf) > 0 Then
-                ReDim Preserve values(0 To count)
-                values(count) = CLng(buf)
-                count = count + 1
-                buf = vbNullString
-            End If
+            
+        ElseIf Len(buf) > 0 Then
+            ReDim Preserve values(0 To count)
+            values(count) = CLng(buf)
+            count = count + 1
+            buf = vbNullString
         End If
     Next i
 
@@ -346,18 +383,17 @@ Private Function ExtractEraName(ByVal s As String) As String
 End Function
 
 Private Function RemoveEraPrefix(ByVal s As String) As String
+    s = Trim$(NzTextSafe(s))
     Dim era As String
     era = ExtractEraName(s)
 
-    If Len(era) > 0 Then
-        s = Trim$(Replace(s, era, "", 1, 1, vbTextCompare))
-    End If
+    s = Trim$(NzTextSafe(s))
 
     If Len(s) > 0 Then
         Dim head As String
         head = UCase$(Left$(s, 1))
         If head = "R" Or head = "H" Or head = "S" Or head = "T" Or head = "M" Then
-            RemoveEraPrefix = Mid$(s, 2)
+            RemoveEraPrefix = Trim$(Mid$(s, 2))
             Exit Function
         End If
     End If
@@ -383,13 +419,14 @@ End Sub
 
 Private Function TryParseDate(ByVal src As String, ByRef dt As Date) As Boolean
     Dim s As String
-    s = Trim$(NzText(src))
+    s = Trim$(NzTextSafe(src))
     If Len(s) = 0 Then Exit Function
 
     On Error Resume Next
     dt = CDate(s)
     TryParseDate = (Err.Number = 0)
     Err.Clear
+    On Error GoTo 0
 End Function
 
 Private Function FormatDateForSentence(ByVal src As String) As String
@@ -397,7 +434,7 @@ Private Function FormatDateForSentence(ByVal src As String) As String
     If TryParseDate(src, dt) Then
         FormatDateForSentence = Year(dt) & "年" & Month(dt) & "月" & day(dt) & "日"
     Else
-        FormatDateForSentence = Trim$(NzText(src))
+        FormatDateForSentence = Trim$(NzTextSafe(src))
     End If
 End Function
 
@@ -405,7 +442,7 @@ Private Function GetCtrlTextSafeAny(ByVal owner As Object, ParamArray names() As
     Dim i As Long
     For i = LBound(names) To UBound(names)
         Dim s As String
-        s = GetCtrlTextSafe(owner, CStr(names(i)))
+        s = GetCtrlTextSafe(owner, NzTextSafe(names(i)))
         If Len(s) > 0 Then
             GetCtrlTextSafeAny = s
             Exit Function
@@ -417,102 +454,184 @@ Private Function GetCtrlTextSafe(ByVal owner As Object, ByVal ctrlName As String
     Dim ctl As Object
     Set ctl = FindControlByName(owner, ctrlName)
     If ctl Is Nothing Then Exit Function
+    
+    GetCtrlTextSafe = GetControlTextSafe(ctl)
+End Function
 
+
+Private Function GetControlTextSafe(ByVal ctl As Object) As String
+    If ObjectIsNothingSafe(ctl) Then Exit Function
+    
     On Error Resume Next
-    GetCtrlTextSafe = NzText(CallByName(ctl, "Text", VbGet))
-    If Len(GetCtrlTextSafe) = 0 Then GetCtrlTextSafe = NzText(CallByName(ctl, "Value", VbGet))
+    GetControlTextSafe = NzTextSafe(CallByName(ctl, "Text", VbGet))
+    If Len(GetControlTextSafe) = 0 Then GetControlTextSafe = NzTextSafe(CallByName(ctl, "Value", VbGet))
+    If Len(GetControlTextSafe) = 0 Then GetControlTextSafe = NzTextSafe(CallByName(ctl, "Caption", VbGet))
     Err.Clear
+    On Error GoTo 0
+End Function
+
+Private Function GetControlValueSafe(ByVal ctl As Object) As Variant
+    If ObjectIsNothingSafe(ctl) Then Exit Function
+    On Error Resume Next
+    GetControlValueSafe = CallByName(ctl, "Value", VbGet)
+    If Err.Number <> 0 Then
+        Err.Clear
+        GetControlValueSafe = Empty
+    End If
+    On Error GoTo 0
 End Function
 
 Private Function FindControlByName(ByVal container As Object, ByVal ctrlName As String) As Object
-    On Error Resume Next
-    If LCase$(NzText(CallByName(container, "Name", VbGet))) = LCase$(ctrlName) Then
-        Set FindControlByName = container
-        Exit Function
+    On Error GoTo SafeExit
+    If ObjectIsNothingSafe(container) Then Exit Function
+
+    Dim thisName As String
+    thisName = NzTextSafe(GetMemberValue(container, "Name"))
+    If Len(thisName) > 0 Then
+        If StrComp(thisName, ctrlName, vbTextCompare) = 0 Then
+            Set FindControlByName = container
+            Exit Function
+        End If
     End If
-    Err.Clear
+
 
     Dim pagesObj As Object
-    Set pagesObj = Nothing
-    Set pagesObj = CallByName(container, "Pages", VbGet)
-    If Err.Number = 0 And Not pagesObj Is Nothing Then
-        Dim p As Variant
-        For Each p In pagesObj
-            Set FindControlByName = FindControlByName(p, ctrlName)
+    Set pagesObj = GetPagesSafe(container)
+    If Not pagesObj Is Nothing Then
+        Dim pg As Object
+        For Each pg In pagesObj
+            Set FindControlByName = FindControlByName(pg, ctrlName)
             If Not FindControlByName Is Nothing Then Exit Function
-        Next p
+        Next pg
     End If
     Err.Clear
 
     Dim controlsObj As Object
-    Set controlsObj = Nothing
-    Set controlsObj = CallByName(container, "Controls", VbGet)
-    If Err.Number <> 0 Or controlsObj Is Nothing Then
-        Err.Clear
-        Exit Function
-    End If
+    Set controlsObj = GetControlsSafe(container)
+    If controlsObj Is Nothing Then Exit Function
 
     Dim c As Variant
-    For Each c In controlsObj
-        Set FindControlByName = FindControlByName(c, ctrlName)
+    Dim ctl As Object
+    For Each ctl In controlsObj
+        Set FindControlByName = FindControlByName(ctl, ctrlName)
         If Not FindControlByName Is Nothing Then Exit Function
-    Next c
+    Next ctl
+
+SafeExit:
     Err.Clear
 End Function
 
-Private Function GetCheckValueSafe(ByVal ctl As Object) As Boolean
+Private Function GetControlsSafe(ByVal container As Object) As Object
+    If ObjectIsNothingSafe(container) Then Exit Function
     On Error Resume Next
-    GetCheckValueSafe = CBool(CallByName(ctl, "Value", VbGet))
-    Err.Clear
+    Set GetControlsSafe = CallByName(container, "Controls", VbGet)
+    If Err.Number <> 0 Then
+        Err.Clear
+        Set GetControlsSafe = Nothing
+    End If
+    On Error GoTo 0
 End Function
 
-Private Function GetControlCaptionSafe(ByVal ctl As Object) As String
+Private Function GetPagesSafe(ByVal container As Object) As Object
+    If ObjectIsNothingSafe(container) Then Exit Function
     On Error Resume Next
-    GetControlCaptionSafe = NzText(CallByName(ctl, "Caption", VbGet))
-    Err.Clear
-End Function
-
-Private Function GetControlTagSafe(ByVal ctrl As Object) As String
-    On Error Resume Next
-    GetControlTagSafe = CStr(ctrl.tag)
+    Set GetPagesSafe = CallByName(container, "Pages", VbGet)
+    If Err.Number <> 0 Then
+        Err.Clear
+        Set GetPagesSafe = Nothing
+    End If
     On Error GoTo 0
 End Function
 
 
+Private Function GetCheckValueSafe(ByVal ctl As Object) As Boolean
+    Dim v As Variant
+    v = GetControlValueSafe(ctl)
+
+    If IsError(v) Or IsNull(v) Or IsEmpty(v) Then Exit Function
+    On Error Resume Next
+    GetCheckValueSafe = CBool(v)
+    Err.Clear
+    On Error GoTo 0
+End Function
+
+Private Function GetControlCaptionSafe(ByVal ctl As Object) As String
+    If ObjectIsNothingSafe(ctl) Then Exit Function
+    On Error Resume Next
+    GetControlCaptionSafe = NzTextSafe(CallByName(ctl, "Caption", VbGet))
+    If Len(GetControlCaptionSafe) = 0 Then GetControlCaptionSafe = NzTextSafe(CallByName(ctl, "Name", VbGet))
+    Err.Clear
+    On Error GoTo 0
+End Function
+
+
+Private Function GetControlTagSafe(ByVal ctl As Object) As String
+    If ObjectIsNothingSafe(ctl) Then Exit Function
+    On Error Resume Next
+    GetControlTagSafe = NzTextSafe(CallByName(ctl, "Tag", VbGet))
+    Err.Clear
+    On Error GoTo 0
+End Function
+
+Private Sub AddUniqueText(ByVal col As Collection, ByVal s As String)
+    s = Trim$(NzTextSafe(s))
+    If Len(s) = 0 Then Exit Sub
+
+    Dim i As Long
+    For i = 1 To col.count
+        If StrComp(CStr(col(i)), s, vbTextCompare) = 0 Then Exit Sub
+    Next i
+    col.Add s
+End Sub
 
 Private Function JoinCollection(ByVal col As Collection, ByVal delimiter As String) As String
     Dim i As Long
     For i = 1 To col.count
         If Len(JoinCollection) > 0 Then JoinCollection = JoinCollection & delimiter
-        JoinCollection = JoinCollection & CStr(col.item(i))
+        JoinCollection = JoinCollection & CStr(col(i))
     Next i
 End Function
 
 Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVal text As String)
-    ws.Range(addressText).Cells(1, 1).value = NzText(text)
+    On Error Resume Next
+    ws.Range(addressText).Cells(1, 1).value = NzTextSafe(text)
+    Err.Clear
+    On Error GoTo 0
 End Sub
 
-Private Function NzText(ByVal value As Variant, Optional ByVal fallback As String = "") As String
-    If IsObject(value) Then
-        NzText = fallback
-    ElseIf IsError(value) Then
-        NzText = fallback
-    ElseIf IsNull(value) Or IsEmpty(value) Then
-        NzText = fallback
+Private Function NzTextSafe(ByVal v As Variant, Optional ByVal fallback As String = vbNullString) As String
+    On Error GoTo EH
+    If IsError(v) Then
+        NzTextSafe = fallback
+    ElseIf IsNull(v) Then
+        NzTextSafe = fallback
+    ElseIf IsEmpty(v) Then
+        NzTextSafe = fallback
+    ElseIf IsObject(v) Then
+        If ObjectIsNothingSafe(v) Then
+            NzTextSafe = fallback
+        Else
+            NzTextSafe = fallback
+        End If
     Else
-        NzText = CStr(value)
+
+        NzTextSafe = CStr(v)
     End If
+    Exit Function
+EH:
+    NzTextSafe = fallback
+    Err.Clear
 End Function
 
 Private Function GetPlanText(ByVal planData As Object, ByVal paths As Variant) As String
-    If planData Is Nothing Then Exit Function
+    If ObjectIsNothingSafe(planData) Then Exit Function
 
     Dim i As Long
     For i = LBound(paths) To UBound(paths)
         Dim v As Variant
-        v = ResolvePath(planData, CStr(paths(i)))
+        v = ResolvePath(planData, NzTextSafe(paths(i)))
         If Not IsEmpty(v) Then
-            GetPlanText = NzText(v)
+            GetPlanText = NzTextSafe(v)
             If Len(GetPlanText) > 0 Then Exit Function
         End If
     Next i
@@ -522,15 +641,23 @@ Private Function GetTextByKeys(ByVal source As Variant, ByVal keys As Variant) A
     Dim i As Long
     For i = LBound(keys) To UBound(keys)
         Dim v As Variant
-        v = ResolvePath(source, CStr(keys(i)))
+        v = ResolvePath(source, NzTextSafe(keys(i)))
         If Not IsEmpty(v) Then
-            GetTextByKeys = NzText(v)
+            GetTextByKeys = NzTextSafe(v)
             If Len(GetTextByKeys) > 0 Then Exit Function
         End If
     Next i
 End Function
 
 Private Function ResolvePath(ByVal source As Variant, ByVal path As String) As Variant
+    If Len(Trim$(path)) = 0 Then Exit Function
+    If IsObject(source) Then
+        If ObjectIsNothingSafe(source) Then Exit Function
+    ElseIf IsEmpty(source) Or IsNull(source) Or IsError(source) Then
+        Exit Function
+    End If
+    
+    
     Dim cur As Variant
     cur = source
 
@@ -547,16 +674,34 @@ Private Function ResolvePath(ByVal source As Variant, ByVal path As String) As V
 End Function
 
 Private Function GetMemberValue(ByVal source As Variant, ByVal memberName As String) As Variant
-    If IsEmpty(source) Then Exit Function
+    If Len(Trim$(memberName)) = 0 Then Exit Function
+    If IsError(source) Or IsNull(source) Or IsEmpty(source) Then Exit Function
     If Not IsObject(source) Then Exit Function
+    If ObjectIsNothingSafe(source) Then Exit Function
 
     On Error Resume Next
     GetMemberValue = CallByName(source, memberName, VbGet)
-    If Err.Number = 0 Then Exit Function
-    Err.Clear
 
-    GetMemberValue = CallByName(source, "Item", VbGet, memberName)
-    If Err.Number = 0 Then Exit Function
+    If Err.Number = 0 Then
+        On Error GoTo 0
+        Exit Function
+    End If
+
+
     Err.Clear
+    GetMemberValue = CallByName(source, "Item", VbGet, memberName)
+    If Err.Number <> 0 Then
+        Err.Clear
+        GetMemberValue = Empty
+    End If
+    On Error GoTo 0
 End Function
 
+Private Function ObjectIsNothingSafe(ByVal obj As Object) As Boolean
+    On Error GoTo EH
+    ObjectIsNothingSafe = (obj Is Nothing)
+    Exit Function
+EH:
+    ObjectIsNothingSafe = True
+    Err.Clear
+End Function
