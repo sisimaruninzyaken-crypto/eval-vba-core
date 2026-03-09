@@ -3130,6 +3130,18 @@ Private Function FindEvalIndexRowsByName(ByVal indexWs As Worksheet, ByVal nameT
     Set FindEvalIndexRowsByName = c
 End Function
 
+Private Function FindEvalIndexRowByUserID(ByVal indexWs As Worksheet, ByVal userID As String) As Long
+    Dim lastRow As Long: lastRow = indexWs.Cells(indexWs.rows.count, 1).End(xlUp).row
+    Dim r As Long
+    For r = 2 To lastRow
+        If StrComp(Trim$(CStr(indexWs.Cells(r, 1).value)), Trim$(userID), vbTextCompare) = 0 Then
+            FindEvalIndexRowByUserID = r
+            Exit Function
+        End If
+    Next r
+End Function
+
+
 Private Function FindEvalIndexRowBySheetName(ByVal indexWs As Worksheet, ByVal sheetName As String) As Long
     Dim lastRow As Long: lastRow = indexWs.Cells(indexWs.rows.count, 4).End(xlUp).row
     Dim r As Long
@@ -3143,15 +3155,44 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     If Len(nm) = 0 Then message = "氏名が未入力です": Exit Function
 
     Dim indexWs As Worksheet: Set indexWs = EnsureEvalIndexSheet()
-    Dim rowsByName As Collection: Set rowsByName = FindEvalIndexRowsByName(indexWs, nm)
     Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
     Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
+    Dim rowsByName As Collection
     Dim indexRow As Long
     Dim newRow As Long
+    
+    If Len(idVal) > 0 Then
+        indexRow = FindEvalIndexRowByUserID(indexWs, idVal)
+        If indexRow = 0 Then
+            If Not forSave Then message = "指定された利用者IDに一致する履歴が見つかりません": Exit Function
+            newRow = NextAppendRow(indexWs)
+            indexWs.Cells(newRow, 1).value = idVal
+            indexWs.Cells(newRow, 2).value = nm
+            indexWs.Cells(newRow, 3).value = kanaVal
+            indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
+            Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
+
+            EnsureHistorySheetInitialized wsTarget
+            ResolveUserHistorySheet = True
+            Exit Function
+        End If
+
+        If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
+        If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
+
+        Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
+        EnsureHistorySheetInitialized wsTarget
+        ResolveUserHistorySheet = True
+        Exit Function
+    End If
+
+    Set rowsByName = FindEvalIndexRowsByName(indexWs, nm)
+    
 
     If rowsByName.count = 0 Then
         
         If Not forSave Then message = "利用者履歴が見つかりません": Exit Function
+        
         newRow = NextAppendRow(indexWs)
         indexWs.Cells(newRow, 1).value = idVal
         indexWs.Cells(newRow, 2).value = nm
@@ -3167,26 +3208,9 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     If rowsByName.count = 1 Then
         indexRow = CLng(rowsByName(1))
     Else
-        If Len(idVal) = 0 Then
-            message = "同姓同名の利用者が存在するため利用者IDの指定が必要です"
-            Exit Function
-        End If
-        
-        Dim i As Long
-        For i = 1 To rowsByName.count
-            If StrComp(CStr(indexWs.Cells(CLng(rowsByName(i)), 1).value), idVal, vbTextCompare) = 0 Then
-                indexRow = CLng(rowsByName(i))
-                Exit For
-            End If
-            
-            Next i
-            
-        If indexRow = 0 Then
-            message = "w指定された利用者IDに一致する履歴が見つかりません"
-            Exit Function
-        End If
     
-    
+        message = "同姓同名の利用者が存在するため利用者IDの指定が必要です"
+        Exit Function
     
     End If
 
