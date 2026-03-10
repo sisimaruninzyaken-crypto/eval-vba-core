@@ -2838,8 +2838,18 @@ Me.Left = Application.Left + (Application.Width - Me.Width) / 2: Me.Top = Applic
 
 
 
- Dim scrH As Single
+    Dim scrH As Single
     Dim h As Single
+    Dim mp2 As Object
+    Dim mp2Parent As Object
+    Dim mpPhysObj As Object
+    Dim pgPhys0 As Object
+    Dim frPhys8 As Object
+    Dim mpROMObj As Object
+    Dim mp1 As Object
+    Dim pg1 As Object
+    Dim fr32 As Object
+    Dim btnLoadPrev As Object
     scrH = Application.UsableHeight
     If scrH < 500 Then
         h = 530
@@ -2936,12 +2946,33 @@ End If
 '--- Fix: 子MultiPage見切れ対策（2025-12-13 OKスナップショット固定）
 
 
-Me.controls("MultiPage2").parent.Height = Me.controls("MultiPage2").Height
-Me.controls("Frame12").Height = 508.1
-Me.controls("mpPhys").Pages(0).controls("Frame8").controls("mpROM").Height = Me.controls("mpPhys").Pages(0).controls("Frame8").InsideHeight - Me.controls("mpPhys").Pages(0).controls("Frame8").controls("mpROM").Top
-Me.controls("mpPhys").Pages(0).controls("Frame8").Height = Me.controls("mpPhys").Height
-Me.controls("mpPhys").Pages(0).controls("Frame8").controls("mpROM").Height = Me.controls("mpPhys").Pages(0).controls("Frame8").InsideHeight - Me.controls("mpPhys").Pages(0).controls("Frame8").controls("mpROM").Top
+On Error Resume Next
+Set mp2 = Me.controls("MultiPage2")
+If Not mp2 Is Nothing Then
+    Set mp2Parent = mp2.parent
+    If Not mp2Parent Is Nothing Then
+        mp2Parent.Height = mp2.Height
+    End If
+End If
+On Error GoTo 0
 
+Me.controls("Frame12").Height = 508.1
+On Error Resume Next
+Set mpPhysObj = Me.controls("mpPhys")
+If Not mpPhysObj Is Nothing Then
+    Set pgPhys0 = mpPhysObj.Pages(0)
+    If Not pgPhys0 Is Nothing Then
+        Set frPhys8 = pgPhys0.controls("Frame8")
+        If Not frPhys8 Is Nothing Then
+            Set mpROMObj = frPhys8.controls("mpROM")
+            frPhys8.Height = mpPhysObj.Height
+            If Not mpROMObj Is Nothing Then
+                mpROMObj.Height = frPhys8.InsideHeight - mpROMObj.Top
+            End If
+        End If
+    End If
+End If
+On Error GoTo 0
 
 
     Call BuildEvalShell_Once
@@ -7047,6 +7078,12 @@ End Sub
 
 
 Public Sub CreateHeaderButtons_Once()
+   Dim mp1 As Object
+   Dim pg1 As Object
+   Dim fr32 As Object
+   Dim btnLoadPrev As Object
+
+
     Static done As Boolean
     If done Then Exit Sub
     done = True
@@ -7146,7 +7183,19 @@ Set mHdrLoadPrevHook.owner = Me
 
 ' 旧ボタンは非表示
 On Error Resume Next
-Me.controls("MultiPage1").Pages(0).controls("Frame32").controls("btnLoadPrevCtl").Visible = False
+Set mp1 = Me.controls("MultiPage1")
+If Not mp1 Is Nothing Then
+    Set pg1 = mp1.Pages(0)
+    If Not pg1 Is Nothing Then
+        Set fr32 = pg1.controls("Frame32")
+        If Not fr32 Is Nothing Then
+            Set btnLoadPrev = fr32.controls("btnLoadPrevCtl")
+            If Not btnLoadPrev Is Nothing Then
+                btnLoadPrev.Visible = False
+            End If
+        End If
+    End If
+End If
 On Error GoTo 0
 
     
