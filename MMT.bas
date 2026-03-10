@@ -142,11 +142,9 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
     If host Is Nothing Then Set host = GetMMTHost(pg)
     If host Is Nothing Then Exit Function
     
-    On Error Resume Next
-    Set mp = host.controls("mpMMTChild")
-    On Error GoTo 0
-    
-    If mp Is Nothing Then
+    Set mp = host
+    If TypeName(mp) <> "MultiPage" Then
+        Set mp = Nothing
         On Error Resume Next
         For i = 0 To host.controls.count - 1
             If TypeName(host.controls(i)) = "MultiPage" Then
@@ -158,18 +156,8 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
     End If
     
     If mp Is Nothing Then
-        On Error Resume Next
-        Set mp = host.controls.Add("Forms.MultiPage.1", "mpMMTChild", True)
-        On Error GoTo 0
-        
-        If mp Is Nothing Then Exit Function
-        
-        mp.Left = 0
-        mp.Top = 0
-        mp.Style = 0
-        mp.Pages.Clear
-        mp.Pages.Add.caption = ChrW(&H4E0A) & ChrW(&H80A2)
-        mp.Pages.Add.caption = ChrW(&H4E0B) & ChrW(&H80A2)
+        Set GetMMTChildTabs = host
+        Exit Function
     End If
     
     If mp.Pages.count < 2 Then
