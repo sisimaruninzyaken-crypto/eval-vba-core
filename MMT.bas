@@ -50,11 +50,21 @@ Public Sub MMT_BuildChildTabs_Direct()
         MMT_ClearGen mp
     End If
 
-    BuildMMTPage mp.Pages(0), Array("Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", "Œ¨ŠOù", _
+    
+    If TypeName(mp) = "MultiPage" Then
+        BuildMMTPage mp.Pages(0), Array("Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", "Œ¨ŠOù", _
                                     "•I‹ü‹È", "•IL“W", "‘O˜r‰ñ“à", "‘O˜r‰ñŠO", _
                                     "èŠÖß¶‹ü", "èŠÖß”w‹ü", "w‹ü‹È", "wL“W", "•êw‘Î—§")
-    BuildMMTPage mp.Pages(1), Array("ŒÒ‹ü‹È", "ŒÒL“W", "ŒÒŠO“]", "ŒÒ“à“]", _
+        BuildMMTPage mp.Pages(1), Array("ŒÒ‹ü‹È", "ŒÒL“W", "ŒÒŠO“]", "ŒÒ“à“]", _
                                     "•G‹ü‹È", "•GL“W", "‘«ŠÖß”w‹ü", "‘«ŠÖß’ê‹ü", "•êæäL“W")
+    Else
+       BuildMMTPage mp, Array("Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", "Œ¨ŠOù", _
+                       "•I‹ü‹È", "•IL“W", "‘O˜r‰ñ“à", "‘O˜r‰ñŠO", _
+                       "èŠÖß¶‹ü", "èŠÖß”w‹ü", "w‹ü‹È", "wL“W", "•êw‘Î—§", _
+                       "ŒÒ‹ü‹È", "ŒÒL“W", "ŒÒŠO“]", "ŒÒ“à“]", _
+                       "•G‹ü‹È", "•GL“W", "‘«ŠÖß”w‹ü", "‘«ŠÖß’ê‹ü", "‘«æäL“W")
+    End If
+    
     
     DoEvents
     Resize_MMTChildHost_ToPage
