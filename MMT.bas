@@ -77,7 +77,7 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
     If pg Is Nothing Then Exit Function
     
     ' 1) åÛï‚ñºÇóDêÊ
-    For Each cand In Array("fraMMTHost", "Frame9", "fraMMTWrap")
+    For Each cand In Array("Frame9", "fraMMTWrap")
         On Error Resume Next
         Set host = SafeGetControl(pg, CStr(cand))
         On Error GoTo 0
