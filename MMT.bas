@@ -43,8 +43,12 @@ Public Sub MMT_BuildChildTabs_Direct()
     mp.Height = host.InsideHeight
 
     '--- qƒ^ƒu‚Ì’†g‚ğì‚è’¼‚·iMMTGEN‚¾‚¯Á‚·j ---
-    MMT_ClearGen mp.Pages(0)
-    MMT_ClearGen mp.Pages(1)
+    If TypeName(mp) = "MultiPage" Then
+        MMT_ClearGen mp.Pages(0)
+        MMT_ClearGen mp.Pages(1)
+    Else
+        MMT_ClearGen mp
+    End If
 
     BuildMMTPage mp.Pages(0), Array("Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", "Œ¨ŠOù", _
                                     "•I‹ü‹È", "•IL“W", "‘O˜r‰ñ“à", "‘O˜r‰ñŠO", _
