@@ -3142,28 +3142,47 @@ Dim y As Single, cboTmp As MSForms.ComboBox
     CreateLabel fTests, "握力 左（kg）", COL_RX, 94: CreateTextBox fTests, COL_RX + lblW + 40, 94, 80, 0, False, "txtGripL", "Grip.L"
 
 Dim memoTop As Single
+Dim fraTestMemo As MSForms.Frame
+Dim memoLX As Single, memoRX As Single
+
 memoTop = 128
-CreateLabel fTests, "備考", COL_LX, memoTop, 220
+Set fraTestMemo = fTests.controls.Add("Forms.Frame.1", "fraTestMemo")
+With fraTestMemo
+    .caption = "備考欄"
+    .Left = 12
+    .Top = memoTop
+    .Width = fTests.InsideWidth - 24
+    .Height = 146
+    .ScrollBars = fmScrollBarsNone
+End With
 
-memoTop = memoTop + 20
-CreateLabel fTests, "10m歩行", COL_LX, memoTop, 110
-CreateTextBox fTests, COL_LX + 112, memoTop - 2, 200, 34, True, "txtMemo_10mWalk", "Memo.10m"
-CreateLabel fTests, "TUG", COL_RX, memoTop, 110
-CreateTextBox fTests, COL_RX + 112, memoTop - 2, 200, 34, True, "txtMemo_TUG", "Memo.TUG"
+memoLX = 12
+memoRX = 300
+
+
+memoTop = 18
+CreateLabel fraTestMemo, "10m歩行", memoLX, memoTop, 110
+CreateTextBox fraTestMemo, memoLX + 112, memoTop - 2, 200, 34, True, "txtMemo_10mWalk", "Memo.10m"
+CreateLabel fraTestMemo, "TUG", memoRX, memoTop, 110
+CreateTextBox fraTestMemo, memoRX + 112, memoTop - 2, 200, 34, True, "txtMemo_TUG", "Memo.TUG"
+
 
 memoTop = memoTop + 40
-CreateLabel fTests, "握力 右", COL_LX, memoTop, 110
-CreateTextBox fTests, COL_LX + 112, memoTop - 2, 200, 34, True, "txtMemo_GripR", "Memo.GripR"
-CreateLabel fTests, "握力 左", COL_RX, memoTop, 110
-CreateTextBox fTests, COL_RX + 112, memoTop - 2, 200, 34, True, "txtMemo_GripL", "Memo.GripL"
+CreateLabel fraTestMemo, "5回立ち上がり", memoLX, memoTop, 110
+CreateTextBox fraTestMemo, memoLX + 112, memoTop - 2, 200, 34, True, "txtMemo_GripR", "Memo.GripR"
+CreateLabel fraTestMemo, "セミタンデム", memoRX, memoTop, 110
+CreateTextBox fraTestMemo, memoRX + 112, memoTop - 2, 200, 34, True, "txtMemo_GripL", "Memo.GripL"
+
 
 memoTop = memoTop + 40
-CreateLabel fTests, "5回立ち上がり", COL_LX, memoTop, 110
-CreateTextBox fTests, COL_LX + 112, memoTop - 2, 200, 34, True, "txtMemo_STS5", "Memo.5xSTS"
-CreateLabel fTests, "セミタンデム", COL_RX, memoTop, 110
-CreateTextBox fTests, COL_RX + 112, memoTop - 2, 200, 34, True, "txtMemo_SemiTandem", "Memo.Semi"
+CreateLabel fraTestMemo, "握力 右", memoLX, memoTop, 110
+CreateTextBox fraTestMemo, memoLX + 112, memoTop - 2, 200, 34, True, "txtMemo_STS5", "Memo.5xSTS"
+CreateLabel fraTestMemo, "握力 左", memoRX, memoTop, 110
+CreateTextBox fraTestMemo, memoRX + 112, memoTop - 2, 200, 34, True, "txtMemo_SemiTandem", "Memo.Semi"
 
-ResizeFrameToContent fTests, memoTop + 44
+
+
+ResizeFrameToContent fTests, fraTestMemo.Top + fraTestMemo.Height
 
 
     Trace "TESTS end", "Init"
