@@ -43,28 +43,14 @@ Public Sub MMT_BuildChildTabs_Direct()
     mp.Height = host.InsideHeight
 
     '--- qƒ^ƒu‚Ì’†g‚ğì‚è’¼‚·iMMTGEN‚¾‚¯Á‚·j ---
-    If TypeName(mp) = "MultiPage" Then
-        MMT_ClearGen mp.Pages(0)
-        MMT_ClearGen mp.Pages(1)
-    Else
-        MMT_ClearGen mp
-    End If
-
-    
-    If TypeName(mp) = "MultiPage" Then
+    MMT_ClearGen mp.Pages(0)
+    MMT_ClearGen mp.Pages(1)
         BuildMMTPage mp.Pages(0), Array("Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", "Œ¨ŠOù", _
                                     "•I‹ü‹È", "•IL“W", "‘O˜r‰ñ“à", "‘O˜r‰ñŠO", _
                                     "èŠÖß¶‹ü", "èŠÖß”w‹ü", "w‹ü‹È", "wL“W", "•êw‘Î—§")
         BuildMMTPage mp.Pages(1), Array("ŒÒ‹ü‹È", "ŒÒL“W", "ŒÒŠO“]", "ŒÒ“à“]", _
                                     "•G‹ü‹È", "•GL“W", "‘«ŠÖß”w‹ü", "‘«ŠÖß’ê‹ü", "•êæäL“W")
-    Else
-       BuildMMTPage mp, Array("Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", "Œ¨ŠOù", _
-                       "•I‹ü‹È", "•IL“W", "‘O˜r‰ñ“à", "‘O˜r‰ñŠO", _
-                       "èŠÖß¶‹ü", "èŠÖß”w‹ü", "w‹ü‹È", "wL“W", "•êw‘Î—§", _
-                       "ŒÒ‹ü‹È", "ŒÒL“W", "ŒÒŠO“]", "ŒÒ“à“]", _
-                       "•G‹ü‹È", "•GL“W", "‘«ŠÖß”w‹ü", "‘«ŠÖß’ê‹ü", "‘«æäL“W")
-    End If
-    
+
     
     DoEvents
     Resize_MMTChildHost_ToPage
@@ -169,14 +155,28 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
         On Error GoTo 0
     End If
     
-    If mp Is Nothing Then
-        Set GetMMTChildTabs = host
-        Exit Function
-    End If
+
+        If mp Is Nothing Then
+            Set mp = host.controls.Add("Forms.MultiPage.1", "mpMMTChildGen", True)
+            With mp
+                .Left = 0
+                .Top = 0
+                .Width = host.InsideWidth
+                .Height = host.InsideHeight
+                .Style = 0
+                .TabsPerRow = 2
+                .tag = "MMTGEN"
+            End With
+        End If
+    
     
     If mp.Pages.count < 2 Then
         Do While mp.Pages.count < 2
             mp.Pages.Add
+        Loop
+            ElseIf mp.Pages.count > 2 Then
+        Do While mp.Pages.count > 2
+            mp.Pages.Remove mp.Pages.count - 1
         Loop
     End If
     
