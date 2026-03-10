@@ -19,6 +19,8 @@ Option Explicit
 '=== frmEval ヘッダ：共通で使う変数 ===
 Private mp As MSForms.MultiPage            ' ルート MultiPage
 Private mpWalk As MSForms.MultiPage        ' 歩行評価タブ内のサブ MultiPage  ← これが今回の追加
+Private hostWalkGait As MSForms.Frame
+Private fGait As MSForms.Frame
 Private hostBasic As MSForms.Frame, hostPost As MSForms.Frame, hostMove As MSForms.Frame
 Private hostTests As MSForms.Frame, hostWalk As MSForms.Frame, hostCog As MSForms.Frame
 Private WithEvents btnLoadPrevCtl As MSForms.CommandButton
@@ -399,11 +401,20 @@ End Sub
 
 Private Function GetWalkEvalAssistiveTargetFrame() As MSForms.Frame
     On Error GoTo EH
-    Set GetWalkEvalAssistiveTargetFrame = Me.controls("MultiPage1") _
-        .Pages("Page6").controls("Frame6") _
-        .controls("MultiPage2").Pages("Page8") _
-        .controls("Frame24").controls("Frame25")
+
+    If Not fGait Is Nothing Then
+        Set GetWalkEvalAssistiveTargetFrame = fGait
+        Exit Function
+    End If
+
+    If Not mpWalk Is Nothing Then
+        Set GetWalkEvalAssistiveTargetFrame = mpWalk.Pages(0).controls("hostWalkGait").controls("fGait")
+        Exit Function
+    End If
+
+    Set GetWalkEvalAssistiveTargetFrame = Nothing
     Exit Function
+    
 EH:
     Set GetWalkEvalAssistiveTargetFrame = Nothing
 End Function
@@ -3160,7 +3171,7 @@ memoLX = 12
 memoRX = 300
 
 
-memoTop = 18
+memoTop = 24
 CreateLabel fraTestMemo, "10m歩行", memoLX, memoTop, 110
 CreateTextBox fraTestMemo, memoLX + 112, memoTop - 2, 200, 34, True, "txtMemo_10mWalk", "Memo.10m"
 CreateLabel fraTestMemo, "TUG", memoRX, memoTop, 110
@@ -3217,8 +3228,7 @@ mpWalk.Pages(0).caption = "自立度"
 mpWalk.Pages(1).caption = "RLA"
 
 
-    Dim hostWalkGait As MSForms.Frame
-    Set hostWalkGait = mpWalk.Pages(0).controls.Add("Forms.Frame.1")
+    Set hostWalkGait = mpWalk.Pages(0).controls.Add("Forms.Frame.1", "hostWalkGait")
     With hostWalkGait
     .caption = ""
     .Left = 0: .Top = 0
@@ -3232,6 +3242,9 @@ End With
 
     nextTop = pad
     Dim fGait As MSForms.Frame: Set fGait = CreateFrameP(hostWalkGait, "歩行評価（自立度）", 90)
+        Set fGait = CreateFrameP(hostWalkGait, "s]歩行評価（自立度）", 90)
+    fGait.name = "fGait"
+    
     y = 22
     Dim rowH As Single: rowH = 28
     
