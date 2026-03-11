@@ -4720,12 +4720,10 @@ End Sub
 
 
 Private Sub BuildWalkIndep_Stability()
-    Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
     Dim top1 As Single, top2 As Single, top3 As Single, top4 As Single
     Dim chk As MSForms.CheckBox
     Dim leftPos As Single
-    Dim nm As Variant
     Dim baseTop As Single
 
     Set f = GetWalkAssistiveTargetFrame()
@@ -4739,11 +4737,9 @@ Private Sub BuildWalkIndep_Stability()
     top3 = top2 + 24
     top4 = top3 + 24
 
-    For Each nm In Array("chkWalkStab_Furatsuki", "chkWalkStab_Foot", "chkWalkStab_Turn", "chkWalkStab_Slow", "chkWalkStab_FallRisk")
-        On Error Resume Next
-        f.controls.Remove CStr(nm)
-        On Error GoTo 0
-    Next
+    Do While f.controls.count > 0
+        f.controls.Remove f.controls(f.controls.count - 1).name
+    Loop
 
     If f.Height < top4 + 24 Then f.Height = top4 + 24
     
