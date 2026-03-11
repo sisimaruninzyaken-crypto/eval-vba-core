@@ -4670,18 +4670,11 @@ Public Sub ListToneKeyCaptions()
 End Sub
 
 Private Function GetWalkBaseTop(ByVal f As MSForms.Frame) As Single
-    Dim baseCtl As Object
     Dim ctl As Object
     Dim bestTop As Single
 
     GetWalkBaseTop = -1
     If f Is Nothing Then Exit Function
-
-    Set baseCtl = SafeGetControl(f, "Label100")
-    If Not baseCtl Is Nothing Then
-        GetWalkBaseTop = baseCtl.Top
-        Exit Function
-    End If
 
     bestTop = 99999
     For Each ctl In f.controls
