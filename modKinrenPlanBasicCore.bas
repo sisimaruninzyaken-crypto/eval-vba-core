@@ -584,7 +584,20 @@ Public Function GetLowerMMTMap_FromFrmEval() As Object
     
     Set dict = CreateObject("Scripting.Dictionary")
     
-    Set mp = frmEval.controls("MultiPage1").Pages(2).controls("mpMMTChild")
+    Dim pgMMT As Object, host As Object
+    Set pgMMT = GetMMTPage(frmEval)
+    If pgMMT Is Nothing Then
+        Set GetLowerMMTMap_FromFrmEval = dict
+        Exit Function
+    End If
+
+    Set host = GetMMTHost(pgMMT)
+    Set mp = GetMMTChildTabs(pgMMT, host)
+    If mp Is Nothing Then
+        Set GetLowerMMTMap_FromFrmEval = dict
+        Exit Function
+    End If
+    
     Set p = mp.Pages(1) ' ‰ºŽˆ
     
     For Each c In p.controls

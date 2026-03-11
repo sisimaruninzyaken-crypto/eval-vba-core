@@ -76,6 +76,31 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
     
     If pg Is Nothing Then Exit Function
     
+    For i = 0 To pg.controls.count - 1
+        Set c = pg.controls(i)
+        If TypeName(c) = "Frame" Then
+            Set mpProbe = Nothing
+            On Error Resume Next
+            For j = 0 To c.controls.count - 1
+                If TypeName(c.controls(j)) = "MultiPage" Then
+                    Set mpProbe = c.controls(j)
+                    Exit For
+                End If
+            Next j
+            On Error GoTo 0
+
+            If Not mpProbe Is Nothing Then
+                If InStr(1, CStr(c.name), "MMT", vbTextCompare) > 0 _
+                   Or InStr(1, CStr(mpProbe.name), "MMT", vbTextCompare) > 0 _
+                   Or InStr(1, CStr(mpProbe.tag), "MMT", vbTextCompare) > 0 Then
+                    Set GetMMTHost = c
+                    Exit Function
+                End If
+            End If
+        End If
+    Next i
+    
+    
     ' 1) 候補名を優先
     For Each cand In Array("Frame9", "fraMMTWrap")
         On Error Resume Next
@@ -84,51 +109,13 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
         
         If Not host Is Nothing Then
             If TypeName(host) = "Frame" Then
-#If APP_DEBUG Then
-                Debug.Print "[MMT][HOST] name-hit=" & CStr(cand) & " type=" & TypeName(host)
-#End If
+
                 Set GetMMTHost = host
                 Exit Function
             End If
             Set host = Nothing
         End If
     Next cand
-    
-    ' 2) Frame を走査して特徴で推定
-    For i = 0 To pg.controls.count - 1
-        Set c = pg.controls(i)
-        If TypeName(c) = "Frame" Then
-            
-            ' mpMMTChild を持っているか（アクセスエラーもあり得るのでガード）
-            Set mpProbe = Nothing
-            On Error Resume Next
-            Set mpProbe = c.controls("mpMMTChild")
-            On Error GoTo 0
-            
-            If Not mpProbe Is Nothing Then
-#If APP_DEBUG Then
-                Debug.Print "[MMT][HOST] inferred=" & c.name & " (has mpMMTChild)"
-#End If
-                Set GetMMTHost = c
-                Exit Function
-            End If
-            
-            ' MultiPage 子を持っているか
-            On Error Resume Next
-            If c.controls.count > 0 Then
-                For j = 0 To c.controls.count - 1
-                    If TypeName(c.controls(j)) = "MultiPage" Then
-#If APP_DEBUG Then
-                        Debug.Print "[MMT][HOST] inferred=" & c.name & " (has MultiPage child)"
-#End If
-                        Set GetMMTHost = c
-                        Exit Function
-                    End If
-                Next j
-            End If
-            On Error GoTo 0
-        End If
-    Next i
     
 #If APP_DEBUG Then
     Debug.Print "[MMT][HOST] not found -> skip"

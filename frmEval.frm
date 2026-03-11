@@ -400,23 +400,35 @@ Private Sub BuildAssistiveChecksInWalkEval(ByVal assistiveCsv As String)
 End Sub
 
 Private Function GetWalkEvalAssistiveTargetFrame() As MSForms.Frame
-    On Error GoTo EH
+    Set GetWalkEvalAssistiveTargetFrame = GetWalkAssistiveTargetFrame()
+End Function
 
-    If Not fGait Is Nothing Then
-        Set GetWalkEvalAssistiveTargetFrame = fGait
-        Exit Function
-    End If
-
-    If Not mpWalk Is Nothing Then
-        Set GetWalkEvalAssistiveTargetFrame = mpWalk.Pages(0).controls("hostWalkGait").controls("fGait")
-        Exit Function
-    End If
-
-    Set GetWalkEvalAssistiveTargetFrame = Nothing
-    Exit Function
+Public Function GetWalkAssistiveTargetFrame() As MSForms.Frame
+    Dim root As MSForms.Frame
+    Dim c As Control
     
-EH:
-    Set GetWalkEvalAssistiveTargetFrame = Nothing
+    On Error Resume Next
+    If Not fGait Is Nothing Then
+        Set GetWalkAssistiveTargetFrame = fGait
+        Exit Function
+    End If
+    On Error GoTo 0
+    
+    Set root = GetWalkRootFrame()
+    If root Is Nothing Then Exit Function
+    
+    For Each c In root.controls
+        If TypeName(c) = "Frame" Then
+            If InStr(1, CStr(c.name), "gait", vbTextCompare) > 0 _
+               Or InStr(1, CStr(c.caption), "", vbTextCompare) > 0 Then
+                Set GetWalkAssistiveTargetFrame = c
+                Exit Function
+            End If
+        End If
+    Next
+
+    Set GetWalkAssistiveTargetFrame = root
+    
 End Function
 
 '=== 関節拘縮：左右チェックを1行生成するヘルパー ======================
@@ -6635,25 +6647,111 @@ End Function
 
 
 Private Function GetMainMultiPage() As MSForms.MultiPage
+    Dim c As Control
+    
     On Error Resume Next
     Set GetMainMultiPage = Me.controls("MultiPage1")
+    On Error GoTo 0
+    If Not GetMainMultiPage Is Nothing Then Exit Function
+
+    For Each c In Me.controls
+        If TypeName(c) = "MultiPage" Then
+            Set GetMainMultiPage = c
+            Exit Function
+        End If
+    Next
 End Function
 
 
 
 '=== 歩行評価フレーム取得ヘルパー（Frame6 固定） ===
 Private Function GetWalkFrame() As MSForms.Frame
-    On Error Resume Next
-
-    ' 名前で直接取得（命名前提：Frame6）
-    Set GetWalkFrame = Me.controls("Frame6")
-
-    ' もし見つからなければ何も返さない（Nothing）
+    Set GetWalkFrame = GetWalkRootFrame()
 End Function
 
+Public Function GetWalkRootFrame() As MSForms.Frame
+    Dim mp As MSForms.MultiPage
+    Dim pg As MSForms.Page
+    Dim c As Control
+    Dim best As MSForms.Frame
+    Dim bestArea As Double
+    Dim area As Double
 
+    Set mp = GetMainMultiPage()
+    If mp Is Nothing Then Exit Function
 
+    For Each pg In mp.Pages
+        For Each c In pg.controls
+            If TypeName(c) = "Frame" Then
+                If InStr(1, CStr(c.caption), "", vbTextCompare) > 0 _
+                   Or InStr(1, CStr(c.name), "walk", vbTextCompare) > 0 Then
+                    Set GetWalkRootFrame = c
+                    Exit Function
+                End If
+                area = CDbl(c.Width) * CDbl(c.Height)
+                If best Is Nothing Or area > bestArea Then
+                    If InStr(1, CStr(pg.caption), "", vbTextCompare) > 0 Then
+                        Set best = c
+                        bestArea = area
+                    End If
+                End If
+            End If
+        Next
+    Next
 
+    Set GetWalkRootFrame = best
+End Function
+
+Public Function GetCogRootFrame() As MSForms.Frame
+    Dim mp As MSForms.MultiPage
+    Dim pg As MSForms.Page
+    Dim c As Control
+
+    Set mp = GetMainMultiPage()
+    If mp Is Nothing Then Exit Function
+
+    For Each pg In mp.Pages
+        If InStr(1, CStr(pg.caption), "Fm", vbTextCompare) > 0 Or InStr(1, CStr(pg.caption), "_", vbTextCompare) > 0 Then
+            For Each c In pg.controls
+                If TypeName(c) = "Frame" Then
+                    If InStr(1, CStr(c.name), "31", vbTextCompare) > 0 Or InStr(1, CStr(c.name), "Cog", vbTextCompare) > 0 Then
+                        Set GetCogRootFrame = c
+                        Exit Function
+                    End If
+                End If
+            Next
+            For Each c In pg.controls
+                If TypeName(c) = "Frame" Then
+                    Set GetCogRootFrame = c
+                    Exit Function
+                End If
+            Next
+        End If
+    Next
+End Function
+
+Public Function GetCogTabs() As MSForms.MultiPage
+    Dim f As MSForms.Frame
+    Dim c As Control
+
+    Set f = GetCogRootFrame()
+    If f Is Nothing Then Exit Function
+
+    For Each c In f.controls
+        If TypeName(c) = "MultiPage" Then
+            If InStr(1, CStr(c.name), "Cog", vbTextCompare) > 0 Or InStr(1, CStr(c.name), "Mental", vbTextCompare) > 0 Then
+                Set GetCogTabs = c
+                Exit Function
+            End If
+        End If
+    Next
+    For Each c In f.controls
+        If TypeName(c) = "MultiPage" Then
+            Set GetCogTabs = c
+            Exit Function
+        End If
+    Next
+End Function
 
 
 
@@ -6836,13 +6934,10 @@ Private Function GetPageRootFrame(ByVal pageIndex As Long) As MSForms.Frame
     If pageIndex < 0 Or pageIndex > mp.Pages.count - 1 Then Exit Function
 
     Set pg = mp.Pages(pageIndex)
-    If pg.caption = "認知・精神" Then
-#If APP_DEBUG Then
-    Debug.Print "[HIT] GetPageRootFrame COG -> Frame31"
-#End If
-    Set GetPageRootFrame = pg.controls("Frame7").controls("Frame31")
-    Exit Function
-End If
+    If InStr(1, CStr(pg.caption), "Fm", vbTextCompare) > 0 Then
+        Set GetPageRootFrame = GetCogRootFrame()
+        If Not GetPageRootFrame Is Nothing Then Exit Function
+    End If
 
     ' そのページ内の「一番大きな Frame = ルートフレーム」とみなす
     For Each c In pg.controls

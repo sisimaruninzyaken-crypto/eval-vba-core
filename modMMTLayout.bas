@@ -1,16 +1,11 @@
 Attribute VB_Name = "modMMTLayout"
 Public Sub Resize_MMTChildHost_ToPage()
     
-    Debug.Print "[MMTResize] pgInside=", frmEval.controls("mpPhys").Pages(1).InsideWidth, frmEval.controls("mpPhys").Pages(1).InsideHeight
+    Dim pg As Object, host As Object, child As Object
 
-    
-    Dim mp As Object, pg As Object, host As Object, child As Object
+    Set pg = GetMMTPage(frmEval)
+    If pg Is Nothing Then Exit Sub
 
-    Set mp = frmEval.controls("mpPhys")
-    mp.value = 1
-    DoEvents
-
-    Set pg = mp.Pages(1)
     Set host = GetMMTHost(pg)
     Set child = GetMMTChildTabs(pg, host)
     If host Is Nothing Or child Is Nothing Then Exit Sub

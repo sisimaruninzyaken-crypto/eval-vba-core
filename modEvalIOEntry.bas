@@ -2198,6 +2198,7 @@ Public Sub Save_WalkIndepToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal o
 End Sub
 
 
+
 Private Function FindControlRecursive(parent As Object, name As String) As Object
     Dim ctl As Object
     For Each ctl In parent.controls
@@ -2439,6 +2440,24 @@ Public Sub Save_WalkRLAToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal own
 
 End Sub
 
+Private Function GetCogTabsSafe(ByVal owner As Object) As Object
+    Dim mp As Object
+    Dim c As Object
+
+    On Error Resume Next
+    Set mp = owner.GetCogTabs
+    On Error GoTo 0
+    If Not mp Is Nothing Then
+        Set GetCogTabsSafe = mp
+        Exit Function
+    End If
+
+    On Error Resume Next
+    Set c = owner.controls("Frame31")
+    If Not c Is Nothing Then Set mp = c.controls("mpCogMental")
+    On Error GoTo 0
+    If Not mp Is Nothing Then Set GetCogTabsSafe = mp
+End Function
 
 
 
@@ -2449,16 +2468,24 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     Dim f As MSForms.Frame
     Dim c As MSForms.Control
     Dim bpsd As String
+    Dim mpCog As Object
+    Dim pgCog As Object
+    Dim pgMental As Object
     
     Set frm = owner   ' frmEval を受け取る想定
+    Set mpCog = GetCogTabsSafe(frm)
+    If mpCog Is Nothing Then Exit Sub
+    Set pgCog = mpCog.Pages("pgCognition")
+    Set pgMental = mpCog.Pages("pgMental")
+        
     
     '=== 認知：中核6項目 =====================================
     
     ' 記憶
     col = HeaderCol_Compat("IO_Cog_Memory", ws)
     If col > 0 Then
-        v = frm.controls("Frame31").controls("mpCogMental") _
-        .Pages("pgCognition").controls("cmbCogMemory").value
+        v = pgCog.controls("cmbCogMemory").value
+
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2467,8 +2494,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 注意
     col = HeaderCol_Compat("IO_Cog_Attention", ws)
     If col > 0 Then
-        v = frm.controls("Frame31").controls("mpCogMental") _
-        .Pages("pgCognition").controls("cmbCogAttention").value
+        v = pgCog.controls("cmbCogAttention").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2477,8 +2503,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 見当識
     col = HeaderCol_Compat("IO_Cog_Orientation", ws)
     If col > 0 Then
-            v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgCognition").controls("cmbCogOrientation").value
+            v = pgCog.controls("cmbCogOrientation").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2487,8 +2512,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 判断
     col = HeaderCol_Compat("IO_Cog_Judgement", ws)
     If col > 0 Then
-            v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgCognition").controls("cmbCogJudgement").value
+            v = pgCog.controls("cmbCogJudgement").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2497,8 +2521,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 遂行機能
     col = HeaderCol_Compat("IO_Cog_Executive", ws)
     If col > 0 Then
-            v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgCognition").controls("cmbCogExecutive").value
+             v = pgCog.controls("cmbCogExecutive").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2507,8 +2530,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 言語
     col = HeaderCol_Compat("IO_Cog_Language", ws)
     If col > 0 Then
-            v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgCognition").controls("cmbCogLanguage").value
+             v = pgCog.controls("cmbCogLanguage").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2518,8 +2540,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     
     col = HeaderCol_Compat("IO_Cog_DementiaType", ws)
     If col > 0 Then
-            v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgCognition").controls("cmbDementiaType").value
+             v = pgCog.controls("cmbDementiaType").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2527,8 +2548,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     
     col = HeaderCol_Compat("IO_Cog_DementiaNote", ws)
     If col > 0 Then
-           v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgCognition").controls("txtDementiaNote").text
+            v = pgCog.controls("txtDementiaNote").text
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2537,7 +2557,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         '=== 認知：BPSD（チェックが入っている項目を | 区切りで保存） ===
     
     bpsd = ""
-    With frm.controls("Frame31").controls("mpCogMental").Pages("pgCognition")
+     With pgCog
         For Each c In .controls
             If TypeName(c) = "CheckBox" Then
                 If c.value = True Then
@@ -2559,8 +2579,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 気分
     col = HeaderCol_Compat("IO_Mental_Mood", ws)
     If col > 0 Then
-            v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgMental").controls("cmbMood").value
+             v = pgMental.controls("cmbMood").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2569,8 +2588,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 意欲
     col = HeaderCol_Compat("IO_Mental_Motivation", ws)
     If col > 0 Then
-            v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgMental").controls("cmbMotivation").value
+            v = pgMental.controls("cmbMotivation").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2579,9 +2597,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 不安
     col = HeaderCol_Compat("IO_Mental_Anxiety", ws)
     If col > 0 Then
-            v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgMental").controls("cmbAnxiety").value
-
+            v = pgMental.controls("cmbAnxiety").value
+            
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
     End If
@@ -2589,8 +2606,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 対人関係
     col = HeaderCol_Compat("IO_Mental_Relation", ws)
     If col > 0 Then
-            v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgMental").controls("cmbRelation").value
+            v = pgMental.controls("cmbRelation").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2599,9 +2615,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 睡眠
     col = HeaderCol_Compat("IO_Mental_Sleep", ws)
     If col > 0 Then
-            v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgMental").controls("cmbSleep").value
-
+            v = pgMental.controls("cmbSleep").value
+            
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
     End If
@@ -2609,8 +2624,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 精神面・備考
     col = HeaderCol_Compat("IO_Mental_Note", ws)
     If col > 0 Then
-           v = frm.controls("Frame31").controls("mpCogMental") _
-            .Pages("pgMental").controls("txtMentalNote").text
+            v = pgMental.controls("txtMentalNote").text
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -2639,9 +2653,9 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     Const COL_MENTAL_NOTE      As Long = 179
 
     Dim f As MSForms.Frame
-    Dim mp As MSForms.MultiPage
-    Dim pgCog As MSForms.Page
-    Dim pgMental As MSForms.Page
+    Dim mp As Object
+    Dim pgCog As Object
+    Dim pgMental As Object
 
     Dim v As Variant
     Dim s As String
@@ -2650,8 +2664,8 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     Dim chk As MSForms.CheckBox
 
     '=== UI ルート取得（絶対名を前提）===
-    Set f = owner.Frame31
-    Set mp = f.controls("mpCogMental")
+    Set mp = GetCogTabsSafe(owner)
+    If mp Is Nothing Then Exit Sub
     Set pgCog = mp.Pages("pgCognition")
     Set pgMental = mp.Pages("pgMental")
 
