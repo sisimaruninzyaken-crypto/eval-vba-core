@@ -4687,9 +4687,40 @@ Private Function GetWalkBaseTop(ByVal f As MSForms.Frame) As Single
 End Function
 
 Private Function SafeGetPage(ByVal mp As Object, ByVal pageKey As Variant) As Object
+    Dim i As Long
+    Dim pg As Object
+    Dim keyText As String
+    Dim capText As String
+
+    If mp Is Nothing Then Exit Function
+    
     On Error Resume Next
-    Set SafeGetPage = mp.Pages(pageKey)
+    If IsNumeric(pageKey) Then
+        i = CLng(pageKey)
+        If i >= 0 And i < mp.Pages.count Then
+            Set SafeGetPage = mp.Pages(i)
+            Exit Function
+        End If
+    End If
     On Error GoTo 0
+
+    keyText = Trim$(CStr(pageKey))
+    If LenB(keyText) = 0 Then Exit Function
+
+    For i = 0 To mp.Pages.count - 1
+        Set pg = mp.Pages(i)
+
+        If StrComp(CStr(pg.name), keyText, vbTextCompare) = 0 Then
+            Set SafeGetPage = pg
+            Exit Function
+        End If
+
+        capText = Trim$(CStr(pg.caption))
+        If StrComp(capText, keyText, vbTextCompare) = 0 Then
+            Set SafeGetPage = pg
+            Exit Function
+        End If
+    Next i
 End Function
 
 
@@ -5723,7 +5754,6 @@ End Sub
 Private Sub BuildDailyLogTab()
     Dim mp As Object
     Dim pg As MSForms.Page
-    Dim i As Long
     Dim exists As Boolean
     Dim fra As MSForms.Frame
 
@@ -5733,13 +5763,8 @@ Private Sub BuildDailyLogTab()
     Set mp = Me.controls("MultiPage1")
 
     '=== すでに「日々の記録」タブがあるか確認（冪等用）===
-    For i = 0 To mp.Pages.count - 1
-        If mp.Pages(i).caption = "日々の記録" Then
-            exists = True
-            Set pg = mp.Pages(i)
-            Exit For
-        End If
-    Next i
+    Set pg = SafeGetPage(mp, "日々の記録")
+    exists = Not (pg Is Nothing)
 
     '=== なければ新しいページを追加 ===
     If Not exists Then
@@ -6416,7 +6441,6 @@ Private Function GetDailyLogFrame() As MSForms.Frame
     Dim mp As Object
     Dim pg As Object
     Dim f As Object
-    Dim i As Long
 
     On Error Resume Next
 
@@ -6426,12 +6450,7 @@ Private Function GetDailyLogFrame() As MSForms.Frame
     End If
 
     ' 「日々の記録」ページを探す
-    For i = 0 To mp.Pages.count - 1
-        If mp.Pages(i).caption = "日々の記録" Then
-            Set pg = mp.Pages(i)
-            Exit For
-        End If
-    Next i
+    Set pg = SafeGetPage(mp, "日々の記録")
     If pg Is Nothing Then
         Exit Function
     End If
