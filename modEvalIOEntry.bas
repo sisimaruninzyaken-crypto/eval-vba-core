@@ -2442,20 +2442,12 @@ End Sub
 
 Private Function GetCogTabsSafe(ByVal owner As Object) As Object
     Dim mp As Object
-    Dim c As Object
 
     On Error Resume Next
     Set mp = owner.GetCogTabs
     On Error GoTo 0
-    If Not mp Is Nothing Then
-        Set GetCogTabsSafe = mp
-        Exit Function
-    End If
-
-    On Error Resume Next
-    Set c = owner.controls("Frame31")
-    If Not c Is Nothing Then Set mp = c.controls("mpCogMental")
-    On Error GoTo 0
+    
+    Set GetCogTabsSafe = mp
     If Not mp Is Nothing Then Set GetCogTabsSafe = mp
 End Function
 

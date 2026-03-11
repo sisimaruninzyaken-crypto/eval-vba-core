@@ -236,6 +236,14 @@ Public Function ControlExists(parent As Object, ctrlName As String) As Boolean
     ControlExists = False
 End Function
 
+Public Function SafeGetControl(ByVal parent As Object, ByVal nm As String) As Object
+    On Error Resume Next
+    Set SafeGetControl = parent.controls(nm)
+    On Error GoTo 0
+End Function
+
+
+
 Public Sub Tighten_DailyLog_Boxes()
     Dim uf As Object: Set uf = frmEval
 

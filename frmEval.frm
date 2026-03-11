@@ -2911,7 +2911,9 @@ End If
 
         BuildWalkUI_All
 
-    Me.controls("Frame31").caption = ""
+    Dim cogRoot As MSForms.Frame
+    Set cogRoot = GetCogRootFrame()
+    If Not cogRoot Is Nothing Then cogRoot.caption = ""
     BuildCogMentalUI_Simple
     BuildCog_CognitionCore      '← 認知6項目を生成
     BuildCog_DementiaBlock      '← 認知症の種類＋備考を生成
@@ -2959,7 +2961,7 @@ End If
 
 
 On Error Resume Next
-Set mp2 = Me.controls("MultiPage2")
+Set mp2 = SafeGetControl(Me, "MultiPage2")
 If Not mp2 Is Nothing Then
     Set mp2Parent = mp2.parent
     If Not mp2Parent Is Nothing Then
@@ -2968,9 +2970,11 @@ If Not mp2 Is Nothing Then
 End If
 On Error GoTo 0
 
-Me.controls("Frame12").Height = 508.1
+Dim frame12 As Object
+Set frame12 = SafeGetControl(Me, "Frame12")
+If Not frame12 Is Nothing Then frame12.Height = 508.1
 On Error Resume Next
-Set mpPhysObj = Me.controls("mpPhys")
+Set mpPhysObj = SafeGetControl(Me, "mpPhys")
 If Not mpPhysObj Is Nothing Then
     Set pgPhys0 = mpPhysObj.Pages(0)
     If Not pgPhys0 Is Nothing Then
@@ -3028,9 +3032,6 @@ mHdrLoadPrevHook.tag = "LoadPrev"
 Set mHdrLoadPrevHook.owner = Me
 DoEvents
 
-On Error Resume Next
-Me.controls("MultiPage1").Pages(0).controls("Frame32").controls("btnLoadPrevCtl").Visible = False
-On Error GoTo 0
     
  If Not mBasicInfoTidyDone Then
     mBasicInfoTidyDone = True
@@ -4668,73 +4669,78 @@ Public Sub ListToneKeyCaptions()
     Next
 End Sub
 
+Private Function GetWalkBaseTop(ByVal f As MSForms.Frame) As Single
+    Dim baseCtl As Object
+    Dim ctl As Object
+    Dim bestTop As Single
+
+    GetWalkBaseTop = -1
+    If f Is Nothing Then Exit Function
+
+    Set baseCtl = SafeGetControl(f, "Label100")
+    If Not baseCtl Is Nothing Then
+        GetWalkBaseTop = baseCtl.Top
+        Exit Function
+    End If
+
+    bestTop = 99999
+    For Each ctl In f.controls
+        If TypeName(ctl) = "ComboBox" Or TypeName(ctl) = "Label" Then
+            If ctl.Top < bestTop Then bestTop = ctl.Top
+        End If
+    Next
+
+    If bestTop < 99999 Then GetWalkBaseTop = bestTop
+End Function
+
+Private Function SafeGetPage(ByVal mp As Object, ByVal pageKey As Variant) As Object
+    On Error Resume Next
+    Set SafeGetPage = mp.Pages(pageKey)
+    On Error GoTo 0
+End Function
+
+
 Private Sub BuildWalkIndep_DistanceOutdoor()
     Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
-    Dim lblBase As MSForms.label   ' 自立度のラベル（Label100）
     Dim cmbBase As MSForms.ComboBox
     Dim lblDist As MSForms.label
     Dim cmbDist As MSForms.ComboBox
     Dim lblOut As MSForms.label
     Dim cmbOut As MSForms.ComboBox
     Dim top1 As Single, top2 As Single, top3 As Single
+    Dim baseTop As Single
 
-       ' 「歩行」自立度フレーム取得（共通ヘルパー経由）
-       ' 「歩行」と「自立」を含むフレームを探す
-    For Each ctl In Me.controls
+   For Each ctl In Me.controls
         If TypeName(ctl) = "Frame" Then
             Set f = ctl
-            If InStr(f.caption, "歩行") > 0 And InStr(f.caption, "自立") > 0 Then
-                Exit For
-            End If
+            If InStr(f.caption, "s") > 0 And InStr(f.caption, "") > 0 Then Exit For
             Set f = Nothing
         End If
     Next
+    If f Is Nothing Then Exit Sub
 
-    If f Is Nothing Then
-        Exit Sub
-    End If
+    baseTop = GetWalkBaseTop(f)
+    If baseTop < 0 Then Exit Sub
 
-
-
-    ' ベース（自立度）取得
-    On Error Resume Next
-    Set lblBase = f.controls("Label100")
-    On Error GoTo 0
-    If lblBase Is Nothing Then
-
-        Exit Sub
-    End If
-
-    ' 自立度コンボ（同じ行にある ComboBox を探す）
     For Each ctl In f.controls
         If TypeName(ctl) = "ComboBox" Then
-            If Abs(ctl.Top - lblBase.Top) < 0.5 Then
+            If Abs(ctl.Top - baseTop) < 0.5 Then
                 Set cmbBase = ctl
                 Exit For
             End If
         End If
     Next
-    If cmbBase Is Nothing Then
+    If cmbBase Is Nothing Then Exit Sub
 
-        Exit Sub
-    End If
+    cmbBase.tag = "WalkIndepLevel"
 
- cmbBase.tag = "WalkIndepLevel"
-
-    ' 行の高さ設定
-    top1 = lblBase.Top
+    top1 = baseTop
     top2 = top1 + 24
     top3 = top2 + 24
 
-    ' --- 距離（2段目） ---
-    On Error Resume Next
-    Set lblDist = f.controls("lblWalkDistance")
-    On Error GoTo 0
-
-    If lblDist Is Nothing Then
-        Set lblDist = f.controls.Add("Forms.Label.1", "lblWalkDistance", True)
-    End If
+    Set lblDist = SafeGetControl(f, "lblWalkDistance")
+    If lblDist Is Nothing Then Set lblDist = f.controls.Add("Forms.Label.1", "lblWalkDistance", True)
     With lblDist
         .caption = "歩行距離"
         .Left = 12
@@ -4743,36 +4749,21 @@ Private Sub BuildWalkIndep_DistanceOutdoor()
         .Height = 18
     End With
 
-    On Error Resume Next
-    Set cmbDist = f.controls("cmbWalkDistance")
-    On Error GoTo 0
-
-    If cmbDist Is Nothing Then
-        Set cmbDist = f.controls.Add("Forms.ComboBox.1", "cmbWalkDistance", True)
-    End If
+    Set cmbDist = SafeGetControl(f, "cmbWalkDistance")
+    If cmbDist Is Nothing Then Set cmbDist = f.controls.Add("Forms.ComboBox.1", "cmbWalkDistance", True)
     With cmbDist
         .Left = lblDist.Left + lblDist.Width + 12
         .Top = top2
         .Width = 300
         .Height = 18
         If .ListCount = 0 Then
-            .AddItem "5m未満"
-            .AddItem "5～10m"
-            .AddItem "10～30m"
-            .AddItem "30～50m"
-            .AddItem "50～100m"
-            .AddItem "100m以上"
+            .AddItem "5m未満": .AddItem "5～10m": .AddItem "10～30m"
+            .AddItem "30～50m": .AddItem "50～100m": .AddItem "100m以上"
         End If
     End With
 
-    ' --- 屋外歩行（3段目） ---
-    On Error Resume Next
-    Set lblOut = f.controls("lblWalkOutdoor")
-    On Error GoTo 0
-
-    If lblOut Is Nothing Then
-        Set lblOut = f.controls.Add("Forms.Label.1", "lblWalkOutdoor", True)
-    End If
+    Set lblOut = SafeGetControl(f, "lblWalkOutdoor")
+    If lblOut Is Nothing Then Set lblOut = f.controls.Add("Forms.Label.1", "lblWalkOutdoor", True)
     With lblOut
         .caption = "屋外歩行"
         .Left = 12
@@ -4781,29 +4772,21 @@ Private Sub BuildWalkIndep_DistanceOutdoor()
         .Height = 18
     End With
 
-    On Error Resume Next
-    Set cmbOut = f.controls("cmbWalkOutdoor")
-    On Error GoTo 0
-
-    If cmbOut Is Nothing Then
-        Set cmbOut = f.controls.Add("Forms.ComboBox.1", "cmbWalkOutdoor", True)
-    End If
+    Set cmbOut = SafeGetControl(f, "cmbWalkOutdoor")
+    If cmbOut Is Nothing Then Set cmbOut = f.controls.Add("Forms.ComboBox.1", "cmbWalkOutdoor", True)
     With cmbOut
         .Left = lblOut.Left + lblOut.Width + 12
         .Top = top3
         .Width = 300
         .Height = 18
         If .ListCount = 0 Then
-            .AddItem "屋内のみ可"
-            .AddItem "屋外も短距離なら可"
-            .AddItem "屋外長距離も可"
-            .AddItem "屋外歩行は原則不可"
+            .AddItem "屋内のみ可": .AddItem "屋外も短距離なら可": .AddItem "屋外長距離も可": .AddItem "屋外歩行は原則不可"
         End If
     End With
 
 
     BuildWalkIndep_Stability
-    BuildWalkIndep_Speed   '★ この行を追加
+    BuildWalkIndep_Speed
 
 End Sub
 
@@ -4812,182 +4795,117 @@ End Sub
 Private Sub BuildWalkIndep_Stability()
     Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
-    Dim lblBase As MSForms.label
     Dim top1 As Single, top2 As Single, top3 As Single, top4 As Single
     Dim chk As MSForms.CheckBox
     Dim leftPos As Single
     Dim nm As Variant
+    Dim baseTop As Single
 
     ' 「歩行」と「自立」を含むフレームを探す
     For Each ctl In Me.controls
         If TypeName(ctl) = "Frame" Then
             Set f = ctl
-            If InStr(f.caption, "歩行") > 0 And InStr(f.caption, "自立") > 0 Then
-                Exit For
-            End If
+            If InStr(f.caption, "s") > 0 And InStr(f.caption, "") > 0 Then Exit For
             Set f = Nothing
         End If
     Next
-
     If f Is Nothing Then Exit Sub
 
-    ' ベース行（Label100）の Top を基準に行位置を決める
-    On Error Resume Next
-    Set lblBase = f.controls("Label100")
-    On Error GoTo 0
-    If lblBase Is Nothing Then Exit Sub
+    baseTop = GetWalkBaseTop(f)
+    If baseTop < 0 Then Exit Sub
 
-    top1 = lblBase.Top
-    top2 = top1 + 24          ' 距離
-    top3 = top2 + 24          ' 屋外歩行
-    top4 = top3 + 24          ' 安定性（新規）
+    top1 = baseTop
+    top2 = top1 + 24
+    top3 = top2 + 24
+    top4 = top3 + 24
 
-    ' まず既存の安定性チェックを全部削除
-    For Each nm In Array( _
-        "chkWalkStab_Furatsuki", _
-        "chkWalkStab_Foot", _
-        "chkWalkStab_Turn", _
-        "chkWalkStab_Slow", _
-        "chkWalkStab_FallRisk")
+    For Each nm In Array("chkWalkStab_Furatsuki", "chkWalkStab_Foot", "chkWalkStab_Turn", "chkWalkStab_Slow", "chkWalkStab_FallRisk")
         On Error Resume Next
         f.controls.Remove CStr(nm)
         On Error GoTo 0
     Next
 
-    ' フレーム高さが足りなければ伸ばす
-    If f.Height < top4 + 24 Then
-        f.Height = top4 + 24
-    End If
-
+    If f.Height < top4 + 24 Then f.Height = top4 + 24
+    
     leftPos = 12
 
-    ' ふらつきあり
+    
     Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Furatsuki", True)
-    With chk
-        .caption = "ふらつきあり"
-        .Left = leftPos
-        .Top = top4
-        .Width = 90
-        .Height = 18
-    End With
+    chk.caption = "ふらつきあり": chk.Left = leftPos: chk.Top = top4: chk.Width = 90: chk.Height = 18
+    
     leftPos = leftPos + chk.Width + 12
+    
 
-    ' 足運び不安定
+    
     Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Foot", True)
-    With chk
-        .caption = "足運び不安定"
-        .Left = leftPos
-        .Top = top4
-        .Width = 100
-        .Height = 18
-    End With
+    chk.caption = "足運び不安定": chk.Left = leftPos: chk.Top = top4: chk.Width = 100: chk.Height = 18
+    
     leftPos = leftPos + chk.Width + 12
-
-    ' 方向転換不安
+    
+    
     Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Turn", True)
-    With chk
-        .caption = "方向転換不安"
-        .Left = leftPos
-        .Top = top4
-        .Width = 100
-        .Height = 18
-    End With
+    chk.caption = "方向転換不安": chk.Left = leftPos: chk.Top = top4: chk.Width = 100: chk.Height = 18
+    
     leftPos = leftPos + chk.Width + 12
-
-    ' 速度低下
+    
+    
+    
     Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Slow", True)
-    With chk
-        .caption = "速度低下"
-        .Left = leftPos
-        .Top = top4
-        .Width = 80
-        .Height = 18
-    End With
+    chk.caption = "速度低下": chk.Left = leftPos: chk.Top = top4: chk.Width = 80: chk.Height = 18
+    
     leftPos = leftPos + chk.Width + 12
 
-    ' 転倒リスク高い
+
     Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_FallRisk", True)
-    With chk
-        .caption = "転倒リスク高い"
-        .Left = leftPos
-        .Top = top4
-        .Width = 110
-        .Height = 18
-    End With
+    chk.caption = "転倒リスク高い": chk.Left = leftPos: chk.Top = top4: chk.Width = 110: chk.Height = 18
 End Sub
 
 
 Private Sub BuildWalkIndep_Speed()
     Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
-    Dim lblBase As MSForms.label
     Dim top1 As Single, top2 As Single, top3 As Single, top4 As Single, top5 As Single
     Dim lbl As MSForms.label
     Dim cmb As MSForms.ComboBox
+    Dim baseTop As Single
 
-    ' 「歩行」と「自立」を含むフレームを探す
+
     For Each ctl In Me.controls
         If TypeName(ctl) = "Frame" Then
             Set f = ctl
-            If InStr(f.caption, "歩行") > 0 And InStr(f.caption, "自立") > 0 Then
-                Exit For
-            End If
+            If InStr(f.caption, "s") > 0 And InStr(f.caption, "") > 0 Then Exit For
             Set f = Nothing
         End If
     Next
-
     If f Is Nothing Then Exit Sub
 
-    ' ベース行（Label100）の Top から段を決める
-    On Error Resume Next
-    Set lblBase = f.controls("Label100")
-    On Error GoTo 0
-    If lblBase Is Nothing Then Exit Sub
+    baseTop = GetWalkBaseTop(f)
+    If baseTop < 0 Then Exit Sub
 
-    top1 = lblBase.Top          ' 自立度
-    top2 = top1 + 24            ' 距離
-    top3 = top2 + 24            ' 屋外歩行
-    top4 = top3 + 24            ' 安定性
-    top5 = top4 + 24            ' ★歩行速度（新規）
+    top1 = baseTop
+    top2 = top1 + 24
+    top3 = top2 + 24
+    top4 = top3 + 24
+    top5 = top4 + 24
 
-    ' フレーム高さを必要に応じて伸ばす
-    If f.Height < top5 + 24 Then
-        f.Height = top5 + 24
-    End If
+    If f.Height < top5 + 24 Then f.Height = top5 + 24
 
-    ' ラベル（歩行速度）
-    On Error Resume Next
-    Set lbl = f.controls("lblWalkSpeed")
-    On Error GoTo 0
-    If lbl Is Nothing Then
-        Set lbl = f.controls.Add("Forms.Label.1", "lblWalkSpeed", True)
-    End If
-    With lbl
-        .caption = "歩行速度"
-        .Left = 12
-        .Top = top5
-        .Width = 60
-        .Height = 18
-    End With
-
-    ' コンボボックス（速度区分）
-    On Error Resume Next
-    Set cmb = f.controls("cmbWalkSpeed")
-    On Error GoTo 0
-    If cmb Is Nothing Then
-        Set cmb = f.controls.Add("Forms.ComboBox.1", "cmbWalkSpeed", True)
-    End If
+    
+    Set lbl = SafeGetControl(f, "lblWalkSpeed")
+    If lbl Is Nothing Then Set lbl = f.controls.Add("Forms.Label.1", "lblWalkSpeed", True)
+    lbl.caption = "歩行速度": lbl.Left = 12: lbl.Top = top5: lbl.Width = 60: lbl.Height = 18
+    
+    
+    Set cmb = SafeGetControl(f, "cmbWalkSpeed")
+    If cmb Is Nothing Then Set cmb = f.controls.Add("Forms.ComboBox.1", "cmbWalkSpeed", True)
+    
     With cmb
         .Left = lbl.Left + lbl.Width + 12
         .Top = top5
         .Width = 200
         .Height = 18
         If .ListCount = 0 Then
-            .AddItem "速い"
-            .AddItem "やや速い"
-            .AddItem "ふつう"
-            .AddItem "やや遅い"
-            .AddItem "遅い"
+            .AddItem "速い": .AddItem "やや速い": .AddItem "ふつう": .AddItem "やや遅い": .AddItem "遅い"
         End If
     End With
 End Sub
@@ -5286,7 +5204,7 @@ Public Sub BuildCogMentalUI_Simple()
 
     ' 親フレーム（認知機能・精神面）
     On Error Resume Next
-    Set f = Me.controls("Frame31")
+    Set f = GetCogRootFrame()
     On Error GoTo 0
 
     If f Is Nothing Then
@@ -5351,26 +5269,22 @@ Public Sub BuildCog_CognitionCore()
     
     ' 親フレーム（認知）
     On Error Resume Next
-    Set f = Me.controls("Frame31")
+    Set f = GetCogRootFrame()
     On Error GoTo 0
     If f Is Nothing Then
-        MsgBox "Frame31 が見つかりません。", vbExclamation
+        MsgBox "フォームがありません", vbExclamation
         Exit Sub
     End If
     
     ' 子マルチページ
-    On Error Resume Next
-    Set mp = f.controls("mpCogMental")
-    On Error GoTo 0
+    Set mp = SafeGetControl(f, "mpCogMental")
     If mp Is Nothing Then
         MsgBox "mpCogMental が見つかりません。", vbExclamation
         Exit Sub
     End If
     
     ' 認知機能ページ
-    On Error Resume Next
-    Set pg = mp.Pages("pgCognition")
-    On Error GoTo 0
+    Set pg = SafeGetPage(mp, "pgCognition")
     If pg Is Nothing Then
         MsgBox "pgCognition ページが見つかりません。", vbExclamation
         Exit Sub
@@ -5552,26 +5466,22 @@ Public Sub BuildCog_DementiaBlock()
     
     ' 親フレーム
     On Error Resume Next
-    Set f = Me.controls("Frame31")
+    Set f = GetCogRootFrame()
     On Error GoTo 0
     If f Is Nothing Then
-        MsgBox "Frame31 が見つかりません。", vbExclamation
+        MsgBox "フォームがありません", vbExclamation
         Exit Sub
     End If
     
     ' 子マルチページ
-    On Error Resume Next
-    Set mp = f.controls("mpCogMental")
-    On Error GoTo 0
+    Set mp = SafeGetControl(f, "mpCogMental")
     If mp Is Nothing Then
         MsgBox "mpCogMental が見つかりません。", vbExclamation
         Exit Sub
     End If
     
     ' 認知機能ページ
-    On Error Resume Next
-    Set pg = mp.Pages("pgCognition")
-    On Error GoTo 0
+    Set pg = SafeGetPage(mp, "pgCognition")
     If pg Is Nothing Then
         MsgBox "pgCognition ページが見つかりません。", vbExclamation
         Exit Sub
@@ -5656,26 +5566,22 @@ Public Sub BuildCog_BPSD()
     
     ' 親フレーム
     On Error Resume Next
-    Set f = Me.controls("Frame31")
+    Set f = GetCogRootFrame()
     On Error GoTo 0
     If f Is Nothing Then
-        MsgBox "Frame31 が見つかりません。", vbExclamation
+        MsgBox "フォームが見つかりません", vbExclamation
         Exit Sub
     End If
     
     ' 子マルチページ
-    On Error Resume Next
-    Set mp = f.controls("mpCogMental")
-    On Error GoTo 0
+    Set mp = SafeGetControl(f, "mpCogMental")
     If mp Is Nothing Then
         MsgBox "mpCogMental が見つかりません。", vbExclamation
         Exit Sub
     End If
     
     ' 認知機能ページ
-    On Error Resume Next
-    Set pg = mp.Pages("pgCognition")
-    On Error GoTo 0
+    Set pg = SafeGetPage(mp, "pgCognition")
     If pg Is Nothing Then
         MsgBox "pgCognition が見つかりません。", vbExclamation
         Exit Sub
@@ -5745,26 +5651,22 @@ Public Sub BuildCog_MentalBlock()
     
     ' 親フレーム（Frame31）
     On Error Resume Next
-    Set f = Me.controls("Frame31")
+    Set f = GetCogRootFrame()
     On Error GoTo 0
     If f Is Nothing Then
-        MsgBox "Frame31 が見つかりません。", vbExclamation
+        MsgBox "フォームが見つかりません", vbExclamation
         Exit Sub
     End If
     
     ' 子マルチページ mpCogMental
-    On Error Resume Next
-    Set mp = f.controls("mpCogMental")
-    On Error GoTo 0
+    Set mp = SafeGetControl(f, "mpCogMental")
     If mp Is Nothing Then
         MsgBox "mpCogMental が見つかりません。", vbExclamation
         Exit Sub
     End If
     
     ' 精神面ページ
-    On Error Resume Next
-    Set pg = mp.Pages("pgMental")
-    On Error GoTo 0
+    Set pg = SafeGetPage(mp, "pgMental")
     If pg Is Nothing Then
         MsgBox "pgMental が見つかりません。", vbExclamation
         Exit Sub

@@ -151,7 +151,7 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
                 .Width = host.InsideWidth
                 .Height = host.InsideHeight
                 .Style = 0
-                .TabsPerRow = 2
+
                 .tag = "MMTGEN"
             End With
         End If
@@ -526,9 +526,3 @@ End Function
 
 
 
-
-Private Function SafeGetControl(ByVal parent As Object, ByVal nm As String) As Object
-    On Error Resume Next
-    Set SafeGetControl = parent.controls(nm)
-    On Error GoTo 0
-End Function
