@@ -4828,7 +4828,7 @@ Private Sub BuildWalk_AbnormalTab()
 
     ' 既に「異常歩行」タブがあれば何もしない
     On Error Resume Next
-    Set pg = mp.Pages("pgWalkAbnormal")
+    Set pg = SafeGetPage(mp, "pgWalkAbnormal")
     On Error GoTo 0
     If Not pg Is Nothing Then Exit Sub
 
@@ -4868,7 +4868,7 @@ Private Sub BuildWalkAbnormal_Frames()
 
     ' 異常歩行ページ取得
     On Error Resume Next
-    Set pg = mp.Pages("pgWalkAbnormal")
+    Set pg = SafeGetPage(mp, "pgWalkAbnormal")
     On Error GoTo 0
     If pg Is Nothing Then Exit Sub
 
@@ -4945,7 +4945,7 @@ Private Sub BuildWalkAbnormal_Checks()
 
     ' 異常歩行ページを取得
     On Error Resume Next
-    Set pg = mp.Pages("pgWalkAbnormal")
+    Set pg = SafeGetPage(mp, "pgWalkAbnormal")
     On Error GoTo 0
     If pg Is Nothing Then Exit Sub
 
@@ -7477,9 +7477,12 @@ End Sub
 ' ====== BasicInfo（Frame32）コントロール実体取得 ======
 Private Function BIObj(ByVal ctrlName As String) As Object
     ' IMdcText / TextBox など “実体(Object)” を返す
-    Set BIObj = Me.controls("MultiPage1").Pages("Page1") _
-                  .controls("Frame1").controls("Frame32") _
-                  .controls(ctrlName).Object
+    Dim p As Object
+    Set p = SafeGetPage(Me.controls("MultiPage1"), "Page1")
+    If p Is Nothing Then Exit Function
+
+    Set BIObj = p.controls("Frame1").controls("Frame32") _
+                 .controls(ctrlName).Object
 End Function
 
 Private Function ReadText(ByVal o As Object) As String
