@@ -3285,8 +3285,8 @@ End With
 
 
     nextTop = pad
-    Dim fGait As MSForms.Frame: Set fGait = CreateFrameP(hostWalkGait, "歩行評価（自立度）", 90)
-        Set fGait = CreateFrameP(hostWalkGait, "s]歩行評価（自立度）", 90)
+        Set fGait = CreateFrameP(hostWalkGait, "歩行評価（自立度）", 90)
+    
     fGait.name = "fGait"
     
     y = 22
@@ -4694,88 +4694,22 @@ End Function
 
 
 Private Sub BuildWalkIndep_DistanceOutdoor()
-    Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
+    Dim ctl As MSForms.Control
     Dim cmbBase As MSForms.ComboBox
-    Dim lblDist As MSForms.label
-    Dim cmbDist As MSForms.ComboBox
-    Dim lblOut As MSForms.label
-    Dim cmbOut As MSForms.ComboBox
-    Dim top1 As Single, top2 As Single, top3 As Single
-    Dim baseTop As Single
 
-   For Each ctl In Me.controls
-        If TypeName(ctl) = "Frame" Then
-            Set f = ctl
-            If InStr(f.caption, "s") > 0 And InStr(f.caption, "") > 0 Then Exit For
-            Set f = Nothing
-        End If
-    Next
+    Set f = GetWalkAssistiveTargetFrame()
     If f Is Nothing Then Exit Sub
-
-    baseTop = GetWalkBaseTop(f)
-    If baseTop < 0 Then Exit Sub
 
     For Each ctl In f.controls
         If TypeName(ctl) = "ComboBox" Then
-            If Abs(ctl.Top - baseTop) < 0.5 Then
-                Set cmbBase = ctl
-                Exit For
-            End If
+            Set cmbBase = ctl
+            Exit For
         End If
     Next
+    
     If cmbBase Is Nothing Then Exit Sub
-
     cmbBase.tag = "WalkIndepLevel"
-
-    top1 = baseTop
-    top2 = top1 + 24
-    top3 = top2 + 24
-
-    Set lblDist = SafeGetControl(f, "lblWalkDistance")
-    If lblDist Is Nothing Then Set lblDist = f.controls.Add("Forms.Label.1", "lblWalkDistance", True)
-    With lblDist
-        .caption = "歩行距離"
-        .Left = 12
-        .Top = top2
-        .Width = 60
-        .Height = 18
-    End With
-
-    Set cmbDist = SafeGetControl(f, "cmbWalkDistance")
-    If cmbDist Is Nothing Then Set cmbDist = f.controls.Add("Forms.ComboBox.1", "cmbWalkDistance", True)
-    With cmbDist
-        .Left = lblDist.Left + lblDist.Width + 12
-        .Top = top2
-        .Width = 300
-        .Height = 18
-        If .ListCount = 0 Then
-            .AddItem "5m未満": .AddItem "5～10m": .AddItem "10～30m"
-            .AddItem "30～50m": .AddItem "50～100m": .AddItem "100m以上"
-        End If
-    End With
-
-    Set lblOut = SafeGetControl(f, "lblWalkOutdoor")
-    If lblOut Is Nothing Then Set lblOut = f.controls.Add("Forms.Label.1", "lblWalkOutdoor", True)
-    With lblOut
-        .caption = "屋外歩行"
-        .Left = 12
-        .Top = top3
-        .Width = 60
-        .Height = 18
-    End With
-
-    Set cmbOut = SafeGetControl(f, "cmbWalkOutdoor")
-    If cmbOut Is Nothing Then Set cmbOut = f.controls.Add("Forms.ComboBox.1", "cmbWalkOutdoor", True)
-    With cmbOut
-        .Left = lblOut.Left + lblOut.Width + 12
-        .Top = top3
-        .Width = 300
-        .Height = 18
-        If .ListCount = 0 Then
-            .AddItem "屋内のみ可": .AddItem "屋外も短距離なら可": .AddItem "屋外長距離も可": .AddItem "屋外歩行は原則不可"
-        End If
-    End With
 
 
     BuildWalkIndep_Stability
@@ -4794,14 +4728,7 @@ Private Sub BuildWalkIndep_Stability()
     Dim nm As Variant
     Dim baseTop As Single
 
-    ' 「歩行」と「自立」を含むフレームを探す
-    For Each ctl In Me.controls
-        If TypeName(ctl) = "Frame" Then
-            Set f = ctl
-            If InStr(f.caption, "s") > 0 And InStr(f.caption, "") > 0 Then Exit For
-            Set f = Nothing
-        End If
-    Next
+    Set f = GetWalkAssistiveTargetFrame()
     If f Is Nothing Then Exit Sub
 
     baseTop = GetWalkBaseTop(f)
@@ -4855,52 +4782,35 @@ End Sub
 
 
 Private Sub BuildWalkIndep_Speed()
-    Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
-    Dim top1 As Single, top2 As Single, top3 As Single, top4 As Single, top5 As Single
-    Dim lbl As MSForms.label
-    Dim cmb As MSForms.ComboBox
     Dim baseTop As Single
+    Dim top5 As Single
+    Dim cmb As MSForms.ComboBox
 
-
-    For Each ctl In Me.controls
-        If TypeName(ctl) = "Frame" Then
-            Set f = ctl
-            If InStr(f.caption, "s") > 0 And InStr(f.caption, "") > 0 Then Exit For
-            Set f = Nothing
-        End If
-    Next
+    Set f = GetWalkAssistiveTargetFrame()
     If f Is Nothing Then Exit Sub
 
     baseTop = GetWalkBaseTop(f)
     If baseTop < 0 Then Exit Sub
 
-    top1 = baseTop
-    top2 = top1 + 24
-    top3 = top2 + 24
-    top4 = top3 + 24
-    top5 = top4 + 24
+    top5 = baseTop + 96
 
-    If f.Height < top5 + 24 Then f.Height = top5 + 24
+    On Error Resume Next
+    f.controls.Remove "cmbGaitSpeedDetail"
+    On Error GoTo 0
+    
+    CreateLabel f, "Speed", 12, top5, 60
+    Set cmb = CreateCombo(f, 84, top5, 200, , "cmbGaitSpeedDetail")
 
-    
-    Set lbl = SafeGetControl(f, "lblWalkSpeed")
-    If lbl Is Nothing Then Set lbl = f.controls.Add("Forms.Label.1", "lblWalkSpeed", True)
-    lbl.caption = "歩行速度": lbl.Left = 12: lbl.Top = top5: lbl.Width = 60: lbl.Height = 18
-    
-    
-    Set cmb = SafeGetControl(f, "cmbWalkSpeed")
-    If cmb Is Nothing Then Set cmb = f.controls.Add("Forms.ComboBox.1", "cmbWalkSpeed", True)
-    
-    With cmb
-        .Left = lbl.Left + lbl.Width + 12
-        .Top = top5
-        .Width = 200
-        .Height = 18
-        If .ListCount = 0 Then
-            .AddItem "速い": .AddItem "やや速い": .AddItem "ふつう": .AddItem "やや遅い": .AddItem "遅い"
-        End If
-    End With
+    If cmb.ListCount = 0 Then
+          cmb.AddItem "速い"
+          cmb.AddItem "やや速い"
+          cmb.AddItem "普通"
+          cmb.AddItem "やや遅い"
+          cmb.AddItem "遅い"
+    End If
+
+    If f.Height < top5 + 42 Then f.Height = top5 + 42
 End Sub
 
 Private Sub BuildWalk_AbnormalTab()
