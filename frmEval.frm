@@ -5815,7 +5815,7 @@ Private Sub BuildDailyLogTab()
     On Error GoTo EH
 
     '=== MultiPage1 を取得 ===
-    Set mp = Me.controls("MultiPage1")
+    Set mp = EvalCtl("MultiPage1")
 
     '=== すでに「日々の記録」タブがあるか確認（冪等用）===
     Set pg = SafeGetPage(mp, "日々の記録")
@@ -6507,7 +6507,7 @@ Private Function GetDailyLogFrame() As MSForms.Frame
 
     On Error Resume Next
 
-    Set mp = Me.controls("MultiPage1")
+   Set mp = EvalCtl("MultiPage1")
     If mp Is Nothing Then
         Exit Function
     End If
@@ -6595,11 +6595,8 @@ Public Function GetCogRootFrame() As MSForms.Frame
 
     Set mp = GetMainMultiPage()
     If mp Is Nothing Then Exit Function
-    If mp.Pages.count < 7 Then Exit Function
-    
-    
-    Set pg = mp.Pages(6)
-    Set host = SafeGetControl(pg, "Frame7")
+
+    Set host = EvalCtl("Frame7")
     If host Is Nothing Then Exit Function
 
     For Each c In host.controls
@@ -6880,7 +6877,9 @@ End Sub
 Public Sub SetFormHeightSafe(ByVal newH As Single)
     Me.Height = newH
     DoEvents
-    Me.controls("MultiPage1").Height = Me.InsideHeight - 12
+    Dim mp As Object
+    Set mp = EvalCtl("MultiPage1")
+    If Not mp Is Nothing Then mp.Height = Me.InsideHeight - 12
     If mBaseLayoutDone Then
         Apply_AlignRoot_All
     End If
@@ -7219,42 +7218,47 @@ Private Sub ApplyScroll_MP1_Page3_7_Once()
    
 
     Dim mp As Object
-    Set mp = Me.controls("MultiPage1")
+    Dim f As Object
+    Set mp = EvalCtl("MultiPage1")
 
     'Page3: Frame3（ScrollHeight = 578.35 + 24 = 602.35）
-    With SafeGetControl(mp.Pages(2), "Frame3")
-        .ScrollBars = fmScrollBarsVertical
-        .ScrollHeight = 900
-    End With
+    Set f = EvalCtl("Frame3")
+    If Not f Is Nothing Then
+        f.ScrollBars = fmScrollBarsVertical
+        f.ScrollHeight = 900
+    End If
 
     'Page7: Frame7（必要時のみバー表示）
-With SafeGetControl(mp.Pages(6), "Frame7")
-    .ScrollHeight = 584.35
-    If .ScrollHeight > .Height Then
-        .ScrollBars = fmScrollBarsVertical
+Set f = EvalCtl("Frame7")
+If Not f Is Nothing Then
+    f.ScrollHeight = 584.35
+    If f.ScrollHeight > f.Height Then
+        f.ScrollBars = fmScrollBarsVertical
     Else
-        .ScrollBars = fmScrollBarsNone
+        f.ScrollBars = fmScrollBarsNone
     End If
-End With
+End If
 
 
 
 'Page2: Frame2（姿勢評価の下見切れ対策）
-With SafeGetControl(mp.Pages(1), "Frame2")
-    .Height = mp.Height
-    .ScrollBars = fmScrollBarsVertical
-    .ScrollHeight = 488   ' 464 + 24
-End With
+Set f = EvalCtl("Frame2")
+If Not f Is Nothing Then
+    If Not mp Is Nothing Then f.Height = mp.Height
+    f.ScrollBars = fmScrollBarsVertical
+    f.ScrollHeight = 488   ' 464 + 24
+End If
 
 
 
 
 'Page1: Frame1（小画面で下が見切れる対策）
-With SafeGetControl(mp.Pages(0), "Frame1")
-    .Height = mp.Height
-    .ScrollBars = fmScrollBarsVertical
-    .ScrollHeight = 420   '←いったん安全値（後で調整可）
-End With
+Set f = EvalCtl("Frame1")
+If Not f Is Nothing Then
+    If Not mp Is Nothing Then f.Height = mp.Height
+    f.ScrollBars = fmScrollBarsVertical
+    f.ScrollHeight = 420   'Sli??j
+End If
 
 
 
