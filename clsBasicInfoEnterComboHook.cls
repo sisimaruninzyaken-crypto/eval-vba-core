@@ -8,6 +8,10 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 
+Option Explicit
+
+Public WithEvents cb As MSForms.ComboBox
+Attribute cb.VB_VarHelpID = -1
 
 Private mOwner As frmEval
 
@@ -23,4 +27,3 @@ Private Sub cb_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As In
     KeyCode = 0
     mOwner.MoveBasicInfoFocusNext cb
 End Sub
-

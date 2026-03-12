@@ -3085,9 +3085,10 @@ DoEvents
  If Not mBasicInfoTidyDone Then
     mBasicInfoTidyDone = True
     Call TidyBasicInfo_TwoColumns
-    SetupBasicInfoEnterNavigation
  End If
     
+ SetupBasicInfoEnterNavigation
+ 
 End Sub
 
 
@@ -7607,10 +7608,11 @@ Private Sub SetupBasicInfoEnterNavigation()
 
         If Not c Is Nothing Then
             If TypeName(c) = "TextBox" Then
-                If c.Visible Then mBasicInfoEnterOrder.Add c
+                mBasicInfoEnterOrder.Add c
             End If
         End If
-    Next
+   Next nm
+
 
     AttachBasicInfoEnterHooks
 End Sub

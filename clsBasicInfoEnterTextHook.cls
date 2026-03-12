@@ -7,7 +7,10 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+Option Explicit
 
+Public WithEvents tb As MSForms.TextBox
+Attribute tb.VB_VarHelpID = -1
 Private mOwner As frmEval
 
 Public Sub Init(ByVal owner As frmEval, ByVal target As MSForms.TextBox)
