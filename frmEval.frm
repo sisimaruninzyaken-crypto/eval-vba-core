@@ -199,6 +199,48 @@ Private Function SafeGetControl(ByVal parent As Object, ByVal nm As String) As O
     Set SafeGetControl = modCommonUtil.SafeGetControl(parent, nm)
 End Function
 
+Private Function EvalCtl(ByVal ctrlName As String, Optional ByVal pageKey As Variant) As Object
+    Dim root As Object
+    Dim mpRoot As Object
+
+    If IsMissing(pageKey) Then
+        Set root = Me
+    Else
+        Set mpRoot = SafeGetControl(Me, "MultiPage1")
+        If mpRoot Is Nothing Then Exit Function
+        Set root = SafeGetPage(mpRoot, pageKey)
+    End If
+
+    If root Is Nothing Then Exit Function
+    Set EvalCtl = SafeGetControl(root, ctrlName)
+End Function
+
+Private Function GetPainHost() As Object
+    Dim c As Object
+
+    Set c = EvalCtl("fraPainCourse")
+    If Not c Is Nothing Then Set GetPainHost = c.parent: Exit Function
+
+    Set c = EvalCtl("fraPainSite")
+    If Not c Is Nothing Then Set GetPainHost = c.parent: Exit Function
+
+    Set c = EvalCtl("fraVAS")
+    If Not c Is Nothing Then Set GetPainHost = c.parent: Exit Function
+
+    Set c = EvalCtl("txtPainMemo")
+    If Not c Is Nothing Then Set GetPainHost = c.parent: Exit Function
+
+    Set c = EvalCtl("cmbNRS_Move")
+    If Not c Is Nothing Then Set GetPainHost = c.parent
+End Function
+
+Private Function DailyLogCtl(ByVal ctrlName As String) As Object
+    Dim f As Object
+    Set f = GetDailyLogFrame()
+    If f Is Nothing Then Exit Function
+    Set DailyLogCtl = SafeGetControl(f, ctrlName)
+End Function
+
 
 '=== ここから 画面作成ヘルパーの最小実装 =========================
 Private Function CreateFrameP(parent As MSForms.Frame, title As String, _
@@ -4025,14 +4067,14 @@ Private Sub mVAS_Change()
     On Error Resume Next
     Dim v As Long
     v = mVAS.value
-    SafeGetControl(SafeGetControl(Me, "fraVAS"), "txtVAS").text = CStr(v)
+    EvalCtl("txtVAS").text = CStr(v)
 
 End Sub
 
 
 Public Sub WireVAS()
     On Error Resume Next
-    Set mVAS = SafeGetControl(SafeGetControl(Me, "Frame12"), "fraVAS").controls("sldVAS")
+    Set mVAS = EvalCtl("sldVAS")
     If mVAS Is Nothing Then Exit Sub
 
 
@@ -4175,7 +4217,7 @@ Public Sub SummarizePainUI()
     Dim frF As MSForms.Frame, c As Control
     Dim onset$, dura$, unit$, day$, vas$
 
-    Set fr = SafeGetControl(Me, "Frame12")
+    Set fr = GetPainHost()
     
     ' 参照取得
     On Error Resume Next
@@ -4231,7 +4273,7 @@ Public Sub SummarizePainUI()
 
     ' メモへ反映
     On Error Resume Next
-   SafeGetControl(Me, "Frame12").controls("txtPainMemo").text = s
+   EvalCtl("txtPainMemo").text = s
 End Sub
 
 
@@ -4253,7 +4295,7 @@ End Sub
 ' 疼痛タブ( Frame12 )に残っている旧UIを除去する
 Public Sub RemoveLegacyPainUI()
     Dim f As MSForms.Frame, n As Variant
-    Set f = SafeGetControl(Me, "Frame12")
+    Set f = GetPainHost()
     If f Is Nothing Then Exit Sub
 
     ' Probeで[LEGACY?]と判定されたものだけ削除（新UIやNRS/備考は残す）
@@ -4275,7 +4317,7 @@ End Sub
 
 Public Sub ArrangePainLayout()
     Dim f As MSForms.Frame
-    Set f = SafeGetControl(Me, "Frame12")
+   Set f = GetPainHost()
     If f Is Nothing Then Exit Sub
 
     ' 上段：左＝性質、右＝VAS
@@ -4339,7 +4381,7 @@ End Sub
 
 Sub RemoveLegacyPainUI_Final()
     Dim fr As MSForms.Frame, c As Control
-    Set fr = SafeGetControl(frmEval, "Frame12")
+    Set fr = GetPainHost()
     If fr Is Nothing Then Exit Sub
     
     For Each c In fr.controls
@@ -4364,7 +4406,7 @@ End Sub
 
 Public Sub MatchPainFrameHeights()
     Dim z As MSForms.Frame, pf As MSForms.Frame, ps As MSForms.Frame, lb As MSForms.label
-    Set z = SafeGetControl(Me, "Frame12")
+    Set z = GetPainHost()
     If z Is Nothing Then Exit Sub
     Set pf = SafeGetControl(z, "fraPainFactors")
     Set ps = SafeGetControl(z, "fraPainSite")
@@ -4398,7 +4440,7 @@ Public Sub TidyPainBoxes()
     Dim ps As MSForms.Frame, pf As MSForms.Frame
     Dim lbPS As MSForms.label, lbPF As MSForms.label
 
-    Set z = SafeGetControl(Me, "Frame12")
+    Set z = GetPainHost()
     If z Is Nothing Then Exit Sub
     Set ps = SafeGetControl(z, "fraPainSite")
     Set pf = SafeGetControl(z, "fraPainFactors")
@@ -4443,7 +4485,7 @@ Public Sub TidyPainCourse()
     Dim L0 As Single, T0 As Single, m As Single, gap As Single
     Dim wLeftCol As Single, rightEdge As Single
     
-    Set f = SafeGetControl(Me, "Frame12")
+     Set f = GetPainHost()
     If f Is Nothing Then Exit Sub
 
     ' 参照（存在しない場合は何もしない）
@@ -6072,7 +6114,10 @@ Public Sub BuildDailyLog_HistoryList(owner As Object)
     margin = 12
 
     ' fraDailyLog と 記録内容テキストを取得
-    Set f = SafeGetControl(owner, "fraDailyLog")
+     Set f = GetDailyLogFrame()
+    If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
+    Set f = GetDailyLogFrame()
+    If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     If f Is Nothing Then Exit Sub
     Set txtNote = f.controls("txtDailyNote")
 
@@ -6141,7 +6186,8 @@ Public Sub BuildDailyLog_ExtractButton(owner As Object)
     margin = 12
 
     ' fraDailyLog と 記録者テキストを取得
-    Set f = SafeGetControl(owner, "fraDailyLog")
+    Set f = GetDailyLogFrame()
+    If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     If f Is Nothing Then Exit Sub
     Set txtStaff = f.controls("txtDailyStaff")
     BuildDailyLog_HistoryList owner   ' ★これを追加（ListBoxを必ず作る）
@@ -6210,25 +6256,25 @@ Private Sub mDailyExtract_Click()
     
     
     Dim box As Object
-            Set box = SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtMonthlyMonitoringDraft")
+            Set box = DailyLogCtl("txtMonthlyMonitoringDraft")
     If box Is Nothing Then Exit Sub
 
         If InStr(1, box.value, "（この月の記録はありません）", vbTextCompare) > 0 Then
             
             box.value = "【月次モニタリング下書き】" & vbCrLf & _
             "対象：" & Me.controls("frHeader").controls("txtHdrName").value & vbCrLf & _
-             "期間：" & Format$(DateSerial(Year(CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value)), _
-                                      Month(CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value)), 1), "yyyy/mm/dd") & _
+                 "期間：" & Format$(DateSerial(Year(CDate(DailyLogCtl("txtDailyDate").value)), _
+                                      Month(CDate(DailyLogCtl("txtDailyDate").value)), 1), "yyyy/mm/dd") & _
             " - " & _
-            Format$(DateSerial(Year(CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value)), _
-                                Month(CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value)) + 1, 0), "yyyy/mm/dd") & vbCrLf & vbCrLf & _
+            Format$(DateSerial(Year(CDate(DailyLogCtl("txtDailyDate").value)), _
+                                Month(CDate(DailyLogCtl("txtDailyDate").value)) + 1, 0), "yyyy/mm/dd") & vbCrLf & vbCrLf & _
             "■ この月に記録された特記事項" & vbCrLf & _
             "この月は特記事項となる記録はありませんでした。" & vbCrLf & _
             "体調面に大きな変動はなく、日々のリハビリにも安定して取り組まれていました。" & vbCrLf & _
             "今後も現在の状態を維持できるよう、引き続き経過を観察していきます。"
 
                       Call ExportMonitoring_ToMonthlyWorkbook( _
-         CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value), _
+          CDate(DailyLogCtl("txtDailyDate").value), _
                 Me.controls("frHeader").controls("txtHdrName").value, _
                 box.value)
 
@@ -6240,7 +6286,7 @@ Private Sub mDailyExtract_Click()
     
 
     ' ② AIで下書きに変換
-    SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtMonthlyMonitoringDraft").value = _
+    DailyLogCtl("txtMonthlyMonitoringDraft").value = _
         OpenAI_BuildDraft( _
             "【出力フォーマット厳守】" & vbCrLf & _
 "以下の見出しを、表記・順序・記号（■）を一切変えずに必ず出力すること。" & vbCrLf & _
@@ -6249,14 +6295,14 @@ Private Sub mDailyExtract_Click()
 "■ この月に記録された特記事項" & vbCrLf & _
 "■ コメント・考察" & vbCrLf & vbCrLf & _
 "・本文（経過・時系列）には、事実のみを記載する。記録に書かれていない事実や推測は、本文には含めない。「コメント・考察」欄に限り、記録内容を踏まえた今後の観察視点や留意点を記載してよい。その際は、断定を避け、「○○の可能性がある」「○○に留意して経過を確認する」などの表現に限定する。医学的判断、改善・悪化の断定、因果関係の断定は行わない。文体は「です・ます調」とし、現場記録として自然で読みやすい柔らかさを持たせる。", _
-            SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtMonthlyMonitoringDraft").value _
+            DailyLogCtl("txtMonthlyMonitoringDraft").value _
         )
 
 
             Call ExportMonitoring_ToMonthlyWorkbook( _
-        CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value), _
+        CDate(DailyLogCtl("txtDailyDate").value), _
         Me.controls("frHeader").controls("txtHdrName").value, _
-        SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtMonthlyMonitoringDraft").value)
+         DailyLogCtl("txtMonthlyMonitoringDraft").value)
 
         
 End Sub
@@ -7126,12 +7172,8 @@ Set mp1 = Me.controls("MultiPage1")
 If Not mp1 Is Nothing Then
     Set pg1 = mp1.Pages(0)
     If Not pg1 Is Nothing Then
-        Set fr32 = SafeGetControl(pg1, "Frame32")
-        If Not fr32 Is Nothing Then
-            Set btnLoadPrev = fr32.controls("btnLoadPrevCtl")
-            If Not btnLoadPrev Is Nothing Then
-                btnLoadPrev.Visible = False
-            End If
+        If Not btnLoadPrev Is Nothing Then
+            btnLoadPrev.Visible = False
         End If
     End If
 End If
@@ -7327,7 +7369,7 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
     Dim hit As Long
     Dim d As Date, staff As String, note As String
 
-    Set f = SafeGetControl(Me, "fraDailyLog")
+    Set f = GetDailyLogFrame()
     If f Is Nothing Then Exit Sub
 
 
@@ -7385,7 +7427,7 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
 
     ' 出力先（起動時に確保済みだが念のため）
     Call Ensure_MonthlyDraftBox_UnderFraDailyLog
-    SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtMonthlyMonitoringDraft").value = s
+    DailyLogCtl("txtMonthlyMonitoringDraft").value = s
 End Sub
 
 
@@ -7476,16 +7518,17 @@ Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     Dim hdr As Object, kana As Object, btn As Object
     Dim refBtn As Object
 
-    ' frHeader 必須
-    If Not TryGetCtl(f, "frHeader", hdr) Then Exit Sub
+    Set hdr = SafeGetControl(f, "frHeader")
+    If hdr Is Nothing Then Set hdr = EvalCtl("frHeader")
+    If hdr Is Nothing Then Exit Sub
 
-    ' 参照（配置の基準）: かな欄必須
-    If Not TryGetCtl(hdr, "txtHdrKana", kana) Then Exit Sub
+    Set kana = SafeGetControl(hdr, "txtHdrKana")
+    If kana Is Nothing Then Exit Sub
 
-    ' 既にあればそれを使う
-    If TryGetCtl(hdr, BTN_NAME, btn) Then
-        ' そのまま配置だけ当て直し
-    Else
+    Set btn = SafeGetControl(hdr, BTN_NAME)
+    If btn Is Nothing Then
+    
+    
         ' 無ければ作る（frHeader配下）
         Set btn = hdr.controls.Add("Forms.CommandButton.1", BTN_NAME, True)
         btn.caption = "前回の値を読み込む"
@@ -7495,11 +7538,10 @@ Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     End If
 
     ' 見た目合わせ用の参照ボタン（あれば）
-    If Not TryGetCtl(hdr, "cmdSaveHeader", refBtn) Then
-        If Not TryGetCtl(hdr, "cmdClearHeader", refBtn) Then
-            Call TryGetCtl(hdr, "cmdCloseHeader", refBtn)
-        End If
-    End If
+    Set refBtn = SafeGetControl(hdr, "cmdSaveHeader")
+    If refBtn Is Nothing Then Set refBtn = SafeGetControl(hdr, "cmdClearHeader")
+    If refBtn Is Nothing Then Set refBtn = SafeGetControl(hdr, "cmdCloseHeader")
+
     If Not refBtn Is Nothing Then
         btn.Font.name = refBtn.Font.name
         btn.Font.Size = refBtn.Font.Size
@@ -7522,15 +7564,17 @@ End Sub
 
 ' ====== BasicInfo（Frame32）コントロール実体取得 ======
 Private Function BIObj(ByVal ctrlName As String) As Object
-    ' IMdcText / TextBox など “実体(Object)” を返す
-    Dim p As Object
-    Set p = SafeGetPage(Me.controls("MultiPage1"), "Page1")
-    If p Is Nothing Then Exit Function
 
     Dim target As Object
-    Set target = SafeGetControl(p, ctrlName)
+    
+
+    Set target = EvalCtl(ctrlName, "Page1")
     If target Is Nothing Then Exit Function
+
+    On Error Resume Next
     Set BIObj = target.Object
+    If BIObj Is Nothing Then Set BIObj = target
+    On Error GoTo 0
 End Function
 
 Private Function ReadText(ByVal o As Object) As String
