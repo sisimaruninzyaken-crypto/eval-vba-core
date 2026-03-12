@@ -5190,7 +5190,7 @@ Public Sub BuildCogMentalUI_Simple()
     On Error GoTo 0
 
     If f Is Nothing Then
-        MsgBox "Frame31（認知機能・精神面）が見つかりません。", vbExclamation
+        MsgBox "認知機能フレーム（Page7 > Frame7 > Frame30）が見つかりません。", vbExclamation
         Exit Sub
     End If
 
@@ -6582,29 +6582,36 @@ End Function
 Public Function GetCogRootFrame() As MSForms.Frame
     Dim mp As MSForms.MultiPage
     Dim pg As MSForms.Page
+    Dim host As MSForms.Frame
     Dim c As Control
+    Dim firstFrame As MSForms.Frame
+    Dim frame30 As MSForms.Frame
 
     Set mp = GetMainMultiPage()
     If mp Is Nothing Then Exit Function
+    If mp.Pages.count < 7 Then Exit Function
+    
+    
+    Set pg = mp.Pages(6)
+    Set host = SafeGetControl(pg, "Frame7")
+    If host Is Nothing Then Exit Function
 
-    For Each pg In mp.Pages
-        If InStr(1, CStr(pg.caption), "Fm", vbTextCompare) > 0 Or InStr(1, CStr(pg.caption), "_", vbTextCompare) > 0 Then
-            For Each c In pg.controls
-                If TypeName(c) = "Frame" Then
-                    If InStr(1, CStr(c.name), "31", vbTextCompare) > 0 Or InStr(1, CStr(c.name), "Cog", vbTextCompare) > 0 Then
-                        Set GetCogRootFrame = c
-                        Exit Function
-                    End If
-                End If
-            Next
-            For Each c In pg.controls
-                If TypeName(c) = "Frame" Then
-                    Set GetCogRootFrame = c
-                    Exit Function
-                End If
-            Next
+    For Each c In host.controls
+        If TypeName(c) = "Frame" Then
+            If firstFrame Is Nothing Then Set firstFrame = c
+            If StrComp(CStr(c.name), "Frame30", vbTextCompare) = 0 Then
+                Set frame30 = c
+                Exit For
+            End If
         End If
     Next
+    
+
+    If Not frame30 Is Nothing Then
+        Set GetCogRootFrame = frame30
+    Else
+        Set GetCogRootFrame = firstFrame
+    End If
 End Function
 
 Public Function GetCogTabs() As MSForms.MultiPage
