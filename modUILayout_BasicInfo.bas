@@ -6,7 +6,7 @@ Attribute VB_Name = "modUILayout_BasicInfo"
 
 Public Sub TidyBasicInfo_TwoColumns()
 
-    Dim uf As Object, mp As Object, pg As Object, f1 As Object, f32 As Object
+    Dim f32 As Object
     Dim W As Double, h As Double
     Dim xL As Double, xR As Double, wCol As Double
     Dim xLbl As Double, xCtl As Double, wLbl As Double, wCtl As Double
@@ -24,15 +24,17 @@ Public Sub TidyBasicInfo_TwoColumns()
     Dim xRightCtl As Double
     Dim riskH As Double
 
-    Set uf = frmEval
-    Set mp = uf.controls("MultiPage1")
-    Set pg = mp.Pages("Page1")
-    Set f1 = pg.controls("Frame1")
-    Set f32 = f1.controls("Frame32")
+    Set c = frmEval.EvalCtl("txtAge", "Page1")
+    If c Is Nothing Then Set c = frmEval.EvalCtl("txtEDate", "Page1")
+    If c Is Nothing Then Exit Sub
+    Set f32 = c.parent
 
     ' 「変更点のみ保存」チェック非表示（本体はチェックボックス）
-    f32.controls("chkDeltaOnly").Visible = False
-    f32.controls("chkDeltaOnly").Height = 0
+    Set c = frmEval.EvalCtl("chkDeltaOnly", "Page1")
+    If Not c Is Nothing Then
+        c.Visible = False
+        c.Height = 0
+    End If
 
     ' 旧 Label### を全て隠す（Frame32直下のみ）
     For Each c In f32.controls
@@ -44,42 +46,25 @@ Public Sub TidyBasicInfo_TwoColumns()
     Next c
 
     ' 右カラム用コントロールを確保（無ければ追加）
-    On Error Resume Next
-    Set txtED = f32.controls("txtEDate")
-    On Error GoTo 0
+    Set txtED = frmEval.EvalCtl("txtEDate", "Page1")
     
-    Set t = Nothing
-    On Error Resume Next
-    Set t = f32.controls("txtEvaluatorJob")
-    On Error GoTo 0
+    Set t = frmEval.EvalCtl("txtEvaluatorJob", "Page1")
     If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtEvaluatorJob", True)
     t.tag = "BI.EvaluatorJob"
     
-
-    On Error Resume Next
-    Set t = f32.controls("txtAdmDate")
-    On Error GoTo 0
+    Set t = frmEval.EvalCtl("txtAdmDate", "Page1")
     If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtAdmDate", True)
 
-    Set t = Nothing
-    On Error Resume Next
-    Set t = f32.controls("txtDisDate")
-    On Error GoTo 0
+    Set t = frmEval.EvalCtl("txtDisDate", "Page1")
     If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtDisDate", True)
 
-    Set t = Nothing
-    On Error Resume Next
-    Set t = f32.controls("txtTxCourse")
-    On Error GoTo 0
+    Set t = frmEval.EvalCtl("txtTxCourse", "Page1")
     If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtTxCourse", True)
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
 
-    Set t = Nothing
-    On Error Resume Next
-    Set t = f32.controls("txtComplications")
-    On Error GoTo 0
+    Set t = frmEval.EvalCtl("txtComplications", "Page1")
     If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtComplications", True)
     t.multiline = True
     t.EnterKeyBehavior = True
@@ -142,7 +127,7 @@ aCapL = Array( _
     ' Left: Needs（本人/家族）
     yL = yL + 10
     Call EnsureLabel(f32, "lblBI_NeedsPt", "本人Needs", xL + xLbl, yL, wLbl, rowH)
-    Set t = f32.controls("txtNeedsPt")
+    Set t = frmEval.EvalCtl("txtNeedsPt", "Page1")
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
@@ -150,7 +135,7 @@ aCapL = Array( _
 
     yL = yL + needsH + gapY
     Call EnsureLabel(f32, "lblBI_NeedsFam", "家族Needs", xL + xLbl, yL, wLbl, rowH)
-    Set t = f32.controls("txtNeedsFam")
+    Set t = frmEval.EvalCtl("txtNeedsFam", "Page1")
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
@@ -174,7 +159,8 @@ aCapL = Array( _
 
     ' Right: 医療情報
     Call EnsureLabel(f32, "lblBI_R_Header_Med", "【医療情報】", xR + xLbl, yR, wLblR, rowH)
-    f32.controls("lblBI_R_Header_Med").Visible = False
+    Set c = frmEval.EvalCtl("lblBI_R_Header_Med", "Page1")
+    If Not c Is Nothing Then c.Visible = False
     yR = yR + gapY
 
     If Not ControlExists(f32, "txtAdmDate") Then f32.controls.Add "Forms.TextBox.1", "txtAdmDate"
@@ -196,24 +182,23 @@ aCapL = Array( _
     ' 治療経過（複数行）
     Call EnsureLabel(f32, "lblBI_R_M_5", "治療経過", xR + xLbl, yR, wLblR, rowH)
     Call PlaceCtl(f32, "txtTxCourse", xRightCtl, yR - 1, wCtl, multiH)
-    With f32.controls("txtTxCourse")
-       .IMEMode = fmIMEModeHiragana
-    End With
+    Set c = frmEval.EvalCtl("txtTxCourse", "Page1")
+    If Not c Is Nothing Then c.IMEMode = fmIMEModeHiragana
     yR = yR + multiH + gapY
 
     ' 合併症（複数行）
     Call EnsureLabel(f32, "lblBI_R_M_6", "合併症", xR + xLbl, yR, wLblR, rowH)
     Call PlaceCtl(f32, "txtComplications", xRightCtl, yR - 1, wCtl, multiH)
-    With f32.controls("txtComplications")
-     .IMEMode = fmIMEModeHiragana
-    End With
+    Set c = frmEval.EvalCtl("txtComplications", "Page1")
+    If Not c Is Nothing Then c.IMEMode = fmIMEModeHiragana
     yR = yR + multiH + 8
 
     ' 右下：リスク群（最下段へ）
     riskH = h - yR - 12
     If riskH < 24 Then riskH = 24
     Call PlaceCtl(f32, "Frame33", xR + xLbl, yR, wCol - 6, riskH)
-    Call ArrangeRiskChecks_TwoCols(f32.controls("Frame33"))
+    Set c = frmEval.EvalCtl("Frame33", "Page1")
+    If Not c Is Nothing Then Call ArrangeRiskChecks_TwoCols(c)
 
 End Sub
 

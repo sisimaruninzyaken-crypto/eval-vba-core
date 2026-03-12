@@ -199,7 +199,7 @@ Private Function SafeGetControl(ByVal parent As Object, ByVal nm As String) As O
     Set SafeGetControl = modCommonUtil.SafeGetControl(parent, nm)
 End Function
 
-Private Function EvalCtl(ByVal ctrlName As String, Optional ByVal pageKey As Variant) As Object
+Public Function EvalCtl(ByVal ctrlName As String, Optional ByVal pageKey As Variant) As Object
     Dim root As Object
     Dim mpRoot As Object
 
