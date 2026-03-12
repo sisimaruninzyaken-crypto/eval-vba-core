@@ -9,7 +9,7 @@ Public Sub TidyBasicInfo_TwoColumns()
     Dim f32 As Object
     Dim W As Double, h As Double
     Dim xL As Double, xR As Double, wCol As Double
-    Dim xLbl As Double, xCtl As Double, wLbl As Double, wCtl As Double
+    Dim xLbl As Double, xCtl As Double, wLbl As Double, wCtl As Double, wCtlShort As Double
     Dim wLblR As Double, wCtlR As Double
     Dim rowH As Double, gapY As Double, multiH As Double, needsH As Double
     Dim socialH As Double
@@ -21,7 +21,9 @@ Public Sub TidyBasicInfo_TwoColumns()
     Dim c As Object
     Dim txtED As Object
     Dim t As Object
+    Dim xCtlR As Double
     Dim xRightCtl As Double
+    Dim riskTop As Double
     Dim riskH As Double
 
     Set c = frmEval.EvalCtl("txtAge", "Page1")
@@ -93,9 +95,8 @@ Public Sub TidyBasicInfo_TwoColumns()
     needsH = 58
 
     ' 右カラムの入力位置は既存 txtEDate に合わせる（あれば）
-   Dim xCtlR As Double
-   xCtlR = 60 + 8          '右ラベル幅60 + 余白8（ここは55?70で微調整）
-   xRightCtl = xR + xCtlR
+     xCtlR = 60 + 8
+     xRightCtl = xR + xCtlR
 
     ' 開始位置（左右カラムを一致）
     yR = 6
@@ -194,13 +195,18 @@ aCapL = Array( _
     yR = yR + multiH + 8
 
     ' 右下：リスク群（最下段へ）
-    riskH = h - yR - 12
-    If riskH < 24 Then riskH = 24
-    Call PlaceCtl(f32, "Frame33", xR + xLbl, yR, wCol - 6, riskH)
-    Set c = frmEval.EvalCtl("Frame33", "Page1")
+    Set t = frmEval.EvalCtl("txtComplications", "Page1")
+    If Not t Is Nothing Then
+        riskTop = t.Top + 55
+        riskH = h - riskTop - 12
+        If riskH < 24 Then riskH = 24
+        Call PlaceCtl(f32, "Frame31", t.Left, t.Top + 55, wCol - 6, riskH)
+    End If
+    Set c = frmEval.EvalCtl("Frame31", "Page1")
     If Not c Is Nothing Then Call ArrangeRiskChecks_TwoCols(c)
 
 End Sub
+
 
 ' ===== helpers =====
 Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Double, ByVal t As Double, ByVal W As Double, ByVal h As Double)
