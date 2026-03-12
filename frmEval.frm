@@ -7585,33 +7585,30 @@ Private Function BIObj(ByVal ctrlName As String) As Object
 End Function
 
 Private Sub SetupBasicInfoEnterNavigation()
-    Dim host As Object
     Dim c As Object
     Dim targets As Variant
     Dim nm As Variant
     Set mBasicInfoEnterHooks = New Collection
     Set mBasicInfoEnterOrder = New Collection
 
-    Set host = EvalCtl("txtAge", "Page1")
-    If host Is Nothing Then Exit Sub
-    Set host = host.parent
-    If host Is Nothing Then Exit Sub
 
     targets = Array( _
-        "txtAge", "txtBirth", "cboSex", "cboCare", "cboElder", "cboDementia", "txtLiving", "txtNeedsPt", "txtNeedsFam", _
-        "txtDisDate", "txtTxCourse", "txtComplications")
+        "txtLiving", _
+        "txtEvaluator", _
+        "txtEvaluatorJob", _
+        "txtOnset", _
+        "txtDx", _
+        "txtAdmDate", _
+        "txtDisDate", _
+        "txtTxCourse")
 
     For Each nm In targets
-        Set c = Nothing
-        On Error Resume Next
-        Set c = host.controls(CStr(nm))
-        On Error GoTo 0
+        Set c = BIObj(CStr(nm))
 
         If Not c Is Nothing Then
-            Select Case TypeName(c)
-                Case "TextBox", "ComboBox"
-                    If c.Visible Then mBasicInfoEnterOrder.Add c
-            End Select
+            If TypeName(c) = "TextBox" Then
+                If c.Visible Then mBasicInfoEnterOrder.Add c
+            End If
         End If
     Next
 
@@ -7622,22 +7619,16 @@ Private Sub AttachBasicInfoEnterHooks()
     Dim i As Long
     Dim c As Object
     Dim hTxt As clsBasicInfoEnterTextHook
-    Dim hCmb As clsBasicInfoEnterComboHook
 
     If mBasicInfoEnterOrder Is Nothing Then Exit Sub
 
     For i = 1 To mBasicInfoEnterOrder.count
         Set c = mBasicInfoEnterOrder(i)
-        Select Case TypeName(c)
-            Case "TextBox"
-                Set hTxt = New clsBasicInfoEnterTextHook
-                hTxt.Init Me, c
-                mBasicInfoEnterHooks.Add hTxt
-            Case "ComboBox"
-                Set hCmb = New clsBasicInfoEnterComboHook
-                hCmb.Init Me, c
-                mBasicInfoEnterHooks.Add hCmb
-        End Select
+        If TypeName(c) = "TextBox" Then
+            Set hTxt = New clsBasicInfoEnterTextHook
+            hTxt.Init Me, c
+            mBasicInfoEnterHooks.Add hTxt
+        End If
     Next
 End Sub
 
