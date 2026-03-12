@@ -7587,12 +7587,8 @@ End Function
 Private Sub SetupBasicInfoEnterNavigation()
     Dim host As Object
     Dim c As Object
-    Dim i As Long
-    Dim j As Long
-    Dim rowTol As Single
-    Dim cur As Object
-    Dim prev As Object
-
+    Dim targets As Variant
+    Dim nm As Variant
     Set mBasicInfoEnterHooks = New Collection
     Set mBasicInfoEnterOrder = New Collection
 
@@ -7601,31 +7597,23 @@ Private Sub SetupBasicInfoEnterNavigation()
     Set host = host.parent
     If host Is Nothing Then Exit Sub
 
-    For Each c In host.controls
-        Select Case TypeName(c)
-            Case "TextBox", "ComboBox"
-                If c.Visible Then mBasicInfoEnterOrder.Add c
-        End Select
-    Next
+    targets = Array( _
+        "txtAge", "txtBirth", "cboSex", "cboCare", "cboElder", "cboDementia", "txtLiving", "txtNeedsPt", "txtNeedsFam", _
+        "txtDisDate", "txtTxCourse", "txtComplications")
 
-    rowTol = 4
-    If mBasicInfoEnterOrder.count > 1 Then
-        For i = 2 To mBasicInfoEnterOrder.count
-            Set cur = mBasicInfoEnterOrder(i)
-            j = i - 1
-            Do While j >= 1
-                Set prev = mBasicInfoEnterOrder(j)
-                If (cur.Top < prev.Top - rowTol) Or _
-                   (Abs(cur.Top - prev.Top) <= rowTol And cur.Left < prev.Left) Then
-                    mBasicInfoEnterOrder.Remove j + 1
-                    mBasicInfoEnterOrder.Add cur, , j
-                    j = j - 1
-                Else
-                    Exit Do
-                End If
-            Loop
-        Next
-    End If
+    For Each nm In targets
+        Set c = Nothing
+        On Error Resume Next
+        Set c = host.controls(CStr(nm))
+        On Error GoTo 0
+
+        If Not c Is Nothing Then
+            Select Case TypeName(c)
+                Case "TextBox", "ComboBox"
+                    If c.Visible Then mBasicInfoEnterOrder.Add c
+            End Select
+        End If
+    Next
 
     AttachBasicInfoEnterHooks
 End Sub
