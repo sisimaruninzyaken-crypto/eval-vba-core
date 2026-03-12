@@ -7527,17 +7527,8 @@ Private Function BIObj(ByVal ctrlName As String) As Object
     Set p = SafeGetPage(Me.controls("MultiPage1"), "Page1")
     If p Is Nothing Then Exit Function
 
-    Dim fr1 As Object, fr32 As Object, target As Object
-    Set fr1 = SafeGetControl(p, "Frame1")
-    If Not fr1 Is Nothing Then
-        Set fr32 = SafeGetControl(fr1, "Frame32")
-        If fr32 Is Nothing Then Set fr32 = SafeGetControl(fr1, "fraBasicInfo")
-    End If
-    If fr32 Is Nothing Then Set fr32 = SafeGetControl(p, "Frame32")
-    If fr32 Is Nothing Then Set fr32 = SafeGetControl(p, "fraBasicInfo")
-    If fr32 Is Nothing Then Exit Function
-
-    Set target = SafeGetControl(fr32, ctrlName)
+    Dim target As Object
+    Set target = SafeGetControl(p, ctrlName)
     If target Is Nothing Then Exit Function
     Set BIObj = target.Object
 End Function
