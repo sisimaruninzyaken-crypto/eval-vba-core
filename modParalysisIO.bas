@@ -56,22 +56,22 @@ End Sub
 
 ' 値がコンボのリストにある時だけ選択する（無ければ未選択）
 Private Sub SetComboSafe(owner As Object, ctlName As String, ByVal v As Variant)
-    Dim cB As MSForms.ComboBox
+    Dim cb As MSForms.ComboBox
     Dim s As String, i As Long, hit As Long
 
     s = CStr(v)
-    Set cB = FindCtlDeep(owner, ctlName)
-    If cB Is Nothing Then Exit Sub
+    Set cb = FindCtlDeep(owner, ctlName)
+    If cb Is Nothing Then Exit Sub
 
     hit = -1
-    For i = 0 To cB.ListCount - 1
-        If CStr(cB.List(i)) = s Then hit = i: Exit For
+    For i = 0 To cb.ListCount - 1
+        If CStr(cb.List(i)) = s Then hit = i: Exit For
     Next
 
     If hit >= 0 Then
-        cB.ListIndex = hit              ' ← 安全に選択
+        cb.ListIndex = hit              ' ← 安全に選択
     Else
-        cB.ListIndex = -1               ' ← 見つからなければクリア（空）
+        cb.ListIndex = -1               ' ← 見つからなければクリア（空）
         ' 必要ならここで：cb.AddItem s : cb.Value = s   ' 自動で項目を追加して選択
     End If
 End Sub

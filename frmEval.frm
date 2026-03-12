@@ -97,6 +97,8 @@ Private mNameSuggestSink As cNameSuggestSink
 Private mDupNameWarned As Boolean
 Private mBasicInfoTidyDone As Boolean
 Private mAgeBusy As Boolean
+Private mBasicInfoEnterHooks As Collection
+Private mBasicInfoEnterOrder As Collection
 
 
 
@@ -333,16 +335,16 @@ End Function
 
 Private Function CreateCombo(parent As MSForms.Frame, x As Single, y As Single, _
                              W As Single, Optional name As String = "", Optional tag As String = "") As MSForms.ComboBox
-    Dim cB As MSForms.ComboBox
-    Set cB = parent.controls.Add("Forms.ComboBox.1", IIf(name = "", vbNullString, name))
-    With cB
+    Dim cb As MSForms.ComboBox
+    Set cb = parent.controls.Add("Forms.ComboBox.1", IIf(name = "", vbNullString, name))
+    With cb
         .Left = x
         .Top = y
         .Width = W
         .Style = fmStyleDropDownList
         .tag = tag
     End With
-    Set CreateCombo = cB
+    Set CreateCombo = cb
 End Function
 
 Private Function CreateCheck(parent As MSForms.Frame, caption As String, _
@@ -1058,13 +1060,13 @@ Next
     yBI = yBI + rowH
 
     For idx = LBound(biItems) To UBound(biItems)
-        Dim lb As MSForms.label, cB As MSForms.ComboBox
+        Dim lb As MSForms.label, cb As MSForms.ComboBox
         Set lb = pBI.controls.Add("Forms.Label.1", "lblBI_" & CStr(idx))
         With lb: .caption = CStr(biItems(idx)): .Left = 12: .Top = yBI: .Width = 160: End With
 
-        Set cB = pBI.controls.Add("Forms.ComboBox.1", "cmbBI_" & CStr(idx))
-        AttachBIHook cB
-        With cB
+        Set cb = pBI.controls.Add("Forms.ComboBox.1", "cmbBI_" & CStr(idx))
+        AttachBIHook cb
+        With cb
             .tag = "BI." & CStr(biItems(idx))
             .Left = 190
             .Top = yBI - 3
@@ -1081,19 +1083,19 @@ Next
             ' 9: 排尿コントロール
             ' → 0 / 5 / 10 点
             Case 0, 3, 6, 7, 8, 9
-                AddItemsToCombo cB, Array("0", "5", "10")
+                AddItemsToCombo cb, Array("0", "5", "10")
 
             ' 2: 整容
             ' 4: 入浴
             ' → 0 / 5 点
             Case 2, 4
-                AddItemsToCombo cB, Array("0", "5")
+                AddItemsToCombo cb, Array("0", "5")
 
             ' 1: 車いす-ベッド移乗
             ' 5: 歩行/車いす移動
             ' → 0 / 5 / 10 / 15 点
             Case 1, 5
-                AddItemsToCombo cB, Array("0", "5", "10", "15")
+                AddItemsToCombo cb, Array("0", "5", "10", "15")
         End Select
 
         yBI = yBI + rowH
@@ -1260,11 +1262,11 @@ End Function
 '=================================================================
 
 '=== BIコンボにイベントフックを張る ===
-Private Sub AttachBIHook(ByRef cB As MSForms.ComboBox)
+Private Sub AttachBIHook(ByRef cb As MSForms.ComboBox)
     If BIHooks Is Nothing Then Set BIHooks = New Collection
     Dim h As CboBIHook
     Set h = New CboBIHook
-    h.Init Me, cB
+    h.Init Me, cb
     BIHooks.Add h
 End Sub
 
@@ -1352,7 +1354,7 @@ Public Sub RecalcBI()
     Dim ctrl As MSForms.Control
     Dim pBI As MSForms.page
     Dim idx As Long
-    Dim cB As MSForms.ComboBox
+    Dim cb As MSForms.ComboBox
     Dim total As Long
     Dim v As String
     Dim txt As MSForms.TextBox
@@ -1380,10 +1382,10 @@ Public Sub RecalcBI()
     ' --- 10項目分の点数を単純に合計する（コンボの値がそのまま点数） ---
     total = 0
     For idx = 0 To 9
-        Set cB = Nothing
-        Set cB = pBI.controls("cmbBI_" & CStr(idx))
-        If Not cB Is Nothing Then
-            v = Trim$(CStr(cB.value))
+        Set cb = Nothing
+        Set cb = pBI.controls("cmbBI_" & CStr(idx))
+        If Not cb Is Nothing Then
+            v = Trim$(CStr(cb.value))
             If Len(v) > 0 Then
                 total = total + CLng(val(v))
             End If
@@ -1484,7 +1486,7 @@ Private Sub BuildKyoOnADL(pg As MSForms.page)
     
 
     Dim y As Single: y = 22
-    Dim lb As MSForms.label, cB As MSForms.ComboBox, txt As MSForms.TextBox
+    Dim lb As MSForms.label, cb As MSForms.ComboBox, txt As MSForms.TextBox
     Dim choices As Variant
 
     ' 候補：既存の PostureChoices() があれば利用、無ければデフォルト
@@ -1499,23 +1501,23 @@ Private Sub BuildKyoOnADL(pg As MSForms.page)
     
 ' 寝返り
 Set lb = CreateLabel(fr, "寝返り", COL_LX, y)
-Set cB = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_Roll", True)
-With cB: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
-AddItemsToCombo cB, choices
+Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_Roll", True)
+With cb: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
+AddItemsToCombo cb, choices
 y = y + rowH
 
 ' 起き上がり
 Set lb = CreateLabel(fr, "起き上がり", COL_LX, y)
-Set cB = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_SitUp", True)
-With cB: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
-AddItemsToCombo cB, choices
+Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_SitUp", True)
+With cb: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
+AddItemsToCombo cb, choices
 y = y + rowH
 
 ' 座位保持
 Set lb = CreateLabel(fr, "座位保持", COL_LX, y)
-Set cB = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_SitHold", True)
-With cB: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
-AddItemsToCombo cB, choices
+Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_SitHold", True)
+With cb: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
+AddItemsToCombo cb, choices
 y = y + rowH
 
     
@@ -1547,13 +1549,13 @@ cboStand.List = MakeList("自立,見守り（監視下）,一部介助,全介助")
 End Sub
 
 'ADL-起居動作用：コンボに候補をセット
-Private Sub AddItemsToCombo(cB As MSForms.ComboBox, items As Variant)
+Private Sub AddItemsToCombo(cb As MSForms.ComboBox, items As Variant)
     Dim k As Long
     On Error Resume Next
-    cB.Clear
-    cB.Style = fmStyleDropDownList
+    cb.Clear
+    cb.Style = fmStyleDropDownList
     For k = LBound(items) To UBound(items)
-        cB.AddItem CStr(items(k))
+        cb.AddItem CStr(items(k))
     Next k
 End Sub
 
@@ -1673,18 +1675,18 @@ Private Sub CreatePostureRows(fr As MSForms.Frame)
         lb.caption = CStr(items(i))
 
         ' コンボ（保存/読込に使う Tag を付与）
-        Dim cB As MSForms.ComboBox
-        Set cB = fr.controls.Add("Forms.ComboBox.1", "cmbPost_" & CStr(i), True)
-        cB.Style = fmStyleDropDownList
-        cB.tag = POSTURE_TAG_PREFIX & CStr(items(i))
+        Dim cb As MSForms.ComboBox
+        Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPost_" & CStr(i), True)
+        cb.Style = fmStyleDropDownList
+        cb.tag = POSTURE_TAG_PREFIX & CStr(items(i))
 
         ' 選択肢の設定：共通関数があれば優先、無ければフォールバック
         On Error Resume Next
-        SetComboItems cB, choices
+        SetComboItems cb, choices
         If Err.Number <> 0 Then
             Dim k As Long: Err.Clear
             For k = LBound(choices) To UBound(choices)
-                cB.AddItem CStr(choices(k))
+                cb.AddItem CStr(choices(k))
             Next
         End If
         On Error GoTo 0
@@ -3083,6 +3085,7 @@ DoEvents
  If Not mBasicInfoTidyDone Then
     mBasicInfoTidyDone = True
     Call TidyBasicInfo_TwoColumns
+    SetupBasicInfoEnterNavigation
  End If
     
 End Sub
@@ -3993,12 +3996,12 @@ Public Sub AddPainFactorsUI()
     ' 左列配置
     y = 8
     For i = LBound(provItems) To UBound(provItems)
-        Dim cB As MSForms.CheckBox
-        Set cB = fr.controls.Add("Forms.CheckBox.1", CStr(provItems(i)(0)), True)
-        cB.caption = CStr(provItems(i)(1))
-        cB.Left = 12
-        cB.Top = y
-        y = y + cB.Height + 2
+        Dim cb As MSForms.CheckBox
+        Set cb = fr.controls.Add("Forms.CheckBox.1", CStr(provItems(i)(0)), True)
+        cb.caption = CStr(provItems(i)(1))
+        cb.Left = 12
+        cb.Top = y
+        y = y + cb.Height + 2
     Next i
 
     ' 右列配置
@@ -4087,7 +4090,7 @@ End Sub
 Public Sub AddPainCourseUI()
     Dim host As MSForms.Frame
     Dim lb As MSForms.label
-    Dim cB As MSForms.ComboBox
+    Dim cb As MSForms.ComboBox
     Dim tb As MSForms.TextBox
     Dim i As Long
 
@@ -4119,9 +4122,9 @@ Public Sub AddPainCourseUI()
     lb.caption = "発症時期"
     lb.Left = 12: lb.Top = 10: lb.AutoSize = True
 
-    Set cB = fr.controls.Add("Forms.ComboBox.1", "cmbPainOnset", True)
-    cB.Left = lb.Left + 60: cB.Top = 8: cB.Width = 140
-    cB.List = Array("急性（?1週）", "亜急性（?3か月）", "慢性（3か月?）", "再燃／再発", "不明")
+    Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPainOnset", True)
+    cb.Left = lb.Left + 60: cb.Top = 8: cb.Width = 140
+    cb.List = Array("急性（?1週）", "亜急性（?3か月）", "慢性（3か月?）", "再燃／再発", "不明")
 
     ' 持続時間
     Set lb = fr.controls.Add("Forms.Label.1", "lblPainDuration", True)
@@ -4131,18 +4134,18 @@ Public Sub AddPainCourseUI()
     Set tb = fr.controls.Add("Forms.TextBox.1", "txtPainDuration", True)
     tb.Left = lb.Left + 36: tb.Top = 8: tb.Width = 40: tb.text = ""
 
-    Set cB = fr.controls.Add("Forms.ComboBox.1", "cmbPainDurationUnit", True)
-    cB.Left = tb.Left + tb.Width + 6: cB.Top = 8: cB.Width = 70
-    cB.List = Array("日", "週", "か月", "年")
+    Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPainDurationUnit", True)
+    cb.Left = tb.Left + tb.Width + 6: cb.Top = 8: cb.Width = 70
+    cb.List = Array("日", "週", "か月", "年")
 
     ' 日内変動
     Set lb = fr.controls.Add("Forms.Label.1", "lblPainDayPeriod", True)
     lb.caption = "日内変動"
     lb.Left = 12: lb.Top = 38: lb.AutoSize = True
 
-    Set cB = fr.controls.Add("Forms.ComboBox.1", "cmbPainDayPeriod", True)
-    cB.Left = lb.Left + 54: cB.Top = 36: cB.Width = 260
-    cB.List = Array("朝に強い", "昼に強い", "夜に強い", "入浴後に軽減", "活動後に増悪", "一定で変化なし")
+    Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPainDayPeriod", True)
+    cb.Left = lb.Left + 54: cb.Top = 36: cb.Width = 260
+    cb.List = Array("朝に強い", "昼に強い", "夜に強い", "入浴後に軽減", "活動後に増悪", "一定で変化なし")
 End Sub
 
 
@@ -7580,6 +7583,93 @@ Private Function BIObj(ByVal ctrlName As String) As Object
     If BIObj Is Nothing Then Set BIObj = target
     On Error GoTo 0
 End Function
+
+Private Sub SetupBasicInfoEnterNavigation()
+    Dim host As Object
+    Dim c As Object
+    Dim i As Long
+    Dim j As Long
+    Dim rowTol As Single
+    Dim cur As Object
+    Dim prev As Object
+
+    Set mBasicInfoEnterHooks = New Collection
+    Set mBasicInfoEnterOrder = New Collection
+
+    Set host = EvalCtl("txtAge", "Page1")
+    If host Is Nothing Then Exit Sub
+    Set host = host.parent
+    If host Is Nothing Then Exit Sub
+
+    For Each c In host.controls
+        Select Case TypeName(c)
+            Case "TextBox", "ComboBox"
+                If c.Visible Then mBasicInfoEnterOrder.Add c
+        End Select
+    Next
+
+    rowTol = 4
+    If mBasicInfoEnterOrder.count > 1 Then
+        For i = 2 To mBasicInfoEnterOrder.count
+            Set cur = mBasicInfoEnterOrder(i)
+            j = i - 1
+            Do While j >= 1
+                Set prev = mBasicInfoEnterOrder(j)
+                If (cur.Top < prev.Top - rowTol) Or _
+                   (Abs(cur.Top - prev.Top) <= rowTol And cur.Left < prev.Left) Then
+                    mBasicInfoEnterOrder.Remove j + 1
+                    mBasicInfoEnterOrder.Add cur, , j
+                    j = j - 1
+                Else
+                    Exit Do
+                End If
+            Loop
+        Next
+    End If
+
+    AttachBasicInfoEnterHooks
+End Sub
+
+Private Sub AttachBasicInfoEnterHooks()
+    Dim i As Long
+    Dim c As Object
+    Dim hTxt As clsBasicInfoEnterTextHook
+    Dim hCmb As clsBasicInfoEnterComboHook
+
+    If mBasicInfoEnterOrder Is Nothing Then Exit Sub
+
+    For i = 1 To mBasicInfoEnterOrder.count
+        Set c = mBasicInfoEnterOrder(i)
+        Select Case TypeName(c)
+            Case "TextBox"
+                Set hTxt = New clsBasicInfoEnterTextHook
+                hTxt.Init Me, c
+                mBasicInfoEnterHooks.Add hTxt
+            Case "ComboBox"
+                Set hCmb = New clsBasicInfoEnterComboHook
+                hCmb.Init Me, c
+                mBasicInfoEnterHooks.Add hCmb
+        End Select
+    Next
+End Sub
+
+Public Sub MoveBasicInfoFocusNext(ByVal current As Object)
+    Dim i As Long
+
+    If mBasicInfoEnterOrder Is Nothing Then Exit Sub
+    If current Is Nothing Then Exit Sub
+
+    For i = 1 To mBasicInfoEnterOrder.count
+        If mBasicInfoEnterOrder(i).name = current.name Then
+            If i < mBasicInfoEnterOrder.count Then
+                mBasicInfoEnterOrder(i + 1).SetFocus
+            End If
+            Exit Sub
+        End If
+    Next
+End Sub
+
+
 
 Private Function ReadText(ByVal o As Object) As String
     ' Value優先、ダメならText

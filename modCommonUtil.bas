@@ -183,7 +183,7 @@ Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal r As Long)
     Dim headersBasic As Variant
     Dim headersLegacy As Variant
     Dim i As Long
-    Dim cB As Long, cL As Long
+    Dim cb As Long, cL As Long
     Dim vB As Variant, vL As Variant
 
     ' Basic.* 系を「正」とみなすが、
@@ -193,14 +193,14 @@ Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal r As Long)
 
 
     For i = LBound(headersBasic) To UBound(headersBasic)
-        cB = modEvalIOEntry.FindColByHeaderExact(ws, headersBasic(i))
+        cb = modEvalIOEntry.FindColByHeaderExact(ws, headersBasic(i))
         cL = modEvalIOEntry.FindColByHeaderExact(ws, headersLegacy(i))
 
 
         ' どちらかの列が存在していれば同期対象
-        If cB > 0 Or cL > 0 Then
-            If cB > 0 Then
-                vB = ws.Cells(r, cB).value
+        If cb > 0 Or cL > 0 Then
+            If cb > 0 Then
+                vB = ws.Cells(r, cb).value
             Else
                 vB = vbNullString
             End If
@@ -214,10 +214,10 @@ Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal r As Long)
             ' 優先度：
             ' 1) Basic 側に値があって旧列が空 → Basic → 旧列へコピー
             ' 2) Basic 側が空で旧列に値 → 旧列 → Basic へコピー
-            If cB > 0 And Len(vB) > 0 And cL > 0 And Len(vL) = 0 Then
+            If cb > 0 And Len(vB) > 0 And cL > 0 And Len(vL) = 0 Then
                 ws.Cells(r, cL).value = vB
-            ElseIf cL > 0 And Len(vL) > 0 And cB > 0 And Len(vB) = 0 Then
-                ws.Cells(r, cB).value = vL
+            ElseIf cL > 0 And Len(vL) > 0 And cb > 0 And Len(vB) = 0 Then
+                ws.Cells(r, cb).value = vL
             End If
         End If
     Next i

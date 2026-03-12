@@ -888,16 +888,16 @@ End Sub
 
 ' 汎用：コンボを安全にセット（リストにある時だけ選択）
 Private Sub SetComboSafe_Basic(owner As Object, ctlName As String, ByVal v As Variant)
-    Dim cB As MSForms.ComboBox
+    Dim cb As MSForms.ComboBox
     Dim s As String, i As Long, hit As Long
     s = CStr(v)
-    Set cB = FindCtlDeep(owner, ctlName)
-    If cB Is Nothing Then Exit Sub
+    Set cb = FindCtlDeep(owner, ctlName)
+    If cb Is Nothing Then Exit Sub
     hit = -1
-    For i = 0 To cB.ListCount - 1
-        If CStr(cB.List(i)) = s Then hit = i: Exit For
+    For i = 0 To cb.ListCount - 1
+        If CStr(cb.List(i)) = s Then hit = i: Exit For
     Next
-    If hit >= 0 Then cB.ListIndex = hit Else cB.ListIndex = -1
+    If hit >= 0 Then cb.ListIndex = hit Else cb.ListIndex = -1
 End Sub
 
 Private Sub SyncAgeBeforeBasicSave(ByVal owner As Object)
@@ -1468,28 +1468,28 @@ End Function
 
 '--- コンボボックスに安全に値を反映（一覧に無い値なら未選択にする） ---
 Private Sub SetComboSafely(owner As Object, ctlName As String, ByVal v As Variant)
-    Dim cB As Object  ' MSForms.ComboBox を late binding で扱う
+    Dim cb As Object  ' MSForms.ComboBox を late binding で扱う
     Dim i As Long, hit As Long
     Dim s As String
 
     On Error Resume Next
-    Set cB = FindCtlDeep(owner, ctlName)
+    Set cb = FindCtlDeep(owner, ctlName)
     On Error GoTo 0
-    If cB Is Nothing Then Exit Sub
+    If cb Is Nothing Then Exit Sub
 
     s = CStr(v)
     hit = -1
-    For i = 0 To cB.ListCount - 1
-        If CStr(cB.List(i)) = s Then
+    For i = 0 To cb.ListCount - 1
+        If CStr(cb.List(i)) = s Then
             hit = i
             Exit For
         End If
     Next
 
     If hit >= 0 Then
-        cB.ListIndex = hit               ' 一致が見つかったら選択
+        cb.ListIndex = hit               ' 一致が見つかったら選択
     Else
-        cB.ListIndex = -1                ' 見つからなければ未選択に（DropDownListでも安全）
+        cb.ListIndex = -1                ' 見つからなければ未選択に（DropDownListでも安全）
         ' ※DropDownListの場合、cb.Text には入れません
     End If
 End Sub
