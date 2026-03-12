@@ -266,13 +266,15 @@ Private Function FindControlRecursive(ByVal node As Object, ByVal targetName As 
         Exit Function
     End If
 
-    For Each child In GetChildControls(node)
-        Set found = FindControlRecursive(child, targetName, visited)
-        If Not found Is Nothing Then
-            Set FindControlRecursive = found
-            Exit Function
-        End If
-    Next child
+    If HasControls(node) Then
+        For Each child In GetChildControls(node)
+            Set found = FindControlRecursive(child, targetName, visited)
+            If Not found Is Nothing Then
+                Set FindControlRecursive = found
+                Exit Function
+            End If
+        Next child
+    End If
 
     If TypeName(node) = "MultiPage" Then
         On Error Resume Next
