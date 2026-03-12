@@ -386,13 +386,18 @@ Public Sub Tighten_DailyLog_Boxes()
 End Sub
 
 Public Function HasControls(ByVal o As Object) As Boolean
-    On Error GoTo EH
     Dim n As Long
+    
+    On Error Resume Next
     n = o.controls.count
-    HasControls = (n >= 0)
-    Exit Function
-EH:
-    HasControls = False
+    
+    If Err.Number <> 0 Then
+        Err.Clear
+        HasControls = False
+    Else
+        HasControls = (n >= 0)
+    End If
+    On Error GoTo 0
 End Function
 
 Public Sub Verify_POST_TagUniqueness()
