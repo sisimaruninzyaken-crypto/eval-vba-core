@@ -3087,7 +3087,7 @@ DoEvents
     Call TidyBasicInfo_TwoColumns
  End If
     
- SetupBasicInfoEnterNavigation
+ EnsureBasicInfoEnterNavigationReady
  
 End Sub
 
@@ -7585,6 +7585,45 @@ Private Function BIObj(ByVal ctrlName As String) As Object
     On Error GoTo 0
 End Function
 
+Private Sub EnsureBasicInfoEnterNavigationReady()
+    Const MAX_RETRY As Long = 10
+    Dim i As Long
+
+    For i = 1 To MAX_RETRY
+        If BasicInfoEnterTargetsReady() Then
+            SetupBasicInfoEnterNavigation
+            Exit Sub
+        End If
+        DoEvents
+    Next i
+End Sub
+
+Private Function BasicInfoEnterTargetsReady() As Boolean
+    Dim nm As Variant
+    Dim targets As Variant
+    Dim c As Object
+
+    targets = Array( _
+        "txtLiving", _
+        "txtEvaluator", _
+        "txtEvaluatorJob", _
+        "txtOnset", _
+        "txtDx", _
+        "txtAdmDate", _
+        "txtDisDate", _
+        "txtTxCourse")
+
+    For Each nm In targets
+        Set c = BIObj(CStr(nm))
+        If c Is Nothing Then Exit Function
+        If TypeName(c) <> "TextBox" Then Exit Function
+    Next nm
+
+    BasicInfoEnterTargetsReady = True
+End Function
+
+
+
 Private Sub SetupBasicInfoEnterNavigation()
     Dim c As Object
     Dim targets As Variant
@@ -7606,12 +7645,8 @@ Private Sub SetupBasicInfoEnterNavigation()
     For Each nm In targets
         Set c = BIObj(CStr(nm))
 
-        If Not c Is Nothing Then
-            If TypeName(c) = "TextBox" Then
-                mBasicInfoEnterOrder.Add c
-            End If
-        End If
-   Next nm
+       mBasicInfoEnterOrder.Add c
+    Next nm
 
 
     AttachBasicInfoEnterHooks
