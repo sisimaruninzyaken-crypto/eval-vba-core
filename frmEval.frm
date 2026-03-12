@@ -2978,7 +2978,7 @@ Set mpPhysObj = SafeGetControl(Me, "mpPhys")
 If Not mpPhysObj Is Nothing Then
     Set pgPhys0 = mpPhysObj.Pages(0)
     If Not pgPhys0 Is Nothing Then
-        Set frPhys8 = pgPhys0.controls("Frame8")
+       Set frPhys8 = SafeGetControl(pgPhys0, "Frame8")
         If Not frPhys8 Is Nothing Then
             Set mpROMObj = frPhys8.controls("mpROM")
             frPhys8.Height = mpPhysObj.Height
@@ -4020,14 +4020,15 @@ Private Sub mVAS_Change()
     On Error Resume Next
     Dim v As Long
     v = mVAS.value
-    Me.controls("fraVAS").controls("txtVAS").text = CStr(v)
+    SafeGetControl(SafeGetControl(Me, "fraVAS"), "txtVAS").text = CStr(v)
 
 End Sub
 
 
 Public Sub WireVAS()
     On Error Resume Next
-    Set mVAS = Me.controls("Frame12").controls("fraVAS").controls("sldVAS")
+    Set mVAS = SafeGetControl(SafeGetControl(Me, "Frame12"), "fraVAS").controls("sldVAS")
+    If mVAS Is Nothing Then Exit Sub
 
 
 End Sub
@@ -4169,18 +4170,18 @@ Public Sub SummarizePainUI()
     Dim frF As MSForms.Frame, c As Control
     Dim onset$, dura$, unit$, day$, vas$
 
-    Set fr = Me.controls("Frame12")
-
+    Set fr = SafeGetControl(Me, "Frame12")
+    
     ' 参照取得
     On Error Resume Next
     Set lbQ = fr.controls("lstPainQual")
-    Set lbS = fr.controls("fraPainSite").controls("lstPainSite")
-    Set frF = fr.controls("fraPainFactors")
-    vas = fr.controls("fraVAS").controls("txtVAS").text
-    onset = fr.controls("fraPainCourse").controls("cmbPainOnset").text
-    dura = fr.controls("fraPainCourse").controls("txtPainDuration").text
-    unit = fr.controls("fraPainCourse").controls("cmbPainDurationUnit").text
-    day = fr.controls("fraPainCourse").controls("cmbPainDayPeriod").text
+    Set lbS = SafeGetControl(fr, "fraPainSite").controls("lstPainSite")
+    Set frF = SafeGetControl(fr, "fraPainFactors")
+    vas = SafeGetControl(fr, "fraVAS").controls("txtVAS").text
+    onset = SafeGetControl(fr, "fraPainCourse").controls("cmbPainOnset").text
+    dura = SafeGetControl(fr, "fraPainCourse").controls("txtPainDuration").text
+    unit = SafeGetControl(fr, "fraPainCourse").controls("cmbPainDurationUnit").text
+    day = SafeGetControl(fr, "fraPainCourse").controls("cmbPainDayPeriod").text
     On Error GoTo 0
 
     ' 痛みの性質
@@ -4225,7 +4226,7 @@ Public Sub SummarizePainUI()
 
     ' メモへ反映
     On Error Resume Next
-    Me.controls("Frame12").controls("txtPainMemo").text = s
+   SafeGetControl(Me, "Frame12").controls("txtPainMemo").text = s
 End Sub
 
 
@@ -4247,7 +4248,8 @@ End Sub
 ' 疼痛タブ( Frame12 )に残っている旧UIを除去する
 Public Sub RemoveLegacyPainUI()
     Dim f As MSForms.Frame, n As Variant
-    Set f = Me.controls("Frame12")
+    Set f = SafeGetControl(Me, "Frame12")
+    If f Is Nothing Then Exit Sub
 
     ' Probeで[LEGACY?]と判定されたものだけ削除（新UIやNRS/備考は残す）
     For Each n In Array("Label85", "TextBox1", "Label86", "Label87", "ComboBox39", "TextBox2", "txtPainMemo_lbl", "txtPainMemo", "lblNRS_Move", "cmbNRS_Move")
@@ -4268,7 +4270,8 @@ End Sub
 
 Public Sub ArrangePainLayout()
     Dim f As MSForms.Frame
-    Set f = Me.controls("Frame12")
+    Set f = SafeGetControl(Me, "Frame12")
+    If f Is Nothing Then Exit Sub
 
     ' 上段：左＝性質、右＝VAS
     With f.controls("lblPainQual")
@@ -4280,7 +4283,7 @@ Public Sub ArrangePainLayout()
         .Width = 360: .Height = 120
         .ZOrder 0
     End With
-    With f.controls("lblVAS")
+    With SafeGetControl(f, "fraVAS")
         .Left = 420: .Top = 12: .ZOrder 0
     End With
     With f.controls("fraVAS")
@@ -4293,7 +4296,7 @@ Public Sub ArrangePainLayout()
     With f.controls("lblPainCourse")
         .Left = 12: .Top = 160: .ZOrder 0
     End With
-    With f.controls("fraPainCourse")
+    With SafeGetControl(f, "fraPainCourse")
         .Left = 12
         .Top = f.controls("lblPainCourse").Top + f.controls("lblPainCourse").Height + 4
         .Width = 360
@@ -4302,7 +4305,7 @@ Public Sub ArrangePainLayout()
     With f.controls("lblPainFactors")
         .Left = 420: .Top = 160: .ZOrder 0
     End With
-    With f.controls("fraPainFactors")
+    With SafeGetControl(f, "fraPainFactors")
         .Left = 420
         .Top = f.controls("lblPainFactors").Top + f.controls("lblPainFactors").Height + 4
         .Width = 330
@@ -4313,7 +4316,7 @@ Public Sub ArrangePainLayout()
     With f.controls("lblPainSite")
         .Left = 12: .Top = 300: .ZOrder 0
     End With
-    With f.controls("fraPainSite")
+    With SafeGetControl(f, "fraPainSite")
         .Left = 12
         .Top = f.controls("lblPainSite").Top + f.controls("lblPainSite").Height + 4
         .Width = 360: .Height = 140
@@ -4331,7 +4334,8 @@ End Sub
 
 Sub RemoveLegacyPainUI_Final()
     Dim fr As MSForms.Frame, c As Control
-    Set fr = frmEval.controls("Frame12")
+    Set fr = SafeGetControl(frmEval, "Frame12")
+    If fr Is Nothing Then Exit Sub
     
     For Each c In fr.controls
         Select Case c.name
@@ -4355,9 +4359,10 @@ End Sub
 
 Public Sub MatchPainFrameHeights()
     Dim z As MSForms.Frame, pf As MSForms.Frame, ps As MSForms.Frame, lb As MSForms.label
-    Set z = Me.controls("Frame12")
-    Set pf = z.controls("fraPainFactors")   ' 誘因・軽減因子
-    Set ps = z.controls("fraPainSite")      ' 疼痛部位
+    Set z = SafeGetControl(Me, "Frame12")
+    If z Is Nothing Then Exit Sub
+    Set pf = SafeGetControl(z, "fraPainFactors")
+    Set ps = SafeGetControl(z, "fraPainSite")
     Set lb = z.controls("lblPainFactors")
 
     Dim newH As Single, bottom As Single, availH As Single
@@ -4388,9 +4393,10 @@ Public Sub TidyPainBoxes()
     Dim ps As MSForms.Frame, pf As MSForms.Frame
     Dim lbPS As MSForms.label, lbPF As MSForms.label
 
-    Set z = Me.controls("Frame12")
-    Set ps = z.controls("fraPainSite")
-    Set pf = z.controls("fraPainFactors")
+    Set z = SafeGetControl(Me, "Frame12")
+    If z Is Nothing Then Exit Sub
+    Set ps = SafeGetControl(z, "fraPainSite")
+    Set pf = SafeGetControl(z, "fraPainFactors")
     Set lbPS = z.controls("lblPainSite")
     Set lbPF = z.controls("lblPainFactors")
 
@@ -4432,7 +4438,7 @@ Public Sub TidyPainCourse()
     Dim L0 As Single, T0 As Single, m As Single, gap As Single
     Dim wLeftCol As Single, rightEdge As Single
     
-    Set f = Me.controls("Frame12")
+    Set f = SafeGetControl(Me, "Frame12")
     If f Is Nothing Then Exit Sub
 
     ' 参照（存在しない場合は何もしない）
@@ -4518,7 +4524,8 @@ End Sub
 Public Sub WidenAndTidyPainCourse()
     ' 相互呼び出しなし／手動実行前提
     Dim f As MSForms.Frame
-   Set f = Me.controls("fraPainCourse")
+   Set f = SafeGetControl(Me, "fraPainCourse")
+    If f Is Nothing Then Exit Sub
 
     With f
         ' 参照
@@ -4575,7 +4582,7 @@ Set L = Me.controls("lblPainSite"):      If Not L Is Nothing Then L.WordWrap = F
 Set L = Me.controls("lblPainFactors"):   If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
 
 '--- Frame3 内 ---
-Set f = Me.controls("Frame3")
+Set f = SafeGetControl(Me, "Frame3")
 If Not f Is Nothing Then
     Set L = f.controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
     Set L = f.controls("lblPainQual"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
@@ -4585,7 +4592,7 @@ If Not f Is Nothing Then
 End If
 
 '--- Frame12 内 ---
-Set f = Me.controls("Frame12")
+Set f = SafeGetControl(Me, "Frame12")
 If Not f Is Nothing Then
     Set L = f.controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
     Set L = f.controls("lblPainQual"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
@@ -5144,8 +5151,9 @@ Public Sub BuildCogMentalUI_Simple()
 
     ' ★歩行タブ(Frame6)と同じ位置・サイズに合わせる
     On Error Resume Next
-    Set fw = Me.controls("Frame6")
+    Set fw = SafeGetControl(Me, "Frame6")
     On Error GoTo 0
+    If fw Is Nothing Then Exit Sub
     If Not fw Is Nothing Then
         f.Left = fw.Left
         f.Top = fw.Top
@@ -5774,7 +5782,7 @@ Private Sub BuildDailyLogTab()
 
     '=== フレームが無ければ1個だけ作る ===
     On Error Resume Next
-    Set fra = pg.controls("fraDailyLog")
+    Set fra = SafeGetControl(pg, "fraDailyLog")
     On Error GoTo EH
 
     If fra Is Nothing Then
@@ -6059,7 +6067,8 @@ Public Sub BuildDailyLog_HistoryList(owner As Object)
     margin = 12
 
     ' fraDailyLog と 記録内容テキストを取得
-    Set f = owner.controls("fraDailyLog")
+    Set f = SafeGetControl(owner, "fraDailyLog")
+    If f Is Nothing Then Exit Sub
     Set txtNote = f.controls("txtDailyNote")
 
     ' すでに作ってある場合はいったん削除して作り直し（冪等性確保）
@@ -6127,7 +6136,8 @@ Public Sub BuildDailyLog_ExtractButton(owner As Object)
     margin = 12
 
     ' fraDailyLog と 記録者テキストを取得
-    Set f = owner.controls("fraDailyLog")
+    Set f = SafeGetControl(owner, "fraDailyLog")
+    If f Is Nothing Then Exit Sub
     Set txtStaff = f.controls("txtDailyStaff")
     BuildDailyLog_HistoryList owner   ' ★これを追加（ListBoxを必ず作る）
 
@@ -6162,7 +6172,8 @@ Public Sub BuildDailyLog_SaveButton(owner As Object)
     margin = 12
 
     ' fraDailyLog と 記録者テキストを取得
-    Set f = owner.controls("fraDailyLog")
+    Set f = SafeGetControl(owner, "fraDailyLog")
+    If f Is Nothing Then Exit Sub
     Set txtStaff = f.controls("txtDailyStaff")
 
     ' 既にボタンがあれば削除して作り直し（冪等）
@@ -6194,24 +6205,25 @@ Private Sub mDailyExtract_Click()
     
     
     Dim box As Object
-      Set box = Me.controls("fraDailyLog").controls("txtMonthlyMonitoringDraft")
+            Set box = SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtMonthlyMonitoringDraft")
+    If box Is Nothing Then Exit Sub
 
         If InStr(1, box.value, "（この月の記録はありません）", vbTextCompare) > 0 Then
             
             box.value = "【月次モニタリング下書き】" & vbCrLf & _
             "対象：" & Me.controls("frHeader").controls("txtHdrName").value & vbCrLf & _
-            "期間：" & Format$(DateSerial(Year(CDate(Me.controls("fraDailyLog").controls("txtDailyDate").value)), _
-                                      Month(CDate(Me.controls("fraDailyLog").controls("txtDailyDate").value)), 1), "yyyy/mm/dd") & _
+             "期間：" & Format$(DateSerial(Year(CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value)), _
+                                      Month(CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value)), 1), "yyyy/mm/dd") & _
             " - " & _
-            Format$(DateSerial(Year(CDate(Me.controls("fraDailyLog").controls("txtDailyDate").value)), _
-                                Month(CDate(Me.controls("fraDailyLog").controls("txtDailyDate").value)) + 1, 0), "yyyy/mm/dd") & vbCrLf & vbCrLf & _
+            Format$(DateSerial(Year(CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value)), _
+                                Month(CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value)) + 1, 0), "yyyy/mm/dd") & vbCrLf & vbCrLf & _
             "■ この月に記録された特記事項" & vbCrLf & _
             "この月は特記事項となる記録はありませんでした。" & vbCrLf & _
             "体調面に大きな変動はなく、日々のリハビリにも安定して取り組まれていました。" & vbCrLf & _
             "今後も現在の状態を維持できるよう、引き続き経過を観察していきます。"
 
                       Call ExportMonitoring_ToMonthlyWorkbook( _
-                CDate(Me.controls("fraDailyLog").controls("txtDailyDate").value), _
+         CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value), _
                 Me.controls("frHeader").controls("txtHdrName").value, _
                 box.value)
 
@@ -6223,7 +6235,7 @@ Private Sub mDailyExtract_Click()
     
 
     ' ② AIで下書きに変換
-    Me.controls("fraDailyLog").controls("txtMonthlyMonitoringDraft").value = _
+    SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtMonthlyMonitoringDraft").value = _
         OpenAI_BuildDraft( _
             "【出力フォーマット厳守】" & vbCrLf & _
 "以下の見出しを、表記・順序・記号（■）を一切変えずに必ず出力すること。" & vbCrLf & _
@@ -6232,14 +6244,14 @@ Private Sub mDailyExtract_Click()
 "■ この月に記録された特記事項" & vbCrLf & _
 "■ コメント・考察" & vbCrLf & vbCrLf & _
 "・本文（経過・時系列）には、事実のみを記載する。記録に書かれていない事実や推測は、本文には含めない。「コメント・考察」欄に限り、記録内容を踏まえた今後の観察視点や留意点を記載してよい。その際は、断定を避け、「○○の可能性がある」「○○に留意して経過を確認する」などの表現に限定する。医学的判断、改善・悪化の断定、因果関係の断定は行わない。文体は「です・ます調」とし、現場記録として自然で読みやすい柔らかさを持たせる。", _
-            Me.controls("fraDailyLog").controls("txtMonthlyMonitoringDraft").value _
+            SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtMonthlyMonitoringDraft").value _
         )
-        
-        
+
+
             Call ExportMonitoring_ToMonthlyWorkbook( _
-        CDate(Me.controls("fraDailyLog").controls("txtDailyDate").value), _
+        CDate(SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtDailyDate").value), _
         Me.controls("frHeader").controls("txtHdrName").value, _
-        Me.controls("fraDailyLog").controls("txtMonthlyMonitoringDraft").value)
+        SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtMonthlyMonitoringDraft").value)
 
         
 End Sub
@@ -6456,7 +6468,7 @@ Private Function GetDailyLogFrame() As MSForms.Frame
     End If
 
     ' フレーム fraDailyLog を取得
-    Set f = pg.controls("fraDailyLog")
+    Set f = SafeGetControl(pg, "fraDailyLog")
     If f Is Nothing Then
         Exit Function
     End If
@@ -6617,19 +6629,19 @@ Debug.Print "[CALL] Debug_FixOverflowFrames @ " & Format$(Now, "yyyy-mm-dd hh:nn
     On Error Resume Next
 
     ' 姿勢評価タブ
-    FitFrameHeightToChildren Me.controls("Frame2")
+    FitFrameHeightToChildren SafeGetControl(Me, "Frame2")
 
     ' 身体機能評価タブ（親だけ調整。子Frame12には触らない）
-    FitFrameHeightToChildren Me.controls("Frame12")
-    FitFrameHeightToChildren Me.controls("Frame3")
+    FitFrameHeightToChildren SafeGetControl(Me, "Frame12")
+    FitFrameHeightToChildren SafeGetControl(Me, "Frame3")
     ' FitFrameHeightToChildren Me.Controls("Frame14")
 
     ' 歩行評価タブ（大枠）
-    FitFrameHeightToChildren Me.controls("Frame6")
+    FitFrameHeightToChildren SafeGetControl(Me, "Frame6")
 
     ' 認知・精神タブ（親Frame7だけを調整）
-    FitFrameHeightToChildren Me.controls("Frame7")
-
+    FitFrameHeightToChildren SafeGetControl(Me, "Frame7")
+    
     On Error GoTo 0
 End Sub
 
@@ -7102,7 +7114,7 @@ Set mp1 = Me.controls("MultiPage1")
 If Not mp1 Is Nothing Then
     Set pg1 = mp1.Pages(0)
     If Not pg1 Is Nothing Then
-        Set fr32 = pg1.controls("Frame32")
+        Set fr32 = SafeGetControl(pg1, "Frame32")
         If Not fr32 Is Nothing Then
             Set btnLoadPrev = fr32.controls("btnLoadPrevCtl")
             If Not btnLoadPrev Is Nothing Then
@@ -7156,13 +7168,13 @@ Private Sub ApplyScroll_MP1_Page3_7_Once()
     Set mp = Me.controls("MultiPage1")
 
     'Page3: Frame3（ScrollHeight = 578.35 + 24 = 602.35）
-    With mp.Pages(2).controls("Frame3")
+    With SafeGetControl(mp.Pages(2), "Frame3")
         .ScrollBars = fmScrollBarsVertical
         .ScrollHeight = 900
     End With
 
     'Page7: Frame7（必要時のみバー表示）
-With mp.Pages(6).controls("Frame7")
+With SafeGetControl(mp.Pages(6), "Frame7")
     .ScrollHeight = 584.35
     If .ScrollHeight > .Height Then
         .ScrollBars = fmScrollBarsVertical
@@ -7174,7 +7186,7 @@ End With
 
 
 'Page2: Frame2（姿勢評価の下見切れ対策）
-With mp.Pages(1).controls("Frame2")
+With SafeGetControl(mp.Pages(1), "Frame2")
     .Height = mp.Height
     .ScrollBars = fmScrollBarsVertical
     .ScrollHeight = 488   ' 464 + 24
@@ -7184,7 +7196,7 @@ End With
 
 
 'Page1: Frame1（小画面で下が見切れる対策）
-With mp.Pages(0).controls("Frame1")
+With SafeGetControl(mp.Pages(0), "Frame1")
     .Height = mp.Height
     .ScrollBars = fmScrollBarsVertical
     .ScrollHeight = 420   '←いったん安全値（後で調整可）
@@ -7258,7 +7270,8 @@ End Sub
 
 Public Sub AddPrintButton_TestEval()
     Dim f As MSForms.Frame
-    Set f = Me.controls("Frame23")
+    Set f = SafeGetControl(Me, "Frame23")
+    If f Is Nothing Then Exit Sub
 
     Dim btn As MSForms.CommandButton
     On Error Resume Next
@@ -7302,7 +7315,9 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
     Dim hit As Long
     Dim d As Date, staff As String, note As String
 
-    Set f = Me.controls("fraDailyLog")
+    Set f = SafeGetControl(Me, "fraDailyLog")
+    If f Is Nothing Then Exit Sub
+
 
     ' 対象月＝記録日（txtDailyDate）の月
     v = f.controls("txtDailyDate").value
@@ -7358,7 +7373,7 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
 
     ' 出力先（起動時に確保済みだが念のため）
     Call Ensure_MonthlyDraftBox_UnderFraDailyLog
-    Me.controls("fraDailyLog").controls("txtMonthlyMonitoringDraft").value = s
+    SafeGetControl(SafeGetControl(Me, "fraDailyLog"), "txtMonthlyMonitoringDraft").value = s
 End Sub
 
 
@@ -7500,8 +7515,12 @@ Private Function BIObj(ByVal ctrlName As String) As Object
     Set p = SafeGetPage(Me.controls("MultiPage1"), "Page1")
     If p Is Nothing Then Exit Function
 
-    Set BIObj = p.controls("Frame1").controls("Frame32") _
-                 .controls(ctrlName).Object
+    Dim fr1 As Object, fr32 As Object, target As Object
+    Set fr1 = SafeGetControl(p, "Frame1")
+    Set fr32 = SafeGetControl(fr1, "Frame32")
+    Set target = SafeGetControl(fr32, ctrlName)
+    If target Is Nothing Then Exit Function
+    Set BIObj = target.Object
 End Function
 
 Private Function ReadText(ByVal o As Object) As String
