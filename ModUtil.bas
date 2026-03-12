@@ -15,7 +15,7 @@ End Sub
 ' ===== Deep control search & helpers =====
 
 Public Function FindCtlDeep(ByVal container As Object, ByVal ctlName As String) As MSForms.Control
-    Dim c As Object, pg As MSForms.Page
+    Dim c As Object, pg As MSForms.page
     On Error Resume Next
 
     For Each c In container.controls
@@ -24,7 +24,7 @@ Public Function FindCtlDeep(ByVal container As Object, ByVal ctlName As String) 
             Exit Function
         End If
 
-        If TypeOf c Is MSForms.Frame Or TypeOf c Is MSForms.Page Then
+        If TypeOf c Is MSForms.Frame Or TypeOf c Is MSForms.page Then
             Set FindCtlDeep = FindCtlDeep(c, ctlName)   ' Å© ctlName Ç…ìùàÍ
             If Not FindCtlDeep Is Nothing Then Exit Function
         End If

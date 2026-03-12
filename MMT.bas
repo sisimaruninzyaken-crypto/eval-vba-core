@@ -267,7 +267,7 @@ End Sub
 
 '--- 子タブ内の全 ComboBox をいったんクリア ---
 Private Sub MMT_ClearMMTCombos(ByVal mp As MSForms.MultiPage)
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim c As Object  '（ControlでもOK）
 
     For Each pg In mp.Pages
@@ -401,7 +401,7 @@ Private Sub MMT_LoadFromString_Core(ByVal s As String)
     Dim parts As Variant, itm As Variant
     Dim side As Long, key As String
     Dim vR As String, vL As String
-    Dim p As MSForms.Page
+    Dim p As MSForms.page
     Dim cboR As MSForms.ComboBox, cboL As MSForms.ComboBox
 
     Set pg = GetMMTPage(frmEval)

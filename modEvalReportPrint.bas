@@ -6,7 +6,7 @@ Private Sub WalkContainer(ByVal cont As Object, ByRef maxBottom As Double)
     
    '--- MultiPage は Controls を持たない（Pages を掘る）
 If TypeName(cont) = "MultiPage" Then
-    Dim p As MSForms.Page
+    Dim p As MSForms.page
     For Each p In cont.Pages
         WalkContainer p, maxBottom
     Next p
@@ -26,7 +26,7 @@ End If
     Dim isContainer As Boolean
     isContainer = (TypeOf c Is MSForms.Frame) _
                   Or (TypeOf c Is MSForms.MultiPage) _
-                  Or (TypeOf c Is MSForms.Page)
+                  Or (TypeOf c Is MSForms.page)
 
     ' 葉（入力部品など）だけで maxBottom を更新する
     If c.Visible Then
@@ -62,7 +62,7 @@ Public Sub Fix_Page8_DailyLog_Once()
 
     Dim uf As Object: Set uf = frmEval
     Dim mp As MSForms.MultiPage: Set mp = uf.controls("MultiPage1")
-    Dim pg As MSForms.Page: Set pg = mp.Pages("Page8")
+    Dim pg As MSForms.page: Set pg = mp.Pages("Page8")
 
     Dim maxBottom As Double
     maxBottom = 0#

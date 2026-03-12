@@ -89,7 +89,7 @@ Private Sub DumpMultiPage_Safe(ByVal ws As Object, ByVal mp As MSForms.MultiPage
     ws.WriteLine Indent(depth) & "(Pages.Count=" & mp.Pages.count & ")"
 
     For i = 0 To mp.Pages.count - 1
-        Dim pg As MSForms.Page
+        Dim pg As MSForms.page
         Set pg = mp.Pages(i)
 
         ' Pageは位置情報に触れない（438回避）。Name/Captionだけ
@@ -107,7 +107,7 @@ ErrH:
 #End If
 End Sub
 
-Private Sub DumpPageChildren_Safe(ByVal ws As Object, ByVal pg As MSForms.Page, ByVal depth As Long, ByVal visited As Object)
+Private Sub DumpPageChildren_Safe(ByVal ws As Object, ByVal pg As MSForms.page, ByVal depth As Long, ByVal visited As Object)
     On Error GoTo ErrH
 
     Dim c As MSForms.Control

@@ -2,7 +2,7 @@ Attribute VB_Name = "modADL_Probe"
 
 
 '=== Util: 指定Captionの右隣コンボを返す（同一行±6ptで最も近い） ===
-Private Function GetRightComboByLabelCaptionIn(p As MSForms.Page, ByVal cap As String) As MSForms.ComboBox
+Private Function GetRightComboByLabelCaptionIn(p As MSForms.page, ByVal cap As String) As MSForms.ComboBox
     Dim i As Long, lb As MSForms.label, c As Control, best As MSForms.ComboBox
     Dim dy As Double, bestDx As Double: bestDx = 1E+30
     ' 1) Caption一致ラベルを探す
@@ -35,7 +35,7 @@ End Function
 
 '=== Resolve: 起居動作の無名Combo（立ち上がり／立位保持）を取得 ===
 Private Sub ResolveKyoUnnamedCombos(ByRef cmbStandUp As MSForms.ComboBox, ByRef cmbStandHold As MSForms.ComboBox)
-    Dim mp As MSForms.MultiPage, p As MSForms.Page, c As Control
+    Dim mp As MSForms.MultiPage, p As MSForms.page, c As Control
     ' mpADL 取得
     For Each c In frmEval.controls
         If TypeName(c) = "MultiPage" Then
@@ -50,7 +50,7 @@ End Sub
 
 '=== Snapshot: ADL（BI/IADL/起居動作）を固定順でシリアライズ表示 ===
 Public Sub Snapshot_ADL_Once()
-    Dim mp As MSForms.MultiPage, p As MSForms.Page, ctl As Control
+    Dim mp As MSForms.MultiPage, p As MSForms.page, ctl As Control
     Dim i As Long, s As String, v As String
     Dim cmbSU As MSForms.ComboBox, cmbSH As MSForms.ComboBox
 
@@ -146,7 +146,7 @@ End Sub
 
 '=== ADL IO Builder: フォーム上のADL値を固定順で連結して返す（副作用なし） ===
 Public Function Build_ADL_IO() As String
-    Dim mp As MSForms.MultiPage, p As MSForms.Page, ctl As Control
+    Dim mp As MSForms.MultiPage, p As MSForms.page, ctl As Control
     Dim i As Long, s As String, v As String
     Dim cmbSU As MSForms.ComboBox, cmbSH As MSForms.ComboBox
 
@@ -293,7 +293,7 @@ End Function
 
 '=== Load: EvalDataの IO_ADL 最新行を読み込み、フォームに反映 ===
 Public Sub Load_ADL_Latest()
-    Dim ws As Worksheet, mp As MSForms.MultiPage, p As MSForms.Page, ctl As Control
+    Dim ws As Worksheet, mp As MSForms.MultiPage, p As MSForms.page, ctl As Control
     Dim c As Long, r As Long, s As String
     Dim parts As Variant, i As Long, n As Long
     Dim k As String, v As String
@@ -424,7 +424,7 @@ Private Sub WalkCtrlPaths(host As Object, ByVal path As String)
 
     ' MultiPage は Controls ではなく Pages を走査
 If TypeName(host) = "MultiPage" Then
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     For Each pg In host.Pages
         WalkCtrlPaths pg, path & "/" & pg.caption & ":Page"
     Next pg
@@ -577,7 +577,7 @@ End Sub
 
 '=== Load: read IO_ADL from a specified row and apply to owner form ===
 Public Sub Load_ADL_FromRow(ws As Worksheet, r As Long, owner As Object)
-    Dim mp As MSForms.MultiPage, p As MSForms.Page, ctl As Control
+    Dim mp As MSForms.MultiPage, p As MSForms.page, ctl As Control
     Dim c As Long, s As String
     Dim parts As Variant, i As Long, n As Long
     Dim k As String, v As String

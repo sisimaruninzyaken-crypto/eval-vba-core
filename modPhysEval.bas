@@ -140,8 +140,8 @@ Public Sub EnsurePhysicalFunctionTabs(owner As frmEval)
     Dim mp As MSForms.MultiPage: Set mp = EnsurePhysMulti(owner)
     If mp Is Nothing Then Exit Sub
 
-    Dim pgRom As MSForms.Page, pgMMT As MSForms.Page, pgSens As MSForms.Page, _
-    pgReflex As MSForms.Page, pgPain As MSForms.Page, pgNote As MSForms.Page
+    Dim pgRom As MSForms.page, pgMMT As MSForms.page, pgSens As MSForms.page, _
+    pgReflex As MSForms.page, pgPain As MSForms.page, pgNote As MSForms.page
 
     Set pgRom = FindOrAddPage(mp, CAP_FUNC_ROM)
     Set pgMMT = FindOrAddPage(mp, CAP_FUNC_MMT)
@@ -163,7 +163,7 @@ Public Sub EnsurePhysicalFunctionTabs(owner As frmEval)
     
     Set hostNote = EnsureHostFrame(pgNote)
 
-Dim pgPar As MSForms.Page, hostPar As MSForms.Frame
+Dim pgPar As MSForms.page, hostPar As MSForms.Frame
 Set pgPar = FindOrAddPage(mp, CAP_FUNC_PARALYSIS)
 Set hostPar = EnsureHostFrame(pgPar)
 BuildParalysisTabUI hostPar   ' ← 既に貼った麻痺UIビルダ
@@ -235,7 +235,7 @@ Private Function FindHostByName(frm As frmEval, hostName As String) As MSForms.F
     Next
 End Function
 
-Private Function FindOrAddPage(mp As MSForms.MultiPage, captionText As String) As MSForms.Page
+Private Function FindOrAddPage(mp As MSForms.MultiPage, captionText As String) As MSForms.page
     Dim i As Long
     For i = 0 To mp.Pages.count - 1
         If mp.Pages(i).caption = captionText Then
@@ -247,7 +247,7 @@ Private Function FindOrAddPage(mp As MSForms.MultiPage, captionText As String) A
     FindOrAddPage.caption = captionText
 End Function
 
-Public Function EnsureHostFrame(pg As MSForms.Page) As MSForms.Frame
+Public Function EnsureHostFrame(pg As MSForms.page) As MSForms.Frame
 
     Dim c As Control
     For Each c In pg.controls
@@ -658,7 +658,7 @@ Public Sub EnsurePhysicalFunctionTabs_Root(owner As frmEval)
 
 
     ' ルートに「身体機能評価」ページを追加/取得
-    Dim pgPhys As MSForms.Page
+    Dim pgPhys As MSForms.page
     Set pgPhys = FindOrAddPage(root, CAP_FUNC)
 
     ' ページ内フレーム
@@ -691,7 +691,7 @@ Public Sub EnsurePhysicalFunctionTabs_Root(owner As frmEval)
     End If
 
     ' 子タブ（3枚）：ROM / MMT / 感覚・痙縮・反射・疼痛（各タブに備考あり）
-    Dim pgRom As MSForms.Page, pgMMT As MSForms.Page, pgSens As MSForms.Page
+    Dim pgRom As MSForms.page, pgMMT As MSForms.page, pgSens As MSForms.page
     Set pgRom = FindOrAddPage(mp, CAP_FUNC_ROM)
     Set pgMMT = FindOrAddPage(mp, CAP_FUNC_MMT)
     Set pgSens = FindOrAddPage(mp, CAP_FUNC_SENS_REF)
@@ -751,7 +751,7 @@ Public Sub EnsurePhysicalFunctionTabs_Under(owner As frmEval, root As MSForms.Mu
     End If
 
     ' ルートに「身体機能評価」ページを追加/取得
-    Dim pgPhys As MSForms.Page
+    Dim pgPhys As MSForms.page
     Set pgPhys = FindOrAddPage(root, CAP_FUNC)
 
     ' ページ内の作業フレーム
@@ -781,8 +781,8 @@ Public Sub EnsurePhysicalFunctionTabs_Under(owner As frmEval, root As MSForms.Mu
     CleanDefaultPages mp
 
     ' --- 子タブ（5枚）を用意 ---
-    Dim pgRom As MSForms.Page, pgMMT As MSForms.Page
-    Dim pgSens As MSForms.Page, pgToneRef As MSForms.Page, pgPain As MSForms.Page
+    Dim pgRom As MSForms.page, pgMMT As MSForms.page
+    Dim pgSens As MSForms.page, pgToneRef As MSForms.page, pgPain As MSForms.page
 
     Set pgRom = FindOrAddPage(mp, CAP_FUNC_ROM)                     ' ROM（主要関節）
     Set pgMMT = FindOrAddPage(mp, CAP_FUNC_MMT)                     ' 筋力（MMT）
@@ -802,7 +802,7 @@ Public Sub EnsurePhysicalFunctionTabs_Under(owner As frmEval, root As MSForms.Mu
     
     
 ' （EnsurePhysicalFunctionTabs_* の中、他のpg～と同じ並びに）
-Dim pgPar As MSForms.Page, hostPar As MSForms.Frame
+Dim pgPar As MSForms.page, hostPar As MSForms.Frame
 Set pgPar = FindOrAddPage(mp, CAP_FUNC_PARALYSIS)
 Set hostPar = EnsureHostFrame(pgPar)
 BuildParalysisTabUI hostPar
@@ -1329,7 +1329,7 @@ Public Sub BuildROMTabs(host As MSForms.Frame)
         .Style = fmTabStyleTabs
     End With
 
-    Dim pUpper As MSForms.Page, pLower As MSForms.Page
+    Dim pUpper As MSForms.page, pLower As MSForms.page
     Set pUpper = mp.Pages.Add: pUpper.caption = "上肢": pUpper.name = "pgROM_Upper"
     Set pLower = mp.Pages.Add: pLower.caption = "下肢": pLower.name = "pgROM_Lower"
 

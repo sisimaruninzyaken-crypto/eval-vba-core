@@ -196,47 +196,7 @@ Private Sub SetCtrlText(ByVal ctrlName As String, ByVal v As String)
 End Sub
 
 Private Function SafeGetControl(ByVal parent As Object, ByVal nm As String) As Object
-    Dim c As Object
-    Dim pg As Object
-    Dim found As Object
-
-    If parent Is Nothing Then Exit Function
-
-    On Error Resume Next
-    Set SafeGetControl = parent.controls(nm)
-    On Error GoTo 0
-    If Not SafeGetControl Is Nothing Then Exit Function
-
-    On Error Resume Next
-    For Each c In parent.controls
-        On Error GoTo 0
-
-        If StrComp(CStr(c.name), nm, vbTextCompare) = 0 Then
-            Set SafeGetControl = c
-            Exit Function
-        End If
-
-        Set found = SafeGetControl(c, nm)
-        If Not found Is Nothing Then
-            Set SafeGetControl = found
-            Exit Function
-        End If
-
-        If TypeName(c) = "MultiPage" Then
-            On Error Resume Next
-            For Each pg In c.Pages
-                On Error GoTo 0
-                Set found = SafeGetControl(pg, nm)
-                If Not found Is Nothing Then
-                    Set SafeGetControl = found
-                    Exit Function
-                End If
-            Next pg
-        End If
-
-        On Error Resume Next
-    Next c
-    On Error GoTo 0
+    Set SafeGetControl = modCommonUtil.SafeGetControl(parent, nm)
 End Function
 
 
@@ -813,7 +773,7 @@ Private Sub ApplyInputModeJP(container As Object)
     On Error GoTo 0
 
     If typ = "MultiPage" Then
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     For Each pg In container.Pages
         ApplyInputModeJP pg
     Next
@@ -841,7 +801,7 @@ Private Sub ApplyInputModeJP(container As Object)
 
             Case "MultiPage"
                 ' 子に MultiPage がぶら下がっている場合は Pages を回す
-                Dim p As MSForms.Page
+                Dim p As MSForms.page
                 For Each p In c.Pages
                     ApplyInputModeJP p
                 Next
@@ -885,7 +845,7 @@ Private Sub NormalizeNumericInContainer(container As Object)
     On Error GoTo 0
 
     If typ = "MultiPage" Then
-        Dim pg As MSForms.Page
+        Dim pg As MSForms.page
         For Each pg In container.Pages
             NormalizeNumericInContainer pg
         Next
@@ -908,7 +868,7 @@ Private Sub NormalizeNumericInContainer(container As Object)
                 NormalizeNumericInContainer c
 
             Case "MultiPage"
-                Dim p As MSForms.Page
+                Dim p As MSForms.page
                 For Each p In c.Pages
                     NormalizeNumericInContainer p
                 Next
@@ -962,7 +922,7 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
     Dim mp As MSForms.MultiPage: Set mp = FindMainMultiPage()
     If mp Is Nothing Then Exit Function
 
-    Dim pgMove As MSForms.Page: Set pgMove = FindPageByCaption(mp, "日常生活動作")
+    Dim pgMove As MSForms.page: Set pgMove = FindPageByCaption(mp, "日常生活動作")
     If pgMove Is Nothing Then
         If mp.Pages.count >= 3 Then
             Set pgMove = mp.Pages(2) ' フォールバック
@@ -1018,7 +978,7 @@ Set EnsureBI_IADL = mpADL
 
 
     '======================== BI（10項目） ========================
-    Dim pBI As MSForms.Page: Set pBI = mpADL.Pages(0)
+    Dim pBI As MSForms.page: Set pBI = mpADL.Pages(0)
     ' 一旦クリアしてから作成（空／重複どちらにも対応）
     Dim iCtl As Long
     
@@ -1179,7 +1139,7 @@ frHomeEnv.Height = txtHomeNote.Top + txtHomeNote.Height + 12
 
 
     '======================== IADL（9項目） ========================
-    Dim pIADL As MSForms.Page: Set pIADL = mpADL.Pages(1)
+    Dim pIADL As MSForms.page: Set pIADL = mpADL.Pages(1)
     For iCtl = pIADL.controls.count - 1 To 0 Step -1
         pIADL.controls.Remove pIADL.controls(iCtl).name
     Next
@@ -1348,7 +1308,7 @@ End Function
 Public Sub RecalcBI()
     Dim mpADL As MSForms.MultiPage
     Dim ctrl As MSForms.Control
-    Dim pBI As MSForms.Page
+    Dim pBI As MSForms.page
     Dim idx As Long
     Dim cB As MSForms.ComboBox
     Dim total As Long
@@ -1448,7 +1408,7 @@ Private Sub RemoveAllMpADL()
     Next i
 
     ' ルート MultiPage（mp）の各ページ内
-    Dim mp As MSForms.MultiPage, p As MSForms.Page
+    Dim mp As MSForms.MultiPage, p As MSForms.page
     For Each c In Me.controls
         If TypeName(c) = "MultiPage" Then Set mp = c: Exit For
     Next c
@@ -1465,7 +1425,7 @@ End Sub
 
 
 '=== ADLタブ内の3枚目「起居動作」ページを組み立てる ======================
-Private Sub BuildKyoOnADL(pg As MSForms.Page)
+Private Sub BuildKyoOnADL(pg As MSForms.page)
 
     Dim fr As MSForms.Frame
     ' 既存があれば再利用、無ければ作成（FindOrAddFrameは既存ヘルパー）
@@ -1586,8 +1546,8 @@ Private Function FindMainMultiPage() As MSForms.MultiPage
 End Function
 
 '―― Caption に指定文字列を含むページを返す（無ければ Nothing）
-Private Function FindPageByCaption(mp As MSForms.MultiPage, cap As String) As MSForms.Page
-    Dim pg As MSForms.Page
+Private Function FindPageByCaption(mp As MSForms.MultiPage, cap As String) As MSForms.page
+    Dim pg As MSForms.page
     For Each pg In mp.Pages
         If InStr(pg.caption, cap) > 0 Then
             Set FindPageByCaption = pg
@@ -1597,7 +1557,7 @@ Private Function FindPageByCaption(mp As MSForms.MultiPage, cap As String) As MS
 End Function
 
 '―― Page 内で Frame を取得（無ければ作成）
-Private Function FindOrAddFrame(pg As MSForms.Page, nm As String) As MSForms.Frame
+Private Function FindOrAddFrame(pg As MSForms.page, nm As String) As MSForms.Frame
     Dim c As MSForms.Control
     For Each c In pg.controls
         If TypeOf c Is MSForms.Frame Then
@@ -1639,7 +1599,7 @@ Debug.Print "BuildPostureUI CALLED", Join(PostureItems, " / ")
     If mp Is Nothing Then Exit Sub
 
     ' 該当ページを Caption で取得（無ければ作る）
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Set pg = FindPageByCaption(mp, CAP_POSTURE_PAGE)
     If pg Is Nothing Then
         Set pg = mp.Pages.Add
@@ -1709,7 +1669,7 @@ Private Sub LayoutPosture()
     Dim mp As MSForms.MultiPage: Set mp = FindMainMultiPage()
     If mp Is Nothing Then Exit Sub
 
-    Dim pg As MSForms.Page: Set pg = FindPageByCaption(mp, CAP_POSTURE_PAGE)
+    Dim pg As MSForms.page: Set pg = FindPageByCaption(mp, CAP_POSTURE_PAGE)
     If pg Is Nothing Then Exit Sub
 
     Dim fr As MSForms.Frame: Set fr = FindOrAddFrame(pg, "frPosture")
@@ -1960,7 +1920,7 @@ Private Sub txtAge_Change():  RefreshSaveEnabled: End Sub
 '========================
 ' スクロール無しのホストフレーム
 '========================
-Private Function CreateScrollHost(pg As MSForms.Page) As MSForms.Frame
+Private Function CreateScrollHost(pg As MSForms.page) As MSForms.Frame
     Dim host As MSForms.Frame
     Set host = pg.controls.Add("Forms.Frame.1")
 
@@ -2073,7 +2033,7 @@ End Function
 ' RLA レベル取得
 '========================
 Private Function GetRLAGroupLevel(ByVal grp As String) As String
-    Dim c As MSForms.Control, p As MSForms.Page, fr As MSForms.Control, ob As MSForms.Control
+    Dim c As MSForms.Control, p As MSForms.page, fr As MSForms.Control, ob As MSForms.Control
     For Each c In hostWalk.controls
         If TypeName(c) = "MultiPage" Then
             For Each p In c.Pages
@@ -2103,14 +2063,14 @@ Private Function CollectFormData() As Object
         Select Case TypeName(c)
             Case "MultiPage"
                 For j = 0 To c.Pages.count - 1
-                    Dim p As MSForms.Page: Set p = c.Pages(j)
+                    Dim p As MSForms.page: Set p = c.Pages(j)
                     Dim co As MSForms.Control
                     For Each co In p.controls
                         CollectOne d, co
                         If TypeName(co) = "Frame" Then
                             For Each ic In co.controls: CollectOne d, ic: Next
                         ElseIf TypeName(co) = "MultiPage" Then
-                            Dim p2 As MSForms.Page, fr As MSForms.Control, it As MSForms.Control
+                            Dim p2 As MSForms.page, fr As MSForms.Control, it As MSForms.Control
                             For Each p2 In co.Pages
                                 For Each fr In p2.controls
                                     CollectOne d, fr
@@ -2158,7 +2118,7 @@ Private Sub CollectOne(ByRef d As Object, ByVal ctl As MSForms.Control)
 End Sub
 
 Private Function AggregateChecks(ByVal groupTag As String) As String
-    Dim picks As String, c As MSForms.Control, p As MSForms.Page, fr As MSForms.Control, cc As MSForms.Control
+    Dim picks As String, c As MSForms.Control, p As MSForms.page, fr As MSForms.Control, cc As MSForms.Control
     For Each c In Me.controls
         If TypeName(c) = "MultiPage" Then
             For Each p In c.Pages
@@ -2191,7 +2151,7 @@ End Function
 
 Private Function FindAllFramesByCaptionPart(ByVal part As String) As Collection
     Dim col As New Collection
-    Dim c As MSForms.Control, p As MSForms.Page, oc As MSForms.Control
+    Dim c As MSForms.Control, p As MSForms.page, oc As MSForms.Control
     For Each c In Me.controls
         If TypeName(c) = "MultiPage" Then
             For Each p In c.Pages
@@ -2199,7 +2159,7 @@ Private Function FindAllFramesByCaptionPart(ByVal part As String) As Collection
                     If TypeName(oc) = "Frame" Then
                         If InStr(1, oc.caption, part, vbTextCompare) > 0 Then col.Add oc
                     ElseIf TypeName(oc) = "MultiPage" Then
-                        Dim p2 As MSForms.Page, oc2 As MSForms.Control
+                        Dim p2 As MSForms.page, oc2 As MSForms.Control
                         For Each p2 In oc.Pages
                             For Each oc2 In p2.controls
                                 If TypeName(oc2) = "Frame" Then
@@ -2600,7 +2560,7 @@ Private Sub SetImeRecursive(container As Object)
                 SetImeRecursive ctl
 
             Case "MultiPage"
-                Dim p As MSForms.Page
+                Dim p As MSForms.page
                 For Each p In ctl.Pages          ' ★ Pages を列挙するのが重要
                     SetImeRecursive p
                 Next
@@ -2715,7 +2675,7 @@ SafeExit:
         mAgeBusy = False
 
     Dim c  As Object
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim hit As Object
 
     ' MultiPage は Pages 経由で潜る（ここが重要）
@@ -2753,7 +2713,7 @@ End Function
 '=== 位置でヘッダ行のボタンを拾う（最上段の右側 2 個を採用）===
 Private Sub GatherButtons(container As Object, ByRef arr As Collection)
     Dim c  As Object
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
 
     ' MultiPage は Pages を再帰
     If TypeName(container) = "MultiPage" Then
@@ -2818,7 +2778,7 @@ End Sub
 '=== ボタン列挙（MultiPage対応版） ===
 Private Sub DumpButtonsProc(container As Object)
     Dim c As Control
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
 
     If TypeName(container) = "MultiPage" Then
         'MultiPage は Pages 配下を回す
@@ -3150,13 +3110,13 @@ mp.Pages(0).caption = "基本情報"
 mp.Pages(1).caption = "姿勢評価"
 
 ' ←ここで「身体機能評価」を先に追加
-Dim pgPhys  As MSForms.Page: Set pgPhys = mp.Pages.Add: pgPhys.caption = "身体機能評価"
+Dim pgPhys  As MSForms.page: Set pgPhys = mp.Pages.Add: pgPhys.caption = "身体機能評価"
 
 ' 残りの親タブ
-Dim pgMove  As MSForms.Page: Set pgMove = mp.Pages.Add: pgMove.caption = "日常生活動作"
-Dim pgTests As MSForms.Page: Set pgTests = mp.Pages.Add: pgTests.caption = "テスト・評価"
-Dim pgWalk  As MSForms.Page: Set pgWalk = mp.Pages.Add: pgWalk.caption = "歩行評価"
-Dim pgCog   As MSForms.Page: Set pgCog = mp.Pages.Add: pgCog.caption = "認知・精神"
+Dim pgMove  As MSForms.page: Set pgMove = mp.Pages.Add: pgMove.caption = "日常生活動作"
+Dim pgTests As MSForms.page: Set pgTests = mp.Pages.Add: pgTests.caption = "テスト・評価"
+Dim pgWalk  As MSForms.page: Set pgWalk = mp.Pages.Add: pgWalk.caption = "歩行評価"
+Dim pgCog   As MSForms.page: Set pgCog = mp.Pages.Add: pgCog.caption = "認知・精神"
 
 ' --- ホスト変数の宣言（ここを追加）---
 ' --- ホスト変数の宣言 ---
@@ -4895,7 +4855,7 @@ End Sub
 Private Sub BuildWalk_AbnormalTab()
     Dim ctl As MSForms.Control
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
 
     ' 歩行評価用の MultiPage2 を探す
     For Each ctl In Me.controls
@@ -4935,7 +4895,7 @@ End Sub
 
 Private Sub BuildWalkAbnormal_Frames()
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
     Dim W As Single, h As Single
@@ -5010,7 +4970,7 @@ End Sub
 
 Private Sub BuildWalkAbnormal_Checks()
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
     Dim chk As MSForms.CheckBox
@@ -5245,7 +5205,7 @@ End Sub
 Public Sub BuildCog_CognitionCore()
     Dim f As MSForms.Frame
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim c As MSForms.Control
     Dim lbl As MSForms.label
     Dim cmb As MSForms.ComboBox
@@ -5441,7 +5401,7 @@ End Sub
 Public Sub BuildCog_DementiaBlock()
     Dim f As MSForms.Frame
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim fraTop As Single
     Dim lbl As MSForms.label
     Dim cmb As MSForms.ComboBox
@@ -5541,7 +5501,7 @@ End Sub
 Public Sub BuildCog_BPSD()
     Dim f As MSForms.Frame
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim topY As Single
     Dim lbl As MSForms.label
     Dim chk As MSForms.CheckBox
@@ -5626,7 +5586,7 @@ End Sub
 Public Sub BuildCog_MentalBlock()
     Dim f As MSForms.Frame
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim lbl As MSForms.label
     Dim cmb As MSForms.ComboBox
     Dim txt As MSForms.TextBox
@@ -5806,7 +5766,7 @@ End Sub
 
 Private Sub BuildDailyLogTab()
     Dim mp As Object
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim exists As Boolean
     Dim fra As MSForms.Frame
 
@@ -6548,7 +6508,7 @@ End Function
 
 Public Function GetWalkRootFrame() As MSForms.Frame
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim c As Control
     Dim best As MSForms.Frame
     Dim bestArea As Double
@@ -6581,7 +6541,7 @@ End Function
 
 Public Function GetCogRootFrame() As MSForms.Frame
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim host As MSForms.Frame
     Dim c As Control
     Dim firstFrame As MSForms.Frame
@@ -6735,7 +6695,7 @@ End Sub
 
 Private Sub AlignRootFrameToPage(ByVal pageIndex As Long, root As MSForms.Frame)
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim pageLeft As Single, pageTop As Single
     Dim pageWidth As Single, pageHeight As Single
 
@@ -6767,7 +6727,7 @@ End Sub
 
 
 Private Sub PreviewOnePage(ByVal idx As Long, ByVal mp As MSForms.MultiPage)
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim root As MSForms.Frame
     Dim x As Single, y As Single, W As Single, h As Single
 
@@ -6805,7 +6765,7 @@ End Sub
 
 Private Function GetPageRootFrame(ByVal pageIndex As Long) As MSForms.Frame
     Dim mp As MSForms.MultiPage
-    Dim pg As MSForms.Page
+    Dim pg As MSForms.page
     Dim c As Control
     Dim f As MSForms.Frame
     Dim best As MSForms.Frame

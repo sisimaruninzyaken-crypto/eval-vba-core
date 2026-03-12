@@ -237,9 +237,107 @@ Public Function ControlExists(parent As Object, ctrlName As String) As Boolean
 End Function
 
 Public Function SafeGetControl(ByVal parent As Object, ByVal nm As String) As Object
+    
+    Dim visited As Object
+
+    If parent Is Nothing Then Exit Function
+    If LenB(Trim$(nm)) = 0 Then Exit Function
+
+    Set visited = CreateObject("Scripting.Dictionary")
+    Set SafeGetControl = FindControlRecursive(parent, nm, visited)
+End Function
+
+Private Function FindControlRecursive(ByVal node As Object, ByVal targetName As String, ByVal visited As Object) As Object
+    Dim child As Object
+    Dim page As Object
+    Dim found As Object
+    Dim key As String
+
+    If node Is Nothing Then Exit Function
+
+    key = BuildVisitedKey(node)
+    If LenB(key) > 0 Then
+        If visited.exists(key) Then Exit Function
+        visited.Add key, True
+    End If
+
+    If HasControlName(node, targetName) Then
+        Set FindControlRecursive = node
+        Exit Function
+    End If
+
+    For Each child In GetChildControls(node)
+        Set found = FindControlRecursive(child, targetName, visited)
+        If Not found Is Nothing Then
+            Set FindControlRecursive = found
+            Exit Function
+        End If
+    Next child
+
+    If TypeName(node) = "MultiPage" Then
+        On Error Resume Next
+        For Each page In node.Pages
+            On Error GoTo 0
+            Set found = FindControlRecursive(page, targetName, visited)
+            If Not found Is Nothing Then
+                Set FindControlRecursive = found
+                Exit Function
+            End If
+            On Error Resume Next
+        Next page
+        On Error GoTo 0
+    End If
+End Function
+
+Private Function GetChildControls(ByVal parent As Object) As Collection
+    Dim result As New Collection
+    Dim c As Object
+    
     On Error Resume Next
-    Set SafeGetControl = parent.controls(nm)
+
+    For Each c In parent.controls
+        result.Add c
+    Next c
     On Error GoTo 0
+
+    Set GetChildControls = result
+End Function
+
+Private Function HasControlName(ByVal ctrl As Object, ByVal nm As String) As Boolean
+    Dim ctrlName As String
+
+    On Error Resume Next
+    ctrlName = CStr(ctrl.name)
+    If Err.Number <> 0 Then
+        Err.Clear
+        Exit Function
+    End If
+
+    On Error GoTo 0
+    
+
+    HasControlName = (StrComp(ctrlName, nm, vbTextCompare) = 0)
+End Function
+
+Private Function BuildVisitedKey(ByVal node As Object) As String
+    Dim h As String
+    Dim n As String
+
+    On Error Resume Next
+    h = Hex$(ObjPtr(node))
+    If Err.Number <> 0 Then
+        Err.Clear
+        h = ""
+    End If
+
+    n = CStr(node.name)
+    If Err.Number <> 0 Then
+        Err.Clear
+        n = ""
+    End If
+    On Error GoTo 0
+
+    BuildVisitedKey = TypeName(node) & "|" & h & "|" & n
 End Function
 
 
