@@ -23,8 +23,8 @@ Public Sub TidyBasicInfo_TwoColumns()
     Dim t As Object
     Dim xCtlR As Double
     Dim xRightCtl As Double
-    Dim riskTop As Double
-    Dim riskH As Double
+    Dim wNeeds As Double
+    Dim wRightMulti As Double
 
     Set c = frmEval.EvalCtl("txtAge", "Page1")
     If c Is Nothing Then Set c = frmEval.EvalCtl("txtEDate", "Page1")
@@ -97,6 +97,8 @@ Public Sub TidyBasicInfo_TwoColumns()
     ' 右カラムの入力位置は既存 txtEDate に合わせる（あれば）
      xCtlR = 60 + 8
      xRightCtl = xR + xCtlR
+     wNeeds = wCol - xCtl
+     wRightMulti = wCol - xCtlR
 
     ' 開始位置（左右カラムを一致）
     yR = 6
@@ -132,7 +134,7 @@ aCapL = Array( _
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
-    Call PlaceCtl(f32, "txtNeedsPt", xL + xCtl, yL - 1, wCtl, needsH)
+    Call PlaceCtl(f32, "txtNeedsPt", xL + xCtl, yL - 1, wNeeds, needsH)
 
     yL = yL + needsH + gapY
     Call EnsureLabel(f32, "lblBI_NeedsFam", "家族Needs", xL + xLbl, yL, wLbl, rowH)
@@ -140,7 +142,7 @@ aCapL = Array( _
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
-    Call PlaceCtl(f32, "txtNeedsFam", xL + xCtl, yL - 1, wCtl, needsH)
+    Call PlaceCtl(f32, "txtNeedsFam", xL + xCtl, yL - 1, wNeeds, needsH)
     yL = yL + needsH + gapY
    
 
@@ -182,14 +184,14 @@ aCapL = Array( _
 
     ' 治療経過（複数行）
     Call EnsureLabel(f32, "lblBI_R_M_5", "治療経過", xR + xLbl, yR, wLblR, rowH)
-    Call PlaceCtl(f32, "txtTxCourse", xRightCtl, yR - 1, wCtl, multiH)
+    Call PlaceCtl(f32, "txtTxCourse", xRightCtl, yR - 1, wRightMulti, multiH)
     Set c = frmEval.EvalCtl("txtTxCourse", "Page1")
     If Not c Is Nothing Then c.IMEMode = fmIMEModeHiragana
     yR = yR + multiH + gapY
 
     ' 合併症（複数行）
     Call EnsureLabel(f32, "lblBI_R_M_6", "合併症", xR + xLbl, yR, wLblR, rowH)
-    Call PlaceCtl(f32, "txtComplications", xRightCtl, yR - 1, wCtl, multiH)
+    Call PlaceCtl(f32, "txtComplications", xRightCtl, yR - 1, wRightMulti, multiH)
     Set c = frmEval.EvalCtl("txtComplications", "Page1")
     If Not c Is Nothing Then c.IMEMode = fmIMEModeHiragana
     yR = yR + multiH + 8
@@ -197,10 +199,7 @@ aCapL = Array( _
     ' 右下：リスク群（最下段へ）
     Set t = frmEval.EvalCtl("txtComplications", "Page1")
     If Not t Is Nothing Then
-        riskTop = t.Top + 55
-        riskH = h - riskTop - 12
-        If riskH < 24 Then riskH = 24
-        Call PlaceCtl(f32, "Frame31", t.Left, t.Top + 55, wCol - 6, riskH)
+        Call PlaceCtl(f32, "Frame31", t.Left, t.Top + 55, t.Width, h - (t.Top + 55) - 12)
     End If
     Set c = frmEval.EvalCtl("Frame31", "Page1")
     If Not c Is Nothing Then Call ArrangeRiskChecks_TwoCols(c)
