@@ -195,6 +195,51 @@ Private Sub SetCtrlText(ByVal ctrlName As String, ByVal v As String)
     Me.controls(ctrlName).text = v
 End Sub
 
+Private Function SafeGetControl(ByVal parent As Object, ByVal nm As String) As Object
+    Dim c As Object
+    Dim pg As Object
+    Dim found As Object
+
+    If parent Is Nothing Then Exit Function
+
+    On Error Resume Next
+    Set SafeGetControl = parent.controls(nm)
+    On Error GoTo 0
+    If Not SafeGetControl Is Nothing Then Exit Function
+
+    On Error Resume Next
+    For Each c In parent.controls
+        On Error GoTo 0
+
+        If StrComp(CStr(c.name), nm, vbTextCompare) = 0 Then
+            Set SafeGetControl = c
+            Exit Function
+        End If
+
+        Set found = SafeGetControl(c, nm)
+        If Not found Is Nothing Then
+            Set SafeGetControl = found
+            Exit Function
+        End If
+
+        If TypeName(c) = "MultiPage" Then
+            On Error Resume Next
+            For Each pg In c.Pages
+                On Error GoTo 0
+                Set found = SafeGetControl(pg, nm)
+                If Not found Is Nothing Then
+                    Set SafeGetControl = found
+                    Exit Function
+                End If
+            Next pg
+        End If
+
+        On Error Resume Next
+    Next c
+    On Error GoTo 0
+End Function
+
+
 '=== Ç±Ç±Ç©ÇÁ âÊñ çÏê¨ÉwÉãÉpÅ[ÇÃç≈è¨é¿ëï =========================
 Private Function CreateFrameP(parent As MSForms.Frame, title As String, _
                               Optional minHeight As Single = 120) As MSForms.Frame
