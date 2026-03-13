@@ -7641,42 +7641,44 @@ Private Function BIText(ByVal ctrlName As String) As MSForms.TextBox
     Set BIText = c
 End Function
 Private Sub mBIEnter_txtLiving_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
-    If KeyCode <> vbKeyReturn Then Exit Sub
-    KeyCode = 0
-    mBIEnter_txtEvaluator.SetFocus
+    HandleBasicInfoEnterRoute KeyCode, mBIEnter_txtEvaluator
+End Sub
+
+Private Sub mBIEnter_txtEvaluator_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    HandleBasicInfoEnterRoute KeyCode, mBIEnter_txtEvaluatorJob
 End Sub
 
 Private Sub mBIEnter_txtEvaluatorJob_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
-    If KeyCode <> vbKeyReturn Then Exit Sub
-    KeyCode = 0
-    mBIEnter_txtOnset.SetFocus
+    HandleBasicInfoEnterRoute KeyCode, mBIEnter_txtOnset
 End Sub
 
 Private Sub mBIEnter_txtOnset_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
-    If KeyCode <> vbKeyReturn Then Exit Sub
-    KeyCode = 0
-    mBIEnter_txtDx.SetFocus
+    HandleBasicInfoEnterRoute KeyCode, mBIEnter_txtDx
 End Sub
 
 
 Private Sub mBIEnter_txtDx_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
-    If KeyCode <> vbKeyReturn Then Exit Sub
-    KeyCode = 0
-    mBIEnter_txtAdmDate.SetFocus
+    HandleBasicInfoEnterRoute KeyCode, mBIEnter_txtAdmDate
 End Sub
 
 Private Sub mBIEnter_txtAdmDate_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
-    If KeyCode <> vbKeyReturn Then Exit Sub
-    KeyCode = 0
-    mBIEnter_txtDisDate.SetFocus
+    HandleBasicInfoEnterRoute KeyCode, mBIEnter_txtDisDate
 End Sub
 
 Private Sub mBIEnter_txtDisDate_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
-    If KeyCode <> vbKeyReturn Then Exit Sub
-    KeyCode = 0
-    mBIEnter_txtTxCourse.SetFocus
+    HandleBasicInfoEnterRoute KeyCode, mBIEnter_txtTxCourse
 End Sub
 
+Private Sub mBIEnter_txtTxCourse_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    HandleBasicInfoEnterRoute KeyCode
+End Sub
+
+Private Sub HandleBasicInfoEnterRoute(ByRef KeyCode As MSForms.ReturnInteger, Optional ByVal nextTarget As MSForms.TextBox = Nothing)
+    If KeyCode <> vbKeyReturn Then Exit Sub
+    KeyCode = 0
+    If nextTarget Is Nothing Then Exit Sub
+    nextTarget.SetFocus
+End Sub
 
 Private Function ReadText(ByVal o As Object) As String
     ' ValueóDêÊÅAÉ_ÉÅÇ»ÇÁText
