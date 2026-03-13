@@ -148,14 +148,21 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
     If host Is Nothing Then Set host = GetMMTHost(pg)
     If host Is Nothing Then Exit Function
     
-    Set mp = host
-    If TypeName(mp) <> "MultiPage" Then
-        Set mp = Nothing
+    Set mp = Nothing
+    If TypeName(host) = "MultiPage" Then
+        If LCase$(CStr(host.name)) = "mpmmtchildgen" _
+           Or InStr(1, CStr(host.tag), "MMTGEN", vbTextCompare) > 0 Then
+            Set mp = host
+        End If
+    Else
         On Error Resume Next
         For i = 0 To host.controls.count - 1
             If TypeName(host.controls(i)) = "MultiPage" Then
-                Set mp = host.controls(i)
-                Exit For
+                If LCase$(CStr(host.controls(i).name)) = "mpmmtchildgen" _
+                   Or InStr(1, CStr(host.controls(i).tag), "MMTGEN", vbTextCompare) > 0 Then
+                    Set mp = host.controls(i)
+                    Exit For
+                End If
             End If
         Next i
         On Error GoTo 0
