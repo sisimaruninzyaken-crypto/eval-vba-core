@@ -7109,9 +7109,15 @@ Public Sub CreateHeaderButtons_Once()
     Dim hSave  As MSForms.CommandButton
     Dim hClose As MSForms.CommandButton
 
-    Set hClear = f.controls.Add("Forms.CommandButton.1", "cmdClearHeader", True)
-    Set hSave = f.controls.Add("Forms.CommandButton.1", "cmdSaveHeader", True)
-    Set hClose = f.controls.Add("Forms.CommandButton.1", "cmdCloseHeader", True)
+     On Error Resume Next
+    Set hClear = f.controls("cmdClearHeader")
+    Set hSave = f.controls("cmdSaveHeader")
+    Set hClose = f.controls("cmdCloseHeader")
+    On Error GoTo 0
+
+    If hClear Is Nothing Then Set hClear = f.controls.Add("Forms.CommandButton.1", "cmdClearHeader", True)
+    If hSave Is Nothing Then Set hSave = f.controls.Add("Forms.CommandButton.1", "cmdSaveHeader", True)
+    If hClose Is Nothing Then Set hClose = f.controls.Add("Forms.CommandButton.1", "cmdCloseHeader", True)
 
     ' å©ÇΩñ⁄ÇÕä˘ë∂Çì•èP
     hClear.caption = bClear.caption: hClear.Width = bClear.Width: hClear.Height = bClear.Height
@@ -7189,8 +7195,15 @@ Set mp1 = Me.controls("MultiPage1")
 If Not mp1 Is Nothing Then
     Set pg1 = mp1.Pages(0)
     If Not pg1 Is Nothing Then
-        If Not btnLoadPrev Is Nothing Then
-            btnLoadPrev.Visible = False
+        If Not btnLoadPrev Is Nothing Then btnLoadPrev.Visible = False
+
+        Dim legacyLoadPrev As MSForms.Control
+        Set legacyLoadPrev = EvalCtl("btnLoadPrevCtl", "Page1")
+        If Not legacyLoadPrev Is Nothing Then
+            legacyLoadPrev.Visible = False
+            legacyLoadPrev.Enabled = False
+            legacyLoadPrev.Left = -1000
+            legacyLoadPrev.Top = -1000
         End If
     End If
 End If
