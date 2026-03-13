@@ -14,7 +14,8 @@ Public Sub MMT_BuildChildTabs_Direct()
         Exit Sub
     End If
 
-    Dim host As Object, mp As Object
+    Dim host As Object, mpMMTChildGen As Object
+    Dim pgUpper As Object, pgLower As Object
 
 
     '--- hostŠm•Ûi–³‚¯‚ê‚Îì‚éj ---
@@ -30,30 +31,37 @@ Public Sub MMT_BuildChildTabs_Direct()
     host.Height = pg.InsideHeight - 12
     
     '--- mpŠm•Ûihost”z‰ºj ---
-    Set mp = GetMMTChildTabs(pg, host)
+    Set mpMMTChildGen = GetMMTChildTabs(pg, host)
     
-    If mp Is Nothing Then
+    If mpMMTChildGen Is Nothing Then
 
         MsgBox "qƒ^ƒu(mpMMTChild)‚ªì¬‚Å‚«‚Ü‚¹‚ñB", vbExclamation
         Exit Sub
     End If
 
     ' mpƒTƒCƒY‚à–ˆ‰ñ’Ç]
-    mp.Width = host.InsideWidth
-    mp.Height = host.InsideHeight
+    mpMMTChildGen.Width = host.InsideWidth
+    mpMMTChildGen.Height = host.InsideHeight
     
     ' legacy stray cleanup
     PurgeStrayMMTControls pg, host
 
     '--- qƒ^ƒu‚Ì’†g‚ğì‚è’¼‚·iMMTGEN‚¾‚¯Á‚·j ---
-    MMT_ClearGen mp.Pages(0)
-    MMT_ClearGen mp.Pages(1)
-        BuildMMTPage mp.Pages(0), Array("Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", "Œ¨ŠOù", _
-                                    "•I‹ü‹È", "•IL“W", "‘O˜r‰ñ“à", "‘O˜r‰ñŠO", _
-                                    "èŠÖß¶‹ü", "èŠÖß”w‹ü", "w‹ü‹È", "wL“W", "•êw‘Î—§")
-        BuildMMTPage mp.Pages(1), Array("ŒÒ‹ü‹È", "ŒÒL“W", "ŒÒŠO“]", "ŒÒ“à“]", _
-                                    "•G‹ü‹È", "•GL“W", "‘«ŠÖß”w‹ü", "‘«ŠÖß’ê‹ü", "•êæäL“W")
-    
+    Set pgUpper = mpMMTChildGen.Pages(0)
+    Set pgLower = mpMMTChildGen.Pages(1)
+MMT_ClearGen pgUpper
+MMT_ClearGen pgLower
+
+BuildMMTPage pgUpper, Array("", "Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", _
+                            "Œ¨ŠOù", "•I‹ü‹È", "•IL“W", _
+                            "‘O˜r‰ñ“à", "‘O˜r‰ñŠO", _
+                            "èŠÖß¶‹ü", "èŠÖß”w‹ü", _
+                            "w‹ü‹È", "wL“W", "•êw‘Î—§")
+
+BuildMMTPage pgLower, Array("ŒÒ‹ü‹È", "ŒÒL“W", "ŒÒŠO“]", "ŒÒ“à“]", _
+                            "•G‹ü‹È", "•GL“W", _
+                            "‘«ŠÖß”w‹ü", "‘«ŠÖß’ê‹ü", _
+                            "•êæäL“W")
     DoEvents
     Resize_MMTChildHost_ToPage
     
