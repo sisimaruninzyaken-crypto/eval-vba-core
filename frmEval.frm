@@ -7587,16 +7587,7 @@ End Sub
 ' ====== BasicInfo（Frame32）コントロール実体取得 ======
 Private Function BIObj(ByVal ctrlName As String) As Object
 
-    Dim target As Object
-    
-
-    Set target = EvalCtl(ctrlName, "Page1")
-    If target Is Nothing Then Exit Function
-
-    On Error Resume Next
-    Set BIObj = target.Object
-    If BIObj Is Nothing Then Set BIObj = target
-    On Error GoTo 0
+    Set BIObj = SafeGetControl(Me, ctrlName)
 End Function
 
 Private Sub EnsureBasicInfoEnterFixedRouteReady()
@@ -7610,14 +7601,14 @@ Private Sub EnsureBasicInfoEnterFixedRouteReady()
 End Sub
 
 Private Function BindBasicInfoEnterFixedRouteTargets() As Boolean
-    Set mBIEnter_txtLiving = BIText("txtLiving")
-    Set mBIEnter_txtEvaluator = BIText("txtEvaluator")
-    Set mBIEnter_txtEvaluatorJob = BIText("txtEvaluatorJob")
-    Set mBIEnter_txtOnset = BIText("txtOnset")
-    Set mBIEnter_txtDx = BIText("txtDx")
-    Set mBIEnter_txtAdmDate = BIText("txtAdmDate")
-    Set mBIEnter_txtDisDate = BIText("txtDisDate")
-    Set mBIEnter_txtTxCourse = BIText("txtTxCourse")
+    Set mBIEnter_txtLiving = ResolveBasicInfoText("txtLiving")
+    Set mBIEnter_txtEvaluator = ResolveBasicInfoText("txtEvaluator")
+    Set mBIEnter_txtEvaluatorJob = ResolveBasicInfoText("txtEvaluatorJob")
+    Set mBIEnter_txtOnset = ResolveBasicInfoText("txtOnset")
+    Set mBIEnter_txtDx = ResolveBasicInfoText("txtDx")
+    Set mBIEnter_txtAdmDate = ResolveBasicInfoText("txtAdmDate")
+    Set mBIEnter_txtDisDate = ResolveBasicInfoText("txtDisDate")
+    Set mBIEnter_txtTxCourse = ResolveBasicInfoText("txtTxCourse")
 
     BindBasicInfoEnterFixedRouteTargets = _
         Not (mBIEnter_txtLiving Is Nothing) And _
@@ -7631,14 +7622,14 @@ Private Function BindBasicInfoEnterFixedRouteTargets() As Boolean
 End Function
 
 
-Private Function BIText(ByVal ctrlName As String) As MSForms.TextBox
+Private Function ResolveBasicInfoText(ByVal ctrlName As String) As MSForms.TextBox
     Dim c As Object
 
-    Set c = BIObj(ctrlName)
+    Set c = SafeGetControl(Me, ctrlName)
     If c Is Nothing Then Exit Function
     If TypeName(c) <> "TextBox" Then Exit Function
 
-    Set BIText = c
+    Set ResolveBasicInfoText = c
 End Function
 Private Sub mBIEnter_txtLiving_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
     HandleBasicInfoEnterRoute KeyCode, mBIEnter_txtEvaluator
