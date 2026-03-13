@@ -178,7 +178,7 @@ Else
     BuildROMSection_Compact hostRom   ' ← 既存：二列レイアウト（互換用）
 End If
 
-    BuildMMTSection owner, hostMmt
+    If Not UseMMTChildTabs() Then BuildMMTSection owner, hostMmt
    BuildSensoryTabUI hostSens
 BuildToneReflexTabUI hostReflex
 BuildPainTabUI owner, hostPain
@@ -704,9 +704,7 @@ Public Sub EnsurePhysicalFunctionTabs_Root(owner As frmEval)
     ' UI生成＋各タブに備考
     BuildROMSection_Compact hostRom
     
-
-    BuildMMTSection owner, hostMmt
-   
+    If Not UseMMTChildTabs() Then BuildMMTSection owner, hostMmt
 
     BuildSensoryToneReflexPain owner, hostSens
     
@@ -816,7 +814,7 @@ Else
     BuildROMSection_Compact hostRom ' ← 旧UI（残置）
 End If
 
-BuildMMTSection owner, hostMmt
+If Not UseMMTChildTabs() Then BuildMMTSection owner, hostMmt
 BuildSensoryTabUI hostSens
 BuildToneReflexTabUI hostTone
 BuildPainTabUI owner, hostPain

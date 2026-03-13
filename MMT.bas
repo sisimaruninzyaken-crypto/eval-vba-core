@@ -41,6 +41,9 @@ Public Sub MMT_BuildChildTabs_Direct()
     ' mpÉTÉCÉYÇ‡ñàâÒí«è]
     mp.Width = host.InsideWidth
     mp.Height = host.InsideHeight
+    
+    ' legacy stray cleanup
+    PurgeStrayMMTControls pg, host
 
     '--- éqÉ^ÉuÇÃíÜêgÇçÏÇËíºÇ∑ÅiMMTGENÇæÇØè¡Ç∑Åj ---
     MMT_ClearGen mp.Pages(0)
@@ -50,14 +53,11 @@ Public Sub MMT_BuildChildTabs_Direct()
                                     "éËä÷êﬂè∂ã¸", "éËä÷êﬂîwã¸", "éwã¸ã»", "éwêLìW", "ïÍéwëŒóß")
         BuildMMTPage mp.Pages(1), Array("å“ã¸ã»", "å“êLìW", "å“äOì]", "å“ì‡ì]", _
                                     "ïGã¸ã»", "ïGêLìW", "ë´ä÷êﬂîwã¸", "ë´ä÷êﬂíÍã¸", "ïÍÊ‰êLìW")
-
     
     DoEvents
     Resize_MMTChildHost_ToPage
     
     Exit Sub
-
-   
 
 
 RRTRACE:
@@ -65,6 +65,9 @@ RRTRACE:
 
 End Sub
 
+Public Function UseMMTChildTabs() As Boolean
+    UseMMTChildTabs = True
+End Function
 
 Public Function GetMMTHost(ByVal pg As Object) As Object
     Dim host As Object
@@ -75,6 +78,22 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
     Dim mpProbe As Object
     
     If pg Is Nothing Then Exit Function
+    
+
+    ' mpPhys-host first
+    On Error Resume Next
+    If TypeName(pg.parent) = "MultiPage" Then
+        If LCase$(CStr(pg.parent.name)) = "mpphys" Then
+            For i = 0 To pg.controls.count - 1
+                Set c = pg.controls(i)
+                If TypeName(c) = "Frame" Then
+                    Set GetMMTHost = c
+                    Exit Function
+                End If
+            Next i
+        End If
+    End If
+    On Error GoTo 0
     
     For i = 0 To pg.controls.count - 1
         Set c = pg.controls(i)
@@ -180,6 +199,13 @@ Public Function GetMMTPage(ByVal frm As Object) As Object
     If frm Is Nothing Then Exit Function
 
     ' ÉtÉHÅ[ÉÄíºâ∫ÇÃ MultiPage ÇëçÇ»Çﬂ
+    ' strict route first
+    Set pg = GetMMTPage_FromPhys(frm)
+    If Not pg Is Nothing Then
+        Set GetMMTPage = pg
+        Exit Function
+    End If
+
     For Each ctl In frm.controls
         If TypeName(ctl) = "MultiPage" Then
             Dim i As Long
@@ -193,6 +219,34 @@ Public Function GetMMTPage(ByVal frm As Object) As Object
         End If
     Next ctl
 End Function
+
+Private Function GetMMTPage_FromPhys(ByVal frm As Object) As Object
+    Dim mp1 As Object, pgPhysRoot As Object, host As Object, mpPhys As Object
+    Dim i As Long, cap As String
+
+    On Error Resume Next
+    Set mp1 = frm.controls("MultiPage1")
+    If mp1 Is Nothing Then Exit Function
+
+    Set pgPhysRoot = mp1.Pages(2)
+    If pgPhysRoot Is Nothing Then Exit Function
+
+    Set host = pgPhysRoot.controls("Frame3")
+    If host Is Nothing Then Exit Function
+
+    Set mpPhys = host.controls("mpPhys")
+    If mpPhys Is Nothing Then Exit Function
+
+    For i = 0 To mpPhys.Pages.count - 1
+        cap = CStr(mpPhys.Pages(i).caption)
+        If InStr(1, cap, "MMT", vbTextCompare) > 0 Then
+            Set GetMMTPage_FromPhys = mpPhys.Pages(i)
+            Exit Function
+        End If
+    Next i
+    On Error GoTo 0
+End Function
+
 
 Private Function PageHasMMTSignature(ByVal pg As Object) As Boolean
     Dim c As Object
@@ -255,7 +309,30 @@ Private Sub BuildMMTPage(ByVal pg As Object, ByVal items As Variant)
     Next
 End Sub
 
-'--- é©ìÆê∂ê¨ÅiMMTGENÅjÇæÇØë|èú ---
+Private Sub PurgeStrayMMTControls(ByVal pg As Object, ByVal host As Object)
+    PurgeMMTNamedControlsInContainer pg
+    If Not host Is Nothing Then PurgeMMTNamedControlsInContainer host
+End Sub
+
+Private Sub PurgeMMTNamedControlsInContainer(ByVal parent As Object)
+    Dim i As Long
+    Dim nm As String
+
+    If parent Is Nothing Then Exit Sub
+
+    On Error Resume Next
+    For i = parent.controls.count - 1 To 0 Step -1
+        nm = LCase$(CStr(parent.controls(i).name))
+        If Left$(nm, 5) = "cbor_" _
+           Or Left$(nm, 5) = "cbol_" _
+           Or Left$(nm, 4) = "lbl_" Then
+            parent.controls.Remove parent.controls(i).name
+        End If
+    Next i
+    On Error GoTo 0
+End Sub
+
+
 Private Sub MMT_ClearGen(ByVal pg As Object)
     Dim idx As Long
     For idx = pg.controls.count - 1 To 0 Step -1
