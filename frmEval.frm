@@ -97,8 +97,22 @@ Private mNameSuggestSink As cNameSuggestSink
 Private mDupNameWarned As Boolean
 Private mBasicInfoTidyDone As Boolean
 Private mAgeBusy As Boolean
-Private mBasicInfoEnterHooks As Collection
-Private mBasicInfoEnterOrder As Collection
+Private WithEvents mBIEnter_txtLiving As MSForms.TextBox
+Attribute mBIEnter_txtLiving.VB_VarHelpID = -1
+Private WithEvents mBIEnter_txtEvaluator As MSForms.TextBox
+Attribute mBIEnter_txtEvaluator.VB_VarHelpID = -1
+Private WithEvents mBIEnter_txtEvaluatorJob As MSForms.TextBox
+Attribute mBIEnter_txtEvaluatorJob.VB_VarHelpID = -1
+Private WithEvents mBIEnter_txtOnset As MSForms.TextBox
+Attribute mBIEnter_txtOnset.VB_VarHelpID = -1
+Private WithEvents mBIEnter_txtDx As MSForms.TextBox
+Attribute mBIEnter_txtDx.VB_VarHelpID = -1
+Private WithEvents mBIEnter_txtAdmDate As MSForms.TextBox
+Attribute mBIEnter_txtAdmDate.VB_VarHelpID = -1
+Private WithEvents mBIEnter_txtDisDate As MSForms.TextBox
+Attribute mBIEnter_txtDisDate.VB_VarHelpID = -1
+Private WithEvents mBIEnter_txtTxCourse As MSForms.TextBox
+Attribute mBIEnter_txtTxCourse.VB_VarHelpID = -1
 
 
 
@@ -3087,7 +3101,7 @@ DoEvents
     Call TidyBasicInfo_TwoColumns
  End If
     
- EnsureBasicInfoEnterNavigationReady
+ EnsureBasicInfoEnterFixedRouteReady
  
 End Sub
 
@@ -7585,106 +7599,83 @@ Private Function BIObj(ByVal ctrlName As String) As Object
     On Error GoTo 0
 End Function
 
-Private Sub EnsureBasicInfoEnterNavigationReady()
+Private Sub EnsureBasicInfoEnterFixedRouteReady()
     Const MAX_RETRY As Long = 10
     Dim i As Long
 
     For i = 1 To MAX_RETRY
-        If BasicInfoEnterTargetsReady() Then
-            SetupBasicInfoEnterNavigation
-            Exit Sub
-        End If
+        If BindBasicInfoEnterFixedRouteTargets() Then Exit Sub
         DoEvents
     Next i
 End Sub
 
-Private Function BasicInfoEnterTargetsReady() As Boolean
-    Dim nm As Variant
-    Dim targets As Variant
-    Dim c As Object
+Private Function BindBasicInfoEnterFixedRouteTargets() As Boolean
+    Set mBIEnter_txtLiving = BIText("txtLiving")
+    Set mBIEnter_txtEvaluator = BIText("txtEvaluator")
+    Set mBIEnter_txtEvaluatorJob = BIText("txtEvaluatorJob")
+    Set mBIEnter_txtOnset = BIText("txtOnset")
+    Set mBIEnter_txtDx = BIText("txtDx")
+    Set mBIEnter_txtAdmDate = BIText("txtAdmDate")
+    Set mBIEnter_txtDisDate = BIText("txtDisDate")
+    Set mBIEnter_txtTxCourse = BIText("txtTxCourse")
 
-    targets = Array( _
-        "txtLiving", _
-        "txtEvaluator", _
-        "txtEvaluatorJob", _
-        "txtOnset", _
-        "txtDx", _
-        "txtAdmDate", _
-        "txtDisDate", _
-        "txtTxCourse")
-
-    For Each nm In targets
-        Set c = BIObj(CStr(nm))
-        If c Is Nothing Then Exit Function
-        If TypeName(c) <> "TextBox" Then Exit Function
-    Next nm
-
-    BasicInfoEnterTargetsReady = True
+    BindBasicInfoEnterFixedRouteTargets = _
+        Not (mBIEnter_txtLiving Is Nothing) And _
+        Not (mBIEnter_txtEvaluator Is Nothing) And _
+        Not (mBIEnter_txtEvaluatorJob Is Nothing) And _
+        Not (mBIEnter_txtOnset Is Nothing) And _
+        Not (mBIEnter_txtDx Is Nothing) And _
+        Not (mBIEnter_txtAdmDate Is Nothing) And _
+        Not (mBIEnter_txtDisDate Is Nothing) And _
+        Not (mBIEnter_txtTxCourse Is Nothing)
 End Function
 
 
-
-Private Sub SetupBasicInfoEnterNavigation()
+Private Function BIText(ByVal ctrlName As String) As MSForms.TextBox
     Dim c As Object
-    Dim targets As Variant
-    Dim nm As Variant
-    Set mBasicInfoEnterHooks = New Collection
-    Set mBasicInfoEnterOrder = New Collection
 
+    Set c = BIObj(ctrlName)
+    If c Is Nothing Then Exit Function
+    If TypeName(c) <> "TextBox" Then Exit Function
 
-    targets = Array( _
-        "txtLiving", _
-        "txtEvaluator", _
-        "txtEvaluatorJob", _
-        "txtOnset", _
-        "txtDx", _
-        "txtAdmDate", _
-        "txtDisDate", _
-        "txtTxCourse")
-
-    For Each nm In targets
-        Set c = BIObj(CStr(nm))
-
-       mBasicInfoEnterOrder.Add c
-    Next nm
-
-
-    AttachBasicInfoEnterHooks
+    Set BIText = c
+End Function
+Private Sub mBIEnter_txtLiving_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If KeyCode <> vbKeyReturn Then Exit Sub
+    KeyCode = 0
+    mBIEnter_txtEvaluator.SetFocus
 End Sub
 
-Private Sub AttachBasicInfoEnterHooks()
-    Dim i As Long
-    Dim c As Object
-    Dim hTxt As clsBasicInfoEnterTextHook
-
-    If mBasicInfoEnterOrder Is Nothing Then Exit Sub
-
-    For i = 1 To mBasicInfoEnterOrder.count
-        Set c = mBasicInfoEnterOrder(i)
-        If TypeName(c) = "TextBox" Then
-            Set hTxt = New clsBasicInfoEnterTextHook
-            hTxt.Init Me, c
-            mBasicInfoEnterHooks.Add hTxt
-        End If
-    Next
+Private Sub mBIEnter_txtEvaluatorJob_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If KeyCode <> vbKeyReturn Then Exit Sub
+    KeyCode = 0
+    mBIEnter_txtOnset.SetFocus
 End Sub
 
-Public Sub MoveBasicInfoFocusNext(ByVal current As Object)
-    Dim i As Long
-
-    If mBasicInfoEnterOrder Is Nothing Then Exit Sub
-    If current Is Nothing Then Exit Sub
-
-    For i = 1 To mBasicInfoEnterOrder.count
-        If mBasicInfoEnterOrder(i).name = current.name Then
-            If i < mBasicInfoEnterOrder.count Then
-                mBasicInfoEnterOrder(i + 1).SetFocus
-            End If
-            Exit Sub
-        End If
-    Next
+Private Sub mBIEnter_txtOnset_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If KeyCode <> vbKeyReturn Then Exit Sub
+    KeyCode = 0
+    mBIEnter_txtDx.SetFocus
 End Sub
 
+
+Private Sub mBIEnter_txtDx_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If KeyCode <> vbKeyReturn Then Exit Sub
+    KeyCode = 0
+    mBIEnter_txtAdmDate.SetFocus
+End Sub
+
+Private Sub mBIEnter_txtAdmDate_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If KeyCode <> vbKeyReturn Then Exit Sub
+    KeyCode = 0
+    mBIEnter_txtDisDate.SetFocus
+End Sub
+
+Private Sub mBIEnter_txtDisDate_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+    If KeyCode <> vbKeyReturn Then Exit Sub
+    KeyCode = 0
+    mBIEnter_txtTxCourse.SetFocus
+End Sub
 
 
 Private Function ReadText(ByVal o As Object) As String
