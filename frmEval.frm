@@ -3534,7 +3534,7 @@ RecalcBI
 
     ' 行4：生活状況 / 要介護度
     CreateLabel fBasic, "生活状況", COL_LX, y
-    CreateTextBox fBasic, COL_LX + lblW, y, 220, 0, False, "txtLiving", "Basic.Living"
+   CreateTextBox fBasic, COL_LX + lblW, y, 220, 50, True, "txtLiving", "Basic.Living"
     CreateLabel fBasic, "要介護度", COL_RX, y
     Dim cboLev As MSForms.ComboBox: Set cboLev = CreateCombo(fBasic, COL_RX + lblW, y, 150, "cboCare", "Basic.CareLevel")
     cboLev.List = MakeList("要支援1,要支援2,要介護1,要介護2,要介護3,要介護4,要介護5")
@@ -7645,7 +7645,7 @@ Private Function ResolveBasicInfoText(ByVal ctrlName As String) As MSForms.TextB
     Set ResolveBasicInfoText = c
 End Function
 Private Sub mBIEnter_txtLiving_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
-    HandleBasicInfoEnterRoute KeyCode, mBIEnter_txtEvaluator
+    ' txtLiving is multiline: keep Enter as newline input.
 End Sub
 
 Private Sub mBIEnter_txtEvaluator_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
