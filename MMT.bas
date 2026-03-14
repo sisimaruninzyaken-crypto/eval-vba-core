@@ -16,6 +16,9 @@ Public Sub MMT_BuildChildTabs_Direct()
 
     Dim host As Object, mpMMTChildGen As Object
     Dim pgUpper As Object, pgLower As Object
+    
+    ClearLegacyMMTOnPage14 frmEval
+    
 
 
     '--- hostŠm•Ûi–³‚¯‚ê‚Îì‚éj ---
@@ -72,6 +75,95 @@ RRTRACE:
     Debug.Print "[MMT ERROR]", Err.Number, Err.Description
 
 End Sub
+
+Private Sub ClearLegacyMMTOnPage14(ByVal frm As Object)
+    Dim mp1 As Object
+    Dim pgRoot As Object
+    Dim host As Object
+    Dim mpPhys As Object
+    Dim i As Long
+    Dim pg As Object
+
+    If frm Is Nothing Then Exit Sub
+
+    On Error Resume Next
+    Set mp1 = frm.controls("MultiPage1")
+    If mp1 Is Nothing Then Exit Sub
+
+    Set pgRoot = mp1.Pages(2)
+    If pgRoot Is Nothing Then Exit Sub
+
+    Set host = pgRoot.controls("Frame3")
+    If host Is Nothing Then Exit Sub
+
+    Set mpPhys = host.controls("mpPhys")
+    If mpPhys Is Nothing Then Exit Sub
+    On Error GoTo 0
+
+    For i = 0 To mpPhys.Pages.count - 1
+        Set pg = mpPhys.Pages(i)
+        If LCase$(CStr(pg.name)) = "page14" Then
+            RemoveLegacyMMTControlsFromPage pg
+            Exit For
+        End If
+    Next i
+End Sub
+
+Private Sub RemoveLegacyMMTControlsFromPage(ByVal pg As Object)
+    Dim i As Long
+    Dim nm As String
+
+    If pg Is Nothing Then Exit Sub
+
+    On Error Resume Next
+    For i = pg.controls.count - 1 To 0 Step -1
+        nm = CStr(pg.controls(i).name)
+        If IsLegacyMMTControlName(nm) Then
+            pg.controls.Remove nm
+        End If
+    Next i
+    On Error GoTo 0
+End Sub
+
+Private Function IsLegacyMMTControlName(ByVal nm As String) As Boolean
+    Dim key As String
+
+    If Len(nm) = 0 Then Exit Function
+
+    If nm = "lblHdrMus" Or nm = "lblHdrR" Or nm = "lblHdrL" Then
+        IsLegacyMMTControlName = True
+        Exit Function
+    End If
+
+    key = GetLegacyMMTKeyByControlName(nm)
+    If Len(key) > 0 Then IsLegacyMMTControlName = True
+End Function
+
+Private Function GetLegacyMMTKeyByControlName(ByVal nm As String) As String
+    Dim keys As Variant
+    Dim i As Long
+    Dim key As String
+
+    keys = LegacyMMTKeys()
+    For i = LBound(keys) To UBound(keys)
+        key = CStr(keys(i))
+        If nm = "lbl_" & key _
+           Or nm = "cboR_" & key _
+           Or nm = "cboL_" & key Then
+            GetLegacyMMTKeyByControlName = key
+            Exit Function
+        End If
+    Next i
+End Function
+
+Private Function LegacyMMTKeys() As Variant
+    LegacyMMTKeys = Array("Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", "Œ¨ŠOù", _
+                      "•I‹ü‹È", "•IL“W", "‘O˜r‰ñ“à", "‘O˜r‰ñŠO", _
+                      "èŠÖß¶‹ü", "èŠÖß”w‹ü", "w‹ü‹È", "wL“W", "•êw‘Î—§", _
+                      "ŒÒ‹ü‹È", "ŒÒL“W", "ŒÒŠO“]", "ŒÒ“à“]", _
+                      "•G‹ü‹È", "•GL“W", "‘«ŠÖß”w‹ü", "‘«ŠÖß’ê‹ü", "•êæäL“W")
+End Function
+
 
 Public Function UseMMTChildTabs() As Boolean
     UseMMTChildTabs = True
