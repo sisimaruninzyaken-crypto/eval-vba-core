@@ -797,6 +797,36 @@ Public Sub EnsurePhysicalFunctionTabs_Under(owner As frmEval, root As MSForms.Mu
     Set hostTone = EnsureHostFrame(pgToneRef)
     Set hostPain = EnsureHostFrame(pgPain)
     
+  ' --- Re-layout all mpPhys pages to actual size ---
+    Dim iPg As Long
+    Dim pgFit As MSForms.page
+    Dim ctlFit As Control
+    Dim fitW As Single, fitH As Single
+
+    fitW = mp.Width - PAD_X * 2
+    fitH = mp.Height - PAD_Y * 2
+    If fitW < 120 Then fitW = 120
+    If fitH < 80 Then fitH = 80
+
+    For iPg = 0 To mp.Pages.count - 1
+        Set pgFit = mp.Pages(iPg)
+
+        ' Activate each page once to force page metrics refresh.
+        mp.value = iPg
+
+        ' Normalize direct host frames under each page.
+        For Each ctlFit In pgFit.controls
+            If TypeName(ctlFit) = "Frame" Then
+                With ctlFit
+                    .Left = PAD_X
+                    .Top = PAD_Y
+                    .Width = fitW
+                    .Height = fitH
+                End With
+            End If
+        Next ctlFit
+    Next iPg
+    
     
     
 ' iEnsurePhysicalFunctionTabs_* ‚Ì’†A‘¼‚Ìpg`‚Æ“¯‚¶•À‚Ñ‚Éj
