@@ -111,18 +111,66 @@ End Sub
 
 Private Sub RemoveLegacyMMTControlsFromPage(ByVal pg As Object)
     Dim i As Long
+    Dim ctl As Object
     Dim nm As String
-
+    Dim removedCount As Long
+    Dim hiddenCount As Long
+    Dim failedCount As Long
+    Dim removeErrNo As Long
+    Dim removeErrDesc As String
+    
     If pg Is Nothing Then Exit Sub
 
-    On Error Resume Next
     For i = pg.controls.count - 1 To 0 Step -1
-        nm = CStr(pg.controls(i).name)
+    
+        Set ctl = pg.controls(i)
+        nm = CStr(ctl.name)
+    
+
         If IsLegacyMMTControlName(nm) Then
+            Err.Clear
+            On Error GoTo REMOVE_FAILED
             pg.controls.Remove nm
+            removedCount = removedCount + 1
+#If APP_DEBUG Then
+            Debug.Print "[MMT][LEGACY][REMOVE]", nm
+#End If
+            On Error GoTo 0
+            GoTo NEXT_CONTROL
+
+REMOVE_FAILED:
+            removeErrNo = Err.Number
+            removeErrDesc = Err.Description
+            Err.Clear
+
+            On Error GoTo HIDE_FAILED
+            ctl.Visible = False
+            ctl.Enabled = False
+            hiddenCount = hiddenCount + 1
+#If APP_DEBUG Then
+            Debug.Print "[MMT][LEGACY][HIDE]", nm, "removeErr=" & removeErrNo, removeErrDesc
+#End If
+            On Error GoTo 0
+            GoTo NEXT_CONTROL
+
+HIDE_FAILED:
+            failedCount = failedCount + 1
+#If APP_DEBUG Then
+            Debug.Print "[MMT][LEGACY][FAIL]", nm, _
+                        " removeErr=" & removeErrNo & ":" & removeErrDesc, _
+                        " hideErr=" & Err.Number & ":" & Err.Description
+#End If
+            Err.Clear
+            On Error GoTo 0
         End If
+
+NEXT_CONTROL:
+        On Error GoTo 0
     Next i
-    On Error GoTo 0
+
+#If APP_DEBUG Then
+    Debug.Print "[MMT][LEGACY][SUMMARY] removed=" & removedCount & " hidden=" & hiddenCount & " failed=" & failedCount
+#End If
 End Sub
 
 Private Function IsLegacyMMTControlName(ByVal nm As String) As Boolean
