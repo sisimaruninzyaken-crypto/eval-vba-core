@@ -1453,9 +1453,7 @@ Public Sub ApplyImeToIADLNote()
     Dim tb As MSForms.TextBox
     Set tb = mpA.Pages(1).controls("txtIADLNote") ' Page(1) = IADL
     If Not tb Is Nothing Then tb.IMEMode = fmIMEModeHiragana
-End Sub
 
-Private Sub mpPhys_Change()
     RunMMTBuildOnceOnMpPhysMMTActive
 End Sub
 
