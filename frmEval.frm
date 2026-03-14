@@ -1454,7 +1454,7 @@ Public Sub ApplyImeToIADLNote()
     Set tb = mpA.Pages(1).controls("txtIADLNote") ' Page(1) = IADL
     If Not tb Is Nothing Then tb.IMEMode = fmIMEModeHiragana
 
-    RunMMTBuildOnceOnMpPhysMMTActive
+   
 End Sub
 
 Private Sub EnsureMpPhysChangeHook_Once()
@@ -1468,7 +1468,7 @@ Private Sub EnsureMpPhysChangeHook_Once()
     mMPPhysHookAttached = True
 End Sub
 
-Private Sub RunMMTBuildOnceOnMpPhysMMTActive()
+Public Sub RunMMTBuildOnceOnMpPhysMMTActive()
     If mMMTFirstBuildDone Then Exit Sub
 
     Dim mpPhysObj As Object

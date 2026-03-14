@@ -20,6 +20,13 @@ End Sub
 
 Private Sub MP_Change()
     On Error Resume Next
-    owner.ApplyImeToIADLNote
+    If owner Is Nothing Then Exit Sub
+    If mp Is Nothing Then Exit Sub
+
+    If LCase$(mp.name) = "mpphys" Then
+        owner.RunMMTBuildOnceOnMpPhysMMTActive
+    Else
+        owner.ApplyImeToIADLNote
+    End If
 End Sub
 
