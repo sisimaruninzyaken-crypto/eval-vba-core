@@ -75,6 +75,8 @@ Private WithEvents mDailyList As clsDailyLogList
 Attribute mDailyList.VB_VarHelpID = -1
 Private mBaseLayoutDone As Boolean
 Private mLayoutBuilt As Boolean
+Private mMPPhysHookAttached As Boolean
+Private mMMTFirstBuildDone As Boolean
 Private Const PAD_SIDE As Single = 8
 Private Const GAP_V As Single = 8
 Private Const HEADER_H As Single = 62
@@ -1451,6 +1453,32 @@ Public Sub ApplyImeToIADLNote()
     Dim tb As MSForms.TextBox
     Set tb = mpA.Pages(1).controls("txtIADLNote") ' Page(1) = IADL
     If Not tb Is Nothing Then tb.IMEMode = fmIMEModeHiragana
+
+    RunMMTBuildOnceOnMpPhysMMTActive
+End Sub
+
+Private Sub EnsureMpPhysChangeHook_Once()
+    If mMPPhysHookAttached Then Exit Sub
+
+    Dim mpPhysObj As Object
+    Set mpPhysObj = SafeGetControl(Me, "mpPhys")
+    If mpPhysObj Is Nothing Then Exit Sub
+
+    AttachMPHook mpPhysObj
+    mMPPhysHookAttached = True
+End Sub
+
+Private Sub RunMMTBuildOnceOnMpPhysMMTActive()
+    If mMMTFirstBuildDone Then Exit Sub
+
+    Dim mpPhysObj As Object
+    Set mpPhysObj = SafeGetControl(Me, "mpPhys")
+    If mpPhysObj Is Nothing Then Exit Sub
+
+    If CLng(mpPhysObj.value) <> 1 Then Exit Sub
+
+    MMT_BuildChildTabs_Direct
+    mMMTFirstBuildDone = True
 End Sub
 
 '=== Ç«Ç±Ç©Ç…écÇ¡ÇƒÇ¢ÇÈ mpADL ÇëSïîè¡Ç∑ ===
@@ -2881,8 +2909,6 @@ End Sub
 
 Private Sub UserForm_Activate()
    
-
-   
     Static done As Boolean
     Dim scrH As Single
     Dim h As Single
@@ -2893,7 +2919,8 @@ Private Sub UserForm_Activate()
     done = True
     
     Call Align_BIHomeEnv_Once
-   
+    
+    
     Me.controls("txtHdrName").SetFocus
     
 
@@ -2936,6 +2963,7 @@ Me.Left = Application.Left + (Application.Width - Me.Width) / 2: Me.Top = Applic
     DoEvents
 
     Call LegacyInit
+    EnsureMpPhysChangeHook_Once
 #If APP_DEBUG Then
     Debug.Print "[PostInit] CtlCount=" & Me.controls.count
 #End If
@@ -3055,6 +3083,7 @@ On Error GoTo 0
 
 
     Call BuildEvalShell_Once
+    
     Call CreateHeaderButtons_Once
 
     Tidy_DailyLog_Once
@@ -3102,6 +3131,7 @@ DoEvents
  End If
     
  EnsureBasicInfoEnterFixedRouteReady
+ 
  
 End Sub
 
