@@ -3863,8 +3863,6 @@ If Not srcLbl Is Nothing Then
         If TypeName(ct) = "ComboBox" Then
             If Abs(ct.Top - srcLbl.Top) <= 20 And ct.Left > srcLbl.Left Then
                 Set srcCmb = ct: Exit For
-                srcLbl.Left = srcLbl.parent.InsideWidth - (srcLbl.Width + srcCmb.Width + 12)
-                srcCmb.Left = srcLbl.Left + srcLbl.Width + 8
             End If
         End If
     Next
@@ -3901,10 +3899,18 @@ cmb.Left = lbl.Left + lbl.Width + 12
 cmb.Top = lbl.Top - 2
 cmb.Width = 42
 
+' Align Rest NRS row above Move NRS to avoid drift
+If Not srcLbl Is Nothing Then
+    srcLbl.Left = lbl.Left
+    srcLbl.Top = lbl.Top - srcLbl.Height - gap
+End If
+If Not srcCmb Is Nothing Then
+    srcCmb.Left = cmb.Left
+    srcCmb.Top = srcLbl.Top - 2
+End If
+
 End If
   
-  srcLbl.Left = srcLbl.parent.InsideWidth - (srcLbl.Width + srcCmb.Width + 12)
-srcCmb.Left = srcLbl.Left + srcLbl.Width + 8
 End Sub
 
 
@@ -4331,15 +4337,6 @@ Private Sub mBtnPainSum_Click()
 End Sub
 
 
-
-
-
-
-
-
-
-
-
 ' ·uí…É^Éu( Frame12 )Ç…écÇ¡ÇƒÇ¢ÇÈãåUIÇèúãéÇ∑ÇÈ
 Public Sub RemoveLegacyPainUI()
     Dim f As MSForms.Frame, n As Variant
@@ -4364,6 +4361,8 @@ End Sub
 
 
 Public Sub ArrangePainLayout()
+If GetPainHost Is Nothing Then Exit Sub
+
     Dim f As MSForms.Frame
    Set f = GetPainHost()
     If f Is Nothing Then Exit Sub
@@ -4378,10 +4377,10 @@ Public Sub ArrangePainLayout()
         .Width = 360: .Height = 120
         .ZOrder 0
     End With
-    With SafeGetControl(f, "fraVAS")
+    With f.controls("lblVAS")
         .Left = 420: .Top = 12: .ZOrder 0
     End With
-    With f.controls("fraVAS")
+    With SafeGetControl(f, "fraVAS")
         .Left = 420
         .Top = f.controls("lblVAS").Top + f.controls("lblVAS").Height + 4
         .ZOrder 0
