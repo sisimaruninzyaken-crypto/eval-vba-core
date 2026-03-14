@@ -758,3 +758,110 @@ End Function
 
 
 
+Public Sub MMT_DebugSurvey_Page14LegacyNames()
+    Dim pg As Object
+    Dim i As Long
+    Dim ctl As Object
+    Dim tp As String
+    Dim nm As String
+    Dim parentNm As String
+    Dim vis As String
+    Dim legacyHit As Boolean
+    Dim scanned As Long
+    Dim candidateCount As Long
+    Dim matchedCount As Long
+
+    Set pg = GetMMTPageByName_Page14(frmEval)
+    If pg Is Nothing Then
+        Debug.Print "[MMT][SURVEY] Page14 not found (root cause candidate=B: target traversal mismatch)"
+        Exit Sub
+    End If
+
+    Debug.Print "[MMT][SURVEY] START page=" & SafeObjName(pg) & " parent=" & SafeObjName(pg.parent)
+
+    For i = 0 To pg.controls.count - 1
+        Set ctl = pg.controls(i)
+        tp = TypeName(ctl)
+        scanned = scanned + 1
+
+        If tp = "Label" Or tp = "ComboBox" Then
+            nm = CStr(ctl.name)
+            parentNm = SafeObjName(ctl.parent)
+            vis = SafeObjVisible(ctl)
+            legacyHit = IsLegacyMMTControlName(nm)
+
+            candidateCount = candidateCount + 1
+            If legacyHit Then matchedCount = matchedCount + 1
+
+            Debug.Print "[MMT][SURVEY]", _
+                        "Name=" & nm, _
+                        "Type=" & tp, _
+                        "Parent=" & parentNm, _
+                        "Visible=" & vis, _
+                        "LegacyHit=" & CStr(legacyHit)
+        End If
+    Next i
+
+    Debug.Print "[MMT][SURVEY][SUMMARY] scanned=" & scanned & " candidates=" & candidateCount & " matched=" & matchedCount & " unmatched=" & (candidateCount - matchedCount)
+
+    If candidateCount = 0 Then
+        Debug.Print "[MMT][SURVEY][CAUSE] B: Page14 direct controls has no Label/ComboBox; traversal target likely differs from actual legacy-control parent"
+    ElseIf matchedCount = 0 Then
+        Debug.Print "[MMT][SURVEY][CAUSE] A: name matching likely failed (LegacyMMTKeys/IsLegacyMMTControlName mismatch)"
+    Else
+        Debug.Print "[MMT][SURVEY][CAUSE] A/B not definitive; if UI unchanged, verify remove/hide runtime errors => C"
+    End If
+End Sub
+
+Private Function GetMMTPageByName_Page14(ByVal frm As Object) As Object
+    Dim mp1 As Object
+    Dim pgRoot As Object
+    Dim host As Object
+    Dim mpPhys As Object
+    Dim i As Long
+
+    If frm Is Nothing Then Exit Function
+
+    On Error Resume Next
+    Set mp1 = frm.controls("MultiPage1")
+    If mp1 Is Nothing Then Exit Function
+
+    Set pgRoot = mp1.Pages(2)
+    If pgRoot Is Nothing Then Exit Function
+
+    Set host = pgRoot.controls("Frame3")
+    If host Is Nothing Then Exit Function
+
+    Set mpPhys = host.controls("mpPhys")
+    If mpPhys Is Nothing Then Exit Function
+    On Error GoTo 0
+
+    For i = 0 To mpPhys.Pages.count - 1
+        If LCase$(CStr(mpPhys.Pages(i).name)) = "page14" Then
+            Set GetMMTPageByName_Page14 = mpPhys.Pages(i)
+            Exit Function
+        End If
+    Next i
+End Function
+
+Private Function SafeObjName(ByVal obj As Object) As String
+    On Error Resume Next
+    SafeObjName = CStr(obj.name)
+    If Err.Number <> 0 Then
+        Err.Clear
+        SafeObjName = "(name-error)"
+    End If
+    On Error GoTo 0
+End Function
+
+Private Function SafeObjVisible(ByVal obj As Object) As String
+    On Error Resume Next
+    SafeObjVisible = CStr(obj.Visible)
+    If Err.Number <> 0 Then
+        Err.Clear
+        SafeObjVisible = "(visible-error)"
+    End If
+    On Error GoTo 0
+End Function
+
+
