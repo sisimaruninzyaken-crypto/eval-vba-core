@@ -3957,7 +3957,7 @@ Public Sub AddPainQualUI()
 
 
     ' 既存NRSの親フレームに追加する
-    Set host = Me.controls("cmbNRS_Move").parent
+    Set host = GetPainHost()
 
     ' 見出し
     Set cap = host.controls.Add("Forms.Label.1", "lblPainQual", True)
@@ -4009,7 +4009,7 @@ Public Sub AddPainFactorsUI()
     If Not t Is Nothing Then Exit Sub
 
     ' 追加先は疼痛タブのフレーム（NRSの親）
-    Set host = Me.controls("cmbNRS_Move").parent
+    Set host = GetPainHost()
 
     ' 見出し
     Set cap = host.controls.Add("Forms.Label.1", "lblPainFactors", True)
@@ -4080,7 +4080,7 @@ Public Sub AddVASUI()
     If Not t Is Nothing Then Exit Sub
     
     ' 追加先＝疼痛タブのフレーム（NRSの親）
-    Set host = Me.controls("cmbNRS_Move").parent
+    Set host = GetPainHost()
 
     ' 見出し
     Set cap = host.controls.Add("Forms.Label.1", "lblVAS", True)
@@ -4151,7 +4151,7 @@ Public Sub AddPainCourseUI()
     If Not t Is Nothing Then Exit Sub
 
     ' 追加先＝疼痛タブのフレーム（NRSの親）
-    Set host = Me.controls("cmbNRS_Move").parent
+    Set host = GetPainHost()
 
     ' 見出し
     Set lb = host.controls.Add("Forms.Label.1", "lblPainCourse", True)
@@ -4220,7 +4220,7 @@ Public Sub AddPainSiteUI()
     If Not t Is Nothing Then Exit Sub
 
     ' 追加先＝疼痛タブのフレーム（NRSの親）
-    Set host = Me.controls("cmbNRS_Move").parent
+    Set host = GetPainHost()
 
     ' 見出し
     Set lb = host.controls.Add("Forms.Label.1", "lblPainSite", True)

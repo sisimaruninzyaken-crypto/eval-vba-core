@@ -1136,16 +1136,17 @@ End Sub
 ' 呼び出し例: BuildPainTabUI owner, hostPain
 '========================================
 Private Sub BuildPainTabUI(owner As frmEval, host As MSForms.Frame)
+
+    If host Is Nothing Then Exit Sub
+
     Dim y As Single: y = PAD_Y
 
-    y = AddDeformText(owner, host, y) ' 変形 所見（自由テキスト）
-    y = y + ROM_HDR_GAP
-    y = AddPainRow(owner, host, y)    ' 部位＋NRS
+    'y = AddDeformText(owner, host, y)
+    'y = AddPainRow(owner, host, y)
 
-    ' 備考（下端に確保）
     Call PlaceMemoBelow(host, host.InsideWidth, host.InsideHeight, y + ROM_HDR_GAP, "txtPainMemo")
-End Sub
 
+End Sub
 
 '========================================
 ' 互換: 感覚＋MAS＋反射＋疼痛 を1ページに描く（Root用）
