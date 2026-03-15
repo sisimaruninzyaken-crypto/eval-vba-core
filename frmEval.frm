@@ -4829,7 +4829,17 @@ Private Sub BuildWalkIndep_DistanceOutdoor()
     Dim f As MSForms.Frame
     Dim ctl As MSForms.Control
     Dim cmbBase As MSForms.ComboBox
-
+    Dim lblDist As MSForms.label
+    Dim lblOut As MSForms.label
+    Dim cmbDist As MSForms.ComboBox
+    Dim cmbOut As MSForms.ComboBox
+    Dim leftLabel As Single
+    Dim leftCombo As Single
+    Dim wLabel As Single
+    Dim wCombo As Single
+    Dim topDist As Single
+    Dim topOut As Single
+    
     Set f = GetWalkAssistiveTargetFrame()
     If f Is Nothing Then Exit Sub
 
@@ -4842,6 +4852,34 @@ Private Sub BuildWalkIndep_DistanceOutdoor()
     
     If cmbBase Is Nothing Then Exit Sub
     cmbBase.tag = "WalkIndepLevel"
+
+    leftLabel = 12
+    leftCombo = cmbBase.Left
+    wLabel = 60
+    wCombo = cmbBase.Width
+    topDist = cmbBase.Top + 24
+    topOut = topDist + 24
+
+    On Error Resume Next
+    Set lblDist = f.controls("lblWalkDistance")
+    Set cmbDist = f.controls("cmbWalkDistance")
+    Set lblOut = f.controls("lblWalkOutdoor")
+    Set cmbOut = f.controls("cmbWalkOutdoor")
+    On Error GoTo 0
+
+    If lblDist Is Nothing Then Set lblDist = CreateLabel(f, "", leftLabel, topDist, wLabel, "lblWalkDistance")
+    If cmbDist Is Nothing Then Set cmbDist = CreateCombo(f, leftCombo, topDist, wCombo, "cmbWalkDistance", "WalkDistance")
+    If lblOut Is Nothing Then Set lblOut = CreateLabel(f, "", leftLabel, topOut, wLabel, "lblWalkOutdoor")
+    If cmbOut Is Nothing Then Set cmbOut = CreateCombo(f, leftCombo, topOut, wCombo, "cmbWalkOutdoor", "WalkOutdoor")
+
+    lblDist.caption = "歩行距離"
+    lblOut.caption = "屋外歩行"
+
+
+    lblDist.Left = leftLabel: lblDist.Top = topDist: lblDist.Width = wLabel
+    cmbDist.Left = leftCombo: cmbDist.Top = topDist: cmbDist.Width = wCombo
+    lblOut.Left = leftLabel: lblOut.Top = topOut: lblOut.Width = wLabel
+    cmbOut.Left = leftCombo: cmbOut.Top = topOut: cmbOut.Width = wCombo
 
 
     BuildWalkIndep_Stability
@@ -4931,7 +4969,7 @@ Private Sub BuildWalkIndep_Speed()
     f.controls.Remove "cmbGaitSpeedDetail"
     On Error GoTo 0
     
-    CreateLabel f, "Speed", 12, top5, 60
+    CreateLabel f, "歩行速度", 12, top5, 60
     Set cmb = CreateCombo(f, 84, top5, 200, , "cmbGaitSpeedDetail")
 
     If cmb.ListCount = 0 Then
