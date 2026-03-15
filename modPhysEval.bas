@@ -1426,12 +1426,24 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
                      (UBound(motions) - LBound(motions)) * ROM_MOTION_GAP_Y)
     End With
 
-    Dim xName As Single, xR As Single, xL As Single
+    Dim xName As Single, xSingle As Single, xR As Single, xL As Single
     xName = PX(ROM_GROUP_PAD)
-    xR = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W * 2 - 6)
     xL = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W)
+    xR = PX(xL - ROM_COL_EDT_W - 6)
+    xSingle = PX(xR - ROM_COL_EDT_W - 6)
+    
+    Dim hdrSingle As MSForms.label, hdrR As MSForms.label, hdrL As MSForms.label
 
-    Dim hdrR As MSForms.label, hdrL As MSForms.label
+    Set hdrSingle = fr.controls.Add("Forms.Label.1")
+    With hdrSingle
+        .caption = "’P“Æ"
+        .Left = xSingle
+        .Top = PX(ROM_GROUP_PAD)
+        .Width = ROM_COL_EDT_W
+        .Height = ROM_ROW_H
+        .TextAlign = fmTextAlignCenter
+        .Font.Bold = True
+    End With
 
     Set hdrR = fr.controls.Add("Forms.Label.1")
     With hdrR
@@ -1460,7 +1472,7 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
 
     For i = LBound(motions) To UBound(motions)
         motionKey = CStr(motions(i))
-        rowY = BuildRomTrunkMotionRow(fr, region, jointKey, motionKey, rowY, xName, xR, xL)
+        rowY = BuildRomTrunkMotionRow(fr, region, jointKey, motionKey, rowY, xName, xSingle, xR, xL)
         If i < UBound(motions) Then rowY = rowY + ROM_MOTION_GAP_Y
     Next i
 
@@ -1470,7 +1482,7 @@ End Function
 
 Private Function BuildRomTrunkMotionRow(host As MSForms.Frame, _
             region As String, jointKey As String, motionKey As String, _
-            y0 As Single, xName As Single, xR As Single, xL As Single) As Single
+            y0 As Single, xName As Single, xSingle As Single, xR As Single, xL As Single) As Single
 
     Dim lbl As MSForms.label
     Set lbl = host.controls.Add("Forms.Label.1")
@@ -1479,7 +1491,7 @@ Private Function BuildRomTrunkMotionRow(host As MSForms.Frame, _
         .caption = GetTrunkMotionCaption(motionKey)
         .Left = xName
         .Top = PX(y0)
-        .Width = PX(host.Width - xName - (host.Width - xR) + ROM_HDR_RL_GAP)
+        .Width = PX(host.Width - xName - (host.Width - xSingle) + ROM_HDR_RL_GAP)
         .Height = ROM_ROW_H
         .TextAlign = fmTextAlignLeft
         .Font.Bold = True
@@ -1492,7 +1504,7 @@ Private Function BuildRomTrunkMotionRow(host As MSForms.Frame, _
             "txtROM_" & region & "_" & jointKey & "_" & motionKey)
 
         With txtSingle
-            .Left = xL
+            .Left = xSingle
             .Top = PX(y0 + (ROM_ROW_H - ROM_TXT_H) / 2)
             .Width = ROM_COL_EDT_W
             .Height = ROM_TXT_H
