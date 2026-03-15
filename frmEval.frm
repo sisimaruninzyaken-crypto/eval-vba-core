@@ -3102,10 +3102,8 @@ On Error GoTo 0
     
     AddHeaderArchiveDeleteButton
 
-   
-   
-  
-
+      RearrangeHeaderTopAreaLayout
+      
 AddPrintButton_TestEval
 
 Call Ensure_MonthlyDraftBox_UnderFraDailyLog
@@ -7277,6 +7275,7 @@ Set mHdrLoadPrevHook = New clsHdrBtnHook
 Set mHdrLoadPrevHook.btn = hLoadPrev
 mHdrLoadPrevHook.tag = "LoadPrev"
 Set mHdrLoadPrevHook.owner = Me
+RearrangeHeaderTopAreaLayout
 
 ' 旧ボタンは非表示
 On Error Resume Next
@@ -7301,7 +7300,112 @@ On Error GoTo 0
     
 End Sub
 
+Private Sub RearrangeHeaderTopAreaLayout()
+    Dim f As Object
+    Dim btnArchive As Object
+    Dim btnClear As Object, btnSave As Object, btnClose As Object, btnLoadPrev As Object
+    Dim lblPID As Object, lblName As Object, lblKana As Object
+    Dim txtPID As Object, txtName As Object, txtKana As Object
+    Dim leftX As Single, midLeft As Single, midRight As Single
+    Dim btnGap As Single, rowTop1 As Single, rowTop2 As Single, rowGap As Single
+    Dim idW As Single, nameW As Single
 
+    Set f = SafeGetControl(Me, "frHeader")
+    If f Is Nothing Then Exit Sub
+
+    Set btnArchive = SafeGetControl(f, "cmdArchiveDelete")
+    Set btnClear = SafeGetControl(f, "cmdClearHeader")
+    Set btnSave = SafeGetControl(f, "cmdSaveHeader")
+    Set btnClose = SafeGetControl(f, "cmdCloseHeader")
+    Set btnLoadPrev = SafeGetControl(f, "cmdHdrLoadPrev")
+
+    Set txtPID = SafeGetControl(f, "txtHdrPID")
+    Set txtName = SafeGetControl(f, "txtHdrName")
+    Set txtKana = SafeGetControl(f, "txtHdrKana")
+    Set lblPID = SafeGetControl(f, "lblHdrPID")
+    Set lblName = SafeGetControl(f, "lblHdrName")
+    Set lblKana = SafeGetControl(f, "lblHdrKana")
+
+    rowTop1 = 6
+    rowGap = 4
+
+    If Not btnArchive Is Nothing Then
+        btnArchive.Left = 8
+        btnArchive.Top = (f.Height - btnArchive.Height) / 2
+        leftX = btnArchive.Left + btnArchive.Width + 14
+    Else
+        leftX = 8
+    End If
+
+    btnGap = 6
+
+    If Not btnClose Is Nothing Then
+        btnClose.Top = rowTop1
+        btnClose.Left = f.Width - 8 - btnClose.Width
+    End If
+
+    If Not btnSave Is Nothing Then
+        btnSave.Top = rowTop1
+        If Not btnClose Is Nothing Then
+            btnSave.Left = btnClose.Left - btnGap - btnSave.Width
+        End If
+    End If
+
+    If Not btnClear Is Nothing Then
+        btnClear.Top = rowTop1
+        If Not btnSave Is Nothing Then
+            btnClear.Left = btnSave.Left - btnGap - btnClear.Width
+        End If
+    End If
+
+    If Not btnLoadPrev Is Nothing And Not btnClear Is Nothing And Not btnClose Is Nothing Then
+        btnLoadPrev.Top = rowTop1 + btnClose.Height + rowGap
+        btnLoadPrev.Left = btnClear.Left
+        btnLoadPrev.Width = (btnClose.Left + btnClose.Width) - btnClear.Left
+    End If
+
+    midLeft = leftX
+    midRight = f.Width - 8
+    If Not btnClear Is Nothing Then midRight = btnClear.Left - 12
+    If midRight <= midLeft Then Exit Sub
+
+    If txtPID Is Nothing Or txtName Is Nothing Or txtKana Is Nothing Then Exit Sub
+
+    rowTop2 = rowTop1 + txtPID.Height + rowGap
+
+    If Not lblPID Is Nothing Then
+        lblPID.AutoSize = True
+        lblPID.Left = midLeft
+        lblPID.Top = rowTop1 + 2
+    End If
+
+    txtPID.Left = midLeft + IIf(lblPID Is Nothing, 0, lblPID.Width + 4)
+    txtPID.Top = rowTop1
+    idW = 72
+    txtPID.Width = idW
+
+    If Not lblName Is Nothing Then
+        lblName.AutoSize = True
+        lblName.Left = txtPID.Left + txtPID.Width + 10
+        lblName.Top = rowTop1 + 2
+    End If
+
+    txtName.Left = IIf(lblName Is Nothing, txtPID.Left + txtPID.Width + 10, lblName.Left + lblName.Width + 4)
+    txtName.Top = rowTop1
+    nameW = midRight - txtName.Left
+    If nameW < 140 Then nameW = 140
+    txtName.Width = nameW
+
+    If Not lblKana Is Nothing Then
+        lblKana.AutoSize = True
+        lblKana.Left = IIf(lblName Is Nothing, txtName.Left - 32, lblName.Left)
+        lblKana.Top = rowTop2 + 2
+    End If
+
+    txtKana.Left = txtName.Left
+    txtKana.Top = rowTop2
+    txtKana.Width = txtName.Width
+End Sub
 
 
 Public Sub DoSaveGlobal()
@@ -7672,9 +7776,7 @@ Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
        
     End If
 
-    ' 位置：txtHdrKana の右
-    btn.Left = kana.Left + kana.Width + 12
-    btn.Top = kana.Top + 2
+    RearrangeHeaderTopAreaLayout
 End Sub
 
 
