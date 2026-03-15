@@ -4869,9 +4869,13 @@ Private Sub BuildWalkIndep_Stability()
     top3 = top2 + 24
     top4 = top3 + 24
 
-    Do While f.controls.count > 0
-        f.controls.Remove f.controls(f.controls.count - 1).name
-    Loop
+    Dim i As Long
+    For i = f.controls.count - 1 To 0 Step -1
+        If StrComp(Left$(f.controls(i).name, 12), "chkWalkStab_", vbTextCompare) = 0 Then
+            f.controls.Remove f.controls(i).name
+        End If
+    Next i
+
 
     If f.Height < top4 + 24 Then f.Height = top4 + 24
     
