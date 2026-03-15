@@ -1362,7 +1362,7 @@ Public Sub BuildROMTabs(host As MSForms.Frame)
     Dim pUpper As MSForms.page, pLower As MSForms.page, pTrunk As MSForms.page
     Set pUpper = mp.Pages.Add: pUpper.caption = "ãˆ": pUpper.name = "pgROM_Upper"
     Set pLower = mp.Pages.Add: pLower.caption = "‰ºˆ": pLower.name = "pgROM_Lower"
-    Set pTrunk = mp.Pages.Add: pTrunk.caption = "?": pTrunk.name = "pgROM_Trunk"
+    Set pTrunk = mp.Pages.Add: pTrunk.caption = "‘ÌŠ²": pTrunk.name = "pgROM_Trunk"
     
     Dim hostUpper As MSForms.Frame, hostLower As MSForms.Frame, hostTrunk As MSForms.Frame
     Set hostUpper = EnsureHostFrame(pUpper)
@@ -1391,15 +1391,15 @@ Public Sub BuildROM_Trunk(host As MSForms.Frame)
     y = ROM_GROUP_PAD
 
     ' èò•”
-    y = BuildRomSingleJointBlock(host, "Trunk", "èò•”", "‹", "‹ü‹È", "", y)
-    y = BuildRomSingleJointBlock(host, "Trunk", "èò•”", "‹", "L“W", "LW", y)
-    y = BuildRomJointBlock(host, "Trunk", "èò•”", "‹", Split("‰ñù,‘¤‹ü", ","), y)
+    y = BuildRomSingleJointBlock(host, "Trunk", "Neck", "èò•”", "Flex", "‹ü‹È", y)
+    y = BuildRomSingleJointBlock(host, "Trunk", "Neck", "èò•”", "Ext", "L“W", y)
+    y = BuildRomJointBlock(host, "Trunk", "Neck", "èò•”", Split("Rot,LatFlex", ","), y)
     y = y + ROM_JOINT_GAP_Y
 
     ' ‘ÌŠ²
-    y = BuildRomSingleJointBlock(host, "Trunk", "‘ÌŠ²", "‹", "‹ü‹È", "", y)
-    y = BuildRomSingleJointBlock(host, "Trunk", "‘ÌŠ²", "‹", "L“W", "LW", y)
-    y = BuildRomJointBlock(host, "Trunk", "‘ÌŠ²", "‹", Split("‰ñù,‘¤‹ü", ","), y)
+    y = BuildRomSingleJointBlock(host, "Trunk", "Trunk", "‘ÌŠ²", "Flex", "‹ü‹È", y)
+    y = BuildRomSingleJointBlock(host, "Trunk", "Trunk", "‘ÌŠ²", "Ext", "L“W", y)
+    y = BuildRomJointBlock(host, "Trunk", "Trunk", "‘ÌŠ²", Split("Rot,LatFlex", ","), y)
     y = y + ROM_JOINT_GAP_Y
 
     ' ‹¹Šs‰Â“®

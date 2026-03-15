@@ -3647,6 +3647,8 @@ RecalcBI
 
     Set frRisk = BuildCheckFrame(fBasic, "ÉäÉXÉN", COL_RX, y, 370, MakeList(RISK_CSV), "RiskGroup")
 
+
+
     Dim nextY As Single
     nextY = frRisk.Top + frRisk.Height
     y = nextY + 8
@@ -3660,6 +3662,8 @@ RecalcBI
     CreateLabel fBasic, "â∆ë∞Needs", COL_RX, y
     CreateTextBox fBasic, COL_RX + lblW, y, 270, needsH, True, "txtNeedsFam", "Needs.Family"
     y = y + needsH + 10
+    
+    
 
     ResizeFrameToContent fBasic, y
     
@@ -7601,7 +7605,7 @@ End Sub
 
 Public Sub AddPrintButton_TestEval()
     Dim f As MSForms.Frame
-    Set f = SafeGetControl(Me, "Frame23")
+    Set f = Me.controls("txtTUG").parent
     If f Is Nothing Then Exit Sub
 
     Dim btn As MSForms.CommandButton

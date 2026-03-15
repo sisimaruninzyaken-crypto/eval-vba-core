@@ -197,14 +197,34 @@ aCapL = Array( _
     yR = yR + multiH + 8
 
     ' 右下：リスク群（最下段へ）
+    Dim riskFrame As Object
+    Set riskFrame = FindBasicInfoRiskFrame(f32)
+    
     Set t = frmEval.EvalCtl("txtComplications", "Page1")
-    If Not t Is Nothing Then
-        Call PlaceCtl(f32, "Frame31", t.Left, t.Top + 55, t.Width, h - (t.Top + 55) - 12)
+    If Not t Is Nothing And Not riskFrame Is Nothing Then
+        Call PlaceCtl(f32, riskFrame.name, t.Left, t.Top + 55, t.Width, h - (t.Top + 55) - 12)
     End If
-    Set c = frmEval.EvalCtl("Frame31", "Page1")
-    If Not c Is Nothing Then Call ArrangeRiskChecks_TwoCols(c)
+    If Not riskFrame Is Nothing Then Call ArrangeRiskChecks_TwoCols(riskFrame)
 
 End Sub
+
+Private Function FindBasicInfoRiskFrame(ByVal parent As Object) As Object
+    Dim c As Object
+    Dim child As Object
+
+    For Each c In parent.controls
+        If TypeName(c) = "Frame" Then
+            For Each child In c.controls
+                If TypeName(child) = "CheckBox" Then
+                    If CStr(child.tag) = "RiskGroup" Then
+                        Set FindBasicInfoRiskFrame = c
+                        Exit Function
+                    End If
+                End If
+            Next child
+        End If
+    Next c
+End Function
 
 
 ' ===== helpers =====
