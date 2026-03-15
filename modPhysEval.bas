@@ -20,6 +20,8 @@ Private Const ROM_GROUP_PAD    As Single = 8   ' Frame 内パディング
 Private Const ROM_HDR_RL_GAP   As Single = 24  ' 運動名とR/L列の間
 Private Const ROM_COL_SHIFT_L  As Single = 34
 Private Const ROM_FRAME_TRIM_R As Single = 24
+Private Const ROM_MULTI_COL_GAP As Single = 16
+Private Const ROM_MULTI_EDIT_GAP As Single = 6
 
 Public Const USE_ROM_SUBTABS   As Boolean = True   ' 子タブ(上肢/下肢)を使う
 
@@ -1650,54 +1652,194 @@ Private Function BuildRomJointBlock(host As MSForms.Frame, _
         .Left = PX(PAD_X)
         .Top = PX(y0)
         .Width = PX(host.Width - PAD_X * 2)
-        ' 高さは行数とヘッダ・パディングから概算
-        .Height = PX(ROM_ROW_H * (UBound(motions) - LBound(motions) + 1) + _
-                     ROM_GROUP_PAD * 2 + ROM_HDR_GAP + (UBound(motions) - LBound(motions)) * ROM_MOTION_GAP_Y)
     End With
 
-    ' R/L ヘッダ
+Dim motionCount As Long
+motionCount = UBound(motions) - LBound(motions) + 1
+
+Dim useTwoCols As Boolean
+useTwoCols = IsRomTwoColumnJoint(region, jointKey)
+
+Dim rowCount As Long
+If useTwoCols Then
+    rowCount = (motionCount + 1) \ 2
+Else
+    rowCount = motionCount
+End If
+
+' 関節フレームの高さを行数に合わせて調整
+fr.Height = PX(ROM_ROW_H * rowCount + _
+               ROM_GROUP_PAD * 2 + ROM_HDR_GAP + (rowCount - 1) * ROM_MOTION_GAP_Y)
+
+Dim topY As Single
+topY = PX(ROM_GROUP_PAD + ROM_ROW_H + ROM_HDR_GAP)
+
+If useTwoCols Then
+
+    ' 2列レイアウトの場合
+    Dim groupW As Single
+    groupW = (fr.Width - ROM_GROUP_PAD * 2 - ROM_MULTI_COL_GAP) / 2
+
+    Dim xGroupL As Single, xGroupR As Single
+    xGroupL = PX(ROM_GROUP_PAD)
+    xGroupR = PX(xGroupL + groupW + ROM_MULTI_COL_GAP)
+
+    Dim labelW As Single
+    labelW = PX(groupW - (ROM_COL_EDT_W * 2 + ROM_MULTI_EDIT_GAP))
+    If labelW < 36 Then labelW = 36
+
+    ' 左列
+    Dim xNameL As Single, xRL As Single, xLL As Single
+    xNameL = xGroupL
+    xRL = PX(xNameL + labelW)
+    xLL = PX(xRL + ROM_COL_EDT_W + ROM_MULTI_EDIT_GAP)
+
+    ' 右列
+    Dim xNameR As Single, xRR As Single, xLR As Single
+    xNameR = xGroupR
+    xRR = PX(xNameR + labelW)
+    xLR = PX(xRR + ROM_COL_EDT_W + ROM_MULTI_EDIT_GAP)
+
+    ' R / L ヘッダを配置
+    AddRomRLHeader fr, xRL, xLL
+    AddRomRLHeader fr, xRR, xLR
+
+    Dim splitIndex As Long
+    splitIndex = rowCount
+
+    Dim i As Long, rowIndex As Long, rowY As Single
+
+    For i = LBound(motions) To UBound(motions)
+
+        If i - LBound(motions) < splitIndex Then
+            rowIndex = i - LBound(motions)
+            rowY = topY + rowIndex * (ROM_ROW_H + ROM_MOTION_GAP_Y)
+
+            ' 左列に配置
+            BuildRomMotionRowAt fr, region, jointKey, CStr(motions(i)), _
+                                rowY, xNameL, xRL, xLL
+
+        Else
+            rowIndex = i - LBound(motions) - splitIndex
+            rowY = topY + rowIndex * (ROM_ROW_H + ROM_MOTION_GAP_Y)
+
+            ' 右列に配置
+            BuildRomMotionRowAt fr, region, jointKey, CStr(motions(i)), _
+                                rowY, xNameR, xRR, xLR
+        End If
+
+    Next i
+
+Else
+
+    ' 1列レイアウトの場合
     Dim xName As Single, xR As Single, xL As Single
+
     xName = PX(ROM_GROUP_PAD)
-    xR = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W * 2 - 6 - ROM_COL_SHIFT_L)
-    xL = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W - ROM_COL_SHIFT_L)
+
+    xR = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W * 2 _
+            - ROM_MULTI_EDIT_GAP - ROM_COL_SHIFT_L)
+
+    xL = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W _
+            - ROM_COL_SHIFT_L)
+
+    ' R / L ヘッダを配置
+    AddRomRLHeader fr, xR, xL
+
+    Dim rowYSingle As Single
+    Dim j As Long
+
+    rowYSingle = topY
+
+    For j = LBound(motions) To UBound(motions)
+
+        BuildRomMotionRowAt fr, region, jointKey, CStr(motions(j)), _
+                            rowYSingle, xName, xR, xL
+
+        rowYSingle = rowYSingle + ROM_ROW_H + ROM_MOTION_GAP_Y
+
+    Next j
+
+End If
+
+' TextBox の IME を無効化するためフックを設定
+AttachTxtImeHookInFrame fr
+
+BuildRomJointBlock = fr.Top + fr.Height + ROM_GAP_Y
+
+End Function
+
+
+Private Function IsRomTwoColumnJoint(ByVal region As String, ByVal jointKey As String) As Boolean
+
+    If region = "Upper" Then
+        ' 上肢
+        IsRomTwoColumnJoint = (jointKey = "Shoulder" Or jointKey = "Wrist")
+
+    ElseIf region = "Lower" Then
+        ' 下肢
+        IsRomTwoColumnJoint = (jointKey = "Hip" Or jointKey = "Ankle")
+
+    Else
+        IsRomTwoColumnJoint = False
+    End If
+
+End Function
+
+
+Private Sub AddRomRLHeader(host As MSForms.Frame, _
+                           ByVal xR As Single, _
+                           ByVal xL As Single)
+
+    Dim lblR As MSForms.label
+    Dim lblL As MSForms.label
+
+    Set lblR = host.controls.Add("Forms.Label.1")
+    With lblR
+        .caption = "右"
+        .Left = xR
+        .Top = PX(ROM_GROUP_PAD)
+        .Width = ROM_COL_EDT_W
+        .Height = ROM_ROW_H
+        .TextAlign = fmTextAlignCenter
+        .Font.Bold = True
+    End With
+
+    Set lblL = host.controls.Add("Forms.Label.1")
+    With lblL
+        .caption = "左"
+        .Left = xL
+        .Top = PX(ROM_GROUP_PAD)
+        .Width = ROM_COL_EDT_W
+        .Height = ROM_ROW_H
+        .TextAlign = fmTextAlignCenter
+        .Font.Bold = True
+    End With
+
     
-    Dim lblR As MSForms.label, lblL As MSForms.label
-    Set lblR = fr.controls.Add("Forms.Label.1")
+   
+    Set lblR = host.controls.Add("Forms.Label.1")
     With lblR
         .caption = "右": .Left = xR: .Top = PX(ROM_GROUP_PAD)
         .Width = ROM_COL_EDT_W: .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter: .Font.Bold = True
     End With
     
-    Set lblL = fr.controls.Add("Forms.Label.1")
+    Set lblL = host.controls.Add("Forms.Label.1")
     With lblL
         .caption = "左": .Left = xL: .Top = PX(ROM_GROUP_PAD)
         .Width = ROM_COL_EDT_W: .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter: .Font.Bold = True
     End With
     
-    ' 運動行
-    Dim i As Long, topY As Single
-    topY = PX(ROM_GROUP_PAD + ROM_HDR_GAP)
-
-    For i = LBound(motions) To UBound(motions)
-        topY = BuildRomMotionRow(fr, region, jointKey, CStr(motions(i)), _
-                                 topY, xName, xR, xL)
-        topY = topY + ROM_MOTION_GAP_Y
-    Next i
-
-    ' IME Off（TxtImeHook）をフレーム内のTextBoxへ一括アタッチ
-    AttachTxtImeHookInFrame fr
-
-    BuildRomJointBlock = fr.Top + fr.Height + ROM_GAP_Y
-End Function
+End Sub
 
 '------------------------------------------------------------
 ' 1運動分の行（ラベル＋R/Lテキスト）
 '------------------------------------------------------------
-Private Function BuildRomMotionRow(host As MSForms.Frame, _
+Private Sub BuildRomMotionRowAt(host As MSForms.Frame, _
         region As String, jointKey As String, motionKey As String, _
-        y0 As Single, xName As Single, xR As Single, xL As Single) As Single
+        y0 As Single, xName As Single, xR As Single, xL As Single)
 
     Dim lbl As MSForms.label
     Set lbl = host.controls.Add("Forms.Label.1")
@@ -1733,9 +1875,7 @@ With tL
     .tag = TAG_FUNC_PREFIX & "|ROM|" & jointKey & "|" & motionKey & "|"    ' ★ここを追加（末尾は空＝L）
 End With
 
-
-    BuildRomMotionRow = tR.Top + ROM_ROW_H
-End Function
+End Sub
 
 Private Function NormalizeRomFrameTitle(ByVal title As String) As String
     Dim normalized As String
