@@ -1391,15 +1391,11 @@ Public Sub BuildROM_Trunk(host As MSForms.Frame)
     y = ROM_GROUP_PAD
 
     ' ËÚïî
-    y = BuildRomSingleJointBlock(host, "Trunk", "Neck", "ËÚïî", "Flex", "ã¸ã»", y)
-    y = BuildRomSingleJointBlock(host, "Trunk", "Neck", "ËÚïî", "Ext", "êLìW", y)
-    y = BuildRomJointBlock(host, "Trunk", "Neck", "ËÚïî", Split("Rot,LatFlex", ","), y)
+    y = BuildRomTrunkJointTable(host, "Trunk", "Neck", "ËÚïî", y)
     y = y + ROM_JOINT_GAP_Y
 
     ' ëÃä≤
-    y = BuildRomSingleJointBlock(host, "Trunk", "Trunk", "ëÃä≤", "Flex", "ã¸ã»", y)
-    y = BuildRomSingleJointBlock(host, "Trunk", "Trunk", "ëÃä≤", "Ext", "êLìW", y)
-    y = BuildRomJointBlock(host, "Trunk", "Trunk", "ëÃä≤", Split("Rot,LatFlex", ","), y)
+    y = BuildRomTrunkJointTable(host, "Trunk", "Trunk", "ëÃä≤", y)
     y = y + ROM_JOINT_GAP_Y
 
     ' ãπäsâ¬ìÆ
@@ -1409,6 +1405,156 @@ Public Sub BuildROM_Trunk(host As MSForms.Frame)
     PlaceMemoBelow host, W, h, y, "txtROM_Trunk_Memo"
 
 End Sub
+
+Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
+            region As String, jointKey As String, jointTitle As String, _
+            y0 As Single) As Single
+
+    Dim motions As Variant
+    motions = Split("Flex,Ext,Rot,LatFlex", ",")
+
+    Dim fr As MSForms.Frame
+    Set fr = host.controls.Add("Forms.Frame.1")
+
+    With fr
+        .caption = jointTitle
+        .Left = PX(PAD_X)
+        .Top = PX(y0)
+        .Width = PX(host.Width - PAD_X * 2)
+        .Height = PX(ROM_GROUP_PAD * 2 + ROM_ROW_H + _
+                     (UBound(motions) - LBound(motions) + 1) * ROM_ROW_H + _
+                     (UBound(motions) - LBound(motions)) * ROM_MOTION_GAP_Y)
+    End With
+
+    Dim xName As Single, xR As Single, xL As Single
+    xName = PX(ROM_GROUP_PAD)
+    xR = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W * 2 - 6)
+    xL = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W)
+
+    Dim hdrR As MSForms.label, hdrL As MSForms.label
+
+    Set hdrR = fr.controls.Add("Forms.Label.1")
+    With hdrR
+        .caption = "âE"
+        .Left = xR
+        .Top = PX(ROM_GROUP_PAD)
+        .Width = ROM_COL_EDT_W
+        .Height = ROM_ROW_H
+        .TextAlign = fmTextAlignCenter
+        .Font.Bold = True
+    End With
+
+    Set hdrL = fr.controls.Add("Forms.Label.1")
+    With hdrL
+        .caption = "ç∂"
+        .Left = xL
+        .Top = PX(ROM_GROUP_PAD)
+        .Width = ROM_COL_EDT_W
+        .Height = ROM_ROW_H
+        .TextAlign = fmTextAlignCenter
+        .Font.Bold = True
+    End With
+
+    Dim i As Long, rowY As Single, motionKey As String
+    rowY = PX(ROM_GROUP_PAD + ROM_ROW_H)
+
+    For i = LBound(motions) To UBound(motions)
+        motionKey = CStr(motions(i))
+        rowY = BuildRomTrunkMotionRow(fr, region, jointKey, motionKey, rowY, xName, xR, xL)
+        If i < UBound(motions) Then rowY = rowY + ROM_MOTION_GAP_Y
+    Next i
+
+    BuildRomTrunkJointTable = fr.Top + fr.Height + ROM_GAP_Y
+End Function
+
+
+Private Function BuildRomTrunkMotionRow(host As MSForms.Frame, _
+            region As String, jointKey As String, motionKey As String, _
+            y0 As Single, xName As Single, xR As Single, xL As Single) As Single
+
+    Dim lbl As MSForms.label
+    Set lbl = host.controls.Add("Forms.Label.1")
+
+    With lbl
+        .caption = GetTrunkMotionCaption(motionKey)
+        .Left = xName
+        .Top = PX(y0)
+        .Width = PX(host.Width - xName - (host.Width - xR) + ROM_HDR_RL_GAP)
+        .Height = ROM_ROW_H
+        .TextAlign = fmTextAlignLeft
+        .Font.Bold = True
+    End With
+
+    If motionKey = "Flex" Or motionKey = "Ext" Then
+
+        Dim txtSingle As MSForms.TextBox
+        Set txtSingle = host.controls.Add("Forms.TextBox.1", _
+            "txtROM_" & region & "_" & jointKey & "_" & motionKey)
+
+        With txtSingle
+            .Left = xL
+            .Top = PX(y0 + (ROM_ROW_H - ROM_TXT_H) / 2)
+            .Width = ROM_COL_EDT_W
+            .Height = ROM_TXT_H
+            .IMEMode = fmIMEModeDisable
+        End With
+
+    Else
+
+        Dim tR As MSForms.TextBox, tL As MSForms.TextBox
+
+        Set tR = host.controls.Add("Forms.TextBox.1", _
+            "txtROM_" & region & "_" & jointKey & "_" & motionKey & "_R")
+
+        With tR
+            .Left = xR
+            .Top = PX(y0 + (ROM_ROW_H - ROM_TXT_H) / 2)
+            .Width = ROM_COL_EDT_W
+            .Height = ROM_TXT_H
+            .IMEMode = fmIMEModeDisable
+            .tag = TAG_FUNC_PREFIX & "|ROM|" & jointKey & "|" & motionKey & "|R"
+        End With
+
+        Set tL = host.controls.Add("Forms.TextBox.1", _
+            "txtROM_" & region & "_" & jointKey & "_" & motionKey & "_L")
+
+        With tL
+            .Left = xL
+            .Top = PX(y0 + (ROM_ROW_H - ROM_TXT_H) / 2)
+            .Width = ROM_COL_EDT_W
+            .Height = ROM_TXT_H
+            .IMEMode = fmIMEModeDisable
+            .tag = TAG_FUNC_PREFIX & "|ROM|" & jointKey & "|" & motionKey & "|L"
+        End With
+
+    End If
+
+    BuildRomTrunkMotionRow = y0 + ROM_ROW_H
+End Function
+
+
+Private Function GetTrunkMotionCaption(motionKey As String) As String
+
+    Select Case motionKey
+
+        Case "Flex"
+            GetTrunkMotionCaption = "ã¸ã»"
+
+        Case "Ext"
+            GetTrunkMotionCaption = "êLìW"
+
+        Case "Rot"
+            GetTrunkMotionCaption = "âÒê˘"
+
+        Case "LatFlex"
+            GetTrunkMotionCaption = "ë§ã¸"
+
+        Case Else
+            GetTrunkMotionCaption = motionKey
+
+    End Select
+
+End Function
 
 '------------------------------------------------------------
 ' è„éà éqÉ^Éu
