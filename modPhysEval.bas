@@ -23,10 +23,11 @@ Public Const USE_ROM_SUBTABS   As Boolean = True   ' 子タブ(上肢/下肢)を使う
 
 
 '=== ROMレイアウト（この4つはROM専用で1回だけ定義）===
-Private Const ROM_ROW_H      As Single = 14
+Private Const ROM_ROW_H      As Single = 22
 Private Const ROM_GAP_Y      As Single = 1
 Private Const ROM_HDR_GAP    As Single = 2
-Private Const ROM_COL_EDT_W  As Single = 38
+Private Const ROM_COL_EDT_W  As Single = 50
+Private Const ROM_TXT_H      As Single = 18
 
 '=== 備考欄の共通パラメータ（新規） ===
 Private Const MEMO_DESIRED_H As Single = 120   ' ほしい高さ（100?160で好みに調整可）
@@ -1358,24 +1359,56 @@ Public Sub BuildROMTabs(host As MSForms.Frame)
         .Style = fmTabStyleTabs
     End With
 
-    Dim pUpper As MSForms.page, pLower As MSForms.page
+    Dim pUpper As MSForms.page, pLower As MSForms.page, pTrunk As MSForms.page
     Set pUpper = mp.Pages.Add: pUpper.caption = "上肢": pUpper.name = "pgROM_Upper"
     Set pLower = mp.Pages.Add: pLower.caption = "下肢": pLower.name = "pgROM_Lower"
-
-    Dim hostUpper As MSForms.Frame, hostLower As MSForms.Frame
+    Set pTrunk = mp.Pages.Add: pTrunk.caption = "?": pTrunk.name = "pgROM_Trunk"
+    
+    Dim hostUpper As MSForms.Frame, hostLower As MSForms.Frame, hostTrunk As MSForms.Frame
     Set hostUpper = EnsureHostFrame(pUpper)
     Set hostLower = EnsureHostFrame(pLower)
-
+    Set hostTrunk = EnsureHostFrame(pTrunk)
+    
     BuildROM_Upper hostUpper
     NormalizeRomColumns hostUpper
 
     BuildROM_Lower hostLower
     NormalizeRomColumns hostLower
+    
+    BuildROM_Trunk hostTrunk
+    NormalizeRomColumns hostTrunk
 
   
 End Sub
 
+Public Sub BuildROM_Trunk(host As MSForms.Frame)
 
+    Dim W As Single, h As Single
+    W = host.Width
+    h = host.Height
+
+    Dim y As Single
+    y = ROM_GROUP_PAD
+
+    ' 頸部
+    y = BuildRomSingleJointBlock(host, "Trunk", "頸部", "°", "屈曲", "", y)
+    y = BuildRomSingleJointBlock(host, "Trunk", "頸部", "°", "伸展", "LW", y)
+    y = BuildRomJointBlock(host, "Trunk", "頸部", "°", Split("回旋,側屈", ","), y)
+    y = y + ROM_JOINT_GAP_Y
+
+    ' 体幹
+    y = BuildRomSingleJointBlock(host, "Trunk", "体幹", "°", "屈曲", "", y)
+    y = BuildRomSingleJointBlock(host, "Trunk", "体幹", "°", "伸展", "LW", y)
+    y = BuildRomJointBlock(host, "Trunk", "体幹", "°", Split("回旋,側屈", ","), y)
+    y = y + ROM_JOINT_GAP_Y
+
+    ' 胸郭可動
+    y = BuildThoraxMobilityBlock(host, y)
+
+    ' メモ欄
+    PlaceMemoBelow host, W, h, y, "txtROM_Trunk_Memo"
+
+End Sub
 
 '------------------------------------------------------------
 ' 上肢 子タブ
@@ -1475,11 +1508,23 @@ Private Function BuildRomJointBlock(host As MSForms.Frame, _
         .Width = ROM_COL_EDT_W: .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter: .Font.Bold = True
     End With
+    
     Set lblL = fr.controls.Add("Forms.Label.1")
     With lblL
         .caption = "L": .Left = xL: .Top = PX(ROM_GROUP_PAD)
         .Width = ROM_COL_EDT_W: .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter: .Font.Bold = True
+    End With
+    
+    Dim btnSame As MSForms.CommandButton
+    Set btnSame = fr.controls.Add("Forms.CommandButton.1", "btnROMSame_" & region & "_" & jointKey)
+    With btnSame
+        .caption = "El"
+        .Left = PX(ROM_GROUP_PAD)
+        .Top = PX(ROM_GROUP_PAD)
+        .Width = 62
+        .Height = ROM_TXT_H
+        .tag = "ROM_MIRROR"
     End With
 
     ' 運動行
@@ -1513,6 +1558,7 @@ Private Function BuildRomMotionRow(host As MSForms.Frame, _
         .Width = PX(host.Width - xName - (host.Width - xR) + ROM_HDR_RL_GAP)
         .Height = ROM_ROW_H
         .TextAlign = fmTextAlignLeft
+        .Font.Bold = True
     End With
 
     Dim tR As MSForms.TextBox, tL As MSForms.TextBox
@@ -1520,8 +1566,8 @@ Private Function BuildRomMotionRow(host As MSForms.Frame, _
 Set tR = host.controls.Add("Forms.TextBox.1", _
     "txtROM_" & region & "_" & jointKey & "_" & motionKey & "_R")
 With tR
-    .Left = xR: .Top = PX(y0)
-    .Width = ROM_COL_EDT_W: .Height = ROM_ROW_H
+    .Left = xR: .Top = PX(y0 + (ROM_ROW_H - ROM_TXT_H) / 2)
+    .Width = ROM_COL_EDT_W: .Height = ROM_TXT_H
     .IMEMode = fmIMEModeDisable
     .tag = TAG_FUNC_PREFIX & "|ROM|" & jointKey & "|" & motionKey & "|E"   ' ★ここを追加
 End With
@@ -1530,14 +1576,107 @@ End With
 Set tL = host.controls.Add("Forms.TextBox.1", _
     "txtROM_" & region & "_" & jointKey & "_" & motionKey & "_L")
 With tL
-    .Left = xL: .Top = PX(y0)
-    .Width = ROM_COL_EDT_W: .Height = ROM_ROW_H
+    .Left = xL: .Top = PX(y0 + (ROM_ROW_H - ROM_TXT_H) / 2)
+    .Width = ROM_COL_EDT_W: .Height = ROM_TXT_H
     .IMEMode = fmIMEModeDisable
     .tag = TAG_FUNC_PREFIX & "|ROM|" & jointKey & "|" & motionKey & "|"    ' ★ここを追加（末尾は空＝L）
 End With
 
 
     BuildRomMotionRow = tR.Top + ROM_ROW_H
+End Function
+
+Private Function BuildRomSingleJointBlock(host As MSForms.Frame, _
+            region As String, jointKey As String, jointTitle As String, _
+            motionKey As String, motionCaption As String, y0 As Single) As Single
+
+    Dim fr As MSForms.Frame
+    Set fr = host.controls.Add("Forms.Frame.1")
+
+    With fr
+        .caption = jointTitle
+        .Left = PX(PAD_X)
+        .Top = PX(y0)
+        .Width = PX(host.Width - PAD_X * 2)
+        .Height = PX(ROM_ROW_H + ROM_GROUP_PAD * 2)
+    End With
+
+    Dim lbl As MSForms.label
+    Set lbl = fr.controls.Add("Forms.Label.1")
+
+    With lbl
+        .caption = motionCaption
+        .Left = PX(ROM_GROUP_PAD)
+        .Top = PX(ROM_GROUP_PAD)
+        .Width = PX(fr.Width - ROM_GROUP_PAD * 3 - ROM_COL_EDT_W)
+        .Height = ROM_ROW_H
+        .Font.Bold = True
+    End With
+
+    Dim txt As MSForms.TextBox
+    Set txt = fr.controls.Add("Forms.TextBox.1", "txtROM_" & region & "_" & jointKey & "_" & motionKey)
+
+    With txt
+        .Left = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W)
+        .Top = PX(ROM_GROUP_PAD + (ROM_ROW_H - ROM_TXT_H) / 2)
+        .Width = ROM_COL_EDT_W
+        .Height = ROM_TXT_H
+        .IMEMode = fmIMEModeDisable
+    End With
+
+    BuildRomSingleJointBlock = fr.Top + fr.Height + ROM_MOTION_GAP_Y
+
+End Function
+
+Private Function BuildThoraxMobilityBlock(host As MSForms.Frame, y0 As Single) As Single
+
+    Dim fr As MSForms.Frame
+    Set fr = host.controls.Add("Forms.Frame.1")
+
+    With fr
+        .caption = "胸郭可動"
+        .Left = PX(PAD_X)
+        .Top = PX(y0)
+        .Width = PX(host.Width - PAD_X * 2)
+        .Height = PX(ROM_ROW_H + ROM_GROUP_PAD * 2)
+    End With
+
+    Dim lbl As MSForms.label
+    Set lbl = fr.controls.Add("Forms.Label.1")
+
+    With lbl
+        .caption = "胸囲差（吸気－呼気）"
+        .Left = PX(ROM_GROUP_PAD)
+        .Top = PX(ROM_GROUP_PAD)
+        .Width = PX(fr.Width - ROM_GROUP_PAD * 4 - ROM_COL_EDT_W - 30)
+        .Height = ROM_ROW_H
+        .Font.Bold = True
+    End With
+
+    Dim txt As MSForms.TextBox
+    Set txt = fr.controls.Add("Forms.TextBox.1", "txtROM_Trunk_Thorax_ChestDiff")
+
+    With txt
+        .Left = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W - 30)
+        .Top = PX(ROM_GROUP_PAD + (ROM_ROW_H - ROM_TXT_H) / 2)
+        .Width = ROM_COL_EDT_W
+        .Height = ROM_TXT_H
+        .IMEMode = fmIMEModeDisable
+    End With
+
+    Dim lblCm As MSForms.label
+    Set lblCm = fr.controls.Add("Forms.Label.1")
+
+    With lblCm
+        .caption = "cm"
+        .Left = PX(txt.Left + txt.Width + 4)
+        .Top = PX(ROM_GROUP_PAD)
+        .Width = 24
+        .Height = ROM_ROW_H
+    End With
+
+    BuildThoraxMobilityBlock = fr.Top + fr.Height + ROM_MOTION_GAP_Y
+
 End Function
 
 '------------------------------------------------------------
@@ -1577,6 +1716,12 @@ Private Function GetMotionCaption(jointKey As String, motionKey As String) As St
                 Case "Plantar": GetMotionCaption = "底屈"
                 Case "Inv":     GetMotionCaption = "内がえし"
                 Case "Ev":      GetMotionCaption = "外がえし"
+            End Select
+            
+        Case "Neck", "Trunk"
+            Select Case motionKey
+                Case "Rot":      GetMotionCaption = ""
+                Case "LatFlex":  GetMotionCaption = ""
             End Select
     End Select
 End Function

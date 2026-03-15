@@ -94,6 +94,7 @@ Private mQuitMode As QuitMode
 Private mHdrArchiveHook As clsHdrBtnHook
 Private mHdrLoadPrevHook As clsHdrBtnHook
 Private mPrintBtnHook As clsPrintBtnHook
+Private mRomMirrorHooks As Collection
 Private mHdrNameSink As cHdrNameSink
 Private mNameSuggestSink As cNameSuggestSink
 Private mDupNameWarned As Boolean
@@ -1839,7 +1840,39 @@ Public Sub RegisterTxtHook(h As TxtImeHook)
     mTxtHooks.Add h
 End Sub
 
+Private Sub HookRomMirrorButtons_Once()
+    If mRomMirrorHooks Is Nothing Then Set mRomMirrorHooks = New Collection
+    If mRomMirrorHooks.count > 0 Then Exit Sub
+    HookRomMirrorButtonsInContainer Me
+End Sub
 
+Private Sub HookRomMirrorButtonsInContainer(ByVal container As Object)
+    On Error Resume Next
+
+    Dim c As Object
+    If TypeName(container) = "MultiPage" Then
+        Dim pg As MSForms.page
+        For Each pg In container.Pages
+            HookRomMirrorButtonsInContainer pg
+        Next
+        Exit Sub
+    End If
+
+    For Each c In container.controls
+        If TypeName(c) = "CommandButton" Then
+            If CStr(c.tag) = "ROM_MIRROR" Then
+                Dim h As clsRomMirrorBtnHook
+                Set h = New clsRomMirrorBtnHook
+                Set h.btn = c
+                mRomMirrorHooks.Add h
+            End If
+        End If
+
+        If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
+            HookRomMirrorButtonsInContainer c
+        End If
+    Next
+End Sub
 
 
 
@@ -3114,6 +3147,7 @@ mHdrNameSink.Hook Me.controls("frHeader").controls("txtHdrName")
 
 Call Align_LoadPrevButton_NextToHdrKana(Me)
 Call Ensure_LoadPrevButton_Once(Me)
+Call HookRomMirrorButtons_Once
 
 '--- hook header "LoadPrev" button (MUST be after Ensure_LoadPrevButton_Once) ---
 Set mHdrLoadPrevHook = New clsHdrBtnHook
@@ -3175,6 +3209,7 @@ Private Sub LegacyInit()
 
     Set mMPHooks = New Collection
     Set mTxtHooks = New Collection
+    Set mRomMirrorHooks = New Collection
 
 SetupLayout
 
@@ -7564,8 +7599,6 @@ Private Sub frHeader_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, 
 End Sub
 
 
-
-
 Public Sub AddPrintButton_TestEval()
     Dim f As MSForms.Frame
     Set f = SafeGetControl(Me, "Frame23")
@@ -7579,24 +7612,20 @@ Public Sub AddPrintButton_TestEval()
     If btn Is Nothing Then
         Set btn = f.controls.Add("Forms.CommandButton.1", "cmdPrintTestEval", True)
         With btn
-            .caption = "グラフ印刷"
-            btn.Width = 120
-btn.Height = 28
-btn.Left = f.InsideWidth - btn.Width - 28.35
-btn.Top = f.controls("txtTUG").Top
+       .caption = "グラフ印刷"
+        btn.Width = 120
+        btn.Height = 28
+        btn.Left = f.InsideWidth - btn.Width - 28.35
+        btn.Top = 12
 
         End With
     End If
     
-    
 btn.Left = f.InsideWidth - btn.Width - 28.35
-
 
     ' ← ★ここ★（この2行だけ追加）
     Set mPrintBtnHook = New clsPrintBtnHook
     Set mPrintBtnHook.btn = btn
-    
-    
     
     
 End Sub
