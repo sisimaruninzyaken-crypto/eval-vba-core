@@ -1668,11 +1668,17 @@ Else
 End If
 
 ' ä÷êﬂÉtÉåÅ[ÉÄÇÃçÇÇ≥ÇçsêîÇ…çáÇÌÇπÇƒí≤êÆ
-fr.Height = PX(ROM_ROW_H * rowCount + _
-               ROM_GROUP_PAD * 2 + ROM_HDR_GAP + (rowCount - 1) * ROM_MOTION_GAP_Y)
 
 Dim topY As Single
 topY = PX(ROM_GROUP_PAD + ROM_ROW_H + ROM_HDR_GAP)
+
+If useTwoCols Then
+    fr.Height = PX(topY + rowCount * ROM_ROW_H + _
+                   (rowCount - 1) * ROM_MOTION_GAP_Y + ROM_GROUP_PAD)
+Else
+    fr.Height = PX(topY + rowCount * ROM_ROW_H + _
+                   (rowCount - 1) * ROM_MOTION_GAP_Y + ROM_GROUP_PAD)
+End If
 
 If useTwoCols Then
 
