@@ -3283,56 +3283,60 @@ Dim y As Single, cboTmp As MSForms.ComboBox
     
     nextTop = pad
     Dim fTests As MSForms.Frame: Set fTests = CreateFrameP(hostTests, "テスト・評価（秒=小数2桁・握力=小数1桁・0以上）", 150)
-    y = 22
-    CreateLabel fTests, "10m歩行（秒）", COL_LX, y: CreateTextBox fTests, COL_LX + lblW + 20, y, 80, 0, False, "txtTenMWalk", "Test.10m": nL y
-    CreateLabel fTests, "TUG（秒）", COL_LX, y: CreateTextBox fTests, COL_LX + lblW + 20, y, 80, 0, False, "txtTUG", "Test.TUG"
-    CreateLabel fTests, "5回立ち上がり（秒）", COL_RX, 22: CreateTextBox fTests, COL_RX + lblW + 60, 22, 80, 0, False, "txtFiveSTS", "Test.5xSTS"
-    CreateLabel fTests, "セミタンデム（秒）", COL_RX, 46: CreateTextBox fTests, COL_RX + lblW + 60, 46, 80, 0, False, "txtSemi", "Test.Semi"
-    CreateLabel fTests, "握力 右（kg）", COL_LX, 94: CreateTextBox fTests, COL_LX + lblW + 20, 94, 80, 0, False, "txtGripR", "Grip.R"
-    CreateLabel fTests, "握力 左（kg）", COL_RX, 94: CreateTextBox fTests, COL_RX + lblW + 40, 94, 80, 0, False, "txtGripL", "Grip.L"
+Dim colL As Single, colR As Single
+Dim row1 As Single, row2 As Single, row3 As Single
+Dim memoW As Single
 
-Dim memoTop As Single
-Dim fraTestMemo As MSForms.Frame
-Dim memoLX As Single, memoRX As Single
+colL = 16
+colR = 420
+row1 = 18
+row2 = 130
+row3 = 242
+memoW = 300
 
-memoTop = 128
-Set fraTestMemo = fTests.controls.Add("Forms.Frame.1", "fraTestMemo")
-With fraTestMemo
-    .caption = "備考欄"
-    .Left = 12
-    .Top = memoTop
-    .Width = fTests.InsideWidth - 24
-    .Height = 146
-    .ScrollBars = fmScrollBarsNone
-End With
+CreateLabel fTests, "10m歩行", colL, row1, 110
+CreateLabel fTests, "秒", colL, row1 + 22, 52
+CreateTextBox fTests, colL + 58, row1 + 20, 80, 0, False, "txtTenMWalk", "Test.10m"
+CreateLabel fTests, "秒", colL + 144, row1 + 22, 20
+CreateLabel fTests, "所見", colL, row1 + 50, 52
+CreateTextBox fTests, colL + 58, row1 + 48, memoW, 40, True, "txtMemo_10mWalk", "Memo.10m"
 
-memoLX = 12
-memoRX = 300
+CreateLabel fTests, "TUG", colR, row1, 110
+CreateLabel fTests, "秒", colR, row1 + 22, 52
+CreateTextBox fTests, colR + 58, row1 + 20, 80, 0, False, "txtTUG", "Test.TUG"
+CreateLabel fTests, "秒", colR + 144, row1 + 22, 20
+CreateLabel fTests, "所見", colR, row1 + 50, 52
+CreateTextBox fTests, colR + 58, row1 + 48, memoW, 40, True, "txtMemo_TUG", "Memo.TUG"
 
+CreateLabel fTests, "5回立ち上がり", colL, row2, 110
+CreateLabel fTests, "秒", colL, row2 + 22, 52
+CreateTextBox fTests, colL + 58, row2 + 20, 80, 0, False, "txtFiveSTS", "Test.5xSTS"
+CreateLabel fTests, "秒", colL + 144, row2 + 22, 20
+CreateLabel fTests, "所見", colL, row2 + 50, 52
+CreateTextBox fTests, colL + 58, row2 + 48, memoW, 40, True, "txtMemo_STS5", "Memo.5xSTS"
 
-memoTop = 24
-CreateLabel fraTestMemo, "10m歩行", memoLX, memoTop, 110
-CreateTextBox fraTestMemo, memoLX + 112, memoTop - 2, 200, 34, True, "txtMemo_10mWalk", "Memo.10m"
-CreateLabel fraTestMemo, "TUG", memoRX, memoTop, 110
-CreateTextBox fraTestMemo, memoRX + 112, memoTop - 2, 200, 34, True, "txtMemo_TUG", "Memo.TUG"
+CreateLabel fTests, "セミタンデム", colR, row2, 110
+CreateLabel fTests, "秒", colR, row2 + 22, 52
+CreateTextBox fTests, colR + 58, row2 + 20, 80, 0, False, "txtSemi", "Test.Semi"
+CreateLabel fTests, "秒", colR + 144, row2 + 22, 20
+CreateLabel fTests, "所見", colR, row2 + 50, 52
+CreateTextBox fTests, colR + 58, row2 + 48, memoW, 40, True, "txtMemo_SemiTandem", "Memo.Semi"
 
+CreateLabel fTests, "握力右", colL, row3, 110
+CreateLabel fTests, "kg", colL, row3 + 22, 52
+CreateTextBox fTests, colL + 58, row3 + 20, 80, 0, False, "txtGripR", "Grip.R"
+CreateLabel fTests, "kg", colL + 144, row3 + 22, 20
+CreateLabel fTests, "所見", colL, row3 + 50, 52
+CreateTextBox fTests, colL + 58, row3 + 48, memoW, 40, True, "txtMemo_GripR", "Memo.GripR"
 
-memoTop = memoTop + 40
-CreateLabel fraTestMemo, "5回立ち上がり", memoLX, memoTop, 110
-CreateTextBox fraTestMemo, memoLX + 112, memoTop - 2, 200, 34, True, "txtMemo_GripR", "Memo.GripR"
-CreateLabel fraTestMemo, "セミタンデム", memoRX, memoTop, 110
-CreateTextBox fraTestMemo, memoRX + 112, memoTop - 2, 200, 34, True, "txtMemo_GripL", "Memo.GripL"
+CreateLabel fTests, "握力左", colR, row3, 110
+CreateLabel fTests, "kg", colR, row3 + 22, 52
+CreateTextBox fTests, colR + 58, row3 + 20, 80, 0, False, "txtGripL", "Grip.L"
+CreateLabel fTests, "kg", colR + 144, row3 + 22, 20
+CreateLabel fTests, "所見", colR, row3 + 50, 52
+CreateTextBox fTests, colR + 58, row3 + 48, memoW, 40, True, "txtMemo_GripL", "Memo.GripL"
 
-
-memoTop = memoTop + 40
-CreateLabel fraTestMemo, "握力 右", memoLX, memoTop, 110
-CreateTextBox fraTestMemo, memoLX + 112, memoTop - 2, 200, 34, True, "txtMemo_STS5", "Memo.5xSTS"
-CreateLabel fraTestMemo, "握力 左", memoRX, memoTop, 110
-CreateTextBox fraTestMemo, memoRX + 112, memoTop - 2, 200, 34, True, "txtMemo_SemiTandem", "Memo.Semi"
-
-
-
-ResizeFrameToContent fTests, fraTestMemo.Top + fraTestMemo.Height
+ResizeFrameToContent fTests, row3 + 112
 
 
     Trace "TESTS end", "Init"
@@ -5308,7 +5312,7 @@ Public Sub BuildCogMentalUI_Simple()
         f.Left = fw.Left
         f.Top = fw.Top
         f.Width = fw.Width
-        'f.Height = fw.Height
+        f.Height = fw.Height
     End If
 
     ' いったん中身を全部クリア（元のラベル／コンボ／既存マルチページも含めて）

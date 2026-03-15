@@ -294,17 +294,17 @@ End Function
 
 
 
-Private Sub CollectChecksRecursive(parent As Object, coll As Collection)
+Private Sub CollectChecksRecursive(parent As Object, colL As Collection)
     Dim c As Object, nm2 As String
     For Each c In parent.controls
         If TypeName(c) = "CheckBox" Then
             If c.value = True Then
                 nm2 = c.name
                 If LCase$(Left$(nm2, 3)) = "chk" Then nm2 = Mid$(nm2, 4)
-                coll.Add nm2
+                colL.Add nm2
             End If
         ElseIf TypeName(c) = "Frame" Or TypeName(c) = "Page" Then
-            CollectChecksRecursive c, coll
+            CollectChecksRecursive c, colL
         End If
     Next
 End Sub
