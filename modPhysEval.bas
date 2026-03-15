@@ -12,6 +12,7 @@ Private Const NOTE_H     As Single = 22
 Private Const COL1_W     As Single = 140  ' 左の見出し列幅（他画面でも使用）
 Private Const COL_EDT_W  As Single = 70   ' 他画面用の入力幅
 Private Const ROW_H     As Single = 18
+Private Const ROM_LABEL_W As Single = 60
 
 ' === ROM 子タブ用 追加定数／フラグ ===
 Private Const ROM_JOINT_GAP_Y As Single = 2   ' 関節ブロック間の縦間
@@ -22,6 +23,7 @@ Private Const ROM_COL_SHIFT_L  As Single = 34
 Private Const ROM_FRAME_TRIM_R As Single = 24
 Private Const ROM_MULTI_COL_GAP As Single = 16
 Private Const ROM_MULTI_EDIT_GAP As Single = 6
+
 
 Public Const USE_ROM_SUBTABS   As Boolean = True   ' 子タブ(上肢/下肢)を使う
 
@@ -1695,12 +1697,12 @@ If useTwoCols Then
     Dim xNameL As Single, xRL As Single, xLL As Single
 
     xNameL = xGroupL
-    xRL = PX(xNameL + labelW)
+    xRL = PX(xNameL + ROM_LABEL_W)
     xLL = PX(xRL + ROM_COL_EDT_W + ROM_MULTI_EDIT_GAP)
     Dim xNameR As Single, xRR As Single, xLR As Single
 
     xNameR = xGroupR
-    xRR = PX(xNameR + labelW)
+    xRR = PX(xNameR + ROM_LABEL_W)
     xLR = PX(xRR + ROM_COL_EDT_W + ROM_MULTI_EDIT_GAP)
 
     AddRomRLHeader fr, xRL, xLL
@@ -1737,11 +1739,9 @@ Else
     Dim xName As Single, xR As Single, xL As Single
 
     xName = PX(ROM_GROUP_PAD)
-    xR = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W * 2 _
-            - ROM_MULTI_EDIT_GAP - ROM_COL_SHIFT_L)
-    xL = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W _
-            - ROM_COL_SHIFT_L)
-
+    xR = PX(xName + ROM_LABEL_W)
+    xL = PX(xR + ROM_COL_EDT_W + ROM_MULTI_EDIT_GAP)
+    
     AddRomRLHeader fr, xR, xL
 
     Dim rowYSingle As Single
