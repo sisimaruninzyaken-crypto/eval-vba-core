@@ -4872,6 +4872,20 @@ Private Sub BuildWalkIndep_DistanceOutdoor()
     If lblOut Is Nothing Then Set lblOut = CreateLabel(f, "", leftLabel, topOut, wLabel, "lblWalkOutdoor")
     If cmbOut Is Nothing Then Set cmbOut = CreateCombo(f, leftCombo, topOut, wCombo, "cmbWalkOutdoor", "WalkOutdoor")
 
+    If cmbDist.ListCount = 0 Then
+        cmbDist.AddItem "屋内のみ"
+        cmbDist.AddItem "屋内短距離"
+        cmbDist.AddItem "屋外短距離"
+        cmbDist.AddItem "屋外長距離"
+    End If
+
+    If cmbOut.ListCount = 0 Then
+        cmbOut.AddItem "自立"
+        cmbOut.AddItem "見守り"
+        cmbOut.AddItem "一部介助"
+        cmbOut.AddItem "全介助"
+    End If
+
     lblDist.caption = "歩行距離"
     lblOut.caption = "屋外歩行"
 
