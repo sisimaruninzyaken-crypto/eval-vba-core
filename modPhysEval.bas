@@ -14,10 +14,12 @@ Private Const COL_EDT_W  As Single = 70   ' 他画面用の入力幅
 Private Const ROW_H     As Single = 18
 
 ' === ROM 子タブ用 追加定数／フラグ ===
-Private Const ROM_JOINT_GAP_Y As Single = 12   ' 関節ブロック間の縦間
+Private Const ROM_JOINT_GAP_Y As Single = 2   ' 関節ブロック間の縦間
 Private Const ROM_MOTION_GAP_Y As Single = 4   ' 運動行の縦間
 Private Const ROM_GROUP_PAD    As Single = 8   ' Frame 内パディング
 Private Const ROM_HDR_RL_GAP   As Single = 24  ' 運動名とR/L列の間
+Private Const ROM_COL_SHIFT_L  As Single = 34
+Private Const ROM_FRAME_TRIM_R As Single = 24
 
 Public Const USE_ROM_SUBTABS   As Boolean = True   ' 子タブ(上肢/下肢)を使う
 
@@ -1417,10 +1419,10 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
     Set fr = host.controls.Add("Forms.Frame.1")
 
     With fr
-        .caption = jointTitle
+        .caption = NormalizeRomFrameTitle(jointTitle)
         .Left = PX(PAD_X)
         .Top = PX(y0)
-        .Width = PX(host.Width - PAD_X * 2)
+        .Width = PX(host.Width - PAD_X * 2 - ROM_FRAME_TRIM_R)
         .Height = PX(ROM_GROUP_PAD * 2 + ROM_ROW_H + _
                      (UBound(motions) - LBound(motions) + 1) * ROM_ROW_H + _
                      (UBound(motions) - LBound(motions)) * ROM_MOTION_GAP_Y)
@@ -1439,7 +1441,7 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
         .caption = "単独"
         .Left = xSingle
         .Top = PX(ROM_GROUP_PAD)
-        .Width = ROM_COL_EDT_W
+        .Width = 24
         .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter
         .Font.Bold = True
@@ -1448,8 +1450,8 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
     Set hdrR = fr.controls.Add("Forms.Label.1")
     With hdrR
         .caption = "右"
-        .Left = xR
-        .Top = PX(ROM_GROUP_PAD)
+        .Left = xR + (ROM_COL_EDT_W - 12) / 2
+        .Top = PX(ROM_GROUP_PAD + 2)
         .Width = ROM_COL_EDT_W
         .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter
@@ -1459,9 +1461,9 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
     Set hdrL = fr.controls.Add("Forms.Label.1")
     With hdrL
         .caption = "左"
-        .Left = xL
-        .Top = PX(ROM_GROUP_PAD)
-        .Width = ROM_COL_EDT_W
+        .Left = xL + (ROM_COL_EDT_W - 12) / 2
+        .Top = PX(ROM_GROUP_PAD + 2)
+        .Width = 24
         .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter
         .Font.Bold = True
@@ -1656,35 +1658,24 @@ Private Function BuildRomJointBlock(host As MSForms.Frame, _
     ' R/L ヘッダ
     Dim xName As Single, xR As Single, xL As Single
     xName = PX(ROM_GROUP_PAD)
-    xR = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W * 2 - 6)
-    xL = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W)
-
+    xR = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W * 2 - 6 - ROM_COL_SHIFT_L)
+    xL = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W - ROM_COL_SHIFT_L)
+    
     Dim lblR As MSForms.label, lblL As MSForms.label
     Set lblR = fr.controls.Add("Forms.Label.1")
     With lblR
-        .caption = "R": .Left = xR: .Top = PX(ROM_GROUP_PAD)
+        .caption = "右": .Left = xR: .Top = PX(ROM_GROUP_PAD)
         .Width = ROM_COL_EDT_W: .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter: .Font.Bold = True
     End With
     
     Set lblL = fr.controls.Add("Forms.Label.1")
     With lblL
-        .caption = "L": .Left = xL: .Top = PX(ROM_GROUP_PAD)
+        .caption = "左": .Left = xL: .Top = PX(ROM_GROUP_PAD)
         .Width = ROM_COL_EDT_W: .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter: .Font.Bold = True
     End With
     
-    Dim btnSame As MSForms.CommandButton
-    Set btnSame = fr.controls.Add("Forms.CommandButton.1", "btnROMSame_" & region & "_" & jointKey)
-    With btnSame
-        .caption = "El"
-        .Left = PX(ROM_GROUP_PAD)
-        .Top = PX(ROM_GROUP_PAD)
-        .Width = 62
-        .Height = ROM_TXT_H
-        .tag = "ROM_MIRROR"
-    End With
-
     ' 運動行
     Dim i As Long, topY As Single
     topY = PX(ROM_GROUP_PAD + ROM_HDR_GAP)
@@ -1727,6 +1718,7 @@ With tR
     .Left = xR: .Top = PX(y0 + (ROM_ROW_H - ROM_TXT_H) / 2)
     .Width = ROM_COL_EDT_W: .Height = ROM_TXT_H
     .IMEMode = fmIMEModeDisable
+    .TextAlign = fmTextAlignRight
     .tag = TAG_FUNC_PREFIX & "|ROM|" & jointKey & "|" & motionKey & "|E"   ' ★ここを追加
 End With
 
@@ -1737,12 +1729,21 @@ With tL
     .Left = xL: .Top = PX(y0 + (ROM_ROW_H - ROM_TXT_H) / 2)
     .Width = ROM_COL_EDT_W: .Height = ROM_TXT_H
     .IMEMode = fmIMEModeDisable
+    .TextAlign = fmTextAlignRight
     .tag = TAG_FUNC_PREFIX & "|ROM|" & jointKey & "|" & motionKey & "|"    ' ★ここを追加（末尾は空＝L）
 End With
 
 
     BuildRomMotionRow = tR.Top + ROM_ROW_H
 End Function
+
+Private Function NormalizeRomFrameTitle(ByVal title As String) As String
+    Dim normalized As String
+    normalized = Replace(title, " ", "")
+    normalized = Replace(normalized, ChrW$(12288), "")
+    NormalizeRomFrameTitle = normalized
+End Function
+
 
 Private Function BuildRomSingleJointBlock(host As MSForms.Frame, _
             region As String, jointKey As String, jointTitle As String, _
