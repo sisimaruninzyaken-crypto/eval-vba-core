@@ -3130,10 +3130,26 @@ DoEvents
     
  EnsureBasicInfoEnterFixedRouteReady
  
+  Call Fix_InnerScrollBars
  
 End Sub
 
+Private Sub Fix_InnerScrollBars()
 
+On Error Resume Next
+
+Me.controls("MultiPage1").Pages("Page1").controls("Frame1").ScrollBars = fmScrollBarsNone
+Me.controls("MultiPage1").Pages("Page1").controls("Frame1").KeepScrollBarsVisible = fmScrollBarsNone
+
+Me.controls("MultiPage1").Pages("Page3").controls("Frame8").ScrollBars = fmScrollBarsNone
+Me.controls("MultiPage1").Pages("Page3").controls("Frame8").KeepScrollBarsVisible = fmScrollBarsNone
+
+Me.controls("MultiPage1").Pages("Page3").controls("Frame9").ScrollBars = fmScrollBarsNone
+Me.controls("MultiPage1").Pages("Page3").controls("Frame9").KeepScrollBarsVisible = fmScrollBarsNone
+
+On Error GoTo 0
+
+End Sub
    
    
    
