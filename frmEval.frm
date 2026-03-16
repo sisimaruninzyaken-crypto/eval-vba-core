@@ -3044,11 +3044,20 @@ End If
     BuildCog_BPSD
     BuildCog_MentalBlock
     BuildDailyLogTab
-    Me.controls("txtDailyStaff").IMEMode = fmIMEModeHiragana
-    Me.controls("txtDailyTraining").IMEMode = fmIMEModeHiragana
-    Me.controls("txtDailyReaction").IMEMode = fmIMEModeHiragana
-    Me.controls("txtDailyAbnormal").IMEMode = fmIMEModeHiragana
-    Me.controls("txtDailyPlan").IMEMode = fmIMEModeHiragana
+    
+    Dim dailyFra As Object
+    Set dailyFra = GetDailyLogFrame()
+    If dailyFra Is Nothing Then Set dailyFra = SafeGetControl(Me, "fraDailyLog")
+
+    If Not dailyFra Is Nothing Then
+        On Error Resume Next
+        If Not dailyFra.controls("txtDailyStaff") Is Nothing Then dailyFra.controls("txtDailyStaff").IMEMode = fmIMEModeHiragana
+        If Not dailyFra.controls("txtDailyTraining") Is Nothing Then dailyFra.controls("txtDailyTraining").IMEMode = fmIMEModeHiragana
+        If Not dailyFra.controls("txtDailyReaction") Is Nothing Then dailyFra.controls("txtDailyReaction").IMEMode = fmIMEModeHiragana
+        If Not dailyFra.controls("txtDailyAbnormal") Is Nothing Then dailyFra.controls("txtDailyAbnormal").IMEMode = fmIMEModeHiragana
+        If Not dailyFra.controls("txtDailyPlan") Is Nothing Then dailyFra.controls("txtDailyPlan").IMEMode = fmIMEModeHiragana
+        On Error GoTo 0
+    End If
     
     Set mDailyList = New clsDailyLogList
     'Set mDailyList.lb = Me.Controls("lstDailyLogList")
