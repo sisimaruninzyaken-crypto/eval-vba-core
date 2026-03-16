@@ -1416,6 +1416,10 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
             region As String, jointKey As String, jointTitle As String, _
             y0 As Single) As Single
 
+    Const TRUNK_COL_GAP As Single = 8
+    Const TRUNK_LABEL_W As Single = 72
+    Const TRUNK_START_GAP As Single = 10
+
     Dim motions As Variant
     motions = Split("Flex,Ext,Rot,LatFlex", ",")
 
@@ -1434,10 +1438,12 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
 
     Dim xName As Single, xSingle As Single, xR As Single, xL As Single
     xName = PX(ROM_GROUP_PAD)
-    xL = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W)
-    xR = PX(xL - ROM_COL_EDT_W - 6)
-    xSingle = PX(xR - ROM_COL_EDT_W - 6)
-    
+
+    ' 列を右端基準ではなく、ラベル基準で固定
+    xSingle = PX(xName + TRUNK_LABEL_W + TRUNK_START_GAP)
+    xR = PX(xSingle + ROM_COL_EDT_W + TRUNK_COL_GAP)
+    xL = PX(xR + ROM_COL_EDT_W + TRUNK_COL_GAP)
+
     Dim hdrSingle As MSForms.label, hdrR As MSForms.label, hdrL As MSForms.label
 
     Set hdrSingle = fr.controls.Add("Forms.Label.1")
@@ -1445,7 +1451,7 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
         .caption = "単独"
         .Left = xSingle
         .Top = PX(ROM_GROUP_PAD)
-        .Width = 24
+        .Width = ROM_COL_EDT_W
         .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter
         .Font.Bold = True
@@ -1454,8 +1460,8 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
     Set hdrR = fr.controls.Add("Forms.Label.1")
     With hdrR
         .caption = "右"
-        .Left = xR + (ROM_COL_EDT_W - 12) / 2
-        .Top = PX(ROM_GROUP_PAD + 2)
+        .Left = xR
+        .Top = PX(ROM_GROUP_PAD)
         .Width = ROM_COL_EDT_W
         .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter
@@ -1465,9 +1471,9 @@ Private Function BuildRomTrunkJointTable(host As MSForms.Frame, _
     Set hdrL = fr.controls.Add("Forms.Label.1")
     With hdrL
         .caption = "左"
-        .Left = xL + (ROM_COL_EDT_W - 12) / 2
-        .Top = PX(ROM_GROUP_PAD + 2)
-        .Width = 24
+        .Left = xL
+        .Top = PX(ROM_GROUP_PAD)
+        .Width = ROM_COL_EDT_W
         .Height = ROM_ROW_H
         .TextAlign = fmTextAlignCenter
         .Font.Bold = True
