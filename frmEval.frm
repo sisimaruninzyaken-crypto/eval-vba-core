@@ -6055,7 +6055,8 @@ Private Sub BuildDailyLogLayout()
     Dim colW As Single
     Dim boxH As Single
     Dim rightLeft As Single
-    
+    Dim topLabelW As Single
+    Dim topInputW As Single
 
 
     Set f = GetDailyLogFrame()
@@ -6068,8 +6069,9 @@ Private Sub BuildDailyLogLayout()
     colW = (f.Width - leftMargin * 2 - colGap) / 2
     If colW < 120 Then colW = 120
     rightLeft = leftMargin + colW + colGap
+    topLabelW = 42
+    topInputW = 88
     
-
     '=== ‹L˜^“úƒ‰ƒxƒ‹ ===
     On Error Resume Next
     Set lbl = f.controls("lblDailyDate")
@@ -6080,7 +6082,7 @@ Private Sub BuildDailyLogLayout()
         .caption = "‹L˜^“ú"
         .Left = leftMargin
         .Top = 18
-        .Width = 40
+        .Width = topLabelW
         .Height = 18
     End With
 
@@ -6092,7 +6094,7 @@ Private Sub BuildDailyLogLayout()
     With txt
         .Left = lbl.Left + lbl.Width + 6
         .Top = lbl.Top - 2
-        .Width = 80
+        .Width = topInputW
         .Height = 18
     End With
 
@@ -6124,10 +6126,10 @@ Private Sub BuildDailyLogLayout()
 
     boxH = 95
 
-    CreateDailyField f, "lblDailyTraining", "txtDailyTraining", "ŽÀŽ{“à—e", leftMargin, topStart, colW, boxH
-    CreateDailyField f, "lblDailyReaction", "txtDailyReaction", "—˜—pŽÒ‚Ì”½‰ž", rightLeft, topStart, colW, boxH
-    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "ˆÙíŠŒ©", leftMargin, topStart + 18 + boxH + rowGap, colW, boxH
-    CreateDailyField f, "lblDailyPlan", "txtDailyPlan", "¡Œã‚Ì•ûj", rightLeft, topStart + 18 + boxH + rowGap, colW, boxH
+    CreateDailyField f, "lblDailyTraining", "txtDailyTraining", "yŽÀŽ{“à—ez", leftMargin, topStart, colW, boxH
+    CreateDailyField f, "lblDailyReaction", "txtDailyReaction", "y—˜—pŽÒ‚Ì”½‰žz", rightLeft, topStart, colW, boxH
+    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "yˆÙíŠŒ©z", leftMargin, topStart + 18 + boxH + rowGap, colW, boxH
+    CreateDailyField f, "lblDailyPlan", "txtDailyPlan", "y¡Œã‚Ì•ûjz", rightLeft, topStart + 18 + boxH + rowGap, colW, boxH
 
     '=== ‹L˜^“à—eƒeƒLƒXƒgiƒ}ƒ‹ƒ`ƒ‰ƒCƒ“j ===
     On Error Resume Next
@@ -6215,30 +6217,27 @@ Public Sub BuildDailyLog_HistoryList(owner As Object)
     On Error Resume Next
     f.controls.Remove "lstDailyLogList"
     f.controls.Remove "lblDailyHistory"
+    f.controls.Remove "lblDailyMonitoringCreate"
     On Error GoTo 0
 
 '--- —š—ðƒ‰ƒxƒ‹ì¬ ---
 Dim lbl As MSForms.label
+Dim lblMonitoring As MSForms.label
 
-Set lbl = f.controls.Add("Forms.Label.1", "lblDailyHistory", True)
-
-With lbl
-    .caption = "‚±‚ÌŒŽ‚Ì‹L˜^ˆê——"
+Set lblMonitoring = f.controls.Add("Forms.Label.1", "lblDailyMonitoringCreate", True)
+With lblMonitoring
+    .caption = "ƒ‚ƒjƒ^ƒŠƒ“ƒO–{•¶"
     .Left = margin
-    .Top = fieldsBottom + 15
+    .Top = fieldsBottom - 4
     .Width = 200
     .Height = 18
     .Font.Bold = True
 End With
 
-
-
-
     ' ListBox ’Ç‰Á
     Set lst = f.controls.Add("Forms.ListBox.1", "lstDailyLogList", True)
 
-   topPos = f.controls("lblDailyHistory").Top + f.controls("lblDailyHistory").Height + 4
-
+  
     With lst
         .Left = margin
         .Top = topPos
@@ -6291,11 +6290,11 @@ Public Sub BuildDailyLog_ExtractButton(owner As Object)
     Set cmd = f.controls.Add("Forms.CommandButton.1", "cmdDailyExtract", True)
 
     With cmd
-        .caption = "‚±‚ÌŒŽ‚Ì‹L˜^ˆê——"
+        .caption = "ƒ‚ƒjƒ^ƒŠƒ“ƒOì¬"
         .Width = 120
         .Height = 24
         .Top = txtStaff.Top
-        .Left = txtStaff.Left + txtStaff.Width + margin + 140
+        .Left = f.Width - margin - .Width
 
     End With
     
@@ -6308,9 +6307,14 @@ Public Sub BuildDailyLog_SaveButton(owner As Object)
     Dim f As Object
     Dim txtStaff As Object
     Dim cmd As MSForms.CommandButton
+    Dim cmdExtract As Object
     Dim margin As Single
+    Dim rightGap As Single
+    Dim extractW As Single
 
     margin = 12
+    rightGap = 8
+    extractW = 120
 
     ' fraDailyLog ‚Æ ‹L˜^ŽÒƒeƒLƒXƒg‚ðŽæ“¾
     Set f = GetDailyLogFrame()
@@ -6336,7 +6340,12 @@ Public Sub BuildDailyLog_SaveButton(owner As Object)
         .Width = 110
         .Height = 24
         .Top = txtStaff.Top
-        .Left = txtStaff.Left + txtStaff.Width + margin
+        Set cmdExtract = SafeGetControl(f, "cmdDailyExtract")
+        If cmdExtract Is Nothing Then
+            .Left = f.Width - margin - extractW - rightGap - .Width
+        Else
+            .Left = cmdExtract.Left - rightGap - .Width
+        End If
     End With
   
     Set mDailySave = cmd
@@ -7419,10 +7428,47 @@ Private Sub Tidy_DailyLog_Once()
     If done Then Exit Sub
     done = True
 
-    Tighten_DailyLog_Boxes
+    Tighten_DailyLog_Boxes_ForLayout
 End Sub
 
+Private Sub Tighten_DailyLog_Boxes_ForLayout()
+    Dim f As Object
+    Dim txtTraining As Object
+    Dim txtReaction As Object
+    Dim txtAbnormal As Object
+    Dim txtPlan As Object
+    Dim lst As Object
+    Dim lbl As Object
+    Dim fieldsBottom As Single
 
+    Set f = GetDailyLogFrame()
+    If f Is Nothing Then Exit Sub
+
+    Set txtTraining = SafeGetControl(f, "txtDailyTraining")
+    Set txtReaction = SafeGetControl(f, "txtDailyReaction")
+    Set txtAbnormal = SafeGetControl(f, "txtDailyAbnormal")
+    Set txtPlan = SafeGetControl(f, "txtDailyPlan")
+    Set lst = SafeGetControl(f, "lstDailyLogList")
+    Set lbl = SafeGetControl(f, "lblDailyHistory")
+
+    If txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Then Exit Sub
+
+    txtTraining.Height = 50
+    txtReaction.Height = 50
+    txtAbnormal.Height = 50
+    txtPlan.Height = 50
+
+    fieldsBottom = txtAbnormal.Top + txtAbnormal.Height
+    If txtPlan.Top + txtPlan.Height > fieldsBottom Then
+        fieldsBottom = txtPlan.Top + txtPlan.Height
+    End If
+
+    If Not lbl Is Nothing Then lbl.Top = fieldsBottom + 15
+    If Not lst Is Nothing Then
+        If Not lbl Is Nothing Then lst.Top = lbl.Top + lbl.Height + 4
+        lst.Height = f.Height - lst.Top - 8
+    End If
+End Sub
 
 
 
