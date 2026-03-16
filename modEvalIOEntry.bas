@@ -680,10 +680,26 @@ Private Function NormalizeCompareValue(ByVal v As String) As String
     NormalizeCompareValue = Trim$(Replace(CStr(v), vbCrLf, vbLf))
 End Function
 
+Private Function ResolveDailyLogRoot(ByVal owner As Object) As Object
+    If owner Is Nothing Then Exit Function
+    Set ResolveDailyLogRoot = SafeGetControl(owner, "fraDailyLog")
+End Function
+
+Private Function ResolveDailyLogControl(ByVal owner As Object, ByVal controlName As String) As Object
+    Dim root As Object
+    If owner Is Nothing Then Exit Function
+    If LenB(Trim$(controlName)) = 0 Then Exit Function
+
+    Set root = ResolveDailyLogRoot(owner)
+    If root Is Nothing Then Exit Function
+
+    Set ResolveDailyLogControl = SafeGetControl(root, controlName)
+End Function
+
 Private Sub CountMainFormTextInputs(owner As Object, ByRef totalCount As Long, ByRef blankCount As Long)
     Dim dailyRoot As Object
     On Error Resume Next
-    Set dailyRoot = owner.controls("fraDailyLog")
+    Set dailyRoot = ResolveDailyLogRoot(owner)
     On Error GoTo 0
 
     CountTextInputsRecursive owner, dailyRoot, totalCount, blankCount
@@ -2825,15 +2841,17 @@ Public Sub Save_DailyLog_FromForm(owner As Object)
     r = lastRow + 1
 
     '--- フォーム上のコントロール取得 ---
-    Set txtName = owner.controls("txtName")          ' 利用者名（frmEval 共通）
-    Set f = owner.controls("fraDailyLog")            ' モニタリング用フレーム
+    Set txtName = SafeGetControl(owner, "txtName")
+    Set f = ResolveDailyLogRoot(owner)
+    If txtName Is Nothing Or f Is Nothing Then Exit Sub
 
-    Set txtDate = f.controls("txtDailyDate")         ' 記録日
-    Set txtStaff = f.controls("txtDailyStaff")       ' 記録者
-    Set txtTraining = f.controls("txtDailyTraining")
-    Set txtReaction = f.controls("txtDailyReaction")
-    Set txtAbnormal = f.controls("txtDailyAbnormal")
-    Set txtPlan = f.controls("txtDailyPlan")
+    Set txtDate = ResolveDailyLogControl(owner, "txtDailyDate")
+    Set txtStaff = ResolveDailyLogControl(owner, "txtDailyStaff")
+    Set txtTraining = ResolveDailyLogControl(owner, "txtDailyTraining")
+    Set txtReaction = ResolveDailyLogControl(owner, "txtDailyReaction")
+    Set txtAbnormal = ResolveDailyLogControl(owner, "txtDailyAbnormal")
+    Set txtPlan = ResolveDailyLogControl(owner, "txtDailyPlan")
+    If txtDate Is Nothing Or txtStaff Is Nothing Or txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Then Exit Sub
     
     '--- DailyLog シートへ保存 ---
     ws.Cells(r, 1).value = CStr(txtDate.value)
@@ -2882,14 +2900,17 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     End If
 
     '--- フォーム上のコントロール取得 ---
-    Set txtName = owner.controls("txtName")
-    Set f = owner.controls("fraDailyLog")
-    Set txtDate = f.controls("txtDailyDate")
-    Set txtStaff = f.controls("txtDailyStaff")
-    Set txtTraining = f.controls("txtDailyTraining")
-    Set txtReaction = f.controls("txtDailyReaction")
-    Set txtAbnormal = f.controls("txtDailyAbnormal")
-    Set txtPlan = f.controls("txtDailyPlan")
+    Set txtName = SafeGetControl(owner, "txtName")
+    Set f = ResolveDailyLogRoot(owner)
+    If txtName Is Nothing Or f Is Nothing Then Exit Sub
+
+    Set txtDate = ResolveDailyLogControl(owner, "txtDailyDate")
+    Set txtStaff = ResolveDailyLogControl(owner, "txtDailyStaff")
+    Set txtTraining = ResolveDailyLogControl(owner, "txtDailyTraining")
+    Set txtReaction = ResolveDailyLogControl(owner, "txtDailyReaction")
+    Set txtAbnormal = ResolveDailyLogControl(owner, "txtDailyAbnormal")
+    Set txtPlan = ResolveDailyLogControl(owner, "txtDailyPlan")
+    If txtDate Is Nothing Or txtStaff Is Nothing Or txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Then Exit Sub
     
     targetName = Trim$(CStr(txtName.value))
     If targetName = "" Then
@@ -2961,16 +2982,36 @@ Public Sub SaveDailyLog_Append(owner As Object)
 
     Set wb = ThisWorkbook
     Set ws = wb.Worksheets("DailyLog")  ' ★ 日々の記録シート名（変えるならここ）
-    Set f = owner.controls("fraDailyLog")
+    Set f = ResolveDailyLogRoot(owner)
+    If f Is Nothing Then Exit Sub
 
+    Dim txtDailyDate As Object
+    Dim txtDailyStaff As Object
+    Dim txtDailyTraining As Object
+    Dim txtDailyReaction As Object
+    Dim txtDailyAbnormal As Object
+    Dim txtDailyPlan As Object
+    Dim hdr As Object
+    Dim txtHdrName As Object
+
+    Set txtDailyDate = ResolveDailyLogControl(owner, "txtDailyDate")
+    Set txtDailyStaff = ResolveDailyLogControl(owner, "txtDailyStaff")
+    Set txtDailyTraining = ResolveDailyLogControl(owner, "txtDailyTraining")
+    Set txtDailyReaction = ResolveDailyLogControl(owner, "txtDailyReaction")
+    Set txtDailyAbnormal = ResolveDailyLogControl(owner, "txtDailyAbnormal")
+    Set txtDailyPlan = ResolveDailyLogControl(owner, "txtDailyPlan")
+    Set hdr = SafeGetControl(owner, "frHeader")
+    Set txtHdrName = SafeGetControl(hdr, "txtHdrName")
+    If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyTraining Is Nothing Or txtDailyReaction Is Nothing Or txtDailyAbnormal Is Nothing Or txtDailyPlan Is Nothing Or txtHdrName Is Nothing Then Exit Sub
+    
     '--- 入力値取得 ---
-    dt = f.controls("txtDailyDate").value
-    nm = Trim$(owner.controls("frHeader").controls("txtHdrName").value)
-    staff = Trim$(f.controls("txtDailyStaff").value)
-    training = CStr(f.controls("txtDailyTraining").value)
-    reaction = CStr(f.controls("txtDailyReaction").value)
-    abnormal = CStr(f.controls("txtDailyAbnormal").value)
-    plan = CStr(f.controls("txtDailyPlan").value)
+    dt = txtDailyDate.value
+    nm = Trim$(txtHdrName.value)
+    staff = Trim$(txtDailyStaff.value)
+    training = CStr(txtDailyTraining.value)
+    reaction = CStr(txtDailyReaction.value)
+    abnormal = CStr(txtDailyAbnormal.value)
+    plan = CStr(txtDailyPlan.value)
     note = ComposeDailyLogBody(training, reaction, abnormal, plan)
 
 
