@@ -3054,8 +3054,10 @@ End If
     
     BuildDailyLog_ExtractButton Me
     BuildDailyLog_SaveButton Me
-       Me.controls("txtEDate").value = Date
-    Me.controls("txtDailyDate").value = Date
+    Me.controls("txtEDate").value = Date
+    Dim txtDailyDate As Object
+    Set txtDailyDate = DailyLogCtl("txtDailyDate")
+    If Not txtDailyDate Is Nothing Then txtDailyDate.value = Date
 
     If Not mPlacedGlobalSave Then
     PlaceGlobalSaveButton_Once
@@ -6084,7 +6086,7 @@ Private Sub BuildDailyLogLayout()
 
     '=== 記録日テキスト ===
     On Error Resume Next
-    Set txt = f.controls("txtDailyDate")
+    Set txt = SafeGetControl(f, "txtDailyDate")
     On Error GoTo EH
     If txt Is Nothing Then Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyDate")
     With txt
@@ -6110,7 +6112,7 @@ Private Sub BuildDailyLogLayout()
 
     '=== 記録者テキスト ===
     On Error Resume Next
-    Set txt = f.controls("txtDailyStaff")
+    Set txt = SafeGetControl(f, "txtDailyStaff")
     On Error GoTo EH
     If txt Is Nothing Then Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyStaff")
     With txt
@@ -6196,8 +6198,14 @@ Public Sub BuildDailyLog_HistoryList(owner As Object)
     If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     If f Is Nothing Then Exit Sub
 
-    Set txtLeft = f.controls("txtDailyAbnormal")
-    Set txtRight = f.controls("txtDailyPlan")
+    Set txtLeft = SafeGetControl(f, "txtDailyAbnormal")
+    Set txtRight = SafeGetControl(f, "txtDailyPlan")
+    If txtLeft Is Nothing Or txtRight Is Nothing Then
+        BuildDailyLogLayout
+        Set txtLeft = SafeGetControl(f, "txtDailyAbnormal")
+        Set txtRight = SafeGetControl(f, "txtDailyPlan")
+    End If
+    If txtLeft Is Nothing Or txtRight Is Nothing Then Exit Sub
 
     fieldsBottom = txtLeft.Top + txtLeft.Height
     If txtRight.Top + txtRight.Height > fieldsBottom Then
@@ -6266,7 +6274,12 @@ Public Sub BuildDailyLog_ExtractButton(owner As Object)
     Set f = GetDailyLogFrame()
     If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     If f Is Nothing Then Exit Sub
-    Set txtStaff = f.controls("txtDailyStaff")
+    Set txtStaff = SafeGetControl(f, "txtDailyStaff")
+    If txtStaff Is Nothing Then
+        BuildDailyLogLayout
+        Set txtStaff = SafeGetControl(f, "txtDailyStaff")
+    End If
+    If txtStaff Is Nothing Then Exit Sub
     BuildDailyLog_HistoryList owner   ' ★これを追加（ListBoxを必ず作る）
 
     ' 既にボタンがあれば削除して作り直し（冪等）
@@ -6300,9 +6313,15 @@ Public Sub BuildDailyLog_SaveButton(owner As Object)
     margin = 12
 
     ' fraDailyLog と 記録者テキストを取得
-    Set f = SafeGetControl(owner, "fraDailyLog")
+    Set f = GetDailyLogFrame()
+    If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     If f Is Nothing Then Exit Sub
-    Set txtStaff = f.controls("txtDailyStaff")
+    Set txtStaff = SafeGetControl(f, "txtDailyStaff")
+    If txtStaff Is Nothing Then
+        BuildDailyLogLayout
+        Set txtStaff = SafeGetControl(f, "txtDailyStaff")
+    End If
+    If txtStaff Is Nothing Then Exit Sub
 
     ' 既にボタンがあれば削除して作り直し（冪等）
     On Error Resume Next
@@ -7554,7 +7573,7 @@ End Sub
 
 Public Sub BuildMonthlyDraft_FromDailyLog()
     Dim ws As Worksheet
-    Dim f As Object
+    Dim txtDailyDate As Object
     Dim nm As String
     Dim v As Variant
     Dim dFrom As Date, dTo As Date
@@ -7563,12 +7582,11 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
     Dim hit As Long
     Dim d As Date, staff As String, note As String
 
-    Set f = GetDailyLogFrame()
-    If f Is Nothing Then Exit Sub
-
+    Set txtDailyDate = DailyLogCtl("txtDailyDate")
+    If txtDailyDate Is Nothing Then Exit Sub
 
     ' 対象月＝記録日（txtDailyDate）の月
-    v = f.controls("txtDailyDate").value
+    v = txtDailyDate.value
     If Not IsDate(v) Then
         MsgBox "記録日の欄に正しい日付を入力してください。", vbExclamation
         Exit Sub
