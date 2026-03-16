@@ -2742,6 +2742,36 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     pgMental.controls("txtMentalNote").text = v
 End Sub
 
+Private Function ComposeDailyLogBody(ByVal training As String, ByVal reaction As String, ByVal abnormal As String, ByVal plan As String) As String
+    ComposeDailyLogBody = "Åyé¿é{ì‡óeÅz" & vbCrLf & training & vbCrLf & vbCrLf & _
+                          "Åyóòópé“ÇÃîΩâûÅz" & vbCrLf & reaction & vbCrLf & vbCrLf & _
+                          "ÅyàŸèÌèäå©Åz" & vbCrLf & abnormal & vbCrLf & vbCrLf & _
+                          "Åyç°å„ÇÃï˚êjÅz" & vbCrLf & plan
+End Function
+
+Private Sub FillDailyLogFieldsFromBody(ByVal body As String, ByRef training As String, ByRef reaction As String, ByRef abnormal As String, ByRef plan As String)
+    Dim p1 As Long, p2 As Long, p3 As Long, p4 As Long
+
+    training = ""
+    reaction = ""
+    abnormal = ""
+    plan = ""
+
+    p1 = InStr(body, "Åyé¿é{ì‡óeÅz")
+    p2 = InStr(body, "Åyóòópé“ÇÃîΩâûÅz")
+    p3 = InStr(body, "ÅyàŸèÌèäå©Åz")
+    p4 = InStr(body, "Åyç°å„ÇÃï˚êjÅz")
+
+    If p1 > 0 And p2 > p1 And p3 > p2 And p4 > p3 Then
+        training = Trim$(Mid$(body, p1 + Len("Åyé¿é{ì‡óeÅz"), p2 - (p1 + Len("Åyé¿é{ì‡óeÅz"))))
+        reaction = Trim$(Mid$(body, p2 + Len("Åyóòópé“ÇÃîΩâûÅz"), p3 - (p2 + Len("Åyóòópé“ÇÃîΩâûÅz"))))
+        abnormal = Trim$(Mid$(body, p3 + Len("ÅyàŸèÌèäå©Åz"), p4 - (p3 + Len("ÅyàŸèÌèäå©Åz"))))
+        plan = Trim$(Mid$(body, p4 + Len("Åyç°å„ÇÃï˚êjÅz")))
+    Else
+        training = body
+    End If
+End Sub
+
 
 Public Sub Save_DailyLog_FromForm(owner As Object)
     Dim wb As Workbook
@@ -2751,7 +2781,10 @@ Public Sub Save_DailyLog_FromForm(owner As Object)
     Dim txtName As Object
     Dim txtDate As Object
     Dim txtStaff As Object
-    Dim txtNote As Object
+    Dim txtTraining As Object
+    Dim txtReaction As Object
+    Dim txtAbnormal As Object
+    Dim txtPlan As Object
     Dim lastRow As Long
     Dim r As Long
 
@@ -2797,13 +2830,16 @@ Public Sub Save_DailyLog_FromForm(owner As Object)
 
     Set txtDate = f.controls("txtDailyDate")         ' ãLò^ì˙
     Set txtStaff = f.controls("txtDailyStaff")       ' ãLò^é“
-    Set txtNote = f.controls("txtDailyNote")         ' ãLò^ì‡óe
-
+    Set txtTraining = f.controls("txtDailyTraining")
+    Set txtReaction = f.controls("txtDailyReaction")
+    Set txtAbnormal = f.controls("txtDailyAbnormal")
+    Set txtPlan = f.controls("txtDailyPlan")
+    
     '--- DailyLog ÉVÅ[ÉgÇ÷ï€ë∂ ---
     ws.Cells(r, 1).value = CStr(txtDate.value)
     ws.Cells(r, 2).value = CStr(txtName.value)
     ws.Cells(r, 3).value = CStr(txtStaff.value)
-    ws.Cells(r, 4).value = CStr(txtNote.value)
+     ws.Cells(r, 4).value = ComposeDailyLogBody(CStr(txtTraining.value), CStr(txtReaction.value), CStr(txtAbnormal.value), CStr(txtPlan.value))
     ws.Cells(r, 1).NumberFormatLocal = "yyyy/mm/dd"   ' Å©Ç±ÇÍÇí«â¡
     
 
@@ -2821,7 +2857,10 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Dim txtName As Object
     Dim txtDate As Object
     Dim txtStaff As Object
-    Dim txtNote As Object
+    Dim txtTraining As Object
+    Dim txtReaction As Object
+    Dim txtAbnormal As Object
+    Dim txtPlan As Object
     Dim lastRow As Long
     Dim r As Long
     Dim targetName As String
@@ -2847,8 +2886,11 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Set f = owner.controls("fraDailyLog")
     Set txtDate = f.controls("txtDailyDate")
     Set txtStaff = f.controls("txtDailyStaff")
-    Set txtNote = f.controls("txtDailyNote")
-
+    Set txtTraining = f.controls("txtDailyTraining")
+    Set txtReaction = f.controls("txtDailyReaction")
+    Set txtAbnormal = f.controls("txtDailyAbnormal")
+    Set txtPlan = f.controls("txtDailyPlan")
+    
     targetName = Trim$(CStr(txtName.value))
     If targetName = "" Then
 
@@ -2876,9 +2918,13 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     End If
 
     '--- å©Ç¬Ç©Ç¡ÇΩçsÇÉtÉHÅ[ÉÄÇ÷îΩâf ---
+    Dim body As String
+    body = CStr(ws.Cells(r, 4).value)
+    
     txtDate.value = ws.Cells(r, 1).value     ' ãLò^ì˙
     txtStaff.value = ws.Cells(r, 3).value    ' ãLò^é“
-    txtNote.value = ws.Cells(r, 4).value     ' ãLò^ì‡óe
+    FillDailyLogFieldsFromBody body, txtTraining.value, txtReaction.value, txtAbnormal.value, txtPlan.value
+
 
 
 End Sub
@@ -2908,6 +2954,10 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Dim nm As String
     Dim staff As String
     Dim note As String
+    Dim training As String
+    Dim reaction As String
+    Dim abnormal As String
+    Dim plan As String
 
     Set wb = ThisWorkbook
     Set ws = wb.Worksheets("DailyLog")  ' Åö ì˙ÅXÇÃãLò^ÉVÅ[ÉgñºÅiïœÇ¶ÇÈÇ»ÇÁÇ±Ç±Åj
@@ -2917,7 +2967,12 @@ Public Sub SaveDailyLog_Append(owner As Object)
     dt = f.controls("txtDailyDate").value
     nm = Trim$(owner.controls("frHeader").controls("txtHdrName").value)
     staff = Trim$(f.controls("txtDailyStaff").value)
-    note = f.controls("txtDailyNote").value
+    training = CStr(f.controls("txtDailyTraining").value)
+    reaction = CStr(f.controls("txtDailyReaction").value)
+    abnormal = CStr(f.controls("txtDailyAbnormal").value)
+    plan = CStr(f.controls("txtDailyPlan").value)
+    note = ComposeDailyLogBody(training, reaction, abnormal, plan)
+
 
     '--- ì¸óÕÉ`ÉFÉbÉN ---
     If nm = "" Then
@@ -2930,7 +2985,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
         Exit Sub
     End If
 
-    If note = "" Then
+    If Trim$(training & reaction & abnormal & plan) = "" Then
         If MsgBox("ãLò^ì‡óeÇ™ãÛÇ≈Ç∑Ç™ï€ë∂ÇµÇ‹Ç∑Ç©ÅH", vbQuestion + vbOKCancel) = vbCancel Then Exit Sub
     End If
 

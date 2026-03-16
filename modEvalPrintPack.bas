@@ -480,7 +480,7 @@ Private Sub SetupPrint3PagesA4(ByVal sh As Worksheet, ByVal nm As String)
         .PaperSize = xlPaperA4
         .Orientation = xlPortrait
 
-        .LeftMargin = Application.CentimetersToPoints(0.7)
+        .leftMargin = Application.CentimetersToPoints(0.7)
         .RightMargin = Application.CentimetersToPoints(0.7)
         .TopMargin = Application.CentimetersToPoints(1.9)
         .BottomMargin = Application.CentimetersToPoints(1.9)

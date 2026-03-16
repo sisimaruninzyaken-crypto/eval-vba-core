@@ -139,15 +139,15 @@ Private Sub DumpOne(ByVal ws As Object, ByVal c As MSForms.Control, ByVal depth 
     s = Indent(depth) & TypeName(c) & " " & SafeStr(c, "Name")
 
     ' ç¿ïWÇÕControlÇÃÇ›ÅiPageÇÕêGÇÁÇ»Ç¢Åj
-    Dim L As Variant, t As Variant, W As Variant, h As Variant
+    Dim L As Variant, t As Variant, w As Variant, h As Variant
     L = SafeNum(c, "Left")
     t = SafeNum(c, "Top")
-    W = SafeNum(c, "Width")
+    w = SafeNum(c, "Width")
     h = SafeNum(c, "Height")
 
     If Not IsEmpty(L) Then s = s & " L=" & Format$(L, "0.00")
     If Not IsEmpty(t) Then s = s & " T=" & Format$(t, "0.00")
-    If Not IsEmpty(W) Then s = s & " W=" & Format$(W, "0.00")
+    If Not IsEmpty(w) Then s = s & " W=" & Format$(w, "0.00")
     If Not IsEmpty(h) Then s = s & " H=" & Format$(h, "0.00")
 
     ws.WriteLine s

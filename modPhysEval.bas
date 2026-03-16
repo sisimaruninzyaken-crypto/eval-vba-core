@@ -53,7 +53,7 @@ Private Const CAP_FUNC_PAIN   As String = "疼痛（部位／NRS）"
 
 Public Sub PlaceMemoBelow( _
     host As MSForms.Frame, _
-    ByVal W As Single, ByVal h As Single, _
+    ByVal w As Single, ByVal h As Single, _
     ByVal yTop As Single, _
     ByVal memoName As String, _
     Optional ByVal fr1 As MSForms.Frame, _
@@ -99,7 +99,7 @@ With lbl
     .caption = labelText
     .Left = PAD_X
     .Top = memoTop
-    .Width = W - PAD_X * 2
+    .Width = w - PAD_X * 2
     .Height = ROW_H
     .Font.Bold = False
 End With
@@ -112,7 +112,7 @@ Set txt = host.controls.Add("Forms.TextBox.1", memoName)
 With txt
     .Left = PAD_X
     .Top = lbl.Top + ROW_H
-    .Width = W - PAD_X * 2
+    .Width = w - PAD_X * 2
 
     ' 残り高さを計算 → 最低高さ＆1以上に丸めてから設定
     hCalc = Application.WorksheetFunction.Min(MEMO_DESIRED_H, h - PAD_Y - .Top)
@@ -1034,10 +1034,10 @@ Public Sub BuildROMSection_TwoCols(host As MSForms.Frame)
 
     ' ←ここは残す：On Error GoTo 0 の直後から差し替え
 
-Dim W As Single, h As Single, colW As Single
-W = host.InsideWidth: h = host.InsideHeight
+Dim w As Single, h As Single, colW As Single
+w = host.InsideWidth: h = host.InsideHeight
 ' 列幅を整数に丸める
-colW = PX((W - (PAD_X * 2) - COL_GAP_X) / 2)
+colW = PX((w - (PAD_X * 2) - COL_GAP_X) / 2)
 
 Dim frUL As MSForms.Frame, frLL As MSForms.Frame
 
@@ -1103,7 +1103,7 @@ End With
     yR = AddROMRow_Compact(frLL, "足関節", "底屈", yR)
 
     ' 備考は共通ヘルパーに統一（自動でhostスクロールもOFF）
-    Call PlaceMemoBelow(host, W, h, Application.WorksheetFunction.Max(yL, yR) + ROM_HDR_GAP, _
+    Call PlaceMemoBelow(host, w, h, Application.WorksheetFunction.Max(yL, yR) + ROM_HDR_GAP, _
                         "txtROMMemo", frUL, frLL)
     ' …上肢/下肢の行をすべて作り終えた直後に…
     NormalizeRomColumns frUL
@@ -1222,18 +1222,18 @@ Private Sub NormalizeRomColumns(host As MSForms.Frame)
     Dim xR As Single, xL As Single
     ROM_GetCols xR, xL
     xR = PX(xR): xL = PX(xL)
-    Dim W As Single: W = PX(ROM_COL_EDT_W)
+    Dim w As Single: w = PX(ROM_COL_EDT_W)
 
     Dim c As Control
     For Each c In host.controls
         Select Case TypeName(c)
             Case "TextBox"
                 ' タグに「右」「左」が入るようにしておく（③参照）
-                If InStr(c.tag, "右") > 0 Then c.Left = xR: c.Width = W
-                If InStr(c.tag, "左") > 0 Then c.Left = xL: c.Width = W
+                If InStr(c.tag, "右") > 0 Then c.Left = xR: c.Width = w
+                If InStr(c.tag, "左") > 0 Then c.Left = xL: c.Width = w
             Case "Label"
-                If c.caption = "R" Then c.Left = xR: c.Width = W
-                If c.caption = "L" Then c.Left = xL: c.Width = W
+                If c.caption = "R" Then c.Left = xR: c.Width = w
+                If c.caption = "L" Then c.Left = xL: c.Width = w
         End Select
     Next
 End Sub
@@ -1242,8 +1242,8 @@ End Sub
 ' 麻痺タブ UI
 '========================================================
 Public Sub BuildParalysisTabUI(host As MSForms.Frame)
-    Dim W As Single, h As Single, y As Single
-    W = host.Width: h = host.Height
+    Dim w As Single, h As Single, y As Single
+    w = host.Width: h = host.Height
     y = PAD_Y
 
     ' ---- 基本情報 ----
@@ -1267,7 +1267,7 @@ Public Sub BuildParalysisTabUI(host As MSForms.Frame)
     y = AddCheckRow(host, "連合反応", "chkAssociatedRxn", y)
 
     ' ---- 備考 ----
-    PlaceMemoBelow host, W, h, y, "txtParalysisMemo"
+    PlaceMemoBelow host, w, h, y, "txtParalysisMemo"
 End Sub
 
 '---- 小物：行ビルダ（見出し／コンボ行／チェック行）----
@@ -1389,8 +1389,8 @@ End Sub
 
 Public Sub BuildROM_Trunk(host As MSForms.Frame)
 
-    Dim W As Single, h As Single
-    W = host.Width
+    Dim w As Single, h As Single
+    w = host.Width
     h = host.Height
 
     Dim y As Single
@@ -1408,7 +1408,7 @@ Public Sub BuildROM_Trunk(host As MSForms.Frame)
     y = BuildThoraxMobilityBlock(host, y)
 
     ' メモ欄
-    PlaceMemoBelow host, W, h, y, "txtROM_Trunk_Memo"
+    PlaceMemoBelow host, w, h, y, "txtROM_Trunk_Memo"
 
 End Sub
 
@@ -1584,8 +1584,8 @@ End Function
 ' 上肢 子タブ
 '------------------------------------------------------------
 Public Sub BuildROM_Upper(host As MSForms.Frame)
-    Dim W As Single, h As Single
-    W = host.Width: h = host.Height
+    Dim w As Single, h As Single
+    w = host.Width: h = host.Height
 
     Dim y As Single: y = ROM_GROUP_PAD
     
@@ -1611,7 +1611,7 @@ Public Sub BuildROM_Upper(host As MSForms.Frame)
             Split("Dorsi,Palmar,Radial,Ulnar", ","), y)
             
             
- PlaceMemoBelow host, W, h, y, "txtROM_Upper_Memo"
+ PlaceMemoBelow host, w, h, y, "txtROM_Upper_Memo"
  
 
 End Sub
@@ -1620,8 +1620,8 @@ End Sub
 ' 下肢 子タブ
 '------------------------------------------------------------
 Public Sub BuildROM_Lower(host As MSForms.Frame)
-    Dim W As Single, h As Single
-    W = host.Width: h = host.Height
+    Dim w As Single, h As Single
+    w = host.Width: h = host.Height
 
     Dim y As Single: y = ROM_GROUP_PAD
     
@@ -1641,7 +1641,7 @@ Public Sub BuildROM_Lower(host As MSForms.Frame)
             Split("Dorsi,Plantar,Inv,Ev", ","), y)
             
             
-PlaceMemoBelow host, W, h, y, "txtROM_Lower_Memo"
+PlaceMemoBelow host, w, h, y, "txtROM_Lower_Memo"
 End Sub
 
 '------------------------------------------------------------

@@ -7,7 +7,7 @@ Attribute VB_Name = "modUILayout_BasicInfo"
 Public Sub TidyBasicInfo_TwoColumns()
 
     Dim f32 As Object
-    Dim W As Double, h As Double
+    Dim w As Double, h As Double
     Dim xL As Double, xR As Double, wCol As Double
     Dim xLbl As Double, xCtl As Double, wLbl As Double, wCtl As Double, wCtlShort As Double
     Dim wLblR As Double, wCtlR As Double
@@ -72,11 +72,11 @@ Public Sub TidyBasicInfo_TwoColumns()
     t.EnterKeyBehavior = True
     t.WordWrap = True
 
-    W = f32.InsideWidth
+    w = f32.InsideWidth
     h = f32.InsideHeight
 
     xL = 12
-    wCol = (W - 36) / 2
+    wCol = (w - 36) / 2
     xR = xL + wCol + 12
 
     wLbl = 140
@@ -228,7 +228,7 @@ End Function
 
 
 ' ===== helpers =====
-Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Double, ByVal t As Double, ByVal W As Double, ByVal h As Double)
+Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Double, ByVal t As Double, ByVal w As Double, ByVal h As Double)
     Dim c As Object
     On Error Resume Next
     Set c = parent.controls(nm)
@@ -237,7 +237,7 @@ Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Doub
 
     c.Left = L
     c.Top = t
-    c.Width = W
+    c.Width = w
     c.Height = h
 End Sub
 
@@ -330,7 +330,7 @@ Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
 
 End Sub
 
-Private Sub EnsureLabel(ByVal parent As Object, ByVal nm As String, ByVal cap As String, ByVal L As Double, ByVal t As Double, ByVal W As Double, ByVal h As Double)
+Private Sub EnsureLabel(ByVal parent As Object, ByVal nm As String, ByVal cap As String, ByVal L As Double, ByVal t As Double, ByVal w As Double, ByVal h As Double)
     Dim lb As Object
     On Error Resume Next
     Set lb = parent.controls(nm)
@@ -344,7 +344,7 @@ Private Sub EnsureLabel(ByVal parent As Object, ByVal nm As String, ByVal cap As
     lb.caption = cap
     lb.Left = L
     lb.Top = t
-    lb.Width = W
+    lb.Width = w
     lb.Height = h
 End Sub
 

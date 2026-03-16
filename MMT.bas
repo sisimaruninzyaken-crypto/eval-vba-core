@@ -428,20 +428,20 @@ End Function
 
 
 Private Sub MakeCbo(ByVal pg As Object, ByVal nm As String, _
-                    ByVal L As Single, ByVal t As Single, ByVal W As Single, ByVal h As Single)
+                    ByVal L As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
     Dim o As MSForms.ComboBox
     Set o = pg.controls.Add("Forms.ComboBox.1", nm, True)
-    o.Left = L: o.Top = t: o.Width = W: o.Height = h
+    o.Left = L: o.Top = t: o.Width = w: o.Height = h
     o.Style = MSForms.fmStyleDropDownList: o.BoundColumn = 1
     o.List = Split("0,1,2,3,4,5", ","): o.tag = "MMTGEN"
 End Sub
 
 
 Private Sub MakeLbl(ByVal pg As Object, ByVal nm As String, ByVal cap As String, _
-                    ByVal L As Single, ByVal t As Single, ByVal W As Single, ByVal h As Single)
+                    ByVal L As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
     Dim o As MSForms.label
     Set o = pg.controls.Add("Forms.Label.1", nm, True)
-    o.caption = cap: o.Left = L: o.Top = t: o.Width = W: o.Height = h: o.tag = "MMTGEN"
+    o.caption = cap: o.Left = L: o.Top = t: o.Width = w: o.Height = h: o.tag = "MMTGEN"
 End Sub
 
 

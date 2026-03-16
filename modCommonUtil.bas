@@ -351,35 +351,33 @@ Public Sub Tighten_DailyLog_Boxes()
     Dim pg As Object: Set pg = mp.Pages(7) ' 日々の記録
 
     Dim f As MSForms.Frame: Set f = pg.controls("fraDailyLog")
-    Dim note As MSForms.TextBox: Set note = pg.controls("txtDailyNote")
-    Dim lst As MSForms.ListBox: Set lst = pg.controls("lstDailyLogList")
+    Dim txtTraining As MSForms.TextBox: Set txtTraining = f.controls("txtDailyTraining")
+    Dim txtReaction As MSForms.TextBox: Set txtReaction = f.controls("txtDailyReaction")
+    Dim txtAbnormal As MSForms.TextBox: Set txtAbnormal = f.controls("txtDailyAbnormal")
+    Dim txtPlan As MSForms.TextBox: Set txtPlan = f.controls("txtDailyPlan")
+    Dim lst As MSForms.ListBox: Set lst = f.controls("lstDailyLogList")
 
-    Const gap As Single = 24
-    Const NOTE_H As Single = 180 ' ←ここだけで調整（現状290.4→220）
+    Const BOX_H As Single = 95
 
-    ' 記録内容：高さを詰める（スクロールは維持）
-    note.multiline = True
-    note.ScrollBars = fmScrollBarsVertical
-    note.Height = NOTE_H
-    
-    ' 一覧：上へ詰めて、下端は今のまま（=高さが増える）
-    Dim bottomKeep As Single
-    bottomKeep = f.Height - 12
+    txtTraining.Height = BOX_H
+    txtReaction.Height = BOX_H
+    txtAbnormal.Height = BOX_H
+    txtPlan.Height = BOX_H
+
+    Dim fieldsBottom As Single
+    fieldsBottom = Application.Max(txtAbnormal.Top + txtAbnormal.Height, txtPlan.Top + txtPlan.Height)
+
 
 
     ' ラベルを「一覧の直上」に置く
     Dim lbl As MSForms.label
-    Set lbl = pg.controls("lblDailyHistory")
-
-    Const LBL_GAP As Single = 6
-
-    lbl.Top = note.Top + note.Height + gap
-    lst.Top = lbl.Top + lbl.Height + LBL_GAP
-    Const LIST_MAX_H As Single = 140   ' ← 好みで調整
-    lst.Height = Application.Min(LIST_MAX_H, Application.Max(60, bottomKeep - lst.Top))
+    Set lbl = f.controls("lblDailyHistory")
 
 
     ' ListBoxは溢れたら自動でスクロールが出る（常時表示は仕様上できない）
+    lbl.Top = fieldsBottom + 15
+    lst.Top = lbl.Top + lbl.Height + 4
+    lst.Height = Application.Max(60, f.Height - lst.Top - 8)
     lst.IntegralHeight = False
 
 

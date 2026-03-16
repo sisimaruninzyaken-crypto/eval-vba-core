@@ -13,8 +13,8 @@ Private Const ROM_GAP_Y As Single = 6
 
 
 Public Sub BuildParalysisTabUI(host As MSForms.Frame)
-    Dim W As Single, h As Single, y As Single
-    W = host.Width: h = host.Height
+    Dim w As Single, h As Single, y As Single
+    w = host.Width: h = host.Height
     y = PAD_Y
 
     ' 見出し:基本情報
@@ -39,7 +39,7 @@ y = AddComboRow_(host, "下肢", "cboBRS_Lower", brsValues, y)
     y = AddCheckRow_(host, "連合反応", "chkAssociatedRxn", y)
 
     ' 備考欄
-    PlaceMemoBelow host, W, h, y, "txtParalysisMemo"
+    PlaceMemoBelow host, w, h, y, "txtParalysisMemo"
 End Sub
 
 ' ---- 行ビルダ(Private) ----

@@ -295,7 +295,7 @@ Function CreateLabel( _
     ByVal caption As String, _
     ByVal x As Single, _
     ByVal y As Single, _
-    Optional ByVal W As Single = 160, _
+    Optional ByVal w As Single = 160, _
     Optional ByVal nm As String = "" _
 ) As MSForms.label
 
@@ -311,7 +311,7 @@ Function CreateLabel( _
         .Left = x
         .Top = y
         .AutoSize = False
-        .Width = W
+        .Width = w
     End With
 
     Set CreateLabel = lb
@@ -325,23 +325,23 @@ Function CreateLabelXY( _
     ByVal y As Single, _
     Optional ByVal caption As String = "", _
     Optional ByVal nm As String = "", _
-    Optional ByVal W As Single = 160 _
+    Optional ByVal w As Single = 160 _
 ) As MSForms.label
-    Set CreateLabelXY = CreateLabel(parent, caption, x, y, W, nm)
+    Set CreateLabelXY = CreateLabel(parent, caption, x, y, w, nm)
 End Function
 
 
 
 
 Private Function CreateTextBox(parent As MSForms.Frame, x As Single, y As Single, _
-                               W As Single, h As Single, multiline As Boolean, _
+                               w As Single, h As Single, multiline As Boolean, _
                                Optional name As String = "", Optional tag As String = "") As MSForms.TextBox
     Dim tb As MSForms.TextBox
     Set tb = parent.controls.Add("Forms.TextBox.1", IIf(name = "", vbNullString, name))
     With tb
         .Left = x
         .Top = y
-        .Width = W
+        .Width = w
         .Height = IIf(h > 0, h, 20)
         .multiline = multiline
         .EnterKeyBehavior = multiline
@@ -351,13 +351,13 @@ Private Function CreateTextBox(parent As MSForms.Frame, x As Single, y As Single
 End Function
 
 Private Function CreateCombo(parent As MSForms.Frame, x As Single, y As Single, _
-                             W As Single, Optional name As String = "", Optional tag As String = "") As MSForms.ComboBox
+                             w As Single, Optional name As String = "", Optional tag As String = "") As MSForms.ComboBox
     Dim cb As MSForms.ComboBox
     Set cb = parent.controls.Add("Forms.ComboBox.1", IIf(name = "", vbNullString, name))
     With cb
         .Left = x
         .Top = y
-        .Width = W
+        .Width = w
         .Style = fmStyleDropDownList
         .tag = tag
     End With
@@ -392,7 +392,7 @@ End Sub
 
 '=== チェックボックスを並べる汎用フレーム ===
 Private Function BuildCheckFrame(parent As MSForms.Frame, _
-    title As String, x As Single, y As Single, W As Single, _
+    title As String, x As Single, y As Single, w As Single, _
     items As Variant, Optional groupTag As String = "") As MSForms.Frame
 
     Dim f As MSForms.Frame
@@ -401,14 +401,14 @@ Private Function BuildCheckFrame(parent As MSForms.Frame, _
         .caption = title
         .Left = x
         .Top = y
-        .Width = W
+        .Width = w
         .Height = 60                ' 仮高さ。下で中身に合わせて伸ばす
         .ScrollBars = fmScrollBarsNone
     End With
 
     ' チェックを2列で配置（長くなりすぎない程度）
     Dim i As Long, col As Long, row As Long
-    Dim colW As Single: colW = (W - 24) / 2
+    Dim colW As Single: colW = (w - 24) / 2
     Dim rowH As Single: rowH = 20
     Dim maxRow As Long: maxRow = 0
 
@@ -3045,7 +3045,10 @@ End If
     BuildCog_MentalBlock
     BuildDailyLogTab
     Me.controls("txtDailyStaff").IMEMode = fmIMEModeHiragana
-    Me.controls("txtDailyNote").IMEMode = fmIMEModeHiragana
+    Me.controls("txtDailyTraining").IMEMode = fmIMEModeHiragana
+    Me.controls("txtDailyReaction").IMEMode = fmIMEModeHiragana
+    Me.controls("txtDailyAbnormal").IMEMode = fmIMEModeHiragana
+    Me.controls("txtDailyPlan").IMEMode = fmIMEModeHiragana
     
     Set mDailyList = New clsDailyLogList
     'Set mDailyList.lb = Me.Controls("lstDailyLogList")
@@ -3397,17 +3400,17 @@ Trace "WALK start", "Init"
 Set mpWalk = hostWalk.controls.Add("Forms.MultiPage.1")
 
 ' 変数宣言は With の外でOK
-Dim W As Single, h As Single
+Dim w As Single, h As Single
 
 With mpWalk
     .Left = 0
     .Top = 0
 
     ' 内寸ベースで算出し、下限を付けてクランプ
-    W = hostWalk.InsideWidth - 12:  If W < 200 Then W = 200
+    w = hostWalk.InsideWidth - 12:  If w < 200 Then w = 200
     h = hostWalk.InsideHeight - 12: If h < 150 Then h = 150
 
-    .Width = W
+    .Width = w
     .Height = h
     .Style = fmTabStyleTabs
 End With
@@ -5100,7 +5103,7 @@ Private Sub BuildWalkAbnormal_Frames()
     Dim pg As MSForms.page
     Dim ctl As MSForms.Control
     Dim f As MSForms.Frame
-    Dim W As Single, h As Single
+    Dim w As Single, h As Single
 
     ' MultiPage2（歩行評価）を取得
     For Each ctl In Me.controls
@@ -5118,7 +5121,7 @@ Private Sub BuildWalkAbnormal_Frames()
     If pg Is Nothing Then Exit Sub
 
     ' ページのワークエリアサイズ
-    W = mp.Width - 24
+    w = mp.Width - 24
     h = mp.Height - 24
 
     ' 既存フレーム削除（再生成用）
@@ -5134,7 +5137,7 @@ Private Sub BuildWalkAbnormal_Frames()
         .caption = "A：片麻痺・脳血管障害パターン"
         .Left = 6
         .Top = 6
-        .Width = W / 2 - 12
+        .Width = w / 2 - 12
         .Height = h / 2 - 12
     End With
 
@@ -5142,9 +5145,9 @@ Private Sub BuildWalkAbnormal_Frames()
     Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbn_B", True)
     With f
         .caption = "B：パーキンソン関連パターン"
-        .Left = W / 2 + 6
+        .Left = w / 2 + 6
         .Top = 6
-        .Width = W / 2 - 12
+        .Width = w / 2 - 12
         .Height = h / 2 - 12
     End With
 
@@ -5154,7 +5157,7 @@ Private Sub BuildWalkAbnormal_Frames()
         .caption = "C：整形・高齢者不安定歩行"
         .Left = 6
         .Top = h / 2 + 6
-        .Width = W / 2 - 12
+        .Width = w / 2 - 12
         .Height = h / 2 - 12
     End With
 
@@ -5162,9 +5165,9 @@ Private Sub BuildWalkAbnormal_Frames()
     Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbn_D", True)
     With f
         .caption = "D：協調障害・失調パターン"
-        .Left = W / 2 + 6
+        .Left = w / 2 + 6
         .Top = h / 2 + 6
-        .Width = W / 2 - 12
+        .Width = w / 2 - 12
         .Height = h / 2 - 12
     End With
 End Sub
@@ -6019,31 +6022,40 @@ End Sub
 Private Sub BuildDailyLogLayout()
     On Error GoTo EH
 
-    Dim mp As Object
-    Dim pg As Object
     Dim f As Object
     Dim lbl As Object
     Dim txt As Object
-    Dim i As Long
+    Dim colGap As Single
+    Dim rowGap As Single
+    Dim leftMargin As Single
+    Dim topStart As Single
+    Dim colW As Single
+    Dim boxH As Single
+    Dim rightLeft As Single
+    
 
-        '=== 日々の記録フレーム取得（共通ヘルパー経由） ===
+
     Set f = GetDailyLogFrame()
     If f Is Nothing Then GoTo ExitHere
 
-    '========================================
-    ' 上段：記録入力ゾーン
-    '========================================
+    leftMargin = 12
+    colGap = 12
+    rowGap = 10
+    topStart = 48
+    colW = (f.Width - leftMargin * 2 - colGap) / 2
+    If colW < 120 Then colW = 120
+    rightLeft = leftMargin + colW + colGap
+    
 
     '=== 記録日ラベル ===
     On Error Resume Next
     Set lbl = f.controls("lblDailyDate")
     On Error GoTo EH
-    If lbl Is Nothing Then
-        Set lbl = f.controls.Add("Forms.Label.1", "lblDailyDate")
-    End If
+
+    If lbl Is Nothing Then Set lbl = f.controls.Add("Forms.Label.1", "lblDailyDate")
     With lbl
         .caption = "記録日"
-        .Left = 12
+        .Left = leftMargin
         .Top = 18
         .Width = 40
         .Height = 18
@@ -6053,9 +6065,7 @@ Private Sub BuildDailyLogLayout()
     On Error Resume Next
     Set txt = f.controls("txtDailyDate")
     On Error GoTo EH
-    If txt Is Nothing Then
-        Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyDate")
-    End If
+    If txt Is Nothing Then Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyDate")
     With txt
         .Left = lbl.Left + lbl.Width + 6
         .Top = lbl.Top - 2
@@ -6064,13 +6074,11 @@ Private Sub BuildDailyLogLayout()
     End With
 
     '=== 記録者ラベル ===
-   On Error Resume Next
+    On Error Resume Next
 
     Set lbl = f.controls("lblDailyStaff")
     On Error GoTo EH
-    If lbl Is Nothing Then
-        Set lbl = f.controls.Add("Forms.Label.1", "lblDailyStaff")
-    End If
+    If lbl Is Nothing Then Set lbl = f.controls.Add("Forms.Label.1", "lblDailyStaff")
     With lbl
         .caption = "記録者"
         .Left = txt.Left + txt.Width + 24
@@ -6083,9 +6091,7 @@ Private Sub BuildDailyLogLayout()
     On Error Resume Next
     Set txt = f.controls("txtDailyStaff")
     On Error GoTo EH
-    If txt Is Nothing Then
-        Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyStaff")
-    End If
+    If txt Is Nothing Then Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyStaff")
     With txt
         .Left = lbl.Left + lbl.Width + 6
         .Top = lbl.Top - 2
@@ -6093,38 +6099,19 @@ Private Sub BuildDailyLogLayout()
         .Height = 18
     End With
 
-    '=== 記録内容ラベル ===
-    On Error Resume Next
-    Set lbl = f.controls("lblDailyNote")
-    On Error GoTo EH
-    If lbl Is Nothing Then
-        Set lbl = f.controls.Add("Forms.Label.1", "lblDailyNote")
-    End If
-    With lbl
-        .caption = "記録内容"
-        .Left = 12
-        .Top = 48
-        .Width = 60
-        .Height = 18
-    End With
+    boxH = 95
+
+    CreateDailyField f, "lblDailyTraining", "txtDailyTraining", "実施内容", leftMargin, topStart, colW, boxH
+    CreateDailyField f, "lblDailyReaction", "txtDailyReaction", "利用者の反応", rightLeft, topStart, colW, boxH
+    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "異常所見", leftMargin, topStart + 18 + boxH + rowGap, colW, boxH
+    CreateDailyField f, "lblDailyPlan", "txtDailyPlan", "今後の方針", rightLeft, topStart + 18 + boxH + rowGap, colW, boxH
 
     '=== 記録内容テキスト（マルチライン） ===
     On Error Resume Next
-    Set txt = f.controls("txtDailyNote")
+    f.controls.Remove "lblDailyNote"
+    f.controls.Remove "txtDailyNote"
     On Error GoTo EH
-    If txt Is Nothing Then
-        Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyNote")
-    End If
-    With txt
-        .Left = 12
-        .Top = 66
-        .Width = f.Width - 24
-        .Height = f.Height - .Top - 12
-        .multiline = True
-        .EnterKeyBehavior = True
-        .ScrollBars = 2   ' fmScrollBarsVertical
-    End With
-
+ 
 ExitHere:
     Exit Sub
 
@@ -6135,170 +6122,81 @@ End Sub
 
 
 Private Sub BuildDailyLog_StaffAndNote()
-    On Error GoTo EH
-    
-    Dim mp As Object
-    Dim pg As Object
-    Dim f As Object
+    BuildDailyLogLayout
+End Sub
+
+Private Sub CreateDailyField(ByVal f As Object, ByVal lblName As String, ByVal txtName As String, ByVal caption As String, _
+                            ByVal x As Single, ByVal y As Single, ByVal w As Single, ByVal h As Single)
     Dim lbl As Object
     Dim txt As Object
-    Dim i As Long
-
-       '=== 日々の記録フレーム取得（共通ヘルパー経由） ===
-    Set f = GetDailyLogFrame()
-    If f Is Nothing Then GoTo ExitHere
-
-    
-    '----------------------------------------
-    ' 記録日（既存があっても位置を揃える）
-    '----------------------------------------
-    On Error Resume Next
-    Set lbl = f.controls("lblDailyDate")
-    On Error GoTo EH
-    If Not lbl Is Nothing Then
-        With lbl
-            .caption = "記録日"
-            .Left = 12
-            .Top = 18
-            .Width = 40
-            .Height = 18
-        End With
-    End If
 
     On Error Resume Next
-    Set txt = f.controls("txtDailyDate")
-    On Error GoTo EH
-    If Not txt Is Nothing Then
-        With txt
-            .Left = lbl.Left + lbl.Width + 6
-            .Top = lbl.Top - 2
-            .Width = 80
-            .Height = 18
-        End With
-    End If
-    
-    '----------------------------------------
-    ' 記録者ラベル
-    '----------------------------------------
-    Set lbl = Nothing
+    Set lbl = f.controls(lblName)
+    On Error GoTo 0
+    If lbl Is Nothing Then Set lbl = f.controls.Add("Forms.Label.1", lblName)
 
-    On Error Resume Next
-    Set lbl = f.controls("lblDailyStaff")
-    On Error GoTo EH
-    If lbl Is Nothing Then
-        Set lbl = f.controls.Add("Forms.Label.1", "lblDailyStaff")
-    End If
     With lbl
-        .caption = "記録者"
-        .Left = txt.Left + txt.Width + 24
-        .Top = 18
-        .Width = 40
-        .Height = 18
+        .caption = caption
+        .Left = x
+        .Top = y
+        .Width = w
+        .Height = 16
     End With
 
-    '----------------------------------------
-    ' 記録者テキスト
-    '----------------------------------------
-    Set txt = Nothing
-    
     On Error Resume Next
-    Set txt = f.controls("txtDailyStaff")
-    On Error GoTo EH
-    If txt Is Nothing Then
-        Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyStaff")
-    End If
+    Set txt = f.controls(txtName)
+    On Error GoTo 0
+    If txt Is Nothing Then Set txt = f.controls.Add("Forms.TextBox.1", txtName)
+
     With txt
-        .Left = lbl.Left + lbl.Width + 6
-        .Top = lbl.Top - 2
-        .Width = 100
-        .Height = 18
-    End With
-
-    '----------------------------------------
-    ' 記録内容ラベル
-    '----------------------------------------
-    Set lbl = Nothing
-    
-    On Error Resume Next
-    Set lbl = f.controls("lblDailyNote")
-    On Error GoTo EH
-    If lbl Is Nothing Then
-        Set lbl = f.controls.Add("Forms.Label.1", "lblDailyNote")
-    End If
-    With lbl
-        .caption = "記録内容"
-        .Left = 12
-        .Top = 48
-        .Width = 60
-        .Height = 18
-    End With
-
-    '----------------------------------------
-    ' 記録内容テキスト（マルチライン）
-    '----------------------------------------
-    Set txt = Nothing
-    
-    On Error Resume Next
-    Set txt = f.controls("txtDailyNote")
-    On Error GoTo EH
-    If txt Is Nothing Then
-        Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyNote")
-    End If
-    With txt
-        .Left = 12
-        .Top = 66
-        .Width = f.Width - 24
-        .Height = f.Height - 280   ' ← ここは元のままに戻す
+        .Left = x
+        .Top = y + 18
+        .Width = w
+        .Height = h
         .multiline = True
         .EnterKeyBehavior = True
         .ScrollBars = 2   ' fmScrollBarsVertical
     End With
 
-ExitHere:
-    Exit Sub
-
-EH:
-    Resume ExitHere
 End Sub
-
-
-
 
 Public Sub BuildDailyLog_HistoryList(owner As Object)
     Dim f As Object
-    Dim txtNote As Object
+    Dim txtLeft As Object
+    Dim txtRight As Object
     Dim lst As MSForms.ListBox
     Dim topPos As Single
     Dim margin As Single
+    Dim fieldsBottom As Single
 
     margin = 12
 
-    ' fraDailyLog と 記録内容テキストを取得
-     Set f = GetDailyLogFrame()
-    If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     Set f = GetDailyLogFrame()
     If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     If f Is Nothing Then Exit Sub
-    Set txtNote = f.controls("txtDailyNote")
 
-    ' すでに作ってある場合はいったん削除して作り直し（冪等性確保）
+    Set txtLeft = f.controls("txtDailyAbnormal")
+    Set txtRight = f.controls("txtDailyPlan")
+
+    fieldsBottom = txtLeft.Top + txtLeft.Height
+    If txtRight.Top + txtRight.Height > fieldsBottom Then
+        fieldsBottom = txtRight.Top + txtRight.Height
+    End If
+    
     On Error Resume Next
     f.controls.Remove "lstDailyLogList"
+    f.controls.Remove "lblDailyHistory"
     On Error GoTo 0
 
 '--- 履歴ラベル作成 ---
 Dim lbl As MSForms.label
 
-On Error Resume Next
-f.controls.Remove "lblDailyHistory"
-On Error GoTo 0
-
 Set lbl = f.controls.Add("Forms.Label.1", "lblDailyHistory", True)
 
 With lbl
     .caption = "この月の記録一覧"
-    .Left = txtNote.Left
-    .Top = txtNote.Top + txtNote.Height + 15    ' ← リストBOXより少し上
+    .Left = margin
+    .Top = fieldsBottom + 15
     .Width = 200
     .Height = 18
     .Font.Bold = True
@@ -6312,12 +6210,10 @@ End With
 
    topPos = f.controls("lblDailyHistory").Top + f.controls("lblDailyHistory").Height + 4
 
-
-
     With lst
-        .Left = txtNote.Left
+        .Left = margin
         .Top = topPos
-        .Width = txtNote.Width
+        .Width = f.Width - margin * 2
         .Height = f.Height - .Top - 8
         .ColumnCount = 3          ' 記録年月 / 名前 / 記録内容
         .ColumnHeads = False
@@ -6873,12 +6769,12 @@ Private Sub GetPageUsableArea( _
     ByVal pageIndex As Long, _
     ByRef x As Single, _
     ByRef y As Single, _
-    ByRef W As Single, _
+    ByRef w As Single, _
     ByRef h As Single)
 
     Dim mp As MSForms.MultiPage
 
-    x = 0: y = 0: W = 0: h = 0   ' デフォルトクリア
+    x = 0: y = 0: w = 0: h = 0   ' デフォルトクリア
 
     Set mp = GetMainMultiPage()
     If mp Is Nothing Then Exit Sub
@@ -6890,7 +6786,7 @@ Private Sub GetPageUsableArea( _
     ' （余白やタブ分のマイナスは、後で AlignRootFrame 側で調整する）
     x = 0
     y = 0
-    W = mp.Width
+    w = mp.Width
     h = mp.Height
 End Sub
 
@@ -6932,7 +6828,7 @@ End Sub
 Private Sub PreviewOnePage(ByVal idx As Long, ByVal mp As MSForms.MultiPage)
     Dim pg As MSForms.page
     Dim root As MSForms.Frame
-    Dim x As Single, y As Single, W As Single, h As Single
+    Dim x As Single, y As Single, w As Single, h As Single
 
     Set pg = mp.Pages(idx)
     Set root = GetPageRootFrame(idx)
@@ -6952,16 +6848,16 @@ Private Sub PreviewOnePage(ByVal idx As Long, ByVal mp As MSForms.MultiPage)
                 "H=" & root.Height
 
     ' AlignRootFrameToPage が使うページ領域
-    GetPageUsableArea idx, x, y, W, h
+    GetPageUsableArea idx, x, y, w, h
     Debug.Print "  PageArea:", _
                 "X=" & x, "Y=" & y, _
-                "W=" & W, "H=" & h
+                "W=" & w, "H=" & h
 
     ' もし AlignRootFrameToPage を呼んだらこうなる（※実際には書き換えない）
     Debug.Print "  WouldAlignTo:", _
                 "L=" & (x), _
                 "T=" & (y), _
-                "W=" & (W), _
+                "W=" & (w), _
                 "H=" & (h)
 End Sub
 

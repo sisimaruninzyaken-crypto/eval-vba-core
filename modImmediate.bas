@@ -485,22 +485,22 @@ Private Sub BuildPage(pg As Object, items As Variant)
 End Sub
 
 '--- Label ê∂ê¨ ---
-Private Sub MakeLabel(pg As Object, nm As String, cap As String, L As Single, t As Single, W As Single, h As Single)
+Private Sub MakeLabel(pg As Object, nm As String, cap As String, L As Single, t As Single, w As Single, h As Single)
     Dim o As MSForms.label
     Set o = pg.controls.Add("Forms.Label.1", nm, True)
     With o
         .caption = cap
-        .Left = L: .Top = t: .Width = W: .Height = h
+        .Left = L: .Top = t: .Width = w: .Height = h
         .tag = "MMTGEN"
     End With
 End Sub
 
 '--- ComboBox ê∂ê¨ÅiMMT 0Å`5Åj ---
-Private Sub MakeCombo(pg As Object, nm As String, L As Single, t As Single, W As Single, h As Single)
+Private Sub MakeCombo(pg As Object, nm As String, L As Single, t As Single, w As Single, h As Single)
     Dim o As MSForms.ComboBox
     Set o = pg.controls.Add("Forms.ComboBox.1", nm, True)
     With o
-        .Left = L: .Top = t: .Width = W: .Height = h
+        .Left = L: .Top = t: .Width = w: .Height = h
         .Style = fmStyleDropDownList
         .tag = "MMTGEN"
         .BoundColumn = 1
@@ -587,18 +587,18 @@ Private Sub BuildMMTPage(pg As Object, items As Variant)
     Next
 End Sub
 
-Private Sub MakeLbl(pg As Object, nm$, cap$, L!, t!, W!, h!)
+Private Sub MakeLbl(pg As Object, nm$, cap$, L!, t!, w!, h!)
     Dim o As MSForms.label
     Set o = pg.controls.Add("Forms.Label.1", nm, True)
-    o.caption = cap: o.Left = L: o.Top = t: o.Width = W: o.Height = h: o.tag = "MMTGEN"
+    o.caption = cap: o.Left = L: o.Top = t: o.Width = w: o.Height = h: o.tag = "MMTGEN"
 End Sub
 
 Private Sub MakeCbo(ByVal pg As Object, ByVal nm As String, _
-                    ByVal L As Single, ByVal t As Single, ByVal W As Single, ByVal h As Single)
+                    ByVal L As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
     Dim o As MSForms.ComboBox
     Set o = pg.controls.Add("Forms.ComboBox.1", nm, True)
     With o
-        .Left = L: .Top = t: .Width = W: .Height = h
+        .Left = L: .Top = t: .Width = w: .Height = h
         .Style = fmStyleDropDownList
         .BoundColumn = 1
         .List = Split("0,1,2,3,4,5", ",")
