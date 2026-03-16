@@ -1954,7 +1954,7 @@ Private Function BuildThoraxMobilityBlock(host As MSForms.Frame, y0 As Single) A
         .caption = "胸囲差（吸気－呼気）"
         .Left = PX(ROM_GROUP_PAD)
         .Top = PX(ROM_GROUP_PAD)
-        .Width = PX(fr.Width - ROM_GROUP_PAD * 4 - ROM_COL_EDT_W - 30)
+        .Width = PX(110)
         .Height = ROM_ROW_H
         .Font.Bold = True
     End With
@@ -1963,7 +1963,7 @@ Private Function BuildThoraxMobilityBlock(host As MSForms.Frame, y0 As Single) A
     Set txt = fr.controls.Add("Forms.TextBox.1", "txtROM_Trunk_Thorax_ChestDiff")
 
     With txt
-        .Left = PX(fr.Width - ROM_GROUP_PAD - ROM_COL_EDT_W - 30)
+        .Left = PX(lbl.Left + lbl.Width + 8)
         .Top = PX(ROM_GROUP_PAD + (ROM_ROW_H - ROM_TXT_H) / 2)
         .Width = ROM_COL_EDT_W
         .Height = ROM_TXT_H
