@@ -3045,19 +3045,7 @@ End If
     BuildCog_MentalBlock
     BuildDailyLogTab
     
-    Dim dailyFra As Object
-    Set dailyFra = GetDailyLogFrame()
-    If dailyFra Is Nothing Then Set dailyFra = SafeGetControl(Me, "fraDailyLog")
-
-    If Not dailyFra Is Nothing Then
-        On Error Resume Next
-        If Not dailyFra.controls("txtDailyStaff") Is Nothing Then dailyFra.controls("txtDailyStaff").IMEMode = fmIMEModeHiragana
-        If Not dailyFra.controls("txtDailyTraining") Is Nothing Then dailyFra.controls("txtDailyTraining").IMEMode = fmIMEModeHiragana
-        If Not dailyFra.controls("txtDailyReaction") Is Nothing Then dailyFra.controls("txtDailyReaction").IMEMode = fmIMEModeHiragana
-        If Not dailyFra.controls("txtDailyAbnormal") Is Nothing Then dailyFra.controls("txtDailyAbnormal").IMEMode = fmIMEModeHiragana
-        If Not dailyFra.controls("txtDailyPlan") Is Nothing Then dailyFra.controls("txtDailyPlan").IMEMode = fmIMEModeHiragana
-        On Error GoTo 0
-    End If
+        ApplyDailyLogImeSettings
     
     Set mDailyList = New clsDailyLogList
     'Set mDailyList.lb = Me.Controls("lstDailyLogList")
@@ -3179,6 +3167,30 @@ DoEvents
   Call Fix_InnerScrollBars
  
 End Sub
+
+Private Sub ApplyDailyLogImeSettings()
+    Dim dailyFra As Object
+
+    Set dailyFra = GetDailyLogFrame()
+    If dailyFra Is Nothing Then Set dailyFra = SafeGetControl(Me, "fraDailyLog")
+    If dailyFra Is Nothing Then Exit Sub
+
+    SetControlImeHiragana dailyFra, "txtDailyStaff"
+    SetControlImeHiragana dailyFra, "txtDailyTraining"
+    SetControlImeHiragana dailyFra, "txtDailyReaction"
+    SetControlImeHiragana dailyFra, "txtDailyAbnormal"
+    SetControlImeHiragana dailyFra, "txtDailyPlan"
+End Sub
+
+Private Sub SetControlImeHiragana(ByVal owner As Object, ByVal controlName As String)
+    Dim tb As Object
+
+    Set tb = SafeGetControl(owner, controlName)
+    If tb Is Nothing Then Exit Sub
+
+    tb.IMEMode = fmIMEModeHiragana
+End Sub
+
 
 Private Sub Fix_InnerScrollBars()
 
