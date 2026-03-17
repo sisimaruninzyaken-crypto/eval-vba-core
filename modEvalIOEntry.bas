@@ -2789,88 +2789,135 @@ Private Sub FillDailyLogFieldsFromBody(ByVal body As String, ByRef training As S
 End Sub
 
 
-Public Sub Save_DailyLog_FromForm(owner As Object)
-    Dim wb As Workbook
+Public Function EnsureDailyLogFolderPath() As String
+
+    Dim dataFolder As String
+    Dim logsFolder As String
+
+    dataFolder = ThisWorkbook.path & "\data"
+    If Dir(dataFolder, vbDirectory) = "" Then MkDir dataFolder
+
+    logsFolder = dataFolder & "\logs"
+    If Dir(logsFolder, vbDirectory) = "" Then MkDir logsFolder
+
+    EnsureDailyLogFolderPath = logsFolder & "\"
+
+End Function
+
+
+Public Function GetDailyLogFilePath(ByVal d As Date) As String
+
+    Dim basePath As String
+    basePath = EnsureDailyLogFolderPath()
+
+    GetDailyLogFilePath = basePath & "DailyLog_" & Format$(d, "yyyy") & ".xlsx"
+
+End Function
+
+Private Function EnsureDailyLogSheet(ByVal wb As Workbook) As Worksheet
     Dim ws As Worksheet
-    Dim sh As Worksheet
-    Dim f As Object
-    Dim txtName As Object
-    Dim txtDate As Object
-    Dim txtStaff As Object
-    Dim txtTraining As Object
-    Dim txtReaction As Object
-    Dim txtAbnormal As Object
-    Dim txtPlan As Object
-    Dim lastRow As Long
-    Dim r As Long
 
-    Set wb = ThisWorkbook
-
-    '--- DailyLog シート取得 or 作成 ---
-    For Each sh In wb.Worksheets
-        If sh.name = "DailyLog" Then
-            Set ws = sh
-            Exit For
-        End If
-    Next sh
+    On Error Resume Next
+    Set ws = wb.Worksheets("DailyLog")
+    On Error GoTo 0
 
     If ws Is Nothing Then
         Set ws = wb.Worksheets.Add(After:=wb.Worksheets(wb.Worksheets.count))
         ws.name = "DailyLog"
-        ws.Range("A1").value = "記録日"
-        ws.Range("B1").value = "利用者名"
-        ws.Range("C1").value = "記録者"
-        ws.Range("D1").value = "記録内容"
     End If
 
-    ' 既存シートでもヘッダが空ならヘッダを補正
-    If ws.Cells(1, 1).value = "" And _
-       ws.Cells(1, 2).value = "" And _
-       ws.Cells(1, 3).value = "" And _
-       ws.Cells(1, 4).value = "" Then
+      If Trim$(CStr(ws.Cells(1, 1).value)) = "" Then ws.Cells(1, 1).value = "LogID"
+      If Trim$(CStr(ws.Cells(1, 2).value)) = "" Then ws.Cells(1, 2).value = "利用者ID"
+      If Trim$(CStr(ws.Cells(1, 3).value)) = "" Then ws.Cells(1, 3).value = "利用者名"
+      If Trim$(CStr(ws.Cells(1, 4).value)) = "" Then ws.Cells(1, 4).value = "利用日"
+      If Trim$(CStr(ws.Cells(1, 5).value)) = "" Then ws.Cells(1, 5).value = "記録本文"
+      If Trim$(CStr(ws.Cells(1, 6).value)) = "" Then ws.Cells(1, 6).value = "記録者"
+      If Trim$(CStr(ws.Cells(1, 7).value)) = "" Then ws.Cells(1, 7).value = "更新日時"
 
-        ws.Range("A1").value = "記録日"
-        ws.Range("B1").value = "利用者名"
-        ws.Range("C1").value = "記録者"
-        ws.Range("D1").value = "記録内容"
+    Set EnsureDailyLogSheet = ws
+End Function
+
+Private Function OpenDailyLogWorkbook(ByVal d As Date, ByVal createIfMissing As Boolean, ByRef openedHere As Boolean) As Workbook
+    Dim filePath As String
+    Dim wb As Workbook
+
+    Call EnsureDailyLogFolderPath
+    filePath = GetDailyLogFilePath(d)
+    
+    
+
+    For Each wb In Application.Workbooks
+        If StrComp(wb.FullName, filePath, vbTextCompare) = 0 Then
+            Set OpenDailyLogWorkbook = wb
+            openedHere = False
+            Exit Function
+        End If
+    Next wb
+
+    If Dir(filePath) <> "" Then
+        Set OpenDailyLogWorkbook = Application.Workbooks.Open(filePath)
+        openedHere = True
+        Exit Function
     End If
+     
 
-    '--- 書き込み行を決定（最終行の次） ---
+    If Not createIfMissing Then Exit Function
+    
+    
+    Set wb = Application.Workbooks.Add(xlWBATWorksheet)
+    Call EnsureDailyLogSheet(wb)
+    wb.SaveAs Filename:=filePath, FileFormat:=xlOpenXMLWorkbook
+    Set OpenDailyLogWorkbook = wb
+    openedHere = True
+End Function
+
+
+Public Function GetDailyLogSheetByDate(ByVal d As Date, ByVal createIfMissing As Boolean, ByRef wb As Workbook, ByRef openedHere As Boolean) As Worksheet
+    Set wb = OpenDailyLogWorkbook(d, createIfMissing, openedHere)
+    If wb Is Nothing Then Exit Function
+    Set GetDailyLogSheetByDate = EnsureDailyLogSheet(wb)
+End Function
+
+Private Function GenerateDailyLogID(ByVal ws As Worksheet, ByVal logDate As Date) As String
+    Dim y As String
+    Dim lastRow As Long
+    Dim r As Long
+    Dim maxSeq As Long
+    Dim token As String
+    Dim seqPart As String
+
+    y = Format$(logDate, "yyyy")
     lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
-    If lastRow < 1 Then lastRow = 1
-    r = lastRow + 1
-
-    '--- フォーム上のコントロール取得 ---
-    Set txtName = SafeGetControl(owner, "txtName")
-    Set f = ResolveDailyLogRoot(owner)
-    If txtName Is Nothing Or f Is Nothing Then Exit Sub
-
-    Set txtDate = ResolveDailyLogControl(owner, "txtDailyDate")
-    Set txtStaff = ResolveDailyLogControl(owner, "txtDailyStaff")
-    Set txtTraining = ResolveDailyLogControl(owner, "txtDailyTraining")
-    Set txtReaction = ResolveDailyLogControl(owner, "txtDailyReaction")
-    Set txtAbnormal = ResolveDailyLogControl(owner, "txtDailyAbnormal")
-    Set txtPlan = ResolveDailyLogControl(owner, "txtDailyPlan")
-    If txtDate Is Nothing Or txtStaff Is Nothing Or txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Then Exit Sub
     
-    '--- DailyLog シートへ保存 ---
-    ws.Cells(r, 1).value = CStr(txtDate.value)
-    ws.Cells(r, 2).value = CStr(txtName.value)
-    ws.Cells(r, 3).value = CStr(txtStaff.value)
-     ws.Cells(r, 4).value = ComposeDailyLogBody(CStr(txtTraining.value), CStr(txtReaction.value), CStr(txtAbnormal.value), CStr(txtPlan.value))
-    ws.Cells(r, 1).NumberFormatLocal = "yyyy/mm/dd"   ' ←これを追加
-    
+    For r = 2 To lastRow
+    token = Trim$(CStr(ws.Cells(r, 1).value))
+    If Len(token) >= 12 And Left$(token, 4) = y And Mid$(token, 5, 1) = "-" Then
+        seqPart = Mid$(token, 6)
+        If IsNumeric(seqPart) Then
+            If CLng(seqPart) > maxSeq Then maxSeq = CLng(seqPart)
+        End If
+    End If
+Next r
 
+GenerateDailyLogID = y & "-" & Format$(maxSeq + 1, "000000")
+End Function
 
+Public Sub Save_DailyLog_FromForm(owner As Object)
+    ' 手動保存時は SaveDailyLog_Append を使用
+    mDailyLogManual = True
+    SaveDailyLog_Append owner
+    mDailyLogManual = False
 End Sub
+    
+    
 
 
 
 
 Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
-    Dim wb As Workbook
     Dim ws As Worksheet
-    Dim sh As Worksheet
+    Dim wb As Workbook
+    Dim wbOpenedHere As Boolean
     Dim f As Object
     Dim txtName As Object
     Dim txtDate As Object
@@ -2884,20 +2931,6 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Dim targetName As String
     Dim hit As Boolean
 
-    Set wb = ThisWorkbook
-
-    '--- DailyLog シート取得（無ければ何もしない） ---
-    For Each sh In wb.Worksheets
-        If sh.name = "DailyLog" Then
-            Set ws = sh
-            Exit For
-        End If
-    Next sh
-
-    If ws Is Nothing Then
-
-        Exit Sub
-    End If
 
     '--- フォーム上のコントロール取得 ---
     Set txtName = SafeGetControl(owner, "txtName")
@@ -2912,39 +2945,49 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Set txtPlan = ResolveDailyLogControl(owner, "txtDailyPlan")
     If txtDate Is Nothing Or txtStaff Is Nothing Or txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Then Exit Sub
     
-    targetName = Trim$(CStr(txtName.value))
-    If targetName = "" Then
-
         Exit Sub
+        
+        
+        
+        
+        
     End If
+
+
+
+
 
     '--- 該当利用者の「最新（いちばん下）」の行を探す ---
-    lastRow = ws.Cells(ws.rows.count, 2).End(xlUp).row   ' B列＝利用者名
-    If lastRow < 2 Then
+    targetName = Trim$(CStr(txtName.value))
+    If targetName = "" Then GoTo FinallyExit
 
-        Exit Sub
-    End If
+    lastRow = ws.Cells(ws.rows.count, 3).End(xlUp).row
+    If lastRow < 2 Then GoTo FinallyExit
+
 
     hit = False
     For r = lastRow To 2 Step -1
-        If Trim$(CStr(ws.Cells(r, 2).value)) = targetName Then
+        If Trim$(CStr(ws.Cells(r, 3).value)) = targetName Then
             hit = True
             Exit For
         End If
     Next r
 
-    If Not hit Then
-
-        Exit Sub
-    End If
+    If Not hit Then GoTo FinallyExit
+    
+    
 
     '--- 見つかった行をフォームへ反映 ---
     Dim body As String
-    body = CStr(ws.Cells(r, 4).value)
-    
-    txtDate.value = ws.Cells(r, 1).value     ' 記録日
-    txtStaff.value = ws.Cells(r, 3).value    ' 記録者
+   body = CStr(ws.Cells(r, 5).value)
+
+    txtDate.value = ws.Cells(r, 4).value
+    txtStaff.value = ws.Cells(r, 6).value
     FillDailyLogFieldsFromBody body, txtTraining.value, txtReaction.value, txtAbnormal.value, txtPlan.value
+
+FinallyExit:
+    If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
+End Sub
 
 
 
@@ -2960,28 +3003,30 @@ End Sub
 
 Public Sub SaveDailyLog_Append(owner As Object)
 
-
-
-
     
     ' 専用ボタンからの呼び出し以外では何もしない
     If Not mDailyLogManual Then Exit Sub
 
-    Dim wb As Workbook
+
     Dim ws As Worksheet
+    Dim wb As Workbook
+    Dim wbOpenedHere As Boolean
     Dim r As Long
     Dim f As Object
     Dim dt As Variant
     Dim nm As String
+    Dim pid As String
     Dim staff As String
     Dim note As String
     Dim training As String
     Dim reaction As String
     Dim abnormal As String
     Dim plan As String
+    Dim logDate As Date
+    Dim lastRow As Long
+    Dim hitRow As Long
 
-    Set wb = ThisWorkbook
-    Set ws = wb.Worksheets("DailyLog")  ' ★ 日々の記録シート名（変えるならここ）
+
     Set f = ResolveDailyLogRoot(owner)
     If f Is Nothing Then Exit Sub
 
@@ -2993,6 +3038,9 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Dim txtDailyPlan As Object
     Dim hdr As Object
     Dim txtHdrName As Object
+    Dim txtHdrPID As Object
+    
+    
 
     Set txtDailyDate = ResolveDailyLogControl(owner, "txtDailyDate")
     Set txtDailyStaff = ResolveDailyLogControl(owner, "txtDailyStaff")
@@ -3004,9 +3052,12 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Set txtHdrName = SafeGetControl(hdr, "txtHdrName")
     If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyTraining Is Nothing Or txtDailyReaction Is Nothing Or txtDailyAbnormal Is Nothing Or txtDailyPlan Is Nothing Or txtHdrName Is Nothing Then Exit Sub
     
-    '--- 入力値取得 ---
+    Set txtHdrPID = SafeGetControl(hdr, "txtHdrPID")
+    If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyTraining Is Nothing Or txtDailyReaction Is Nothing Or txtDailyAbnormal Is Nothing Or txtDailyPlan Is Nothing Or txtHdrName Is Nothing Or txtHdrPID Is Nothing Then Exit Sub
+
     dt = txtDailyDate.value
     nm = Trim$(txtHdrName.value)
+    pid = Trim$(txtHdrPID.value)
     staff = Trim$(txtDailyStaff.value)
     training = CStr(txtDailyTraining.value)
     reaction = CStr(txtDailyReaction.value)
@@ -3017,7 +3068,12 @@ Public Sub SaveDailyLog_Append(owner As Object)
 
     '--- 入力チェック ---
     If nm = "" Then
-        MsgBox "氏名を入力してください。", vbExclamation
+     MsgBox "利用者名を入力してください。", vbExclamation
+     Exit Sub
+    End If
+
+If pid = "" Then
+    MsgBox "利用者IDを入力してください。", vbExclamation
         Exit Sub
     End If
 
@@ -3028,11 +3084,49 @@ Public Sub SaveDailyLog_Append(owner As Object)
 
     If Trim$(training & reaction & abnormal & plan) = "" Then
         If MsgBox("記録内容が空ですが保存しますか？", vbQuestion + vbOKCancel) = vbCancel Then Exit Sub
+    
+ End If
+
+    logDate = CDate(dt)
+    Set ws = GetDailyLogSheetByDate(logDate, True, wb, wbOpenedHere)
+    If ws Is Nothing Then Exit Sub
+
+    lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
+    hitRow = 0
+
+    For r = 2 To lastRow
+        If Trim$(CStr(ws.Cells(r, 2).value)) = pid Then
+            If IsDate(ws.Cells(r, 4).value) Then
+                If CLng(CDate(ws.Cells(r, 4).value)) = CLng(logDate) Then
+                    hitRow = r
+                    Exit For
+                End If
+            End If
+        End If
+    Next r
+
+    If hitRow = 0 Then
+        hitRow = IIf(lastRow < 2, 2, lastRow + 1)
+        ws.Cells(hitRow, 1).value = GenerateDailyLogID(ws, logDate)
+    ElseIf Trim$(CStr(ws.Cells(hitRow, 1).value)) = "" Then
+        ws.Cells(hitRow, 1).value = GenerateDailyLogID(ws, logDate)
+    
     End If
+    
+    
 
     '--- 追記行を決める（1行目に見出しがある前提）---
-    r = ws.Cells(ws.rows.count, 1).End(xlUp).row + 1
-
+    ws.Cells(hitRow, 2).value = pid
+    ws.Cells(hitRow, 3).value = nm
+    ws.Cells(hitRow, 4).value = logDate
+    ws.Cells(hitRow, 4).NumberFormatLocal = "yyyy/mm/dd"
+    ws.Cells(hitRow, 5).value = note
+    ws.Cells(hitRow, 6).value = staff
+    ws.Cells(hitRow, 7).value = Now
+    ws.Cells(hitRow, 7).NumberFormatLocal = "yyyy/mm/dd hh:mm"
+    
+    
+    
     '--- 書き込み ---
     ws.Cells(r, 1).value = CDate(dt)   ' 記録日
     ws.Cells(r, 2).value = nm          ' 利用者名

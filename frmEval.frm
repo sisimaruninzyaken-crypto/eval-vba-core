@@ -6057,14 +6057,14 @@ Private Sub BuildDailyLogLayout()
     Dim rightLeft As Single
     Dim topLabelW As Single
     Dim topInputW As Single
-
+    Dim secondRowTop As Single
 
     Set f = GetDailyLogFrame()
     If f Is Nothing Then GoTo ExitHere
 
     leftMargin = 12
     colGap = 12
-    rowGap = 10
+    rowGap = 0
     topStart = 48
     colW = (f.Width - leftMargin * 2 - colGap) / 2
     If colW < 120 Then colW = 120
@@ -6125,11 +6125,13 @@ Private Sub BuildDailyLogLayout()
     End With
 
     boxH = 95
+    secondRowTop = topStart + 18 + boxH + rowGap - 6
 
     CreateDailyField f, "lblDailyTraining", "txtDailyTraining", "【実施内容】", leftMargin, topStart, colW, boxH
     CreateDailyField f, "lblDailyReaction", "txtDailyReaction", "【利用者の反応】", rightLeft, topStart, colW, boxH
-    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "【異常所見】", leftMargin, topStart + 18 + boxH + rowGap, colW, boxH
-    CreateDailyField f, "lblDailyPlan", "txtDailyPlan", "【今後の方針】", rightLeft, topStart + 18 + boxH + rowGap, colW, boxH
+    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "【異常所見】", leftMargin, secondRowTop, colW, boxH
+    CreateDailyField f, "lblDailyPlan", "txtDailyPlan", "【今後の方針】", rightLeft, secondRowTop, colW, boxH
+
 
     '=== 記録内容テキスト（マルチライン） ===
     On Error Resume Next
@@ -7619,6 +7621,8 @@ End Sub
 
 Public Sub BuildMonthlyDraft_FromDailyLog()
     Dim ws As Worksheet
+    Dim wb As Workbook
+    Dim wbOpenedHere As Boolean
     Dim txtDailyDate As Object
     Dim nm As String
     Dim v As Variant
@@ -7650,27 +7654,34 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
     Dim pid As String, cntSameName As Long
     
 
-    Set ws = ThisWorkbook.Worksheets("DailyLog")
+Set ws = GetDailyLogSheetByDate(dFrom, False, wb, wbOpenedHere)
+If ws Is Nothing Then
+    s = "【モニタリング】" & vbCrLf _
+      & "利用者名：" & nm & vbCrLf _
+      & "期間：" & Format$(dFrom, "yyyy/mm/dd") & " ～ " & Format$(dTo, "yyyy/mm/dd") & vbCrLf & vbCrLf _
+      & "該当期間の記録はありません。" & vbCrLf
+    GoTo WriteOut
+End If
+
     lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
-    
+
     pid = Trim$(Me.controls("frHeader").controls("txtHdrPID").value)
-    cntSameName = Application.WorksheetFunction.CountIf(ws.Range("B:B"), nm)
+    cntSameName = Application.WorksheetFunction.CountIf(ws.Range("C:C"), nm)
 
-
-    s = "【月次モニタリング下書き】" & vbCrLf _
+    s = "【モニタリング】" & vbCrLf _
       & "対象：" & nm & vbCrLf _
       & "期間：" & Format$(dFrom, "yyyy/mm/dd") & " - " & Format$(dTo, "yyyy/mm/dd") & vbCrLf & vbCrLf _
       & "■ この月に記録された特記事項（時系列）" & vbCrLf
 
     hit = 0
     For r = 2 To lastRow
-        If Trim$(ws.Cells(r, 2).value) = nm And (cntSameName = 1 Or Trim$(ws.Cells(r, 3).value) = pid) Then
-            If IsDate(ws.Cells(r, 1).value) Then
-                d = CDate(ws.Cells(r, 1).value)
+        If Trim$(ws.Cells(r, 3).value) = nm And (cntSameName = 1 Or Trim$(ws.Cells(r, 2).value) = pid) Then
+            If IsDate(ws.Cells(r, 4).value) Then
+                d = CDate(ws.Cells(r, 4).value)
                 If d >= dFrom And d <= dTo Then
                     note = CStr(ws.Cells(r, 5).value)
                     If Len(Trim$(note)) > 0 Then
-                        staff = CStr(ws.Cells(r, 4).value)
+                        staff = CStr(ws.Cells(r, 6).value)
                         s = s & "・" & Format$(d, "m/d") & "（" & staff & "） " & note & vbCrLf
                         hit = hit + 1
                     End If
@@ -7683,9 +7694,13 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
         s = s & "・（この月の記録はありません）" & vbCrLf
     End If
 
+    
     ' 出力先（起動時に確保済みだが念のため）
+WriteOut:
     Call Ensure_MonthlyDraftBox_UnderFraDailyLog
     DailyLogCtl("txtMonthlyMonitoringDraft").value = s
+
+    If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
 End Sub
 
 
