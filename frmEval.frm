@@ -6399,6 +6399,8 @@ If Trim$(DailyLogCtl("txtMonthlyMonitoringDraft").value) = "" Then
     Exit Sub
 End If
 
+
+
 DailyLogCtl("txtMonthlyMonitoringDraft").value = _
     OpenAI_BuildDraft( _
             "【出力フォーマット厳守】" & vbCrLf & _
@@ -7685,7 +7687,7 @@ End If
             If IsDate(ws.Cells(r, 4).value) Then
                 d = CDate(ws.Cells(r, 4).value)
                 If d >= dFrom And d <= dTo Then
-                    note = CStr(ws.Cells(r, 5).value)
+                    note = ExtractAbnormalFindingsFromNote(CStr(ws.Cells(r, 5).value))
                     If Len(Trim$(note)) > 0 Then
                         staff = CStr(ws.Cells(r, 6).value)
                         s = s & "・" & Format$(d, "m/d") & "（" & staff & "） " & note & vbCrLf
@@ -7709,7 +7711,43 @@ WriteOut:
     If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
 End Sub
 
+Private Function ExtractAbnormalFindingsFromNote(ByVal note As String) As String
+    Dim normalized As String
+    Dim startPos As Long
+    Dim endPos As Long
+    Dim result As String
 
+    normalized = Replace(note, vbCrLf, vbLf)
+    normalized = Replace(normalized, vbCr, vbLf)
+
+    startPos = InStr(1, normalized, "??", vbTextCompare)
+    If startPos = 0 Then Exit Function
+
+    startPos = InStr(1, normalized, "異常所見", vbTextCompare)
+    If startPos = 0 Then Exit Function
+
+    startPos = startPos + Len("異常所見")
+    Do While startPos <= Len(normalized)
+      Select Case Mid$(normalized, startPos, 1)
+          Case "：", ":", "】", "]", "）", ")", " ", "　", vbTab, vbLf
+              startPos = startPos + 1
+          Case Else
+              Exit Do
+       End Select
+    Loop
+
+    endPos = InStr(startPos, normalized, "今後の方針", vbTextCompare)
+    If endPos > 0 Then
+        result = Mid$(normalized, startPos, endPos - startPos)
+    Else
+        result = Mid$(normalized, startPos)
+    End If
+
+    result = Trim$(result)
+    result = Replace(result, vbLf, vbCrLf)
+
+    ExtractAbnormalFindingsFromNote = result
+End Function
 
 
 
