@@ -2949,9 +2949,12 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Dim txtReaction As Object
     Dim txtAbnormal As Object
     Dim txtPlan As Object
+    Dim hdr As Object
+    Dim txtHdrPID As Object
     Dim lastRow As Long
     Dim r As Long
     Dim targetName As String
+    Dim targetPid As String
     Dim hit As Boolean
     Dim body As String
     Dim basePath As String
@@ -2977,14 +2980,17 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Set txtReaction = ResolveDailyLogControl(owner, "txtDailyReaction")
     Set txtAbnormal = ResolveDailyLogControl(owner, "txtDailyAbnormal")
     Set txtPlan = ResolveDailyLogControl(owner, "txtDailyPlan")
-    If txtDate Is Nothing Or txtStaff Is Nothing Or txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Then Exit Sub
+    Set hdr = SafeGetControl(owner, "frHeader")
+    Set txtHdrPID = SafeGetControl(hdr, "txtHdrPID")
+    If txtDate Is Nothing Or txtStaff Is Nothing Or txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Or txtHdrPID Is Nothing Then Exit Sub
     
 
 
 
     '--- 該当利用者の「最新（いちばん下）」の行を探す ---
     targetName = Trim$(CStr(txtName.value))
-    If targetName = "" Then GoTo FinallyExit
+    targetPid = Trim$(CStr(txtHdrPID.value))
+    If targetPid = "" And targetName = "" Then GoTo FinallyExit
 
     basePath = EnsureDailyLogFolderPath()
     fileName = Dir(basePath & "DailyLog_*.xlsx")
@@ -3030,7 +3036,14 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
         If Not ws Is Nothing Then
             lastRow = ws.Cells(ws.rows.count, 3).End(xlUp).row
             For r = lastRow To 2 Step -1
-                If Trim$(CStr(ws.Cells(r, 3).value)) = targetName Then
+                 If targetPid <> "" Then
+                    If Trim$(CStr(ws.Cells(r, 2).value)) = targetPid Then
+                        hit = True
+                        Set wb = candidateWb
+                        wbOpenedHere = candidateOpenedHere
+                        Exit For
+                    End If
+                ElseIf Trim$(CStr(ws.Cells(r, 3).value)) = targetName Then
                     hit = True
                     Set wb = candidateWb
                     wbOpenedHere = candidateOpenedHere
