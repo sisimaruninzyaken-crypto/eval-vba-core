@@ -3149,11 +3149,6 @@ Public Sub SaveDailyLog_Append(owner As Object)
      Exit Sub
     End If
 
-If pid = "" Then
-    MsgBox "利用者IDを入力してください。", vbExclamation
-        Exit Sub
-    End If
-
     If Not IsDate(dt) Then
         MsgBox "記録日の欄に正しい日付を入力してください。", vbExclamation
         Exit Sub
@@ -3172,9 +3167,14 @@ If pid = "" Then
     hitRow = 0
 
     For r = 2 To lastRow
-        If Trim$(CStr(ws.Cells(r, 2).value)) = pid Then
-            If IsDate(ws.Cells(r, 4).value) Then
-                If CLng(CDate(ws.Cells(r, 4).value)) = CLng(logDate) Then
+        If IsDate(ws.Cells(r, 4).value) Then
+            If CLng(CDate(ws.Cells(r, 4).value)) = CLng(logDate) Then
+                If pid <> "" Then
+                    If Trim$(CStr(ws.Cells(r, 2).value)) = pid Then
+                        hitRow = r
+                        Exit For
+                    End If
+                ElseIf Trim$(CStr(ws.Cells(r, 3).value)) = nm Then
                     hitRow = r
                     Exit For
                 End If
