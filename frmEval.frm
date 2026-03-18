@@ -6366,6 +6366,7 @@ Private Sub mDailyExtract_Click()
             Set box = DailyLogCtl("txtMonthlyMonitoringDraft")
     If box Is Nothing Then Exit Sub
 
+
         If InStr(1, box.value, "（この月の記録はありません）", vbTextCompare) > 0 Then
             
             box.value = "【月次モニタリング下書き】" & vbCrLf & _
@@ -7712,6 +7713,8 @@ WriteOut:
 End Sub
 
 Private Function ExtractAbnormalFindingsFromNote(ByVal note As String) As String
+    
+    
     Dim normalized As String
     Dim startPos As Long
     Dim endPos As Long
@@ -7720,8 +7723,6 @@ Private Function ExtractAbnormalFindingsFromNote(ByVal note As String) As String
     normalized = Replace(note, vbCrLf, vbLf)
     normalized = Replace(normalized, vbCr, vbLf)
 
-    startPos = InStr(1, normalized, "??", vbTextCompare)
-    If startPos = 0 Then Exit Function
 
     startPos = InStr(1, normalized, "異常所見", vbTextCompare)
     If startPos = 0 Then Exit Function
