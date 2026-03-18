@@ -2866,7 +2866,7 @@ Private Function OpenDailyLogWorkbook(ByVal d As Date, ByVal createIfMissing As 
     
     Set wb = Application.Workbooks.Add(xlWBATWorksheet)
     Call EnsureDailyLogSheet(wb)
-    wb.SaveAs Filename:=filePath, FileFormat:=xlOpenXMLWorkbook
+    wb.SaveAs fileName:=filePath, FileFormat:=xlOpenXMLWorkbook
     Set OpenDailyLogWorkbook = wb
     openedHere = True
 End Function
@@ -2909,6 +2909,27 @@ Public Sub Save_DailyLog_FromForm(owner As Object)
     mDailyLogManual = False
 End Sub
     
+
+Private Sub SortDailyLogFilesByYearDesc(ByRef years() As Long, ByRef files() As String, ByVal itemCount As Long)
+    Dim i As Long
+    Dim j As Long
+    Dim tmpYear As Long
+    Dim tmpFile As String
+
+    For i = 1 To itemCount - 1
+        For j = i + 1 To itemCount
+            If years(j) > years(i) Then
+                tmpYear = years(i)
+                years(i) = years(j)
+                years(j) = tmpYear
+
+                tmpFile = files(i)
+                files(i) = files(j)
+                files(j) = tmpFile
+            End If
+        Next j
+    Next i
+End Sub
     
 
 
@@ -2918,6 +2939,8 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Dim ws As Worksheet
     Dim wb As Workbook
     Dim wbOpenedHere As Boolean
+    Dim candidateWb As Workbook
+    Dim candidateOpenedHere As Boolean
     Dim f As Object
     Dim txtName As Object
     Dim txtDate As Object
@@ -2930,6 +2953,17 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Dim r As Long
     Dim targetName As String
     Dim hit As Boolean
+    Dim body As String
+    Dim basePath As String
+    Dim fileName As String
+    Dim token As String
+    Dim itemCount As Long
+    Dim years() As Long
+    Dim files() As String
+    Dim idx As Long
+    Dim y As Long
+    Dim awb As Workbook
+    Dim filePath As String
 
 
     '--- フォーム上のコントロール取得 ---
@@ -2945,15 +2979,6 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Set txtPlan = ResolveDailyLogControl(owner, "txtDailyPlan")
     If txtDate Is Nothing Or txtStaff Is Nothing Or txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Then Exit Sub
     
-        Exit Sub
-        
-        
-        
-        
-        
-    End If
-
-
 
 
 
@@ -2961,25 +2986,73 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     targetName = Trim$(CStr(txtName.value))
     If targetName = "" Then GoTo FinallyExit
 
-    lastRow = ws.Cells(ws.rows.count, 3).End(xlUp).row
-    If lastRow < 2 Then GoTo FinallyExit
+    basePath = EnsureDailyLogFolderPath()
+    fileName = Dir(basePath & "DailyLog_*.xlsx")
+
+    Do While fileName <> ""
+        token = Mid$(fileName, Len("DailyLog_") + 1, 4)
+        If Len(token) = 4 And IsNumeric(token) Then
+            y = CLng(token)
+            itemCount = itemCount + 1
+            ReDim Preserve years(1 To itemCount)
+            ReDim Preserve files(1 To itemCount)
+            years(itemCount) = y
+            files(itemCount) = fileName
+        End If
+        fileName = Dir()
+    Loop
+
+    If itemCount = 0 Then GoTo FinallyExit
+
+    SortDailyLogFilesByYearDesc years, files, itemCount
 
 
     hit = False
-    For r = lastRow To 2 Step -1
-        If Trim$(CStr(ws.Cells(r, 3).value)) = targetName Then
-            hit = True
-            Exit For
+    For idx = 1 To itemCount
+        filePath = basePath & files(idx)
+        Set candidateWb = Nothing
+        candidateOpenedHere = False
+
+        For Each awb In Application.Workbooks
+            If StrComp(awb.FullName, filePath, vbTextCompare) = 0 Then
+                Set candidateWb = awb
+                Exit For
+            End If
+        Next awb
+
+        If candidateWb Is Nothing Then
+            Set candidateWb = Application.Workbooks.Open(filePath)
+            candidateOpenedHere = True
         End If
-    Next r
+        
+
+        Set ws = EnsureDailyLogSheet(candidateWb)
+        If Not ws Is Nothing Then
+            lastRow = ws.Cells(ws.rows.count, 3).End(xlUp).row
+            For r = lastRow To 2 Step -1
+                If Trim$(CStr(ws.Cells(r, 3).value)) = targetName Then
+                    hit = True
+                    Set wb = candidateWb
+                    wbOpenedHere = candidateOpenedHere
+                    Exit For
+                End If
+            Next r
+        End If
+
+        If hit Then Exit For
+
+        If candidateOpenedHere Then
+            candidateWb.Close SaveChanges:=False
+        End If
+    Next idx
+
 
     If Not hit Then GoTo FinallyExit
     
     
 
     '--- 見つかった行をフォームへ反映 ---
-    Dim body As String
-   body = CStr(ws.Cells(r, 5).value)
+    body = CStr(ws.Cells(r, 5).value)
 
     txtDate.value = ws.Cells(r, 4).value
     txtStaff.value = ws.Cells(r, 6).value
@@ -2988,15 +3061,6 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
 FinallyExit:
     If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
 End Sub
-
-
-
-End Sub
-
-
-
-
-
 
 
 
