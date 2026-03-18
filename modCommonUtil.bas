@@ -638,7 +638,7 @@ End If
 
 
     ' テンプレ Monitoring をこの月ブックへコピー
-    ThisWorkbook.Worksheets("Monitoring").Copy After:=wbNew.Worksheets(wbNew.Worksheets.count)
+    ThisWorkbook.Worksheets("Monitoring").Copy after:=wbNew.Worksheets(wbNew.Worksheets.count)
     Set wsNew = wbNew.Worksheets(wbNew.Worksheets.count)
     
     
@@ -659,7 +659,10 @@ End With
 
 
     ' シート名は実名でOK
-    wsNew.name = Left$(clientName, 31)
+If Trim$(clientName) = "" Then
+    MsgBox "利用者名を入力してください", vbExclamation
+    Exit Sub
+End If
 
     ' 印刷物の表示名だけ伏字（シート名は実名）
     wsNew.Range("C7").value = MaskNameForPrint(clientName)

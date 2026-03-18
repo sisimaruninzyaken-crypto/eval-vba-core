@@ -2070,7 +2070,7 @@ Private Function EnsureEvalData() As Worksheet
 
     If ws Is Nothing Then
         Set ws = ThisWorkbook.Worksheets.Add( _
-                 After:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.count))
+                 after:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.count))
         ws.name = sh
     End If
 
@@ -2535,7 +2535,7 @@ Private Function GetOrCreateEvalSheet() As Worksheet
     Set ws = ThisWorkbook.Worksheets("EvalData")
     On Error GoTo 0
     If ws Is Nothing Then
-        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
+        Set ws = ThisWorkbook.Worksheets.Add(after:=Sheets(Sheets.count))
         ws.name = "EvalData"
     End If
     Set GetOrCreateEvalSheet = ws
@@ -4956,17 +4956,17 @@ Private Sub BuildWalkIndep_DistanceOutdoor()
     If cmbOut Is Nothing Then Set cmbOut = CreateCombo(f, leftCombo, topOut, wCombo, "cmbWalkOutdoor", "WalkOutdoor")
 
     If cmbDist.ListCount = 0 Then
-        cmbDist.AddItem "屋内のみ"
-        cmbDist.AddItem "屋内短距離"
-        cmbDist.AddItem "屋外短距離"
-        cmbDist.AddItem "屋外長距離"
+      cmbDist.AddItem "5m未満"
+      cmbDist.AddItem "5m以上10m未満"
+      cmbDist.AddItem "10m以上50m未満"
+      cmbDist.AddItem "50m以上"
     End If
 
     If cmbOut.ListCount = 0 Then
-        cmbOut.AddItem "自立"
-        cmbOut.AddItem "見守り"
-        cmbOut.AddItem "一部介助"
-        cmbOut.AddItem "全介助"
+      cmbOut.AddItem "屋外歩行可"
+      cmbOut.AddItem "屋外も短距離なら可"
+      cmbOut.AddItem "屋外は見守りで可"
+      cmbOut.AddItem "屋外は介助が必要"
     End If
 
     lblDist.caption = "歩行距離"
@@ -6393,8 +6393,14 @@ Private Sub mDailyExtract_Click()
     
 
     ' ② AIで下書きに変換
-    DailyLogCtl("txtMonthlyMonitoringDraft").value = _
-        OpenAI_BuildDraft( _
+' AIで下書きに変換
+If Trim$(DailyLogCtl("txtMonthlyMonitoringDraft").value) = "" Then
+    MsgBox "モニタリング本文が空です。先に内容を入力してください。", vbExclamation
+    Exit Sub
+End If
+
+DailyLogCtl("txtMonthlyMonitoringDraft").value = _
+    OpenAI_BuildDraft( _
             "【出力フォーマット厳守】" & vbCrLf & _
 "以下の見出しを、表記・順序・記号（■）を一切変えずに必ず出力すること。" & vbCrLf & _
 "見出しの追加・削除・言い換え禁止。装飾（★/【】/番号付け）禁止。" & vbCrLf & _

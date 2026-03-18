@@ -91,12 +91,6 @@ Private Function JsonGetOutputText(ByVal json As String) As String
 End Function
 
 
-
-
-
-
-
-
 Private Function JsonUnescape(ByVal s As String) As String
     Dim i As Long, n As Long, hex4 As String, ch As String
     Dim out As String

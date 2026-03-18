@@ -391,7 +391,7 @@ Private Function EnsureEvalSheet(sheetName As String) As Worksheet
     Set EnsureEvalSheet = ThisWorkbook.Worksheets(sheetName)
     On Error GoTo 0
     If EnsureEvalSheet Is Nothing Then
-        Set EnsureEvalSheet = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
+        Set EnsureEvalSheet = ThisWorkbook.Worksheets.Add(after:=Sheets(Sheets.count))
         On Error Resume Next
         EnsureEvalSheet.name = sheetName   ' 既存名ならExcelが自動リネーム
         On Error GoTo 0
@@ -470,7 +470,7 @@ Private Function EnsureClientMasterSheet() As Worksheet
     On Error GoTo 0
 
     If ws Is Nothing Then
-        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
+        Set ws = ThisWorkbook.Worksheets.Add(after:=Sheets(Sheets.count))
         ws.name = CLIENT_MASTER_SHEET_NAME
     End If
 
@@ -2822,7 +2822,7 @@ Private Function EnsureDailyLogSheet(ByVal wb As Workbook) As Worksheet
     On Error GoTo 0
 
     If ws Is Nothing Then
-        Set ws = wb.Worksheets.Add(After:=wb.Worksheets(wb.Worksheets.count))
+        Set ws = wb.Worksheets.Add(after:=wb.Worksheets(wb.Worksheets.count))
         ws.name = "DailyLog"
     End If
 
@@ -3202,14 +3202,6 @@ If pid = "" Then
     ws.Cells(hitRow, 7).value = Now
     ws.Cells(hitRow, 7).NumberFormatLocal = "yyyy/mm/dd hh:mm"
     
-    
-    
-    '--- 書き込み ---
-    ws.Cells(r, 1).value = CDate(dt)   ' 記録日
-    ws.Cells(r, 2).value = nm          ' 利用者名
-    ws.Cells(r, 3).value = Trim$(owner.controls("frHeader").controls("txtHdrPID").value) ' ★ID
-    ws.Cells(r, 4).value = staff       ' 記録者
-    ws.Cells(r, 5).value = note        ' 記録内容
 
 End Sub
 
@@ -3393,7 +3385,7 @@ Private Function EnsureEvalIndexSheet() As Worksheet
     Set ws = ThisWorkbook.Worksheets(EVAL_INDEX_SHEET_NAME)
     On Error GoTo 0
     If ws Is Nothing Then
-        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
+        Set ws = ThisWorkbook.Worksheets.Add(after:=Sheets(Sheets.count))
         ws.name = EVAL_INDEX_SHEET_NAME
     End If
 
