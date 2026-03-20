@@ -134,7 +134,7 @@ End Sub
 Private Sub SaveROMTrunkValue(ws As Worksheet, rowNum As Long, owner As Object, look As Object, _
                               ByVal header As String, ByVal ctlName As String)
     Dim col As Long
-    col = ResolveColOrCreate(ws, look, header)
+    col = ResolveColOrCreate(ws, look, header, LegacyTrunkHeaderName(header))
     ws.Cells(rowNum, col).Value2 = GetCtlText(owner, ctlName)
 End Sub
 
@@ -144,6 +144,7 @@ Private Sub LoadROMTrunkValue(ws As Worksheet, rowNum As Long, owner As Object, 
     Dim ctl As Object
 
     col = ResolveColumn(look, header)
+    If col = 0 Then col = ResolveColumn(look, LegacyTrunkHeaderName(header))
     If col = 0 Then Exit Sub
 
     Set ctl = FindCtlDeep(owner, ctlName)
@@ -153,6 +154,18 @@ Private Sub LoadROMTrunkValue(ws As Worksheet, rowNum As Long, owner As Object, 
     ctl.text = CStr(ws.Cells(rowNum, col).Value2)
     On Error GoTo 0
 End Sub
+
+Private Function LegacyTrunkHeaderName(ByVal header As String) As String
+    Select Case header
+        Case "ROM_Trunk_Flex":      LegacyTrunkHeaderName = "ROM_Trunk_Trunk_Flex"
+        Case "ROM_Trunk_Ext":       LegacyTrunkHeaderName = "ROM_Trunk_Trunk_Ext"
+        Case "ROM_Trunk_Rot_R":     LegacyTrunkHeaderName = "ROM_Trunk_Trunk_Rot_R"
+        Case "ROM_Trunk_Rot_L":     LegacyTrunkHeaderName = "ROM_Trunk_Trunk_Rot_L"
+        Case "ROM_Trunk_LatFlex_R": LegacyTrunkHeaderName = "ROM_Trunk_Trunk_LatFlex_R"
+        Case "ROM_Trunk_LatFlex_L": LegacyTrunkHeaderName = "ROM_Trunk_Trunk_LatFlex_L"
+        Case "ROM_Trunk_Memo":      LegacyTrunkHeaderName = "ROM_Trunk_Trunk_Memo"
+    End Select
+End Function
 
 
 
