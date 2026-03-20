@@ -2678,21 +2678,6 @@ End Sub
 
 
 Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner As Object)
-    Const COL_COG_MEMORY       As Long = 165
-    Const COL_COG_ATTENTION    As Long = 166
-    Const COL_COG_ORIENTATION  As Long = 167
-    Const COL_COG_JUDGEMENT    As Long = 168
-    Const COL_COG_EXECUTIVE    As Long = 169
-    Const COL_COG_LANGUAGE     As Long = 170
-    Const COL_COG_DEMENTIA     As Long = 171
-    Const COL_COG_DEM_NOTE     As Long = 172
-    Const COL_COG_BPSD         As Long = 173
-    Const COL_MENTAL_MOOD      As Long = 174
-    Const COL_MENTAL_MOTIV     As Long = 175
-    Const COL_MENTAL_ANXIETY   As Long = 176
-    Const COL_MENTAL_RELATION  As Long = 177
-    Const COL_MENTAL_SLEEP     As Long = 178
-    Const COL_MENTAL_NOTE      As Long = 179
 
     Dim f As MSForms.Frame
     Dim mp As Object
@@ -2712,37 +2697,16 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     Set pgMental = mp.Pages("pgMental")
 
     '=== 認知側 combobox 群 ===
-    v = ws.Cells(r, COL_COG_MEMORY).value
-    If IsNull(v) Then v = ""
-    pgCog.controls("cmbCogMemory").value = v
+    LoadComboValueByHeader ws, r, "IO_Cog_Memory", pgCog, "cmbCogMemory"
+    LoadComboValueByHeader ws, r, "IO_Cog_Attention", pgCog, "cmbCogAttention"
+    LoadComboValueByHeader ws, r, "IO_Cog_Orientation", pgCog, "cmbCogOrientation"
+    LoadComboValueByHeader ws, r, "IO_Cog_Judgement", pgCog, "cmbCogJudgement"
+    LoadComboValueByHeader ws, r, "IO_Cog_Executive", pgCog, "cmbCogExecutive"
+    LoadComboValueByHeader ws, r, "IO_Cog_Language", pgCog, "cmbCogLanguage"
+    LoadComboValueByHeader ws, r, "IO_Cog_DementiaType", pgCog, "cmbDementiaType"
 
-    v = ws.Cells(r, COL_COG_ATTENTION).value
-    If IsNull(v) Then v = ""
-    pgCog.controls("cmbCogAttention").value = v
-
-    v = ws.Cells(r, COL_COG_ORIENTATION).value
-    If IsNull(v) Then v = ""
-    pgCog.controls("cmbCogOrientation").value = v
-
-    v = ws.Cells(r, COL_COG_JUDGEMENT).value
-    If IsNull(v) Then v = ""
-    pgCog.controls("cmbCogJudgement").value = v
-
-    v = ws.Cells(r, COL_COG_EXECUTIVE).value
-    If IsNull(v) Then v = ""
-    pgCog.controls("cmbCogExecutive").value = v
-
-    v = ws.Cells(r, COL_COG_LANGUAGE).value
-    If IsNull(v) Then v = ""
-    pgCog.controls("cmbCogLanguage").value = v
-
-    v = ws.Cells(r, COL_COG_DEMENTIA).value
-    If IsNull(v) Then v = ""
-    pgCog.controls("cmbDementiaType").value = v
-
-    v = ws.Cells(r, COL_COG_DEM_NOTE).value
-    If IsNull(v) Then v = ""
-    pgCog.controls("txtDementiaNote").text = v
+    v = ReadValueByCompatHeader(ws, r, "IO_Cog_DementiaNote")
+    pgCog.controls("txtDementiaNote").text = CStr(v)
 
     '=== BPSD（chkBPSD0?10）===
     ' 1) 全部一度クリア
@@ -2752,7 +2716,7 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     Next i
 
     ' 2) セル文字列を | で分解し、Caption と一致するチェックボックスをON
-    s = ws.Cells(r, COL_COG_BPSD).value & ""
+    s = CStr(ReadValueByCompatHeader(ws, r, "IO_Cog_BPSD"))
     If Len(s) > 0 Then
         arr = Split(s, "|")
         For i = LBound(arr) To UBound(arr)
@@ -2767,30 +2731,64 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     End If
 
     '=== 精神面 combobox / note ===
-    v = ws.Cells(r, COL_MENTAL_MOOD).value
-    If IsNull(v) Then v = ""
-    pgMental.controls("cmbMood").value = v
+    LoadComboValueByHeader ws, r, "IO_Mental_Mood", pgMental, "cmbMood"
+    LoadComboValueByHeader ws, r, "IO_Mental_Motivation", pgMental, "cmbMotivation"
+    LoadComboValueByHeader ws, r, "IO_Mental_Anxiety", pgMental, "cmbAnxiety"
+    LoadComboValueByHeader ws, r, "IO_Mental_Relation", pgMental, "cmbRelation"
+    LoadComboValueByHeader ws, r, "IO_Mental_Sleep", pgMental, "cmbSleep"
 
-    v = ws.Cells(r, COL_MENTAL_MOTIV).value
-    If IsNull(v) Then v = ""
-    pgMental.controls("cmbMotivation").value = v
-
-    v = ws.Cells(r, COL_MENTAL_ANXIETY).value
-    If IsNull(v) Then v = ""
-    pgMental.controls("cmbAnxiety").value = v
-
-    v = ws.Cells(r, COL_MENTAL_RELATION).value
-    If IsNull(v) Then v = ""
-    pgMental.controls("cmbRelation").value = v
-
-    v = ws.Cells(r, COL_MENTAL_SLEEP).value
-    If IsNull(v) Then v = ""
-    pgMental.controls("cmbSleep").value = v
-
-    v = ws.Cells(r, COL_MENTAL_NOTE).value
-    If IsNull(v) Then v = ""
-    pgMental.controls("txtMentalNote").text = v
+    v = ReadValueByCompatHeader(ws, r, "IO_Mental_Note")
+    pgMental.controls("txtMentalNote").text = CStr(v)
 End Sub
+
+
+Private Sub LoadComboValueByHeader(ByVal ws As Worksheet, ByVal r As Long, ByVal headerName As String, _
+                                   ByVal parent As Object, ByVal comboName As String)
+    Dim cmb As MSForms.ComboBox
+    Dim v As String
+
+    Set cmb = parent.controls(comboName)
+    v = CStr(ReadValueByCompatHeader(ws, r, headerName))
+
+    If Len(v) = 0 Then
+        cmb.ListIndex = -1
+    ElseIf ComboBoxHasValue(cmb, v) Then
+        cmb.value = v
+    Else
+        cmb.ListIndex = -1
+        Debug.Print "[Load_CognitionMental] skip invalid combo value"; _
+                    " header=" & headerName & " combo=" & comboName & " value=" & v
+    End If
+End Sub
+
+Private Function ReadValueByCompatHeader(ByVal ws As Worksheet, ByVal r As Long, ByVal headerName As String) As Variant
+    Dim col As Long
+
+    col = HeaderCol_Compat(headerName, ws)
+    If col <= 0 Then
+        ReadValueByCompatHeader = vbNullString
+        Exit Function
+    End If
+
+    If IsNull(ws.Cells(r, col).value) Then
+        ReadValueByCompatHeader = vbNullString
+    Else
+        ReadValueByCompatHeader = ws.Cells(r, col).value
+    End If
+End Function
+
+Private Function ComboBoxHasValue(ByVal cmb As MSForms.ComboBox, ByVal target As String) As Boolean
+    Dim i As Long
+
+    For i = 0 To cmb.ListCount - 1
+        If StrComp(CStr(cmb.List(i)), target, vbBinaryCompare) = 0 Then
+            ComboBoxHasValue = True
+            Exit Function
+        End If
+    Next i
+End Function
+
+
 
 Private Function ComposeDailyLogBody(ByVal training As String, ByVal reaction As String, ByVal abnormal As String, ByVal plan As String) As String
     ComposeDailyLogBody = "【実施内容】" & vbCrLf & training & vbCrLf & vbCrLf & _
