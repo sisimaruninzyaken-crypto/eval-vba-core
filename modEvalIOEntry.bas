@@ -1954,6 +1954,7 @@ Public Sub Save_TestEvalToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal ow
 
         ' 指定行に上書き保存
     ws.Cells(r, c).Value2 = CStr(s)
+    SaveTestEvalMemoColumns ws, r, owner
     ws.Cells(r, 181).value = val(owner.txtTUG.value)
 
 
@@ -1975,6 +1976,7 @@ Public Sub Load_TestEvalFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner 
     owner.txtGripR.value = IO_GetVal(s, "Test_Grip_R_kg")
     owner.txtGripL.value = IO_GetVal(s, "Test_Grip_L_kg")
     owner.txtSemi.value = IO_GetVal(s, "Test_SemiTandem_sec")
+    LoadTestEvalMemoColumns ws, r, owner
 
     ' TODO: ここから下は後で実装（今は触らない）
     ' IO_TestEval を分解して
@@ -1983,9 +1985,41 @@ Public Sub Load_TestEvalFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner 
     
     
     ws.Cells(r, 181).value = val(owner.txtTUG.value)
-
-    
    
+End Sub
+
+Private Sub SaveTestEvalMemoColumns(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
+    SaveTestEvalMemoColumn ws, r, owner, "TestEval_Memo_10mWalk", "txtMemo_10mWalk"
+    SaveTestEvalMemoColumn ws, r, owner, "TestEval_Memo_TUG", "txtMemo_TUG"
+    SaveTestEvalMemoColumn ws, r, owner, "TestEval_Memo_STS5", "txtMemo_STS5"
+    SaveTestEvalMemoColumn ws, r, owner, "TestEval_Memo_SemiTandem", "txtMemo_SemiTandem"
+    SaveTestEvalMemoColumn ws, r, owner, "TestEval_Memo_GripR", "txtMemo_GripR"
+    SaveTestEvalMemoColumn ws, r, owner, "TestEval_Memo_GripL", "txtMemo_GripL"
+End Sub
+
+Private Sub LoadTestEvalMemoColumns(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
+    LoadTestEvalMemoColumn ws, r, owner, "TestEval_Memo_10mWalk", "txtMemo_10mWalk"
+    LoadTestEvalMemoColumn ws, r, owner, "TestEval_Memo_TUG", "txtMemo_TUG"
+    LoadTestEvalMemoColumn ws, r, owner, "TestEval_Memo_STS5", "txtMemo_STS5"
+    LoadTestEvalMemoColumn ws, r, owner, "TestEval_Memo_SemiTandem", "txtMemo_SemiTandem"
+    LoadTestEvalMemoColumn ws, r, owner, "TestEval_Memo_GripR", "txtMemo_GripR"
+    LoadTestEvalMemoColumn ws, r, owner, "TestEval_Memo_GripL", "txtMemo_GripL"
+End Sub
+
+Private Sub SaveTestEvalMemoColumn(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object, _
+                                   ByVal header As String, ByVal ctlName As String)
+    Dim c As Long
+    c = EnsureHeader(ws, header)
+    ws.Cells(r, c).Value2 = GetCtlTextGeneric(owner, ctlName)
+End Sub
+
+Private Sub LoadTestEvalMemoColumn(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object, _
+                                   ByVal header As String, ByVal ctlName As String)
+    Dim c As Long
+    c = FindColByHeaderExact(ws, header)
+    If c = 0 Then Exit Sub
+
+    SetCtlValueSafe owner, ctlName, CStr(ws.Cells(r, c).Value2)
 End Sub
 
 Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner As Object)

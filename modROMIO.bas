@@ -20,6 +20,7 @@ Set look = BuildHeaderLookup(ws)
     SaveROMblock ws, rowNum, owner, look, "Lower", "Knee", Array("Flex", "Ext")
     SaveROMblock ws, rowNum, owner, look, "Lower", "Ankle", Array("Dorsi", "Plantar", "Inv", "Ev")
     SaveROMMemo ws, rowNum, owner, look, "Lower"
+    SaveROMTrunk ws, rowNum, owner, look
 End Sub
 
 ' ===== 入口：ROMを読込（見出しがある列だけ読む） =====
@@ -48,6 +49,7 @@ Public Sub LoadROMFromSheet(ws As Worksheet, rowNum As Long, owner As frmEval)
     LoadROMblock ws, rowNum, owner, look, "Lower", "Knee", Array("Flex", "Ext")
     LoadROMblock ws, rowNum, owner, look, "Lower", "Ankle", Array("Dorsi", "Plantar", "Inv", "Ev")
     LoadROMMemo ws, rowNum, owner, look, "Lower"
+    LoadROMTrunk ws, rowNum, owner, look
 End Sub
 
 
@@ -108,6 +110,50 @@ Private Sub LoadROMMemo(ws As Worksheet, rowNum As Long, owner As Object, look A
     col = ResolveColumn(look, hdr)
     If col > 0 Then FindCtlDeep(owner, ctl).text = ws.Cells(rowNum, col).value
 End Sub
+
+Private Sub SaveROMTrunk(ws As Worksheet, rowNum As Long, owner As Object, look As Object)
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Flex", "txtROM_Trunk_Trunk_Flex"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Ext", "txtROM_Trunk_Trunk_Ext"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Rot_R", "txtROM_Trunk_Trunk_Rot_R"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Rot_L", "txtROM_Trunk_Trunk_Rot_L"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_LatFlex_R", "txtROM_Trunk_Trunk_LatFlex_R"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_LatFlex_L", "txtROM_Trunk_Trunk_LatFlex_L"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Memo", "txtROM_Trunk_Memo"
+End Sub
+
+Private Sub LoadROMTrunk(ws As Worksheet, rowNum As Long, owner As Object, look As Object)
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Flex", "txtROM_Trunk_Trunk_Flex"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Ext", "txtROM_Trunk_Trunk_Ext"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Rot_R", "txtROM_Trunk_Trunk_Rot_R"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Rot_L", "txtROM_Trunk_Trunk_Rot_L"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_LatFlex_R", "txtROM_Trunk_Trunk_LatFlex_R"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_LatFlex_L", "txtROM_Trunk_Trunk_LatFlex_L"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Memo", "txtROM_Trunk_Memo"
+End Sub
+
+Private Sub SaveROMTrunkValue(ws As Worksheet, rowNum As Long, owner As Object, look As Object, _
+                              ByVal header As String, ByVal ctlName As String)
+    Dim col As Long
+    col = ResolveColOrCreate(ws, look, header)
+    ws.Cells(rowNum, col).Value2 = GetCtlText(owner, ctlName)
+End Sub
+
+Private Sub LoadROMTrunkValue(ws As Worksheet, rowNum As Long, owner As Object, look As Object, _
+                              ByVal header As String, ByVal ctlName As String)
+    Dim col As Long
+    Dim ctl As Object
+
+    col = ResolveColumn(look, header)
+    If col = 0 Then Exit Sub
+
+    Set ctl = FindCtlDeep(owner, ctlName)
+    If ctl Is Nothing Then Exit Sub
+
+    On Error Resume Next
+    ctl.text = CStr(ws.Cells(rowNum, col).Value2)
+    On Error GoTo 0
+End Sub
+
 
 
 '=== 基本情報の候補名を一覧表示（イミディエイトに出力） ===
