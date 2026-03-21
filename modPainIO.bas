@@ -116,6 +116,12 @@ Private Sub LoadPainFromSheet_MinCombos(ByVal owner As Object)
         Set ctl = ResolvePainControl(owner, "cmbPainOnset")
         If Not ctl Is Nothing Then ctl.value = t
     End If
+    
+     t = IO_GetVal(s, "txtPainDuration")
+    If Len(t) > 0 Then
+        Set ctl = ResolvePainControl(owner, "txtPainDuration")
+        If Not ctl Is Nothing Then ctl.text = t
+    End If
 
     t = IO_GetVal(s, "cmbPainDurationUnit")
     If Len(t) > 0 Then
