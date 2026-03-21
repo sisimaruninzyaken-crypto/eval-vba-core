@@ -112,46 +112,77 @@ Private Sub LoadROMMemo(ws As Worksheet, rowNum As Long, owner As Object, look A
 End Sub
 
 Private Sub SaveROMTrunk(ws As Worksheet, rowNum As Long, owner As Object, look As Object)
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_Flex", "txtROM_Trunk_Neck_Flex"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_Ext", "txtROM_Trunk_Neck_Ext"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_Rot_R", "txtROM_Trunk_Neck_Rot_R"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_Rot_L", "txtROM_Trunk_Neck_Rot_L"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_LatFlex_R", "txtROM_Trunk_Neck_LatFlex_R"
+    SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_LatFlex_L", "txtROM_Trunk_Neck_LatFlex_L"
+    
+    
     SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Flex", "txtROM_Trunk_Trunk_Flex"
     SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Ext", "txtROM_Trunk_Trunk_Ext"
     SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Rot_R", "txtROM_Trunk_Trunk_Rot_R"
     SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Rot_L", "txtROM_Trunk_Trunk_Rot_L"
     SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_LatFlex_R", "txtROM_Trunk_Trunk_LatFlex_R"
     SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_LatFlex_L", "txtROM_Trunk_Trunk_LatFlex_L"
+    SaveROMTrunkValue ws, rowNum, owner, look, "Thorax_Expansion", "txtROM_Trunk_Thorax_ChestDiff"
     SaveROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Memo", "txtROM_Trunk_Memo"
 End Sub
 
 Private Sub LoadROMTrunk(ws As Worksheet, rowNum As Long, owner As Object, look As Object)
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_Flex", "txtROM_Trunk_Neck_Flex"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_Ext", "txtROM_Trunk_Neck_Ext"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_Rot_R", "txtROM_Trunk_Neck_Rot_R"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_Rot_L", "txtROM_Trunk_Neck_Rot_L"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_LatFlex_R", "txtROM_Trunk_Neck_LatFlex_R"
+    LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Neck_LatFlex_L", "txtROM_Trunk_Neck_LatFlex_L"
+
+
     LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Flex", "txtROM_Trunk_Trunk_Flex"
     LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Ext", "txtROM_Trunk_Trunk_Ext"
     LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Rot_R", "txtROM_Trunk_Trunk_Rot_R"
     LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Rot_L", "txtROM_Trunk_Trunk_Rot_L"
     LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_LatFlex_R", "txtROM_Trunk_Trunk_LatFlex_R"
     LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_LatFlex_L", "txtROM_Trunk_Trunk_LatFlex_L"
+    LoadROMTrunkValue ws, rowNum, owner, look, "Thorax_Expansion", "txtROM_Trunk_Thorax_ChestDiff"
     LoadROMTrunkValue ws, rowNum, owner, look, "ROM_Trunk_Memo", "txtROM_Trunk_Memo"
 End Sub
 
 Private Sub SaveROMTrunkValue(ws As Worksheet, rowNum As Long, owner As Object, look As Object, _
                               ByVal header As String, ByVal ctlName As String)
     Dim col As Long
+    Dim ctl As Object
+
+    Set ctl = FindCtlDeep(owner, ctlName)
+    If ctl Is Nothing Then Exit Sub
+    
     col = ResolveColOrCreate(ws, look, header, LegacyTrunkHeaderName(header))
-    ws.Cells(rowNum, col).Value2 = GetCtlText(owner, ctlName)
+    If col = 0 Then Exit Sub
+
+    On Error Resume Next
+    ws.Cells(rowNum, col).Value2 = CStr(ctl.value)
+    On Error GoTo 0
 End Sub
 
 Private Sub LoadROMTrunkValue(ws As Worksheet, rowNum As Long, owner As Object, look As Object, _
                               ByVal header As String, ByVal ctlName As String)
     Dim col As Long
     Dim ctl As Object
-
+    Dim v As Variant
+    
     col = ResolveColumn(look, header)
     If col = 0 Then col = ResolveColumn(look, LegacyTrunkHeaderName(header))
     If col = 0 Then Exit Sub
 
     Set ctl = FindCtlDeep(owner, ctlName)
     If ctl Is Nothing Then Exit Sub
-
+    
+    v = ws.Cells(rowNum, col).Value2
+    If IsError(v) Or IsNull(v) Then v = vbNullString
+    
     On Error Resume Next
-    ctl.text = CStr(ws.Cells(rowNum, col).Value2)
+    ctl.text = CStr(v)
     On Error GoTo 0
 End Sub
 
