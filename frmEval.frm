@@ -2355,8 +2355,6 @@ Me.controls("txtName").text = Me.controls("txtHdrName").text
 
     Call modEvalIOEntry.LoadEvaluation_ByName_From(Me)
 
-' [Pain-Load] manual wrapper entrypoint (DO NOT REMOVE)
-Call LoadLatestPainNow
 
 Me.Repaint
 

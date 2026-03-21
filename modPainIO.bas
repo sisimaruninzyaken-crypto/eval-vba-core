@@ -98,17 +98,13 @@ Private Function ResolvePainControl(ByVal owner As Object, ByVal ctrlName As Str
 End Function
 
 
-Private Sub LoadPainFromSheet_MinCombos(ByVal owner As Object)
-    Dim ws As Worksheet
-    Dim hubRow As Long
+Private Sub LoadPainFromSheet_MinCombos(ByVal ws As Worksheet, ByVal hubRow As Long, ByVal owner As Object)
     Dim s As String
     Dim ctl As Object
     Dim t As String
 
-    If Not gPainLoadEnabled Then Exit Sub
-
-    Set ws = ThisWorkbook.Worksheets("EvalData")
-    hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.text))
+    If ws Is Nothing Then Exit Sub
+    If hubRow <= 0 Then Exit Sub
     s = ReadStr_Compat("IO_Pain", hubRow, ws)
 
     t = IO_GetVal(s, "cmbPainOnset")
@@ -200,15 +196,13 @@ End Sub
 
 
 ' 直近最終行のIOを読込、ListBox と Factors を復元
-Private Sub LoadPainFromSheet_MinLists(ByVal owner As Object)
-    Dim ws As Worksheet
-    Dim hubRow As Long
+Private Sub LoadPainFromSheet_MinLists(ByVal ws As Worksheet, ByVal hubRow As Long, ByVal owner As Object)
     Dim s As String
     Dim ctl As Object
     Dim t As String
 
-    Set ws = ThisWorkbook.Worksheets("EvalData")
-    hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.text))
+    If ws Is Nothing Then Exit Sub
+    If hubRow <= 0 Then Exit Sub
     s = ReadStr_Compat("IO_Pain", hubRow, ws)
     
     
@@ -223,6 +217,7 @@ Private Sub LoadPainFromSheet_MinLists(ByVal owner As Object)
     If Not ctl Is Nothing Then RestoreListBoxSelections ctl, t
 
     ' ---- PainFactors : fraPainFactors 配下の CheckBox (Name一致) ----
+    t = IO_GetVal(s, "PainFactors")
     Set ctl = ResolvePainControl(owner, "fraPainFactors")
     If Not ctl Is Nothing Then RestorePainFactors ctl, t
 
@@ -390,15 +385,23 @@ End Sub
 
 '=== [TEMP] Pain IO Loader (Finalize版) ===============================
 Public Sub LoadPainFromSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
+    Dim prevEnabled As Boolean
     Dim txtDur As Object
 
 
 
     If owner Is Nothing Then Exit Sub
     If ResolvePainPage(owner) Is Nothing Then Exit Sub
+    If ws Is Nothing Then Exit Sub
+    If r <= 0 Then Exit Sub
 
-    LoadPainFromSheet_MinCombos owner
-    LoadPainFromSheet_MinLists owner
+    prevEnabled = gPainLoadEnabled
+    gPainLoadEnabled = True
+
+    LoadPainFromSheet_MinCombos ws, r, owner
+    LoadPainFromSheet_MinLists ws, r, owner
+    
+    gPainLoadEnabled = prevEnabled
 
     Set txtDur = ResolvePainControl(owner, "txtPainDuration")
     If Not txtDur Is Nothing Then
