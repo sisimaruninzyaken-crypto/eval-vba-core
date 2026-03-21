@@ -26,14 +26,8 @@ Private Const SEP_RL  As String = ","  ' R/L 連結
 Public Sub SavePainToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
 
     Dim pg As Object
-    On Error Resume Next
-    Set pg = owner.controls.item("mpPhys").Pages(4)   ' 疼痛（部位／NRS）
-    On Error GoTo 0
-    If pg Is Nothing Then
-    
-    
-    Exit Sub
-End If
+    Set pg = ResolvePainPage(owner)
+      If pg Is Nothing Then Exit Sub
 
     
 
@@ -101,8 +95,12 @@ End If
     
 
 ' === ListBox（複数選択）の保存を追加 ===
+Dim listBoxes As Collection
 Dim c As Object, sel As String, j As Long, base2 As String
-For Each c In pg.controls
+Set listBoxes = New Collection
+CollectListBoxesRecursive pg, listBoxes
+
+For Each c In listBoxes
     If TypeName(c) = "ListBox" Then
         sel = ""
         For j = 0 To c.ListCount - 1
@@ -167,16 +165,31 @@ End If
     If LenB(HEADER_NOTE) > 0 Then
         ws.Cells(r, EnsureHeaderCol(ws, HEADER_NOTE)).value = noteText
     End If
-
-   
-    
-   
-
-
-    
-    
     
 End Sub
+
+Private Function ResolvePainPage(ByVal owner As Object) As Object
+    Dim mpPhys As Object
+    Dim i As Long
+    Dim pg As Object
+
+    Set mpPhys = modCommonUtil.SafeGetControl(owner, "mpPhys")
+    If mpPhys Is Nothing Then Exit Function
+
+    For i = 0 To mpPhys.Pages.count - 1
+        Set pg = mpPhys.Pages(i)
+        If Not modCommonUtil.SafeGetControl(pg, "fraPainCourse") Is Nothing Then
+            Set ResolvePainPage = pg
+            Exit Function
+        End If
+        If Not modCommonUtil.SafeGetControl(pg, "fraVAS") Is Nothing Then
+            Set ResolvePainPage = pg
+            Exit Function
+        End If
+    Next
+End Function
+
+
 
 '―― 補助：対象MultiPageとPage探索 ―――――――――――――――――――――――――――――――――
 Private Function FindTargetMultiPage(ByVal owner As Object, ByVal hint As String, ByRef outPage As Object) As Object
@@ -209,6 +222,18 @@ Private Sub CollectCombos(ByVal container As Object, ByRef bag As Collection)
 End Sub
 
 '―― 補助：Combos→配列（Name/Top/Left/Ref） ―――――――――――――――――――――――――――――――
+Private Sub CollectListBoxesRecursive(ByVal container As Object, ByRef bag As Collection)
+    Dim ctl As Object
+    For Each ctl In container.controls
+        Select Case TypeName(ctl)
+            Case "ListBox"
+                bag.Add ctl
+            Case "Frame", "Page"
+                CollectListBoxesRecursive ctl, bag
+        End Select
+    Next
+End Sub
+
 Private Function ControlsToArray(ByVal bag As Collection) As Variant
     Dim i As Long, o As Object
     Dim arr() As Variant
