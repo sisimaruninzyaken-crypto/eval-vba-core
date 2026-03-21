@@ -64,91 +64,84 @@ End Function
 
 '=== [TEMP] Pain IO Load (最小：コンボ＋VAS) ============================
 ' 直近最終行のIOを読込、疼痛タブの主要コンボとVASへ反映
+Private Function ResolvePainPage(ByVal owner As Object) As Object
+    Dim mpPhys As Object
+    Dim i As Long
+    Dim pg As Object
+
+    Set mpPhys = modCommonUtil.SafeGetControl(owner, "mpPhys")
+    If mpPhys Is Nothing Then Exit Function
+
+
+    For i = 0 To mpPhys.Pages.count - 1
+        Set pg = mpPhys.Pages(i)
+        If Not modCommonUtil.SafeGetControl(pg, "fraPainCourse") Is Nothing Then
+            Set ResolvePainPage = pg
+            Exit Function
+        End If
+        If Not modCommonUtil.SafeGetControl(pg, "fraVAS") Is Nothing Then
+            Set ResolvePainPage = pg
+            Exit Function
+        End If
+    Next i
+End Function
+
+
+Private Function ResolvePainControl(ByVal owner As Object, ByVal ctrlName As String) As Object
+    Dim pg As Object
+
+    Set pg = ResolvePainPage(owner)
+    If pg Is Nothing Then Exit Function
+
+
+     Set ResolvePainControl = modCommonUtil.SafeGetControl(pg, ctrlName)
+End Function
+
+
 Private Sub LoadPainFromSheet_MinCombos(ByVal owner As Object)
+    Dim ws As Worksheet
+    Dim hubRow As Long
+    Dim s As String
+    Dim ctl As Object
+    Dim t As String
 
-If Not gPainLoadEnabled Then
+    If Not gPainLoadEnabled Then Exit Sub
+
+    Set ws = ThisWorkbook.Worksheets("EvalData")
+    hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.text))
+    s = ReadStr_Compat("IO_Pain", hubRow, ws)
+
+    t = IO_GetVal(s, "cmbPainOnset")
+    If Len(t) > 0 Then
+        Set ctl = ResolvePainControl(owner, "cmbPainOnset")
+        If Not ctl Is Nothing Then ctl.value = t
+    End If
+
+    t = IO_GetVal(s, "cmbPainDurationUnit")
+    If Len(t) > 0 Then
+        Set ctl = ResolvePainControl(owner, "cmbPainDurationUnit")
+        If Not ctl Is Nothing Then ctl.value = t
+    End If
+
+    t = IO_GetVal(s, "cmbPainDayPeriod")
+    If Len(t) > 0 Then
+        Set ctl = ResolvePainControl(owner, "cmbPainDayPeriod")
+        If Not ctl Is Nothing Then ctl.value = t
+    End If
+
+    Set ctl = ResolvePainControl(owner, "txtVAS")
+    If Not ctl Is Nothing Then ctl.text = ""
+    Set ctl = ResolvePainControl(owner, "sldVAS")
+    If Not ctl Is Nothing Then ctl.value = 0
+
     
-    Exit Sub
-End If
-
-
-
-
-    Dim ws As Worksheet, lr As Long, s As String, hubRow As Long
-Dim pg As Object, t As String
-Set ws = ThisWorkbook.Worksheets("EvalData")
-
-hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.text))
-lr = hubRow                        '（Debug.Printで lr を使うなら合わせておく）
-s = ReadStr_Compat("IO_Pain", hubRow, ws)
-
-
-    
-    
-    
-     
-
-    Set pg = owner.controls("mpPhys").Pages(4)
-    If pg Is Nothing Then Exit Sub
-' ---- Combo: 発症/期間単位/日内変動 ----
-t = IO_GetVal(s, "cmbPainOnset")
-If Len(t) > 0 Then pg.controls("cmbPainOnset").value = t
-
-' ★持続期間（数字：txtPainDuration）を読み込み
-t = IO_GetVal(s, "txtPainDuration")
-
-Debug.Print "[txtDur-Test]", "hubRow=", hubRow, " val=", t
-
-
-
-If Len(t) > 0 Then
-    On Error Resume Next
-    pg.controls("txtPainDuration").text = t
-    On Error GoTo 0
-End If
-
-Debug.Print "[txtDur-AfterSet]", "[" & pg.controls("txtPainDuration").text & "]"
-
-
-
-
-
-
-
-t = IO_GetVal(s, "cmbPainDurationUnit")
-If Len(t) > 0 Then pg.controls("cmbPainDurationUnit").value = t
-
-t = IO_GetVal(s, "cmbPainDayPeriod")
-If Len(t) > 0 Then pg.controls("cmbPainDayPeriod").value = t
-
-
-    ' 最新行（IO/NOTE基準）
-lr = WorksheetFunction.Max(ws.Cells(ws.rows.count, 156).End(xlUp).row, ws.Cells(ws.rows.count, 157).End(xlUp).row)
-
-
-
-' ---- VAS（IO優先／空ならNOTE数値を採用）----
-Dim altVAS As String
-s = ReadStr_Compat("IO_Pain", hubRow, ws)
-t = IO_GetVal(s, "VAS")
-altVAS = ""
-
-
-' いったんクリア
-On Error Resume Next
-pg.controls("fraVAS").controls("txtVAS").text = ""
-pg.controls("fraVAS").controls("sldVAS").value = 0
-On Error GoTo 0
-
-If Len(t) = 0 And IsNumeric(altVAS) Then t = Trim$(altVAS)
-If Len(t) > 0 Then
-    On Error Resume Next
-    pg.controls("fraVAS").controls("txtVAS").text = t
-    pg.controls("fraVAS").controls("sldVAS").value = CLng(t)
-    On Error GoTo 0
-End If
-
-
+    t = IO_GetVal(s, "VAS")
+    If Len(t) > 0 Then
+        Set ctl = ResolvePainControl(owner, "txtVAS")
+        If Not ctl Is Nothing Then ctl.text = t
+        Set ctl = ResolvePainControl(owner, "sldVAS")
+        If Not ctl Is Nothing Then ctl.value = CLng(t)
+    End If
    
 
     
@@ -202,51 +195,30 @@ End Sub
 
 ' 直近最終行のIOを読込、ListBox と Factors を復元
 Private Sub LoadPainFromSheet_MinLists(ByVal owner As Object)
-    Dim ws As Worksheet, lr As Long, s As String
-    Dim pg As Object, t As String
- Set ws = ThisWorkbook.Worksheets("EvalData")
+    Dim ws As Worksheet
+    Dim hubRow As Long
+    Dim s As String
+    Dim ctl As Object
+    Dim t As String
 
-Dim hubRow As Long
-hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.text))
-
-Debug.Print "[PAIN][MinLists] hubRow=", hubRow   ' ←ログは残してOK
-
-s = ReadStr_Compat("IO_Pain", hubRow, ws)
-
-On Error Resume Next
-Set pg = owner.controls("mpPhys").Pages(4)
-On Error GoTo 0
-If pg Is Nothing Then Exit Sub
-
-
-
-    
-    
-    
-
-    
-    Debug.Print "[DBG-PainQual-RAW]  "; IO_GetVal(s, "PainQual")
-Debug.Print "[DBG-PainSite-RAW]  "; IO_GetVal(s, "PainSite")
-Debug.Print "[DBG-PainFactors-RAW]"; IO_GetVal(s, "PainFactors")
-
+    Set ws = ThisWorkbook.Worksheets("EvalData")
+    hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.text))
+    s = ReadStr_Compat("IO_Pain", hubRow, ws)
     
     
 
 
-' ---- ListBox : PainQual / PainSite ----
-t = IO_GetVal(s, "PainQual")
-On Error Resume Next
-RestoreListBoxSelections pg.controls("lstPainQual"), t
+    t = IO_GetVal(s, "PainQual")
+    Set ctl = ResolvePainControl(owner, "lstPainQual")
+    If Not ctl Is Nothing Then RestoreListBoxSelections ctl, t
 
     t = IO_GetVal(s, "PainSite")
-    RestoreListBoxSelections pg.controls("lstPainSite"), t
-    On Error GoTo 0
+    Set ctl = ResolvePainControl(owner, "lstPainSite")
+    If Not ctl Is Nothing Then RestoreListBoxSelections ctl, t
 
     ' ---- PainFactors : fraPainFactors 配下の CheckBox (Name一致) ----
-    t = IO_GetVal(s, "PainFactors")
-    On Error Resume Next
-    RestorePainFactors pg.controls("fraPainFactors"), t
-    On Error GoTo 0
+    Set ctl = ResolvePainControl(owner, "fraPainFactors")
+    If Not ctl Is Nothing Then RestorePainFactors ctl, t
 
     
 End Sub
@@ -369,10 +341,9 @@ End Function
 ' fraVAS 配下かどうかを厳密判定（オブジェクト参照で再帰）
 Private Function IsUnderVAS(target As Object) As Boolean
     Dim pg As Object, vas As Object
-    Set pg = frmEval.controls("mpPhys").Pages(4)
-    On Error Resume Next
-    Set vas = pg.controls("fraVAS")
-    On Error GoTo 0
+    Set pg = ResolvePainPage(frmEval)
+    If pg Is Nothing Then Exit Function
+    Set vas = modCommonUtil.SafeGetControl(pg, "fraVAS")
     If vas Is Nothing Then Exit Function
     IsUnderVAS = IsDescendantOf(vas, target)
 End Function
@@ -412,37 +383,21 @@ End Sub
 
 
 '=== [TEMP] Pain IO Loader (Finalize版) ===============================
-Private Sub LoadPainFromSheet(ByVal owner As Object)
+Public Sub LoadPainFromSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
+    Dim txtDur As Object
 
 
 
+    If owner Is Nothing Then Exit Sub
+    If ResolvePainPage(owner) Is Nothing Then Exit Sub
 
+    LoadPainFromSheet_MinCombos owner
+    LoadPainFromSheet_MinLists owner
 
-    Dim ws As Worksheet, lr As Long, ioText As String, noteText As String
-    Dim pg As Object
-    Set ws = ThisWorkbook.Worksheets("EvalData")
-    Dim hubRow As Long
-hubRow = FindLatestRowByName(ws, Trim$(owner.txtName.text))
-
-
-ioText = ReadStr_Compat("IO_Pain", hubRow, ws)
-'noteText = CStr(ws.Cells(hubRow, 108).value)
-
-
-    Set pg = owner.controls("mpPhys").Pages(4)
-    If pg Is Nothing Then Exit Sub
-
-   LoadPainFromSheet_MinCombos owner
-Debug.Print "[After-MinCombos]", pg.controls("txtPainDuration").text
-
-LoadPainFromSheet_MinLists owner
-Debug.Print "[After-MinLists]", pg.controls("txtPainDuration").text
-
-'LoadPainFromSheet_Note owner
-Debug.Print "[After-Note]", pg.controls("txtPainDuration").text
-
-Debug.Print "[After-PainCore-End]", frmEval.controls("mpPhys").Pages(4).controls("txtPainDuration").text
-
+    Set txtDur = ResolvePainControl(owner, "txtPainDuration")
+    If Not txtDur Is Nothing Then
+        Debug.Print "[After-PainCore-End]", txtDur.text
+    End If
 
 End Sub
 '======================================================================
@@ -553,7 +508,7 @@ Public Sub LoadLatestPainNow()
     
 
     gPainLoadEnabled = True
-    LoadPainFromSheet frmEval
+    LoadPainFromSheet ThisWorkbook.Worksheets("EvalData"), 0, frmEval
     gPainLoadEnabled = False
 
 End Sub
