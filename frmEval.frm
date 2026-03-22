@@ -77,6 +77,10 @@ Private mBaseLayoutDone As Boolean
 Private mLayoutBuilt As Boolean
 Private mMPPhysHookAttached As Boolean
 Private mMMTFirstBuildDone As Boolean
+Private mPendingMMTLoad As Boolean
+Private mPendingMMTRow As Long
+Private mApplyingPendingMMTLoad As Boolean
+Private mPendingMMTWs As Worksheet
 Private Const PAD_SIDE As Single = 8
 Private Const GAP_V As Single = 8
 Private Const HEADER_H As Single = 62
@@ -1480,6 +1484,45 @@ Public Sub RunMMTBuildOnceOnMpPhysMMTActive()
 
     MMT_BuildChildTabs_Direct
     mMMTFirstBuildDone = True
+    
+    TryRunPendingMMTLoad
+End Sub
+
+Public Sub QueueMMTLoadAfterUI(ByVal ws As Worksheet, ByVal rowNum As Long)
+    If ws Is Nothing Then Exit Sub
+    If rowNum < 2 Then Exit Sub
+
+    Set mPendingMMTWs = ws
+    mPendingMMTRow = rowNum
+    mPendingMMTLoad = True
+
+    TryRunPendingMMTLoad
+End Sub
+
+Private Sub TryRunPendingMMTLoad()
+    On Error GoTo EH
+
+    If mApplyingPendingMMTLoad Then Exit Sub
+    If Not mPendingMMTLoad Then Exit Sub
+    If Not mMMTFirstBuildDone Then Exit Sub
+    If mPendingMMTWs Is Nothing Then Exit Sub
+
+    mApplyingPendingMMTLoad = True
+    Call MMT.LoadMMTFromSheet(mPendingMMTWs, mPendingMMTRow, Me)
+
+ExitHere:
+    If Err.Number = 0 Then
+        mPendingMMTLoad = False
+        mPendingMMTRow = 0
+        Set mPendingMMTWs = Nothing
+    End If
+    mApplyingPendingMMTLoad = False
+    Exit Sub
+
+EH:
+    Debug.Print "[ERR][frmEval.TryRunPendingMMTLoad] Err=" & Err.Number & " Desc=" & Err.Description
+    Resume ExitHere
+    
 End Sub
 
 '=== ‚Ç‚±‚©‚ÉŽc‚Á‚Ä‚¢‚é mpADL ‚ð‘S•”Á‚· ===

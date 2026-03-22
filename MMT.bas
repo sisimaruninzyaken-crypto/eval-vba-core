@@ -213,6 +213,7 @@ Private Function LegacyMMTKeys() As Variant
 End Function
 
 
+
 Public Function UseMMTChildTabs() As Boolean
     UseMMTChildTabs = True
 End Function
@@ -610,13 +611,7 @@ Public Sub LoadMMTFromSheet(ws As Worksheet, r As Long, owner As Object)
     Set mp = GetMMTChildTabs(pg)
     Debug.Print "[MMT] after GetMMTChildTabs", TypeName(mp)
 
-    If mp Is Nothing Then
-        Debug.Print "[MMT] building child tabs"
-        MMT_BuildChildTabs_Direct
-        Set mp = GetMMTChildTabs(pg)
-        Debug.Print "[MMT] after rebuild", TypeName(mp)
-        If mp Is Nothing Then Exit Sub
-    End If
+    If mp Is Nothing Then Exit Sub
 
     Debug.Print "[MMT] before LoadFromString"
     MMT_LoadFromString_Core s

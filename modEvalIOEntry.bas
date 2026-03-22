@@ -1154,7 +1154,11 @@ If GetBool(owner, "chkLoadPosture", True) Then Call IO_SafeRunLoad("LoadPostureF
 Debug.Print "[TRACE] Done POSTURE"
 
 Debug.Print "[TRACE] About to run MMT"
-Call MMT.LoadMMTFromSheet(ws, r, owner)
+If TypeName(owner) = "frmEval" Then
+    owner.QueueMMTLoadAfterUI ws, r
+Else
+    Call MMT.LoadMMTFromSheet(ws, r, owner)
+End If
 Debug.Print "[TRACE] Done MMT"
 ExitHere:
     Exit Sub
