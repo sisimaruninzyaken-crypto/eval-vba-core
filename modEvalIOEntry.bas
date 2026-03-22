@@ -335,11 +335,11 @@ End Sub
 Public Function FindLatestRowByName(ws As Worksheet, nameText As String) As Long
 
     Dim c As Long
-      c = FindHeaderCol(ws, "Basic.Name")
-      If c = 0 Then c = FindHeaderCol(ws, "氏名")
-      If c = 0 Then c = FindHeaderCol(ws, "利用者名")
-      If c = 0 Then c = FindHeaderCol(ws, "名前")
-      If c = 0 Then c = FindHeaderCol(ws, "Name")
+    c = FindHeaderCol(ws, "Basic.Name")
+    If c = 0 Then c = FindHeaderCol(ws, "氏名")
+    If c = 0 Then c = FindHeaderCol(ws, "利用者名")
+    If c = 0 Then c = FindHeaderCol(ws, "名前")
+    If c = 0 Then c = FindHeaderCol(ws, "Name")
     If c = 0 Then
         HistoryLoadDebug_Print "[FindLatestRowByName]", _
                                "sheet=" & HistoryLoadDebug_SheetName(ws), _
@@ -4041,6 +4041,8 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
                 If StrComp(storedSheetName, wsTarget.name, vbTextCompare) <> 0 Then
                     indexWs.Cells(indexRow, 4).value = wsTarget.name
                 End If
+            ElseIf TryGetWorksheetByName(storedSheetName, wsTarget) Then
+                EnsureHistorySheetInitialized wsTarget
             Else
                 message = "対象の評価履歴が見つかりません。"
                 Exit Function
@@ -4142,10 +4144,124 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
         End If
         Exit Function
     End If
+    
+    If Not forSave Then
+        pickedRow = PickDuplicateNameIndexRow(indexWs, rowsByName, nm)
+        If pickedRow > 0 Then
+            If TryResolveHistorySheetFromIndexRow(indexWs, pickedRow, nm, wsTarget) Then
+                ResolveUserHistorySheet = True
+                Exit Function
+            End If
+            message = "候補がありません。"
+            Exit Function
+        End If
+        Exit Function
+    End If
 
     message = "同姓同名の利用者が複数いるため、IDまたは履歴を選択してください。" & _
           BuildDuplicateNameCandidatesMessage(indexWs, rowsByName)
 End Function
+
+Private Function TryResolveHistorySheetFromIndexRow(ByVal indexWs As Worksheet, _
+                                                    ByVal indexRow As Long, _
+                                                    ByVal targetName As String, _
+                                                    ByRef wsTarget As Worksheet) As Boolean
+    Dim storedSheetName As String
+
+    If indexRow <= 0 Then Exit Function
+
+    storedSheetName = Trim$(CStr(indexWs.Cells(indexRow, 4).value))
+    If Len(storedSheetName) = 0 Then Exit Function
+
+    If TryGetWorksheetByName(storedSheetName, wsTarget) Then
+        EnsureHistorySheetInitialized wsTarget
+        TryResolveHistorySheetFromIndexRow = True
+        Exit Function
+    End If
+
+    If TryResolveExistingHistorySheetByName(storedSheetName, targetName, wsTarget) Then
+        If StrComp(storedSheetName, wsTarget.name, vbTextCompare) <> 0 Then
+            indexWs.Cells(indexRow, 4).value = wsTarget.name
+        End If
+        EnsureHistorySheetInitialized wsTarget
+        TryResolveHistorySheetFromIndexRow = True
+    End If
+End Function
+
+Private Function BuildDuplicateNameCandidateLine(ByVal indexWs As Worksheet, _
+                                                 ByVal rowNo As Long, _
+                                                 ByVal itemNo As Long) As String
+    Dim idVal As String
+    Dim kanaVal As String
+    Dim latestVal As String
+    Dim recCount As String
+    Dim sheetName As String
+
+    idVal = Trim$(CStr(indexWs.Cells(rowNo, 1).value))
+    kanaVal = Trim$(CStr(indexWs.Cells(rowNo, 3).value))
+    sheetName = Trim$(CStr(indexWs.Cells(rowNo, 4).value))
+    latestVal = Trim$(CStr(indexWs.Cells(rowNo, 6).value))
+    recCount = Trim$(CStr(indexWs.Cells(rowNo, 7).value))
+
+    BuildDuplicateNameCandidateLine = CStr(itemNo) & ") Sheet:" & sheetName
+    If Len(kanaVal) > 0 Then BuildDuplicateNameCandidateLine = BuildDuplicateNameCandidateLine & " / Kana:" & kanaVal
+    If Len(latestVal) > 0 Then BuildDuplicateNameCandidateLine = BuildDuplicateNameCandidateLine & " / Latest:" & latestVal
+    If Len(recCount) > 0 Then BuildDuplicateNameCandidateLine = BuildDuplicateNameCandidateLine & " / Count:" & recCount
+    If Len(idVal) > 0 Then
+        BuildDuplicateNameCandidateLine = BuildDuplicateNameCandidateLine & " / ID:" & idVal
+    Else
+        BuildDuplicateNameCandidateLine = BuildDuplicateNameCandidateLine & " / ID:(none)"
+    End If
+End Function
+
+Private Function BuildDuplicateNameSelectionMessage(ByVal indexWs As Worksheet, _
+                                                    ByVal rowsByName As Collection, _
+                                                    ByVal personName As String) As String
+    Dim lines As String
+    Dim i As Long
+    Dim rowNo As Long
+
+    If rowsByName Is Nothing Then Exit Function
+    If rowsByName.count = 0 Then Exit Function
+
+    For i = 1 To rowsByName.count
+        rowNo = CLng(rowsByName(i))
+        lines = lines & BuildDuplicateNameCandidateLine(indexWs, rowNo, i)
+        If i < rowsByName.count Then lines = lines & vbCrLf
+    Next i
+
+    
+    BuildDuplicateNameSelectionMessage = _
+        "同姓同名の利用者が複数存在します。" & vbCrLf & _
+        "対象の履歴を選択してください。" & vbCrLf & _
+        "利用者名: " & personName & vbCrLf & vbCrLf & _
+        lines & vbCrLf & vbCrLf & _
+        "番号を入力してください。"
+End Function
+
+Private Function PickDuplicateNameIndexRow(ByVal indexWs As Worksheet, _
+                                           ByVal rowsByName As Collection, _
+                                           ByVal personName As String) As Long
+    Dim prompt As String
+    Dim picked As Variant
+    Dim n As Long
+
+    If rowsByName Is Nothing Then Exit Function
+    If rowsByName.count = 0 Then Exit Function
+
+    prompt = BuildDuplicateNameSelectionMessage(indexWs, rowsByName, personName)
+    picked = Application.InputBox(prompt, "同姓同名の候補選択", Type:=1)
+    If VarType(picked) = vbBoolean Then Exit Function
+    If IsError(picked) Then Exit Function
+    If Not IsNumeric(picked) Then Exit Function
+    If Len(CStr(picked)) = 0 Then Exit Function
+
+    n = CLng(picked)
+    If n < 1 Or n > rowsByName.count Then Exit Function
+
+    PickDuplicateNameIndexRow = CLng(rowsByName(n))
+End Function
+
 
 Private Function BuildDuplicateNameCandidatesMessage(ByVal indexWs As Worksheet, ByVal rowsByName As Collection) As String
     Dim lines As String
