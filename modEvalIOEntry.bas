@@ -437,7 +437,7 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
         
         wsUser.Cells(appendRow, EnsureHeader(wsUser, HDR_ROWNO)).value = appendRow - 1
         SaveAllSectionsToSheet wsUser, appendRow, owner
-        Save_CognitionMental_AtRow wsUser, appendRow, frmEval
+        Save_CognitionMental_AtRow wsUser, appendRow, owner
         MirrorBasicRow wsUser, appendRow
         
         Dim idxRow As Long
@@ -3451,7 +3451,11 @@ Private Function CommonHistoryHeaders() As Variant
         "Basic.Medical.AdmitDate", "Basic.Medical.DischargeDate", _
         "Basic.Medical.CourseNote", "Basic.Medical.ComplicationNote", _
         HDR_HOMEENV_CHECKS, HDR_HOMEENV_NOTE, HDR_AIDS_CHECKS, HDR_RISK_CHECKS, _
-        "IO_Cog_DementiaNote", "IO_Mental_Note")
+         "IO_Cog_Memory", "IO_Cog_Attention", "IO_Cog_Orientation", _
+        "IO_Cog_Judgement", "IO_Cog_Executive", "IO_Cog_Language", _
+        "IO_Cog_DementiaType", "IO_Cog_DementiaNote", "IO_Cog_BPSD", _
+        "IO_Mental_Mood", "IO_Mental_Motivation", "IO_Mental_Anxiety", _
+        "IO_Mental_Relation", "IO_Mental_Sleep", "IO_Mental_Note")
         headers.Add CStr(v)
     Next v
 
