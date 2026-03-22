@@ -2552,7 +2552,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     End If
     
     ' ”»’f
-    col = HeaderCol_Compat("IO_Cog_Judgement", ws)
+    col = HeaderCol_Compat("IO_Cog_Judgment", ws)
     If col > 0 Then
             v = pgCog.controls("cmbCogJudgement").value
 
@@ -2700,7 +2700,7 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     LoadComboValueByHeader ws, r, "IO_Cog_Memory", pgCog, "cmbCogMemory"
     LoadComboValueByHeader ws, r, "IO_Cog_Attention", pgCog, "cmbCogAttention"
     LoadComboValueByHeader ws, r, "IO_Cog_Orientation", pgCog, "cmbCogOrientation"
-    LoadComboValueByHeader ws, r, "IO_Cog_Judgement", pgCog, "cmbCogJudgement"
+    LoadComboValueByHeader ws, r, "IO_Cog_Judgment", pgCog, "cmbCogJudgement"
     LoadComboValueByHeader ws, r, "IO_Cog_Executive", pgCog, "cmbCogExecutive"
     LoadComboValueByHeader ws, r, "IO_Cog_Language", pgCog, "cmbCogLanguage"
     LoadComboValueByHeader ws, r, "IO_Cog_DementiaType", pgCog, "cmbDementiaType"
@@ -2762,19 +2762,26 @@ Private Sub LoadComboValueByHeader(ByVal ws As Worksheet, ByVal r As Long, ByVal
 End Sub
 
 Private Function ReadValueByCompatHeader(ByVal ws As Worksheet, ByVal r As Long, ByVal headerName As String) As Variant
+    Dim headers As Variant
+    Dim i As Long
     Dim col As Long
+    Dim v As Variant
 
-    col = HeaderCol_Compat(headerName, ws)
-    If col <= 0 Then
-        ReadValueByCompatHeader = vbNullString
-        Exit Function
-    End If
+    headers = CompatHeaderNames(headerName)
+    For i = LBound(headers) To UBound(headers)
+        col = HeaderCol(CStr(headers(i)), ws)
+        If col > 0 Then
+            v = ws.Cells(r, col).value
+            If Not IsNull(v) Then
+                If Len(CStr(v)) > 0 Then
+                    ReadValueByCompatHeader = v
+                    Exit Function
+                End If
+            End If
+        End If
+    Next i
 
-    If IsNull(ws.Cells(r, col).value) Then
-        ReadValueByCompatHeader = vbNullString
-    Else
-        ReadValueByCompatHeader = ws.Cells(r, col).value
-    End If
+    ReadValueByCompatHeader = vbNullString
 End Function
 
 Private Function ComboBoxHasValue(ByVal cmb As MSForms.ComboBox, ByVal target As String) As Boolean
@@ -3452,7 +3459,7 @@ Private Function CommonHistoryHeaders() As Variant
         "Basic.Medical.CourseNote", "Basic.Medical.ComplicationNote", _
         HDR_HOMEENV_CHECKS, HDR_HOMEENV_NOTE, HDR_AIDS_CHECKS, HDR_RISK_CHECKS, _
          "IO_Cog_Memory", "IO_Cog_Attention", "IO_Cog_Orientation", _
-        "IO_Cog_Judgement", "IO_Cog_Executive", "IO_Cog_Language", _
+        "IO_Cog_Judgment", "IO_Cog_Executive", "IO_Cog_Language", _
         "IO_Cog_DementiaType", "IO_Cog_DementiaNote", "IO_Cog_BPSD", _
         "IO_Mental_Mood", "IO_Mental_Motivation", "IO_Mental_Anxiety", _
         "IO_Mental_Relation", "IO_Mental_Sleep", "IO_Mental_Note")

@@ -422,13 +422,30 @@ Public Function ResolveLegacyCol(ByVal wantName As String, Optional ByVal ws As 
     ResolveLegacyCol = HeaderCol(colName, ws)
 End Function
 
+Public Function CompatHeaderNames(ByVal wantName As String) As Variant
+    Dim mapped As String
+    mapped = ResolveLegacyHeader(wantName)
+
+    Select Case LCase$(mapped)
+        Case "io_cog_judgment", "io_cog_judgement"
+            CompatHeaderNames = Array("IO_Cog_Judgment", "IO_Cog_Judgement")
+        Case Else
+            CompatHeaderNames = Array(mapped)
+    End Select
+End Function
+
 
 '=== HeaderCol_CompatFV‹Œƒwƒbƒ_–¼‚ð‹zŽû‚µ‚Ä—ñ”Ô†‚ð•Ô‚· ===
 Public Function HeaderCol_Compat(ByVal wantName As String, Optional ByVal ws As Worksheet) As Long
     If ws Is Nothing Then Set ws = ActiveSheet
-    Dim mapped As String
-    mapped = ResolveLegacyHeader(wantName) ' —á: "IO_Sensory"¨"SENSE_IO"
-    HeaderCol_Compat = HeaderCol(mapped, ws)
+    Dim headers As Variant
+    Dim i As Long
+
+    headers = CompatHeaderNames(wantName)
+    For i = LBound(headers) To UBound(headers)
+        HeaderCol_Compat = HeaderCol(CStr(headers(i)), ws)
+        If HeaderCol_Compat > 0 Then Exit Function
+    Next i
 End Function
 
 
