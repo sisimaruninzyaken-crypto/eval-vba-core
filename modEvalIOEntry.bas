@@ -296,7 +296,7 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
         If validRow = 0 Then validRow = FindLatestRowByName(wsTarget, nameVal)
         
         If validRow = 0 Then
-            MsgBox "IDが未設定のため、処理できません。", vbExclamation
+            MsgBox "対象の評価履歴が見つかりません。", vbInformation
             Exit Sub
         End If
         LoadAllSectionsFromSheet wsTarget, validRow, owner
@@ -3808,10 +3808,19 @@ Private Function PickLegacyTransferIndexRow(ByVal indexWs As Worksheet, _
                                             ByVal forSave As Boolean) As Long
     Dim prompt As String
     Dim picked As Variant
+    Dim i As Long
     Dim n As Long
-
+    Dim hasUnassigned As Boolean
+    
     If rowsByName Is Nothing Then Exit Function
     If rowsByName.count = 0 Then Exit Function
+
+    For i = 1 To rowsByName.count
+        If Len(Trim$(CStr(indexWs.Cells(CLng(rowsByName(i)), 1).value))) = 0 Then
+            hasUnassigned = True
+            Exit For
+        End If
+    Next i
 
     prompt = BuildLegacyTransferCandidatesMessage(indexWs, rowsByName) & vbCrLf & vbCrLf
     If hasUnassigned Then
@@ -3906,21 +3915,14 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     Set rowsByName = FindEvalIndexRowsByName(indexWs, nm)
     
     
-    If rowsByName.count = 1 Then
+    If Len(idVal) = 0 And rowsByName.count = 1 Then
         indexRow = CLng(rowsByName(1))
 
-        Dim existingNameRowID As String
-        existingNameRowID = Trim$(CStr(indexWs.Cells(indexRow, 1).value))
-
+ 
         If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
         Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
         EnsureHistorySheetInitialized wsTarget
 
-        If forSave Then
-            If Len(idVal) > 0 And Len(existingNameRowID) = 0 Then
-                Call AssignUserIDToHistoryEntry(indexWs, indexRow, idVal, nm, kanaVal, wsTarget)
-            End If
-        End If
 
         If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
         ResolveUserHistorySheet = True
@@ -3962,11 +3964,7 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     If rowsByName.count = 0 Then
         
         If Not forSave Then
-            If Len(idVal) > 0 Then
-               message = "同一IDの複数データが存在します。処理を中断します。"
-            Else
-               message = "同姓同名の複数データが存在します。処理を中断します。"
-            End If
+           message = "対象の評価履歴が見つかりません。"
             Exit Function
         End If
         
