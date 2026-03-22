@@ -39,6 +39,7 @@ Private Const HDR_HOMEENV_CHECKS As String = "Basic.HomeEnv.Checks"
 Private Const HDR_HOMEENV_NOTE As String = "Basic.HomeEnv.Note"
 Private Const HDR_RISK_CHECKS As String = "Basic.Risk.Checks"
 Private Const HDR_AIDS_CHECKS As String = "Basic.Aids.Checks"
+Private Const HISTORY_LOAD_DEBUG As Boolean = True
 
 
 Public Sub LoadEvaluation_CurrentRow()
@@ -289,13 +290,31 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
         Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
         Dim nameVal As String: nameVal = Trim$(owner.txtName.text)
         Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
+        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                               "resolvedSheet=" & HistoryLoadDebug_SheetName(wsTarget), _
+                               "nameVal=" & HistoryLoadDebug_Quote(nameVal), _
+                               "idVal=" & HistoryLoadDebug_Quote(idVal), _
+                               "kanaVal=" & HistoryLoadDebug_Quote(kanaVal)
 
         If Len(idVal) > 0 Then
             validRow = FindLatestValidEvalRowByIdentity(wsTarget, nameVal, idVal, kanaVal)
+            HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                                   "identityLookupCalled=True", _
+                                   "identityRow=" & CStr(validRow)
         End If
-        If validRow = 0 Then validRow = FindLatestRowByName(wsTarget, nameVal)
+        If validRow = 0 Then
+            HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                                   "fallbackFindLatestRowByName=True"
+            validRow = FindLatestRowByName(wsTarget, nameVal)
+        Else
+            HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                                   "fallbackFindLatestRowByName=False"
+        End If
+        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                               "finalValidRow=" & CStr(validRow)
         
         If validRow = 0 Then
+             HistoryLoadDebug_ScanWorkbookForName nameVal, wsTarget
             MsgBox "対象の評価履歴が見つかりません。", vbInformation
             Exit Sub
         End If
@@ -319,16 +338,45 @@ Public Function FindLatestRowByName(ws As Worksheet, nameText As String) As Long
     c = FindHeaderCol(ws, "氏名")
     If c = 0 Then c = FindHeaderCol(ws, "利用者名")
     If c = 0 Then c = FindHeaderCol(ws, "名前")
-    If c = 0 Then Exit Function
+    If c = 0 Then
+        HistoryLoadDebug_Print "[FindLatestRowByName]", _
+                               "sheet=" & HistoryLoadDebug_SheetName(ws), _
+                               "targetName=" & HistoryLoadDebug_Quote(nameText), _
+                               "nameHeaderMissing=True"
+        Exit Function
+    End If
+
+    HistoryLoadDebug_Print "[FindLatestRowByName]", _
+                           "sheet=" & HistoryLoadDebug_SheetName(ws), _
+                           "targetName=" & HistoryLoadDebug_Quote(nameText), _
+                           "nameHeader=" & HistoryLoadDebug_Quote(CStr(ws.Cells(1, c).value)), _
+                           "nameCol=" & CStr(c)
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, c).End(xlUp).row
     Dim r As Long
+    Dim rowName As String
+    Dim normalizedTarget As String
+    Dim normalizedRow As String
+
+    normalizedTarget = NormalizeName(nameText)
+    HistoryLoadDebug_Print "[FindLatestRowByName]", "lastRow=" & CStr(lastRow)
     For r = lastRow To 2 Step -1      ' 1行目は見出し想定
-        If NormalizeName(CStr(ws.Cells(r, c).value)) = NormalizeName(nameText) Then
+        rowName = CStr(ws.Cells(r, c).value)
+        normalizedRow = NormalizeName(rowName)
+        HistoryLoadDebug_Print "[FindLatestRowByName][SCAN]", _
+                               "row=" & CStr(r), _
+                               "raw=" & HistoryLoadDebug_Quote(rowName), _
+                               "normalized=" & HistoryLoadDebug_Quote(normalizedRow), _
+                               "matched=" & CStr(normalizedRow = normalizedTarget)
+        If normalizedRow = normalizedTarget Then
+            HistoryLoadDebug_Print "[FindLatestRowByName]", _
+                                   "matchedRow=" & CStr(r)
             FindLatestRowByName = r
             Exit Function
         End If
     Next r
+
+    HistoryLoadDebug_Print "[FindLatestRowByName]", "matchedRow=0"
 End Function
 
 
@@ -3734,6 +3782,8 @@ Private Function FindEvalIndexRowsByName(ByVal indexWs As Worksheet, ByVal nameT
     Set FindEvalIndexRowsByName = c
 End Function
 
+
+
 Private Function FindEvalIndexRowByUserID(ByVal indexWs As Worksheet, ByVal userID As String) As Long
     Dim lastRow As Long: lastRow = indexWs.Cells(indexWs.rows.count, 1).End(xlUp).row
     Dim r As Long
@@ -3913,15 +3963,29 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     Dim pickedRow As Long
 
     Set rowsByName = FindEvalIndexRowsByName(indexWs, nm)
+    HistoryLoadDebug_Print "[ResolveUserHistorySheet]", _
+                           "forSave=" & CStr(forSave), _
+                           "name=" & HistoryLoadDebug_Quote(nm), _
+                           "id=" & HistoryLoadDebug_Quote(idVal), _
+                           "kana=" & HistoryLoadDebug_Quote(kanaVal), _
+                           "rowsByName=" & CStr(rowsByName.count)
     
     
     If Len(idVal) = 0 And rowsByName.count = 1 Then
         indexRow = CLng(rowsByName(1))
+        HistoryLoadDebug_Print "[ResolveUserHistorySheet]", _
+                               "branch=noID_uniqueName", _
+                               "indexRow=" & CStr(indexRow), _
+                               "indexSheetCellBefore=" & HistoryLoadDebug_Quote(CStr(indexWs.Cells(indexRow, 4).value))
 
  
         If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
         Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
         EnsureHistorySheetInitialized wsTarget
+        HistoryLoadDebug_Print "[ResolveUserHistorySheet]", _
+                               "branch=noID_uniqueName", _
+                               "resolvedSheet=" & HistoryLoadDebug_SheetName(wsTarget), _
+                               "sheetLastDataRow=" & CStr(LastDataRow(wsTarget))
 
 
         If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
@@ -4087,6 +4151,80 @@ EH:
     TryParseNumericUserID = False
 End Function
 
+Private Sub HistoryLoadDebug_Print(ParamArray args())
+    If Not HISTORY_LOAD_DEBUG Then Exit Sub
+
+    Dim i As Long
+    Dim msg As String
+    For i = LBound(args) To UBound(args)
+        msg = msg & IIf(i > 0, " | ", "") & CStr(args(i))
+    Next i
+    Debug.Print Format$(Now, "hh:nn:ss"), msg
+End Sub
+
+Private Function HistoryLoadDebug_Quote(ByVal valueText As String) As String
+    HistoryLoadDebug_Quote = Chr$(34) & Replace$(CStr(valueText), Chr$(34), Chr$(34) & Chr$(34)) & Chr$(34)
+End Function
+
+Private Function HistoryLoadDebug_SheetName(ByVal ws As Worksheet) As String
+    If ws Is Nothing Then
+        HistoryLoadDebug_SheetName = "(Nothing)"
+    Else
+        HistoryLoadDebug_SheetName = ws.name
+    End If
+End Function
+
+Private Sub HistoryLoadDebug_ScanWorkbookForName(ByVal targetName As String, ByVal resolvedSheet As Worksheet)
+    Dim ws As Worksheet
+    Dim c As Long
+    Dim lastRow As Long
+    Dim r As Long
+    Dim rowName As String
+    Dim normalizedTarget As String
+    Dim matched As Boolean
+
+    normalizedTarget = NormalizeName(targetName)
+    HistoryLoadDebug_Print "[HistoryScanWorkbook]", _
+                           "targetName=" & HistoryLoadDebug_Quote(targetName), _
+                           "resolvedSheet=" & HistoryLoadDebug_SheetName(resolvedSheet)
+
+    For Each ws In ThisWorkbook.Worksheets
+        If (Left$(ws.name, Len(EVAL_HISTORY_SHEET_PREFIX)) = EVAL_HISTORY_SHEET_PREFIX) _
+           Or StrComp(ws.name, EVAL_SHEET_NAME, vbTextCompare) = 0 Then
+            c = FindColByHeaderExact(ws, "Basic.Name")
+                 If c = 0 Then c = FindHeaderCol(ws, "氏名")
+                 If c = 0 Then c = FindHeaderCol(ws, "利用者名")
+                 If c = 0 Then c = FindHeaderCol(ws, "Name")
+
+            If c = 0 Then
+                HistoryLoadDebug_Print "[HistoryScanWorkbook]", _
+                                       "sheet=" & ws.name, _
+                                       "nameHeaderMissing=True"
+            Else
+                lastRow = LastDataRow(ws)
+                matched = False
+                For r = 2 To lastRow
+                    rowName = CStr(ws.Cells(r, c).value)
+                    If NormalizeName(rowName) = normalizedTarget Then
+                        HistoryLoadDebug_Print "[HistoryScanWorkbook]", _
+                                               "sheet=" & ws.name, _
+                                               "row=" & CStr(r), _
+                                               "raw=" & HistoryLoadDebug_Quote(rowName), _
+                                               "isResolvedSheet=" & CStr(StrComp(ws.name, HistoryLoadDebug_SheetName(resolvedSheet), vbTextCompare) = 0)
+                        matched = True
+                    End If
+                Next r
+                If Not matched Then
+                    HistoryLoadDebug_Print "[HistoryScanWorkbook]", _
+                                           "sheet=" & ws.name, _
+                                           "matchedRow=0", _
+                                           "nameCol=" & CStr(c), _
+                                           "lastRow=" & CStr(lastRow)
+                End If
+            End If
+        End If
+    Next ws
+End Sub
 
 
 Private Sub UpdateEvalIndexMetadata(ByVal owner As Object, ByVal indexRow As Long, ByVal sheetName As String)
