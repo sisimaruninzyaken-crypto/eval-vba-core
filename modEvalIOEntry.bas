@@ -2077,6 +2077,7 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner
     ' --- 速度 ---
     v = IO_GetVal(s, "Walk_Speed")
     Set cmb = FindControlRecursive(owner, "cmbWalkSpeed")
+    If cmb Is Nothing Then Set cmb = FindControlByTagRecursive(owner, "cmbGaitSpeedDetail")
     If Not cmb Is Nothing Then cmb.value = v
 
     ' --- 安定性チェック（chkWalkStab_*）を一度全部OFF ---
@@ -2103,6 +2104,9 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner
             End If
         Next i
     End If
+
+    v = IO_GetVal(s, "Walk_Assistive")
+    DeserializeCheckedCaptionsByTag owner, "AssistiveGroup", v
 End Sub
 
 Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner As Object)
@@ -2274,11 +2278,90 @@ Private Function FindControlRecursive(parent As Object, name As String) As Objec
     Next ctl
 End Function
 
+Private Function FindControlByTagRecursive(parent As Object, tagName As String) As Object
+    Dim ctl As Object
+    For Each ctl In parent.controls
+        If StrComp(CStr(ctl.tag), tagName, vbTextCompare) = 0 Then
+            Set FindControlByTagRecursive = ctl
+            Exit Function
+        End If
+        On Error Resume Next
+        If ctl.controls.count > 0 Then
+            Dim subCtl As Object
+            Set subCtl = FindControlByTagRecursive(ctl, tagName)
+            If Not subCtl Is Nothing Then
+                Set FindControlByTagRecursive = subCtl
+                Exit Function
+            End If
+        End If
+        On Error GoTo 0
+    Next ctl
+End Function
+
+Private Function SerializeCheckedCaptionsByTag(parent As Object, groupTag As String) As String
+    Dim ctl As Object
+    Dim s As String
+    Dim childCsv As String
+
+    For Each ctl In parent.controls
+        If TypeName(ctl) = "CheckBox" Then
+            If StrComp(CStr(ctl.tag), groupTag, vbTextCompare) = 0 Then
+                If ctl.value = True Then
+                    If LenB(s) > 0 Then s = s & ","
+                    s = s & Trim$(ctl.caption)
+                End If
+            End If
+        End If
+
+        On Error Resume Next
+        If ctl.controls.count > 0 Then
+            childCsv = SerializeCheckedCaptionsByTag(ctl, groupTag)
+            If LenB(childCsv) > 0 Then
+                If LenB(s) > 0 Then s = s & ","
+                s = s & childCsv
+            End If
+        End If
+        On Error GoTo 0
+    Next ctl
+
+    SerializeCheckedCaptionsByTag = s
+End Function
+
+Private Sub DeserializeCheckedCaptionsByTag(parent As Object, groupTag As String, ByVal csv As String)
+    Dim dict As Object
+    Dim parts As Variant
+    Dim p As Variant
+    Dim ctl As Object
+
+    Set dict = CreateObject("Scripting.Dictionary")
+    If Len(Trim$(csv)) > 0 Then
+        parts = Split(csv, ",")
+        For Each p In parts
+            dict(Trim$(CStr(p))) = True
+        Next p
+    End If
+
+    For Each ctl In parent.controls
+        If TypeName(ctl) = "CheckBox" Then
+            If StrComp(CStr(ctl.tag), groupTag, vbTextCompare) = 0 Then
+                ctl.value = dict.exists(Trim$(ctl.caption))
+            End If
+        End If
+
+        On Error Resume Next
+        If ctl.controls.count > 0 Then
+            DeserializeCheckedCaptionsByTag ctl, groupTag, csv
+        End If
+        On Error GoTo 0
+    Next ctl
+End Sub
+
 
 Public Function Build_WalkIndep_IO(owner As Object) As String
     Dim vDist As String
     Dim vOut As String
     Dim vSpeed As String
+    Dim vAssistive As String
     Dim s As String
     Dim hits As Collection
     Dim c As Object
@@ -2307,11 +2390,16 @@ If Not cLvl Is Nothing Then vLevel = Trim$(cLvl.value)
 
 
     ' 距離・屋外・速度
-    On Error Resume Next
-    vDist = Trim$(owner.controls("cmbWalkDistance").value)
-    vOut = Trim$(owner.controls("cmbWalkOutdoor").value)
-    vSpeed = Trim$(owner.controls("cmbWalkSpeed").value)
-    On Error GoTo 0
+    Set c = FindControlRecursive(owner, "cmbWalkDistance")
+    If Not c Is Nothing Then vDist = Trim$(c.value)
+
+    Set c = FindControlRecursive(owner, "cmbWalkOutdoor")
+    If Not c Is Nothing Then vOut = Trim$(c.value)
+
+    Set c = FindControlRecursive(owner, "cmbWalkSpeed")
+    If c Is Nothing Then Set c = FindControlByTagRecursive(owner, "cmbGaitSpeedDetail")
+    If Not c Is Nothing Then vSpeed = Trim$(c.value)
+    
 
     ' 安定性チェック（chkWalkStab_～ を全部拾う）
     Set hits = New Collection
@@ -2340,7 +2428,8 @@ If Not cLvl Is Nothing Then vLevel = Trim$(cLvl.value)
     s = s & "|Walk_Stab=" & stab
     s = s & "|Walk_Speed=" & vSpeed
 
-    
+    vAssistive = SerializeCheckedCaptionsByTag(owner, "AssistiveGroup")
+    s = s & "|Walk_Assistive=" & vAssistive
 
     Build_WalkIndep_IO = s
 End Function
