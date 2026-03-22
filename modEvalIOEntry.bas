@@ -292,15 +292,11 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
 
         If Len(idVal) > 0 Then
             validRow = FindLatestValidEvalRowByIdentity(wsTarget, nameVal, idVal, kanaVal)
-        Else
-            If Len(idVal) > 0 Then
-                MsgBox "ID不一致のため、読込を中断しました。", vbExclamation
-            Else
-                MsgBox "有効な評価データが存在しないため、読込できません。", vbExclamation
-            End If
         End If
+        If validRow = 0 Then validRow = FindLatestRowByName(wsTarget, nameVal)
+        
         If validRow = 0 Then
-            MsgBox "Yuko na hyokabi o motsu rireki ga nai tame yomikomi dekinai", vbExclamation
+            MsgBox "IDが未設定のため、処理できません。", vbExclamation
             Exit Sub
         End If
         LoadAllSectionsFromSheet wsTarget, validRow, owner
@@ -3758,6 +3754,141 @@ Private Function FindEvalIndexRowBySheetName(ByVal indexWs As Worksheet, ByVal s
     Next r
 End Function
 
+Private Function FindEvalIndexRowsByNameWithoutUserID(ByVal indexWs As Worksheet, ByVal nameText As String) As Collection
+    Dim c As New Collection
+    Dim rowsByName As Collection
+    Dim i As Long
+    Dim rowNo As Long
+
+    Set rowsByName = FindEvalIndexRowsByName(indexWs, nameText)
+    For i = 1 To rowsByName.count
+        rowNo = CLng(rowsByName(i))
+        If Len(Trim$(CStr(indexWs.Cells(rowNo, 1).value))) = 0 Then c.Add rowNo
+    Next i
+
+    Set FindEvalIndexRowsByNameWithoutUserID = c
+End Function
+
+Private Function BuildLegacyTransferCandidatesMessage(ByVal indexWs As Worksheet, ByVal rowsByName As Collection) As String
+    Dim lines As String
+    Dim i As Long
+    Dim rowNo As Long
+    Dim kanaVal As String
+    Dim latestVal As String
+    Dim recCount As String
+    Dim sheetName As String
+
+    For i = 1 To rowsByName.count
+        rowNo = CLng(rowsByName(i))
+        kanaVal = Trim$(CStr(indexWs.Cells(rowNo, 3).value))
+        sheetName = Trim$(CStr(indexWs.Cells(rowNo, 4).value))
+        latestVal = Trim$(CStr(indexWs.Cells(rowNo, 6).value))
+        recCount = Trim$(CStr(indexWs.Cells(rowNo, 7).value))
+
+        lines = lines & CStr(i) & ") Sheet:" & sheetName
+        If Len(kanaVal) > 0 Then lines = lines & " / Kana:" & kanaVal
+        If Len(latestVal) > 0 Then lines = lines & " / Latest:" & latestVal
+        If Len(recCount) > 0 Then lines = lines & " / Count:" & recCount
+        If i < rowsByName.count Then lines = lines & vbCrLf
+    Next i
+
+    If Len(lines) = 0 Then Exit Function
+
+    BuildLegacyTransferCandidatesMessage = _
+        "同姓同名の利用者が複数存在します。" & vbCrLf & _
+        "対象者を特定するため、IDを入力してください。" & vbCrLf & _
+        "（または候補から選択してください）" & vbCrLf & vbCrLf & _
+        lines
+End Function
+
+Private Function PickLegacyTransferIndexRow(ByVal indexWs As Worksheet, _
+                                            ByVal rowsByName As Collection, _
+                                            ByVal userID As String, _
+                                            ByVal personName As String, _
+                                            ByVal forSave As Boolean) As Long
+    Dim prompt As String
+    Dim picked As Variant
+    Dim n As Long
+
+    If rowsByName Is Nothing Then Exit Function
+    If rowsByName.count = 0 Then Exit Function
+
+    prompt = BuildLegacyTransferCandidatesMessage(indexWs, rowsByName) & vbCrLf & vbCrLf
+    If hasUnassigned Then
+        prompt = prompt & "ID未設定の旧記録が見つかりました。" & vbCrLf
+    Else
+        prompt = prompt & "同姓同名の利用者が複数存在します。" & vbCrLf
+    End If
+
+    prompt = prompt & "対象者: " & personName & " / ID: " & userID & vbCrLf & _
+         "引き継ぐ記録の番号を入力してください。"
+
+    picked = Application.InputBox(prompt, "旧記録の引き継ぎ", Type:=1)
+    If VarType(picked) = vbBoolean Then Exit Function
+    If IsError(picked) Then Exit Function
+    If Not IsNumeric(picked) Then Exit Function
+    If Len(CStr(picked)) = 0 Then Exit Function
+
+    n = CLng(picked)
+    If n < 1 Or n > rowsByName.count Then Exit Function
+
+    PickLegacyTransferIndexRow = CLng(rowsByName(n))
+End Function
+
+Private Function WriteUserIDToLegacyHistory(ByVal wsTarget As Worksheet, _
+                                            ByVal userID As String, _
+                                            ByVal personName As String) As Long
+    Dim cID As Long
+    Dim cName As Long
+    Dim lastRow As Long
+    Dim r As Long
+
+    cID = FindColByHeaderExact(wsTarget, "Basic.ID")
+    If cID = 0 Then cID = EnsureHeader(wsTarget, "Basic.ID")
+
+    cName = FindColByHeaderExact(wsTarget, "Basic.Name")
+       If cName = 0 Then cName = FindHeaderCol(wsTarget, "氏名")
+       If cName = 0 Then cName = FindHeaderCol(wsTarget, "利用者名")
+       If cName = 0 Then cName = FindHeaderCol(wsTarget, "Name")
+
+    lastRow = LastDataRow(wsTarget)
+    For r = 2 To lastRow
+        If Len(Trim$(CStr(wsTarget.Cells(r, cID).value))) > 0 Then GoTo NextRow
+        If cName > 0 Then
+            If NormalizeName(CStr(wsTarget.Cells(r, cName).value)) <> NormalizeName(personName) Then GoTo NextRow
+        End If
+        wsTarget.Cells(r, cID).value = userID
+        WriteUserIDToLegacyHistory = WriteUserIDToLegacyHistory + 1
+NextRow:
+    Next r
+End Function
+
+Private Function AssignUserIDToHistoryEntry(ByVal indexWs As Worksheet, _
+                                            ByVal indexRow As Long, _
+                                            ByVal userID As String, _
+                                            ByVal personName As String, _
+                                            ByVal kanaVal As String, _
+                                            ByRef wsTarget As Worksheet) As Boolean
+    Dim sheetName As String
+
+    If indexRow <= 0 Then Exit Function
+
+    If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
+    sheetName = CStr(indexWs.Cells(indexRow, 4).value)
+
+    indexWs.Cells(indexRow, 1).value = userID
+    indexWs.Cells(indexRow, 2).value = personName
+    If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
+
+    Set wsTarget = EnsureEvalSheet(sheetName)
+    EnsureHistorySheetInitialized wsTarget
+    Call WriteUserIDToLegacyHistory(wsTarget, userID, personName)
+
+    AssignUserIDToHistoryEntry = True
+End Function
+
+
+
 Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boolean, ByRef wsTarget As Worksheet, ByRef message As String) As Boolean
     Dim nm As String: nm = Trim$(owner.txtName.text)
     If Len(nm) = 0 Then message = "氏名が未入力です": Exit Function
@@ -3767,8 +3898,12 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
     Dim rowsByName As Collection
     Dim rowsByID As Collection
+    Dim rowsByNameWithoutID As Collection
     Dim indexRow As Long
     Dim newRow As Long
+    Dim pickedRow As Long
+
+    Set rowsByName = FindEvalIndexRowsByName(indexWs, nm)
     
     If Len(idVal) > 0 Then
         Set rowsByID = FindEvalIndexRowsByUserID(indexWs, idVal)
@@ -3777,45 +3912,40 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
             Exit Function
         End If
 
-        If rowsByID.count = 1 Then indexRow = CLng(rowsByID(1))
-        If indexRow = 0 Then
-            If Not forSave Then message = "指定された利用者IDに一致する履歴が見つかりません": Exit Function
-            newRow = NextAppendRow(indexWs)
-            indexWs.Cells(newRow, 1).value = idVal
-            indexWs.Cells(newRow, 2).value = nm
-            indexWs.Cells(newRow, 3).value = kanaVal
-            indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
-            Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
+        If rowsByID.count = 1 Then
+            indexRow = CLng(rowsByID(1))
+
+            Dim indexName As String: indexName = Trim$(CStr(indexWs.Cells(indexRow, 2).value))
+            Dim indexKana As String: indexKana = Trim$(CStr(indexWs.Cells(indexRow, 3).value))
+            If NormalizeName(indexName) <> NormalizeName(nm) _
+               Or Not IsSameKanaIfAvailable(kanaVal, indexKana) Then
+                message = BuildUserIdentityMismatchMessage(idVal, nm, indexName, kanaVal, indexKana)
+                Exit Function
+            End If
+
+            If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
+            If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
+
+            Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
 
             EnsureHistorySheetInitialized wsTarget
             ResolveUserHistorySheet = True
             Exit Function
         End If
         
-         Dim indexName As String: indexName = Trim$(CStr(indexWs.Cells(indexRow, 2).value))
-        Dim indexKana As String: indexKana = Trim$(CStr(indexWs.Cells(indexRow, 3).value))
-        If NormalizeName(indexName) <> NormalizeName(nm) _
-           Or Not IsSameKanaIfAvailable(kanaVal, indexKana) Then
-            message = BuildUserIdentityMismatchMessage(idVal, nm, indexName, kanaVal, indexKana)
-            Exit Function
-        End If
-       
-
-        If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
-        If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
-
-        Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
-        EnsureHistorySheetInitialized wsTarget
-        ResolveUserHistorySheet = True
-        Exit Function
     End If
 
-    Set rowsByName = FindEvalIndexRowsByName(indexWs, nm)
     
-
     If rowsByName.count = 0 Then
         
-        If Not forSave Then message = "利用者履歴が見つかりません": Exit Function
+        If Not forSave Then
+            If Len(idVal) > 0 Then
+               message = "同一IDの複数データが存在します。処理を中断します。"
+            Else
+               message = "同姓同名の複数データが存在します。処理を中断します。"
+            End If
+            Exit Function
+        End If
         
         newRow = NextAppendRow(indexWs)
         indexWs.Cells(newRow, 1).value = idVal
@@ -3831,21 +3961,77 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
 
     If rowsByName.count = 1 Then
         indexRow = CLng(rowsByName(1))
-    Else
-    
-        message = "同姓同名の利用者が存在するため利用者IDの指定が必要です" & _
-            BuildDuplicateNameCandidatesMessage(indexWs, rowsByName)
+
+        Dim existingNameRowID As String
+        existingNameRowID = Trim$(CStr(indexWs.Cells(indexRow, 1).value))
+        If Len(idVal) > 0 And Len(existingNameRowID) > 0 Then
+            If StrComp(existingNameRowID, idVal, vbTextCompare) <> 0 Then
+                If forSave Then
+                    newRow = NextAppendRow(indexWs)
+                    indexWs.Cells(newRow, 1).value = idVal
+                    indexWs.Cells(newRow, 2).value = nm
+                    indexWs.Cells(newRow, 3).value = kanaVal
+                    indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
+                    Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
+                    EnsureHistorySheetInitialized wsTarget
+                    ResolveUserHistorySheet = True
+                Else
+                     message = "ユーザーIDが未入力のため、処理を中断しました。"
+                End If
+                Exit Function
+            End If
+        End If
+
+        If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
+        Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
+        EnsureHistorySheetInitialized wsTarget
+
+        If forSave Then
+            If Len(idVal) > 0 And Len(existingNameRowID) = 0 Then
+                Call AssignUserIDToHistoryEntry(indexWs, indexRow, idVal, nm, kanaVal, wsTarget)
+            End If
+        End If
+
+        If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
+        ResolveUserHistorySheet = True
         Exit Function
     
     End If
 
-    If Len(CStr(indexWs.Cells(indexRow, 1).value)) = 0 And Len(idVal) > 0 Then indexWs.Cells(indexRow, 1).value = idVal
-    If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
-    If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
+    If Len(idVal) > 0 Then
+        Set rowsByNameWithoutID = FindEvalIndexRowsByNameWithoutUserID(indexWs, nm)
+        pickedRow = PickLegacyTransferIndexRow(indexWs, rowsByNameWithoutID, idVal, nm, forSave)
+        If pickedRow > 0 Then
+            If AssignUserIDToHistoryEntry(indexWs, pickedRow, idVal, nm, kanaVal, wsTarget) Then
+                ResolveUserHistorySheet = True
+                Exit Function
+            End If
+        End If
 
-    Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
-    EnsureHistorySheetInitialized wsTarget
-    ResolveUserHistorySheet = True
+        If forSave Then
+            newRow = NextAppendRow(indexWs)
+            indexWs.Cells(newRow, 1).value = idVal
+            indexWs.Cells(newRow, 2).value = nm
+            indexWs.Cells(newRow, 3).value = kanaVal
+            indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
+            Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
+            EnsureHistorySheetInitialized wsTarget
+            ResolveUserHistorySheet = True
+            Exit Function
+        End If
+
+        message = "同姓同名の利用者が複数存在します。" & vbCrLf & _
+          "該当する履歴を選択してください。"
+        If Not rowsByNameWithoutID Is Nothing Then
+            If rowsByNameWithoutID.count > 0 Then
+                message = message & vbCrLf & vbCrLf & BuildLegacyTransferCandidatesMessage(indexWs, rowsByNameWithoutID)
+            End If
+        End If
+        Exit Function
+    End If
+
+    message = "同姓同名の利用者が複数いるため、IDまたは履歴を選択してください。" & _
+          BuildDuplicateNameCandidatesMessage(indexWs, rowsByName)
 End Function
 
 Private Function BuildDuplicateNameCandidatesMessage(ByVal indexWs As Worksheet, ByVal rowsByName As Collection) As String

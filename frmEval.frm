@@ -2463,7 +2463,7 @@ Private Function FindRowByNameWithPickLocal(ws As Worksheet, nameText As String,
 
     Dim idx As Variant
     idx = Application.InputBox( _
-            Prompt:="同姓同名の直近" & cnt & "件（最新→古い）:" & vbCrLf & disp & vbCrLf & _
+            prompt:="同姓同名の直近" & cnt & "件（最新→古い）:" & vbCrLf & disp & vbCrLf & _
                     "番号を入力（1-" & cnt & "、キャンセル=中止）", _
             Type:=1)
     If idx = False Then Exit Function
