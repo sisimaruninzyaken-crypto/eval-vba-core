@@ -55,7 +55,7 @@ Public Sub MMT_BuildChildTabs_Direct()
 MMT_ClearGen pgUpper
 MMT_ClearGen pgLower
 
-BuildMMTPage pgUpper, Array("", "Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", _
+BuildMMTPage pgUpper, Array("Œ¨‹ü‹È", "Œ¨L“W", "Œ¨ŠO“]", "Œ¨“àù", _
                             "Œ¨ŠOù", "•I‹ü‹È", "•IL“W", _
                             "‘O˜r‰ñ“à", "‘O˜r‰ñŠO", _
                             "èŠÖß¶‹ü", "èŠÖß”w‹ü", _

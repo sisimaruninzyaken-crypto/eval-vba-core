@@ -286,7 +286,19 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
     Dim resolveMessage As String
     If ResolveUserHistorySheet(owner, False, wsTarget, resolveMessage) Then
         Dim validRow As Long
-        validRow = GetLatestValidEvalRow(wsTarget)
+        Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
+        Dim nameVal As String: nameVal = Trim$(owner.txtName.text)
+        Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
+
+        If Len(idVal) > 0 Then
+            validRow = FindLatestValidEvalRowByIdentity(wsTarget, nameVal, idVal, kanaVal)
+        Else
+            If Len(idVal) > 0 Then
+                MsgBox "ID不一致のため、読込を中断しました。", vbExclamation
+            Else
+                MsgBox "有効な評価データが存在しないため、読込できません。", vbExclamation
+            End If
+        End If
         If validRow = 0 Then
             MsgBox "Yuko na hyokabi o motsu rireki ga nai tame yomikomi dekinai", vbExclamation
             Exit Sub
@@ -373,7 +385,125 @@ Public Function FindLatestRowByNameAndID( _
     Next r
 End Function
 
+Private Function FindEvalIndexRowsByUserID(ByVal indexWs As Worksheet, ByVal userID As String) As Collection
+    Dim c As New Collection
+    Dim lastRow As Long: lastRow = indexWs.Cells(indexWs.rows.count, 1).End(xlUp).row
+    Dim r As Long
 
+    For r = 2 To lastRow
+        If StrComp(Trim$(CStr(indexWs.Cells(r, 1).value)), Trim$(userID), vbTextCompare) = 0 Then c.Add r
+    Next r
+
+    Set FindEvalIndexRowsByUserID = c
+End Function
+
+Private Function BuildDuplicateUserIDMessage(ByVal indexWs As Worksheet, ByVal userID As String, ByVal rowsByID As Collection) As String
+    Dim lines As String
+    Dim i As Long
+    Dim rowNo As Long
+
+    For i = 1 To rowsByID.count
+        rowNo = CLng(rowsByID(i))
+        lines = lines & _
+            "- Name: " & Trim$(CStr(indexWs.Cells(rowNo, 2).value)) & _
+            " / Kana: " & Trim$(CStr(indexWs.Cells(rowNo, 3).value)) & _
+            " / Sheet: " & Trim$(CStr(indexWs.Cells(rowNo, 4).value))
+        If i < rowsByID.count Then lines = lines & vbCrLf
+    Next i
+
+    BuildDuplicateUserIDMessage = _
+       "EvalIndex内で同一IDが複数存在しています。" & vbCrLf & _
+       "ID: " & userID & vbCrLf & vbCrLf & lines
+End Function
+
+Private Function BuildUserIdentityMismatchMessage(ByVal userID As String, _
+                                                  ByVal inputName As String, _
+                                                  ByVal indexName As String, _
+                                                  ByVal inputKana As String, _
+                                                  ByVal indexKana As String) As String
+    Dim lines As String
+
+    lines = lines & "ID不一致エラー" & vbCrLf
+    lines = lines & "ID: " & userID & vbCrLf
+    lines = lines & "入力氏名: " & inputName & vbCrLf
+    lines = lines & "登録氏名: " & indexName
+
+    If Len(Trim$(inputKana)) > 0 Or Len(Trim$(indexKana)) > 0 Then
+        lines = lines & vbCrLf & "入力カナ: " & inputKana & vbCrLf & "登録カナ: " & indexKana
+    End If
+
+    BuildUserIdentityMismatchMessage = lines
+End Function
+
+Private Function IsSameKanaIfAvailable(ByVal leftKana As String, ByVal rightKana As String) As Boolean
+    leftKana = Trim$(leftKana)
+    rightKana = Trim$(rightKana)
+
+    If Len(leftKana) = 0 Or Len(rightKana) = 0 Then
+        IsSameKanaIfAvailable = True
+    Else
+        IsSameKanaIfAvailable = (StrComp(leftKana, rightKana, vbTextCompare) = 0)
+    End If
+End Function
+
+Private Function FindLatestValidEvalRowByIdentity(ByVal ws As Worksheet, _
+                                                  ByVal nameText As String, _
+                                                  ByVal idVal As String, _
+                                                  Optional ByVal kanaText As String = "") As Long
+    Dim cEval As Long: cEval = FindColByHeaderExact(ws, "Basic.EvalDate")
+    Dim cID As Long: cID = FindColByHeaderExact(ws, "Basic.ID")
+    Dim cName As Long
+    Dim cKana As Long: cKana = FindColByHeaderExact(ws, "Basic.NameKana")
+    Dim lastRow As Long
+    Dim r As Long
+    Dim d As Date
+    Dim bestDate As Date
+    Dim bestRow As Long
+    Dim rowName As String
+    Dim rowKana As String
+
+    If cEval = 0 Then Exit Function
+
+    If cID = 0 Then cID = FindColByHeaderExact(ws, "ID")
+    If cID = 0 Then Exit Function
+
+    cName = FindColByHeaderExact(ws, "Basic.Name")
+      If cName = 0 Then cName = FindHeaderCol(ws, "氏名")
+      If cName = 0 Then cName = FindHeaderCol(ws, "利用者名")
+      If cName = 0 Then cName = FindHeaderCol(ws, "Name")
+    If cName = 0 Then Exit Function
+
+    lastRow = LastDataRow(ws)
+
+    For r = 2 To lastRow
+        If StrComp(Trim$(CStr(ws.Cells(r, cID).value)), Trim$(idVal), vbTextCompare) <> 0 Then GoTo NextRow
+
+        rowName = Trim$(CStr(ws.Cells(r, cName).value))
+        If NormalizeName(rowName) <> NormalizeName(nameText) Then GoTo NextRow
+
+        If Len(Trim$(kanaText)) > 0 And cKana > 0 Then
+            rowKana = Trim$(CStr(ws.Cells(r, cKana).value))
+            If Len(rowKana) > 0 Then
+                If StrComp(rowKana, Trim$(kanaText), vbTextCompare) <> 0 Then GoTo NextRow
+            End If
+        End If
+
+        If Not TryParseEvalDate(ws.Cells(r, cEval).value, d) Then GoTo NextRow
+
+        If bestRow = 0 Then
+            bestRow = r
+            bestDate = d
+        ElseIf d > bestDate Then
+            bestRow = r
+            bestDate = d
+        ElseIf d = bestDate Then
+            If r > bestRow Then bestRow = r
+        End If
+NextRow:
+    Next r
+
+    FindLatestValidEvalRowByIdentity = bestRow
+End Function
 
 
 '======================== 補助：フォーム／シート／行 ========================
@@ -3636,11 +3766,18 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
     Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
     Dim rowsByName As Collection
+    Dim rowsByID As Collection
     Dim indexRow As Long
     Dim newRow As Long
     
     If Len(idVal) > 0 Then
-        indexRow = FindEvalIndexRowByUserID(indexWs, idVal)
+        Set rowsByID = FindEvalIndexRowsByUserID(indexWs, idVal)
+        If rowsByID.count > 1 Then
+            message = BuildDuplicateUserIDMessage(indexWs, idVal, rowsByID)
+            Exit Function
+        End If
+
+        If rowsByID.count = 1 Then indexRow = CLng(rowsByID(1))
         If indexRow = 0 Then
             If Not forSave Then message = "指定された利用者IDに一致する履歴が見つかりません": Exit Function
             newRow = NextAppendRow(indexWs)
@@ -3654,6 +3791,15 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
             ResolveUserHistorySheet = True
             Exit Function
         End If
+        
+         Dim indexName As String: indexName = Trim$(CStr(indexWs.Cells(indexRow, 2).value))
+        Dim indexKana As String: indexKana = Trim$(CStr(indexWs.Cells(indexRow, 3).value))
+        If NormalizeName(indexName) <> NormalizeName(nm) _
+           Or Not IsSameKanaIfAvailable(kanaVal, indexKana) Then
+            message = BuildUserIdentityMismatchMessage(idVal, nm, indexName, kanaVal, indexKana)
+            Exit Function
+        End If
+       
 
         If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
         If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
