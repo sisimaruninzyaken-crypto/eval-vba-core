@@ -3819,6 +3819,52 @@ Private Function FindEvalIndexRowsByNameWithoutUserID(ByVal indexWs As Worksheet
     Set FindEvalIndexRowsByNameWithoutUserID = c
 End Function
 
+Private Function TryGetWorksheetByName(ByVal sheetName As String, ByRef ws As Worksheet) As Boolean
+    If Len(Trim$(sheetName)) = 0 Then Exit Function
+
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(sheetName)
+    On Error GoTo 0
+
+    TryGetWorksheetByName = Not ws Is Nothing
+End Function
+
+Private Function TryResolveExistingHistorySheetByName(ByVal storedSheetName As String, _
+                                                      ByVal targetName As String, _
+                                                      ByRef wsResolved As Worksheet) As Boolean
+    Dim wsCandidate As Worksheet
+    Dim ws As Worksheet
+    Dim matchedCount As Long
+
+    If TryGetWorksheetByName(storedSheetName, wsCandidate) Then
+        If FindLatestRowByName(wsCandidate, targetName) > 0 Then
+            Set wsResolved = wsCandidate
+            TryResolveExistingHistorySheetByName = True
+            Exit Function
+        End If
+    End If
+
+    For Each ws In ThisWorkbook.Worksheets
+        If (Left$(ws.name, Len(EVAL_HISTORY_SHEET_PREFIX)) = EVAL_HISTORY_SHEET_PREFIX) _
+           Or StrComp(ws.name, EVAL_SHEET_NAME, vbTextCompare) = 0 Then
+            If FindLatestRowByName(ws, targetName) > 0 Then
+                matchedCount = matchedCount + 1
+                Set wsResolved = ws
+                If matchedCount > 1 Then
+                    Set wsResolved = Nothing
+                    Exit Function
+                End If
+            End If
+        End If
+    Next ws
+
+    If matchedCount = 1 Then
+        TryResolveExistingHistorySheetByName = True
+    End If
+End Function
+
+
+
 Private Function BuildLegacyTransferCandidatesMessage(ByVal indexWs As Worksheet, ByVal rowsByName As Collection) As String
     Dim lines As String
     Dim i As Long
@@ -3972,16 +4018,37 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     
     
     If Len(idVal) = 0 And rowsByName.count = 1 Then
+        Dim storedSheetName As String
+
         indexRow = CLng(rowsByName(1))
+        storedSheetName = Trim$(CStr(indexWs.Cells(indexRow, 4).value))
         HistoryLoadDebug_Print "[ResolveUserHistorySheet]", _
                                "branch=noID_uniqueName", _
                                "indexRow=" & CStr(indexRow), _
-                               "indexSheetCellBefore=" & HistoryLoadDebug_Quote(CStr(indexWs.Cells(indexRow, 4).value))
+                               "indexSheetCellBefore=" & HistoryLoadDebug_Quote(storedSheetName)
+
+        If forSave Then
+            If Len(storedSheetName) = 0 Then
+                storedSheetName = NextHistorySheetName(indexWs)
+                indexWs.Cells(indexRow, 4).value = storedSheetName
+            End If
+            Set wsTarget = EnsureEvalSheet(storedSheetName)
+            EnsureHistorySheetInitialized wsTarget
+        Else
+            If TryResolveExistingHistorySheetByName(storedSheetName, nm, wsTarget) Then
+                If StrComp(storedSheetName, wsTarget.name, vbTextCompare) <> 0 Then
+                    indexWs.Cells(indexRow, 4).value = wsTarget.name
+                End If
+            ElseIf TryGetWorksheetByName(storedSheetName, wsTarget) Then
+                EnsureHistorySheetInitialized wsTarget
+            Else
+                message = "ëŒè€ÇÃï]âøóöóÇ™å©Ç¬Ç©ÇËÇ‹ÇπÇÒÅB"
+                Exit Function
+            End If
+        End If
 
  
-        If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
-        Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
-        EnsureHistorySheetInitialized wsTarget
+       
         HistoryLoadDebug_Print "[ResolveUserHistorySheet]", _
                                "branch=noID_uniqueName", _
                                "resolvedSheet=" & HistoryLoadDebug_SheetName(wsTarget), _
