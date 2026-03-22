@@ -157,6 +157,9 @@ aCapL = Array( _
         Call PlaceCtl(f32, CStr(aCtlR(i)), xRightCtl, yR - 1, wCtl, rowH + 2)
         yR = yR + rowH + gapY
     Next i
+    
+    Set c = frmEval.EvalCtl("txtEvaluatorJob", "Page1")
+    If Not c Is Nothing Then c.IMEMode = fmIMEModeHiragana
 
     yR = yR + 4
 

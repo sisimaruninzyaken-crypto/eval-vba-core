@@ -608,6 +608,20 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
         EnsureHistorySheetInitialized wsUser
         EnsureClientMasterEntry owner
         
+        Dim patientName As String
+        patientName = Trim$(GetCtlTextGeneric(owner, "txtName"))
+        If Len(patientName) = 0 Then
+              MsgBox "Š³ŽÒ–¼‚ð“ü—Í‚µ‚Ä‚©‚ç•Û‘¶‚µ‚Ä‚­‚¾‚³‚¢B", vbExclamation
+              Exit Sub
+        End If
+        
+        Dim warnMessage As String
+        warnMessage = GetSparseMainSaveWarningMessage(wsUser, patientName, owner)
+        If Len(warnMessage) > 0 Then
+            If MsgBox(warnMessage, vbExclamation + vbYesNo) = vbNo Then Exit Sub
+        End If
+        
+        
         Dim appendRow As Long
         appendRow = NextAppendRow(wsUser)
         

@@ -6024,6 +6024,7 @@ Public Sub BuildCog_MentalBlock()
         .Top = topY - 2
          .Width = mp.Width - .Left - 12
         .Height = 50
+        .IMEMode = fmIMEModeHiragana
         .multiline = True
         .EnterKeyBehavior = True
     End With
