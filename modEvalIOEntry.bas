@@ -335,9 +335,11 @@ End Sub
 Public Function FindLatestRowByName(ws As Worksheet, nameText As String) As Long
 
     Dim c As Long
-    c = FindHeaderCol(ws, "氏名")
-    If c = 0 Then c = FindHeaderCol(ws, "利用者名")
-    If c = 0 Then c = FindHeaderCol(ws, "名前")
+      c = FindHeaderCol(ws, "Basic.Name")
+      If c = 0 Then c = FindHeaderCol(ws, "氏名")
+      If c = 0 Then c = FindHeaderCol(ws, "利用者名")
+      If c = 0 Then c = FindHeaderCol(ws, "名前")
+      If c = 0 Then c = FindHeaderCol(ws, "Name")
     If c = 0 Then
         HistoryLoadDebug_Print "[FindLatestRowByName]", _
                                "sheet=" & HistoryLoadDebug_SheetName(ws), _
@@ -4039,8 +4041,6 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
                 If StrComp(storedSheetName, wsTarget.name, vbTextCompare) <> 0 Then
                     indexWs.Cells(indexRow, 4).value = wsTarget.name
                 End If
-            ElseIf TryGetWorksheetByName(storedSheetName, wsTarget) Then
-                EnsureHistorySheetInitialized wsTarget
             Else
                 message = "対象の評価履歴が見つかりません。"
                 Exit Function
