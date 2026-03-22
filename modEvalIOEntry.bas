@@ -3905,6 +3905,29 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
 
     Set rowsByName = FindEvalIndexRowsByName(indexWs, nm)
     
+    
+    If rowsByName.count = 1 Then
+        indexRow = CLng(rowsByName(1))
+
+        Dim existingNameRowID As String
+        existingNameRowID = Trim$(CStr(indexWs.Cells(indexRow, 1).value))
+
+        If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
+        Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
+        EnsureHistorySheetInitialized wsTarget
+
+        If forSave Then
+            If Len(idVal) > 0 And Len(existingNameRowID) = 0 Then
+                Call AssignUserIDToHistoryEntry(indexWs, indexRow, idVal, nm, kanaVal, wsTarget)
+            End If
+        End If
+
+        If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
+        ResolveUserHistorySheet = True
+        Exit Function
+    End If
+
+    
     If Len(idVal) > 0 Then
         Set rowsByID = FindEvalIndexRowsByUserID(indexWs, idVal)
         If rowsByID.count > 1 Then
@@ -3954,45 +3977,6 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
         indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
         Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
         
-        EnsureHistorySheetInitialized wsTarget
-        ResolveUserHistorySheet = True
-        Exit Function
-    End If
-
-    If rowsByName.count = 1 Then
-        indexRow = CLng(rowsByName(1))
-
-        Dim existingNameRowID As String
-        existingNameRowID = Trim$(CStr(indexWs.Cells(indexRow, 1).value))
-        If Len(idVal) > 0 And Len(existingNameRowID) > 0 Then
-            If StrComp(existingNameRowID, idVal, vbTextCompare) <> 0 Then
-                If forSave Then
-                    newRow = NextAppendRow(indexWs)
-                    indexWs.Cells(newRow, 1).value = idVal
-                    indexWs.Cells(newRow, 2).value = nm
-                    indexWs.Cells(newRow, 3).value = kanaVal
-                    indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
-                    Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
-                    EnsureHistorySheetInitialized wsTarget
-                    ResolveUserHistorySheet = True
-                Else
-                     message = "ユーザーIDが未入力のため、処理を中断しました。"
-                End If
-                Exit Function
-            End If
-        End If
-
-        If Len(CStr(indexWs.Cells(indexRow, 4).value)) = 0 Then indexWs.Cells(indexRow, 4).value = NextHistorySheetName(indexWs)
-        Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
-        EnsureHistorySheetInitialized wsTarget
-
-        If forSave Then
-            If Len(idVal) > 0 And Len(existingNameRowID) = 0 Then
-                Call AssignUserIDToHistoryEntry(indexWs, indexRow, idVal, nm, kanaVal, wsTarget)
-            End If
-        End If
-
-        If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
         ResolveUserHistorySheet = True
         Exit Function
     
