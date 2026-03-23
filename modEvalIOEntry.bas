@@ -567,7 +567,7 @@ Private Function EnsureEvalSheet(sheetName As String) As Worksheet
     Set EnsureEvalSheet = ThisWorkbook.Worksheets(sheetName)
     On Error GoTo 0
     If EnsureEvalSheet Is Nothing Then
-        Set EnsureEvalSheet = ThisWorkbook.Worksheets.Add(after:=Sheets(Sheets.count))
+        Set EnsureEvalSheet = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
         On Error Resume Next
         EnsureEvalSheet.name = sheetName   ' ä˘ë∂ñºÇ»ÇÁExcelÇ™é©ìÆÉäÉlÅ[ÉÄ
         On Error GoTo 0
@@ -660,7 +660,7 @@ Private Function EnsureClientMasterSheet() As Worksheet
     On Error GoTo 0
 
     If ws Is Nothing Then
-        Set ws = ThisWorkbook.Worksheets.Add(after:=Sheets(Sheets.count))
+        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
         ws.name = CLIENT_MASTER_SHEET_NAME
     End If
 
@@ -778,7 +778,9 @@ Private Function GetSparseMainSaveWarningMessage(ws As Worksheet, ByVal patientN
     filledCount = CountMainFormFilledFields(owner)
 
     Dim changeCount As Long
-    changeCount = CountMainFormTextboxChanges(ws, existingRow, owner)
+    changeCount = CountMainFormTextboxChanges(ws, existingRow, owner) + _
+                  CountMainFormMajorBlockChanges(ws, existingRow, owner)
+
 
     If filledCount < MAIN_SAVE_MIN_FILLED_FIELDS Then
         GetSparseMainSaveWarningMessage = MAIN_SAVE_FEW_INPUT_MESSAGE
@@ -829,6 +831,218 @@ Private Function CountMainFormTextboxChanges(ws As Worksheet, ByVal existingRow 
 NextItem:
     Next i
 End Function
+
+Private Function CountMainFormMajorBlockChanges(ws As Worksheet, ByVal existingRow As Long, owner As Object) As Long
+    If HasMainFormTestEvalChange(ws, existingRow, owner) Then
+        CountMainFormMajorBlockChanges = CountMainFormMajorBlockChanges + 1
+    End If
+
+    If HasMainFormADLChange(ws, existingRow, owner) Then
+        CountMainFormMajorBlockChanges = CountMainFormMajorBlockChanges + 1
+    End If
+
+    If HasMainFormROMChange(ws, existingRow, owner) Then
+        CountMainFormMajorBlockChanges = CountMainFormMajorBlockChanges + 1
+    End If
+
+    If HasMainFormMMTChange(ws, existingRow, owner) Then
+        CountMainFormMajorBlockChanges = CountMainFormMajorBlockChanges + 1
+    End If
+End Function
+
+Private Function HasMainFormTestEvalChange(ws As Worksheet, ByVal existingRow As Long, owner As Object) As Boolean
+    HasMainFormTestEvalChange = HasSerializedBlockChange( _
+        Build_TestEval_IO(owner), _
+        ReadStr_Compat("IO_TestEval", existingRow, ws), _
+        TestEvalCompareKeys() _
+    )
+End Function
+
+Private Function HasMainFormADLChange(ws As Worksheet, ByVal existingRow As Long, owner As Object) As Boolean
+    HasMainFormADLChange = HasSerializedBlockChange( _
+        Build_ADL_IO(), _
+        ReadStr_Compat("IO_ADL", existingRow, ws), _
+        ADLCompareKeys() _
+    )
+End Function
+
+Private Function HasMainFormROMChange(ws As Worksheet, ByVal existingRow As Long, owner As Object) As Boolean
+    If HasMainFormROMJointChange(ws, existingRow, owner, "Upper", "Shoulder", Array("Flex", "Ext", "Abd", "Add", "ER", "IR")) Then
+        HasMainFormROMChange = True
+        Exit Function
+    End If
+
+    If HasMainFormROMJointChange(ws, existingRow, owner, "Upper", "Elbow", Array("Flex", "Ext")) Then
+        HasMainFormROMChange = True
+        Exit Function
+    End If
+
+    If HasMainFormROMJointChange(ws, existingRow, owner, "Upper", "Forearm", Array("Sup", "Pro")) Then
+        HasMainFormROMChange = True
+        Exit Function
+    End If
+
+    If HasMainFormROMJointChange(ws, existingRow, owner, "Upper", "Wrist", Array("Dorsi", "Palmar", "Radial", "Ulnar")) Then
+        HasMainFormROMChange = True
+        Exit Function
+    End If
+
+    If HasMainFormROMJointChange(ws, existingRow, owner, "Lower", "Hip", Array("Flex", "Ext", "Abd", "Add", "ER", "IR")) Then
+        HasMainFormROMChange = True
+        Exit Function
+    End If
+
+    If HasMainFormROMJointChange(ws, existingRow, owner, "Lower", "Knee", Array("Flex", "Ext")) Then
+        HasMainFormROMChange = True
+        Exit Function
+    End If
+
+    If HasMainFormROMJointChange(ws, existingRow, owner, "Lower", "Ankle", Array("Dorsi", "Plantar", "Inv", "Ev")) Then
+        HasMainFormROMChange = True
+        Exit Function
+    End If
+
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Neck_Flex", "txtROM_Trunk_Neck_Flex") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Neck_Ext", "txtROM_Trunk_Neck_Ext") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Neck_Rot_R", "txtROM_Trunk_Neck_Rot_R") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Neck_Rot_L", "txtROM_Trunk_Neck_Rot_L") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Neck_LatFlex_R", "txtROM_Trunk_Neck_LatFlex_R") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Neck_LatFlex_L", "txtROM_Trunk_Neck_LatFlex_L") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Trunk_Flex", "txtROM_Trunk_Trunk_Flex") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Trunk_Ext", "txtROM_Trunk_Trunk_Ext") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Trunk_Rot_R", "txtROM_Trunk_Trunk_Rot_R") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Trunk_Rot_L", "txtROM_Trunk_Trunk_Rot_L") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Trunk_LatFlex_R", "txtROM_Trunk_Trunk_LatFlex_R") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "ROM_Trunk_LatFlex_L", "txtROM_Trunk_Trunk_LatFlex_L") Then HasMainFormROMChange = True: Exit Function
+    If HasMainFormROMFieldChange(ws, existingRow, owner, "Thorax_Expansion", "txtROM_Trunk_Thorax_ChestDiff") Then HasMainFormROMChange = True
+End Function
+
+Private Function HasMainFormROMJointChange(ws As Worksheet, ByVal existingRow As Long, owner As Object, _
+                                           ByVal layer As String, ByVal joint As String, motions As Variant) As Boolean
+    Dim motion As Variant
+    Dim side As Variant
+
+    For Each motion In motions
+        For Each side In Array("R", "L")
+            If HasMainFormROMFieldChange(ws, existingRow, owner, _
+                                         "ROM_" & layer & "_" & joint & "_" & CStr(motion) & "_" & CStr(side), _
+                                         "txtROM_" & layer & "_" & joint & "_" & CStr(motion) & "_" & CStr(side)) Then
+                HasMainFormROMJointChange = True
+                Exit Function
+            End If
+        Next side
+    Next motion
+End Function
+
+Private Function HasMainFormROMFieldChange(ws As Worksheet, ByVal existingRow As Long, owner As Object, _
+                                           ByVal headerName As String, ByVal ctlName As String) As Boolean
+    Dim curVal As String
+    Dim oldVal As String
+
+    curVal = NormalizeCompareValue(GetCtlTextGeneric(owner, ctlName))
+    oldVal = NormalizeCompareValue(ReadStr_Compat(headerName, existingRow, ws))
+
+    HasMainFormROMFieldChange = (StrComp(curVal, oldVal, vbBinaryCompare) <> 0)
+End Function
+
+Private Function HasMainFormMMTChange(ws As Worksheet, ByVal existingRow As Long, owner As Object) As Boolean
+    HasMainFormMMTChange = (StrComp( _
+        NormalizeCompareValue(BuildCurrentMMTCompareValue(owner)), _
+        NormalizeCompareValue(ReadStr_Compat("IO_MMT", existingRow, ws)), _
+        vbBinaryCompare) <> 0)
+End Function
+
+Private Function BuildCurrentMMTCompareValue(owner As Object) As String
+    Dim pg As Object
+    Dim mp As Object
+    Dim p As Long
+    Dim c As Object
+    Dim parts() As String
+    Dim n As Long
+
+    Set pg = MMT.GetMMTPage(owner)
+    If pg Is Nothing Then Exit Function
+
+    On Error Resume Next
+    Set mp = MMT.GetMMTChildTabs(pg)
+    On Error GoTo 0
+    If mp Is Nothing Then Exit Function
+
+    ReDim parts(0 To 0)
+    n = -1
+
+    For p = 0 To mp.Pages.count - 1
+        For Each c In mp.Pages(p).controls
+            If TypeName(c) = "ComboBox" Then
+                Dim nm As String
+                Dim side As String
+
+                If Left$(c.name, 5) = "cboR_" Then
+                    nm = Mid$(c.name, 6)
+                    side = "R"
+                ElseIf Left$(c.name, 5) = "cboL_" Then
+                    nm = Mid$(c.name, 6)
+                    side = "L"
+                Else
+                    nm = vbNullString
+                    side = vbNullString
+                End If
+
+                If Len(nm) > 0 And side = "R" Then
+                    Dim rVal As String
+                    Dim lVal As String
+
+                    rVal = NormalizeCompareValue(CStr(c.value))
+                    On Error Resume Next
+                    lVal = NormalizeCompareValue(CStr(mp.Pages(p).controls("cboL_" & nm).value))
+                    On Error GoTo 0
+
+                    n = n + 1
+                    ReDim Preserve parts(0 To n)
+                    parts(n) = CStr(p) & "|" & nm & "|" & rVal & "|" & lVal
+                End If
+            End If
+        Next c
+    Next p
+
+    If n >= 0 Then BuildCurrentMMTCompareValue = Join(parts, ";")
+End Function
+
+Private Function HasSerializedBlockChange(ByVal currentValue As String, ByVal oldValue As String, keys As Variant) As Boolean
+    Dim i As Long
+    For i = LBound(keys) To UBound(keys)
+        If StrComp( _
+            NormalizeCompareValue(IO_GetVal(currentValue, CStr(keys(i)))), _
+            NormalizeCompareValue(IO_GetVal(oldValue, CStr(keys(i)))), _
+            vbBinaryCompare) <> 0 Then
+            HasSerializedBlockChange = True
+            Exit Function
+        End If
+    Next i
+End Function
+
+Private Function TestEvalCompareKeys() As Variant
+    TestEvalCompareKeys = Array( _
+        "Test_10MWalk_sec", _
+        "Test_TUG_sec", _
+        "Test_Grip_R_kg", _
+        "Test_Grip_L_kg", _
+        "Test_5xSitStand_sec", _
+        "Test_SemiTandem_sec" _
+    )
+End Function
+
+Private Function ADLCompareKeys() As Variant
+    ADLCompareKeys = Array( _
+        "BITotal", _
+        "BI_0", "BI_1", "BI_2", "BI_3", "BI_4", "BI_5", "BI_6", "BI_7", "BI_8", "BI_9", _
+        "BI_HomeEnv_0", "BI_HomeEnv_1", "BI_HomeEnv_2", "BI_HomeEnv_3", "BI_HomeEnv_4", "BI_HomeEnv_5", "BI_HomeEnv_6", _
+        "IADL_0", "IADL_1", "IADL_2", "IADL_3", "IADL_4", "IADL_5", "IADL_6", "IADL_7", "IADL_8", _
+        "Kyo_Roll", "Kyo_SitUp", "Kyo_SitHold", "Kyo_StandUp", "Kyo_StandHold" _
+    )
+End Function
+
+
 
 Private Function CountMainFormFilledFields(owner As Object) As Long
     Dim map As Variant
@@ -3144,7 +3358,7 @@ Private Function EnsureDailyLogSheet(ByVal wb As Workbook) As Worksheet
     On Error GoTo 0
 
     If ws Is Nothing Then
-        Set ws = wb.Worksheets.Add(after:=wb.Worksheets(wb.Worksheets.count))
+        Set ws = wb.Worksheets.Add(After:=wb.Worksheets(wb.Worksheets.count))
         ws.name = "DailyLog"
     End If
 
@@ -3707,7 +3921,7 @@ Private Function EnsureEvalIndexSheet() As Worksheet
     Set ws = ThisWorkbook.Worksheets(EVAL_INDEX_SHEET_NAME)
     On Error GoTo 0
     If ws Is Nothing Then
-        Set ws = ThisWorkbook.Worksheets.Add(after:=Sheets(Sheets.count))
+        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
         ws.name = EVAL_INDEX_SHEET_NAME
     End If
 

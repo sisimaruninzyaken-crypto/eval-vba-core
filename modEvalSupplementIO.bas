@@ -26,7 +26,7 @@ Private Function GetOrCreateSheet(ByVal wb As Workbook, ByVal sheetName As Strin
     Set ws = wb.Worksheets(sheetName)
     On Error GoTo 0
     If ws Is Nothing Then
-        Set ws = wb.Worksheets.Add(after:=wb.Worksheets(wb.Worksheets.count))
+        Set ws = wb.Worksheets.Add(After:=wb.Worksheets(wb.Worksheets.count))
         On Error Resume Next
         ws.name = sheetName
         On Error GoTo 0

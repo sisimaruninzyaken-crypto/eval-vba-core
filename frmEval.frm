@@ -2113,7 +2113,7 @@ Private Function EnsureEvalData() As Worksheet
 
     If ws Is Nothing Then
         Set ws = ThisWorkbook.Worksheets.Add( _
-                 after:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.count))
+                 After:=ThisWorkbook.Worksheets(ThisWorkbook.Worksheets.count))
         ws.name = sh
     End If
 
@@ -2576,7 +2576,7 @@ Private Function GetOrCreateEvalSheet() As Worksheet
     Set ws = ThisWorkbook.Worksheets("EvalData")
     On Error GoTo 0
     If ws Is Nothing Then
-        Set ws = ThisWorkbook.Worksheets.Add(after:=Sheets(Sheets.count))
+        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
         ws.name = "EvalData"
     End If
     Set GetOrCreateEvalSheet = ws

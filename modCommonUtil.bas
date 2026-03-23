@@ -638,7 +638,7 @@ End If
 
 
     ' テンプレ Monitoring をこの月ブックへコピー
-    ThisWorkbook.Worksheets("Monitoring").Copy after:=wbNew.Worksheets(wbNew.Worksheets.count)
+    ThisWorkbook.Worksheets("Monitoring").Copy After:=wbNew.Worksheets(wbNew.Worksheets.count)
     Set wsNew = wbNew.Worksheets(wbNew.Worksheets.count)
     
     
