@@ -778,10 +778,9 @@ Private Function GetSparseMainSaveWarningMessage(ws As Worksheet, ByVal patientN
     filledCount = CountMainFormFilledFields(owner)
 
     Dim changeCount As Long
-    changeCount = CountMainFormTextboxChanges(ws, existingRow, owner) + _
-                  CountMainFormMajorBlockChanges(ws, existingRow, owner)
-
-
+    changeCount = CountMainFormTextboxChanges(ws, existingRow, owner)
+    changeCount = changeCount + CountMainFormMajorBlockChanges(ws, existingRow, owner)
+    
     If filledCount < MAIN_SAVE_MIN_FILLED_FIELDS Then
         GetSparseMainSaveWarningMessage = MAIN_SAVE_FEW_INPUT_MESSAGE
         Exit Function
@@ -832,12 +831,32 @@ NextItem:
     Next i
 End Function
 
+Private Function CountMainFormFilledFields(owner As Object) As Long
+    Dim map As Variant
+    map = MainSaveTextboxHeaderMap()
+
+    Dim i As Long
+    For i = LBound(map) To UBound(map)
+        If Len(NormalizeCompareValue(GetCtlTextGeneric(owner, CStr(map(i)(1))))) > 0 Then
+            CountMainFormFilledFields = CountMainFormFilledFields + 1
+        End If
+    Next i
+End Function
+
 Private Function CountMainFormMajorBlockChanges(ws As Worksheet, ByVal existingRow As Long, owner As Object) As Long
     If HasMainFormTestEvalChange(ws, existingRow, owner) Then
         CountMainFormMajorBlockChanges = CountMainFormMajorBlockChanges + 1
     End If
 
-    If HasMainFormADLChange(ws, existingRow, owner) Then
+    If HasMainFormBIChange(ws, existingRow) Then
+        CountMainFormMajorBlockChanges = CountMainFormMajorBlockChanges + 1
+    End If
+
+    If HasMainFormIADLChange(ws, existingRow) Then
+        CountMainFormMajorBlockChanges = CountMainFormMajorBlockChanges + 1
+    End If
+
+    If HasMainFormKyoChange(ws, existingRow) Then
         CountMainFormMajorBlockChanges = CountMainFormMajorBlockChanges + 1
     End If
 
@@ -858,11 +877,27 @@ Private Function HasMainFormTestEvalChange(ws As Worksheet, ByVal existingRow As
     )
 End Function
 
-Private Function HasMainFormADLChange(ws As Worksheet, ByVal existingRow As Long, owner As Object) As Boolean
-    HasMainFormADLChange = HasSerializedBlockChange( _
+Private Function HasMainFormBIChange(ws As Worksheet, ByVal existingRow As Long) As Boolean
+    HasMainFormBIChange = HasSerializedBlockChange( _
         Build_ADL_IO(), _
         ReadStr_Compat("IO_ADL", existingRow, ws), _
-        ADLCompareKeys() _
+        BICompareKeys() _
+    )
+End Function
+
+Private Function HasMainFormIADLChange(ws As Worksheet, ByVal existingRow As Long) As Boolean
+    HasMainFormIADLChange = HasSerializedBlockChange( _
+        Build_ADL_IO(), _
+        ReadStr_Compat("IO_ADL", existingRow, ws), _
+        IADLCompareKeys() _
+    )
+End Function
+
+Private Function HasMainFormKyoChange(ws As Worksheet, ByVal existingRow As Long) As Boolean
+    HasMainFormKyoChange = HasSerializedBlockChange( _
+        Build_ADL_IO(), _
+        ReadStr_Compat("IO_ADL", existingRow, ws), _
+        KyoCompareKeys() _
     )
 End Function
 
@@ -1032,28 +1067,24 @@ Private Function TestEvalCompareKeys() As Variant
     )
 End Function
 
-Private Function ADLCompareKeys() As Variant
-    ADLCompareKeys = Array( _
+Private Function BICompareKeys() As Variant
+    BICompareKeys = Array( _
         "BITotal", _
         "BI_0", "BI_1", "BI_2", "BI_3", "BI_4", "BI_5", "BI_6", "BI_7", "BI_8", "BI_9", _
-        "BI_HomeEnv_0", "BI_HomeEnv_1", "BI_HomeEnv_2", "BI_HomeEnv_3", "BI_HomeEnv_4", "BI_HomeEnv_5", "BI_HomeEnv_6", _
-        "IADL_0", "IADL_1", "IADL_2", "IADL_3", "IADL_4", "IADL_5", "IADL_6", "IADL_7", "IADL_8", _
-        "Kyo_Roll", "Kyo_SitUp", "Kyo_SitHold", "Kyo_StandUp", "Kyo_StandHold" _
+        "BI_HomeEnv_0", "BI_HomeEnv_1", "BI_HomeEnv_2", "BI_HomeEnv_3", "BI_HomeEnv_4", "BI_HomeEnv_5", "BI_HomeEnv_6" _
     )
 End Function
 
+Private Function IADLCompareKeys() As Variant
+    IADLCompareKeys = Array( _
+        "IADL_0", "IADL_1", "IADL_2", "IADL_3", "IADL_4", "IADL_5", "IADL_6", "IADL_7", "IADL_8" _
+    )
+End Function
 
-
-Private Function CountMainFormFilledFields(owner As Object) As Long
-    Dim map As Variant
-    map = MainSaveTextboxHeaderMap()
-
-    Dim i As Long
-    For i = LBound(map) To UBound(map)
-        If Len(NormalizeCompareValue(GetCtlTextGeneric(owner, CStr(map(i)(1))))) > 0 Then
-            CountMainFormFilledFields = CountMainFormFilledFields + 1
-        End If
-    Next i
+Private Function KyoCompareKeys() As Variant
+    KyoCompareKeys = Array( _
+        "Kyo_Roll", "Kyo_SitUp", "Kyo_SitHold", "Kyo_StandUp", "Kyo_StandHold" _
+    )
 End Function
 
 
