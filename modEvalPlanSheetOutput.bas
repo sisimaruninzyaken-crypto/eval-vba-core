@@ -15,7 +15,7 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     SplitWarekiBirthParts GetCtrlTextSafe(owner, "txtBirth"), GetCtrlTextSafe(owner, "txtAge"), eraName, birthBody
 
     WriteMerged ws, "A2:U2", BuildHeaderDate("ì¬“ú", FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate")))
-    WriteMerged ws, "V2:AP2", BuildHeaderDate("‘O‰ñì¬“ú", "")
+    WriteMerged ws, "V2:AP2", BuildHeaderDate("‘O‰ñì¬“ú", FormatWarekiFull(GetPreviousCreatedDateText()))
     WriteMerged ws, "AQ2:BJ2", BuildHeaderDate("‰‰ñì¬“ú", "")
 
     WriteMerged ws, "E3:Q3", GetCtrlTextSafe(owner, "txtHdrKana")
@@ -48,6 +48,20 @@ EH:
 
 
 End Sub
+
+
+Private Function GetPreviousCreatedDateText() As String
+    On Error GoTo EH
+
+    Dim wsEval As Worksheet
+    Set wsEval = modEvalIOEntry.GetEvalDataSheet()
+
+    GetPreviousCreatedDateText = modEvalIOEntry.GetPreviousEvalDateText(wsEval)
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
 
 Private Sub WriteProgramBlocks(ByVal ws As Worksheet, ByVal planData As Object)
     Dim i As Long
