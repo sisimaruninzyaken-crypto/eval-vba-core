@@ -79,9 +79,7 @@ Private Function GetFirstCreatedDateText(ByVal owner As Object) As String
         GetFirstCreatedDateText = firstEvalDate
     End If
 
-    If Len(GetFirstCreatedDateText) = 0 Then
-        GetFirstCreatedDateText = modEvalIOEntry.GetClientMasterCreatedDateText(owner)
-    End If
+   
     Exit Function
 EH:
     Err.Clear
