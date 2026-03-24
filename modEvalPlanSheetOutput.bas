@@ -15,8 +15,9 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     SplitWarekiBirthParts GetCtrlTextSafe(owner, "txtBirth"), GetCtrlTextSafe(owner, "txtAge"), eraName, birthBody
 
     WriteMerged ws, "A2:U2", BuildHeaderDate("çÏê¨ì˙", FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate")))
-    WriteMerged ws, "V2:AP2", BuildHeaderDate("ëOâÒçÏê¨ì˙", FormatWarekiFull(GetPreviousCreatedDateText()))
-    WriteMerged ws, "AQ2:BJ2", BuildHeaderDate("èââÒçÏê¨", FormatWarekiFull(GetFirstCreatedDateText()))
+    WriteMerged ws, "V2:AP2", BuildHeaderDate("ëOâÒçÏê¨ì˙", FormatWarekiFull(GetPreviousCreatedDateText(owner)))
+    WriteMerged ws, "AQ2:BJ2", BuildHeaderDate("èââÒçÏê¨", FormatWarekiFull(GetFirstCreatedDateText(owner)))
+
 
     WriteMerged ws, "E3:Q3", GetCtrlTextSafe(owner, "txtHdrKana")
     WriteMerged ws, "V3:AK3", eraName
@@ -50,32 +51,37 @@ EH:
 End Sub
 
 
-Private Function GetPreviousCreatedDateText() As String
+Private Function GetPreviousCreatedDateText(ByVal owner As Object) As String
     On Error GoTo EH
 
     Dim wsEval As Worksheet
-    Set wsEval = modEvalIOEntry.GetEvalDataSheet()
-
-    GetPreviousCreatedDateText = modEvalIOEntry.GetPreviousEvalDateText(wsEval)
+    If modEvalIOEntry.TryGetUserHistorySheet(owner, wsEval) Then
+        GetPreviousCreatedDateText = modEvalIOEntry.GetPreviousEvalDateText(wsEval)
+    End If
     Exit Function
 EH:
     Err.Clear
 End Function
 
 
-Private Function GetFirstCreatedDateText() As String
+Private Function GetFirstCreatedDateText(ByVal owner As Object) As String
     On Error GoTo EH
 
     Dim wsEval As Worksheet
-    Set wsEval = modEvalIOEntry.GetEvalDataSheet()
 
     Dim firstEvalDate As String
     Dim latestEvalDate As String
     Dim previousEvalDate As String
     Dim recordCount As Long
 
-    modEvalIOEntry.GetUserEvalDateStats wsEval, firstEvalDate, latestEvalDate, previousEvalDate, recordCount
-    GetFirstCreatedDateText = firstEvalDate
+        If modEvalIOEntry.TryGetUserHistorySheet(owner, wsEval) Then
+        modEvalIOEntry.GetUserEvalDateStats wsEval, firstEvalDate, latestEvalDate, previousEvalDate, recordCount
+        GetFirstCreatedDateText = firstEvalDate
+    End If
+
+    If Len(GetFirstCreatedDateText) = 0 Then
+        GetFirstCreatedDateText = modEvalIOEntry.GetClientMasterCreatedDateText(owner)
+    End If
     Exit Function
 EH:
     Err.Clear

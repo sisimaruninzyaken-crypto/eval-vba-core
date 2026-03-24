@@ -4421,6 +4421,14 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
           BuildDuplicateNameCandidatesMessage(indexWs, rowsByName)
 End Function
 
+
+
+Public Function TryGetUserHistorySheet(ByVal owner As Object, ByRef wsTarget As Worksheet) As Boolean
+    Dim message As String
+    TryGetUserHistorySheet = ResolveUserHistorySheet(owner, False, wsTarget, message)
+End Function
+
+
 Private Function TryResolveHistorySheetFromIndexRow(ByVal indexWs As Worksheet, _
                                                     ByVal indexRow As Long, _
                                                     ByVal targetName As String, _
@@ -4742,12 +4750,33 @@ Public Sub GetUserEvalDateStats(ByVal wsTarget As Worksheet, _
     If hasPrev Then previousEvalDate = Format$(prevD, "yyyy/mm/dd")
 End Sub
 
+
 Public Function GetPreviousEvalDateText(ByVal wsTarget As Worksheet) As String
     Dim firstEvalDate As String, latestEvalDate As String, previousEvalDate As String
     Dim recordCount As Long
     GetUserEvalDateStats wsTarget, firstEvalDate, latestEvalDate, previousEvalDate, recordCount
     GetPreviousEvalDateText = previousEvalDate
 End Function
+
+
+Public Function GetClientMasterCreatedDateText(ByVal owner As Object) As String
+    On Error GoTo EH
+
+    Dim ws As Worksheet: Set ws = EnsureClientMasterSheet()
+    Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
+    Dim nameVal As String: nameVal = Trim$(GetCtlTextGeneric(owner, "txtName"))
+    Dim shouldSkip As Boolean
+    Dim rowNo As Long
+
+    rowNo = FindClientMasterRow(ws, idVal, nameVal, shouldSkip)
+    If rowNo <= 0 Then Exit Function
+
+    GetClientMasterCreatedDateText = Trim$(CStr(ws.Cells(rowNo, 7).value))
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
 
 Private Sub UpdateEvalIndexStats(ByVal indexRow As Long, ByVal wsTarget As Worksheet)
     Dim firstEvalDate As String, latestEvalDate As String, previousEvalDate As String
