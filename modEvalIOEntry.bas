@@ -1551,6 +1551,26 @@ map = Array( _
         End If
     End If
 
+    ' --- 後方互換フォールバック: 治療経過が空の場合は Basic.Medical.CourseNote 列で再試行 ---
+    Dim cTC As Long: cTC = FindHeaderCol(ws, "治療経過")
+    If cTC = 0 Or Len(Trim$(CStr(ws.Cells(r, cTC).value))) = 0 Then
+        Dim cTCNew As Long: cTCNew = FindHeaderCol(ws, "Basic.Medical.CourseNote")
+        If cTCNew > 0 And Len(Trim$(CStr(ws.Cells(r, cTCNew).value))) > 0 Then
+            Dim oTxCourse As Object: Set oTxCourse = FindCtlDeep(owner, "txtTxCourse")
+            If Not oTxCourse Is Nothing Then oTxCourse.value = ws.Cells(r, cTCNew).value
+        End If
+    End If
+
+    ' --- 後方互換フォールバック: 合併疾患が空の場合は Basic.Medical.ComplicationNote 列で再試行 ---
+    Dim cCP As Long: cCP = FindHeaderCol(ws, "合併疾患")
+    If cCP = 0 Or Len(Trim$(CStr(ws.Cells(r, cCP).value))) = 0 Then
+        Dim cCPNew As Long: cCPNew = FindHeaderCol(ws, "Basic.Medical.ComplicationNote")
+        If cCPNew > 0 And Len(Trim$(CStr(ws.Cells(r, cCPNew).value))) > 0 Then
+            Dim oComplic As Object: Set oComplic = FindCtlDeep(owner, "txtComplications")
+            If Not oComplic Is Nothing Then oComplic.value = ws.Cells(r, cCPNew).value
+        End If
+    End If
+
     ' --- 後方互換フォールバック: 評価日が空の場合は Basic.EvalDate 列で再試行 ---
     Dim cED As Long: cED = FindHeaderCol(ws, "評価日")
     If cED = 0 Or Len(Trim$(CStr(ws.Cells(r, cED).value))) = 0 Then
