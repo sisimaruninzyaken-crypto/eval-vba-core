@@ -1,12 +1,12 @@
 Attribute VB_Name = "modPainIO"
-'=== [TEMP] Pain IO Load Parse Helpers (荳譎・ ===========================
+'=== [TEMP] Pain IO Load Parse Helpers (一時) ===========================
 Option Private Module
 
 
 Option Explicit
 
-Private Const COL_IO As Long = 156  ' HEADER_IO 蛻暦ｼ・valData・・
-Public gPainLoadEnabled As Boolean   ' 譌｢螳・False・郁ｪｭ霎ｼ遖∵ｭ｢・・
+Private Const COL_IO As Long = 156  ' HEADER_IO 列（EvalData）
+Public gPainLoadEnabled As Boolean   ' 既定=False（読込禁止）
 
 Private Function NormalizePainSite(ByVal s As String) As String
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary")
@@ -20,9 +20,9 @@ Private Function NormalizePainSite(ByVal s As String) As String
     a = Split(s, "/")
     For i = LBound(a) To UBound(a)
         t = Trim$(a(i))
-        ' 縲梧焔縲阪→縲梧欠縲阪・縺ｾ縺ｨ繧√※縲梧焔/謖・阪↓邨ｱ荳
-        If t = "謇・ Or t = "謖・ Then
-            d("謇・謖・) = 1
+        ' 「手」と「指」はまとめて「手/指」に統一
+        If t = "手" Or t = "指" Then
+            d("手/指") = 1
         Else
             d(t) = 1
         End If
@@ -33,7 +33,7 @@ End Function
 
 
 
-' IO譁・ｭ怜・縺九ｉ key 縺ｫ蟇ｾ蠢懊☆繧句､繧定ｿ斐☆・・: " 蛹ｺ蛻・ｊ縲・|" 繝ｬ繧ｳ繝ｼ繝牙玄蛻・ｊ・・
+' IO文字列から key に対応する値を返す（": " 区切り、"|" レコード区切り）
 Public Function IO_GetVal(ByVal ioText As String, ByVal key As String) As String
     Dim recs() As String, i As Long, t As String, p As Long, k As String, v As String
     IO_GetVal = ""
@@ -45,7 +45,7 @@ Public Function IO_GetVal(ByVal ioText As String, ByVal key As String) As String
         If Len(t) = 0 Then GoTo NextI
        p = InStr(1, t, ":")
 If p = 0 Then
-    p = InStr(1, t, "=")   ' 笘・％縺薙ｒ霑ｽ蜉・・蛹ｺ蛻・ｊ縺ｫ繧ょｯｾ蠢・
+    p = InStr(1, t, "=")   ' ★ここを追加：=区切りにも対応
 End If
 
 If p > 0 Then
@@ -62,8 +62,8 @@ NextI:
 End Function
 
 
-'=== [TEMP] Pain IO Load (譛蟆擾ｼ壹さ繝ｳ繝懶ｼ儀AS) ============================
-' 逶ｴ霑第怙邨り｡後・IO繧定ｪｭ霎ｼ縲∫名逞帙ち繝悶・荳ｻ隕√さ繝ｳ繝懊→VAS縺ｸ蜿肴丐
+'=== [TEMP] Pain IO Load (最小：コンボ＋VAS) ============================
+' 直近最終行のIOを読込、疼痛タブの主要コンボとVASへ反映
 Private Function ResolvePainPage(ByVal owner As Object) As Object
     Dim mpPhys As Object
     Dim i As Long
@@ -149,7 +149,7 @@ Private Sub LoadPainFromSheet_MinCombos(ByVal ws As Worksheet, ByVal hubRow As L
     
 End Sub
 
-' 譁・ｭ怜・ "A/B/C" 竊・Dictionary(Set) 蛹・
+' 文字列 "A/B/C" → Dictionary(Set) 化
 Private Function MakeSetFromSlash(ByVal s As String) As Object
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary")
     Dim a() As String, i As Long, t As String
@@ -163,7 +163,7 @@ Private Function MakeSetFromSlash(ByVal s As String) As Object
     Set MakeSetFromSlash = d
 End Function
 
-' ListBox 縺ｮ驕ｸ謚槫ｾｩ蜈・ｼ磯・岼譁・ｭ怜・荳閾ｴ・・
+' ListBox の選択復元（項目文字列一致）
 Private Sub RestoreListBoxSelections(lb As MSForms.ListBox, ByVal slash As String)
     Dim want As Object: Set want = MakeSetFromSlash(slash)
     Dim j As Long, txt As String
@@ -177,11 +177,11 @@ End Sub
 Private Sub RestorePainFactors(ByVal container As Object, ByVal slash As String)
     Dim want As Object: Set want = MakeSetFromSlash(slash)
     Dim c As Object, base As String
-    ' 縺・▲縺溘ｓ蜈ｨ隗｣髯､
+    ' いったん全解除
     For Each c In container.controls
         If TypeName(c) = "CheckBox" Then c.value = False
     Next
-    ' 隧ｲ蠖薙・縺ｿ True
+    ' 該当のみ True
     For Each c In container.controls
         If TypeName(c) = "CheckBox" Then
             base = c.name
@@ -195,7 +195,7 @@ Private Sub RestorePainFactors(ByVal container As Object, ByVal slash As String)
 End Sub
 
 
-' 逶ｴ霑第怙邨り｡後・IO繧定ｪｭ霎ｼ縲´istBox 縺ｨ Factors 繧貞ｾｩ蜈・
+' 直近最終行のIOを読込、ListBox と Factors を復元
 Private Sub LoadPainFromSheet_MinLists(ByVal ws As Worksheet, ByVal hubRow As Long, ByVal owner As Object)
     Dim s As String
     Dim ctl As Object
@@ -216,7 +216,7 @@ Private Sub LoadPainFromSheet_MinLists(ByVal ws As Worksheet, ByVal hubRow As Lo
     Set ctl = ResolvePainControl(owner, "lstPainSite")
     If Not ctl Is Nothing Then RestoreListBoxSelections ctl, t
 
-    ' ---- PainFactors : fraPainFactors 驟堺ｸ九・ CheckBox (Name荳閾ｴ) ----
+    ' ---- PainFactors : fraPainFactors 配下の CheckBox (Name一致) ----
     t = IO_GetVal(s, "PainFactors")
     Set ctl = ResolvePainControl(owner, "fraPainFactors")
     If Not ctl Is Nothing Then RestorePainFactors ctl, t
@@ -269,15 +269,15 @@ End Function
 
 
 '=== [TEMP] NOTE TextBox Finder =======================================
-' 蜆ｪ蜈・: 蜷咲ｧｰ縺ｫ "Memo" 繧貞性繧 TextBox
-' 蜆ｪ蜈・: MultiLine=True 縺ｮ TextBox・・AS邉ｻ繧帝勁螟厄ｼ・
-' 蜆ｪ蜈・: 荳願ｨ倥′辟｡縺代ｌ縺ｰ譛螟ｧ髱｢遨阪ゅ◆縺縺・VAS驟堺ｸ九・髯､螟・
+' 優先1: 名称に "Memo" を含む TextBox
+' 優先2: MultiLine=True の TextBox（VAS系を除外）
+' 優先3: 上記が無ければ最大面積。ただし VAS配下は除外
 Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
     Dim best As MSForms.TextBox
     Dim bestArea As Double
     Dim c As Object
 
-    ' 蜀榊ｸｰ謗｢邏｢
+    ' 再帰探索
     For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
             If InStr(1, c.name, "Memo", vbTextCompare) > 0 Then
@@ -293,7 +293,7 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
         End If
     Next
 
-    ' MultiLine 蜆ｪ蜈茨ｼ・AS驟堺ｸ九・髯､螟厄ｼ・
+    ' MultiLine 優先（VAS配下は除外）
     For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
             If SafeIsMultiLine(c) And Not IsUnderVAS(c) Then
@@ -308,7 +308,7 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
         End If
     Next
 
-    ' 譛螟ｧ髱｢遨搾ｼ・AS驟堺ｸ矩勁螟厄ｼ・
+    ' 最大面積（VAS配下除外）
     bestArea = -1
     For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
@@ -339,7 +339,7 @@ Private Function SafeIsMultiLine(tb As Object) As Boolean
     On Error GoTo 0
 End Function
 
-' fraVAS 驟堺ｸ九°縺ｩ縺・°繧貞宍蟇・愛螳夲ｼ医が繝悶ず繧ｧ繧ｯ繝亥盾辣ｧ縺ｧ蜀榊ｸｰ・・
+' fraVAS 配下かどうかを厳密判定（オブジェクト参照で再帰）
 Private Function IsUnderVAS(target As Object) As Boolean
     Dim pg As Object, vas As Object
     Set pg = ResolvePainPage(frmEval)
@@ -360,9 +360,9 @@ Private Function IsDescendantOf(container As Object, target As Object) As Boolea
 End Function
 
 
-'=== [TEMP] NOTE Loader (鄂ｮ謠帷沿) =======================================
+'=== [TEMP] NOTE Loader (置換版) =======================================
 Private Sub LoadPainFromSheet_Note(ByVal owner As Object)
-    Const COL_NOTE As Long = 108  ' HEADER_NOTE 蛻・
+    Const COL_NOTE As Long = 108  ' HEADER_NOTE 列
     Dim ws As Worksheet, lr As Long, noteText As String
     Dim pg As Object, tb As MSForms.TextBox
 
@@ -383,7 +383,7 @@ End Sub
 
 
 
-'=== [TEMP] Pain IO Loader (Finalize迚・ ===============================
+'=== [TEMP] Pain IO Loader (Finalize版) ===============================
 Public Sub LoadPainFromSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim prevEnabled As Boolean
     Dim txtDur As Object
@@ -416,7 +416,7 @@ End Sub
 
 
 
-'=== [TEMP] Latest row helper (IO/NOTE蝓ｺ貅・ ============================
+'=== [TEMP] Latest row helper (IO/NOTE基準) ============================
 Private Function LatestRowIO(ByVal ws As Worksheet) As Long
     LatestRowIO = WorksheetFunction.Max(ws.Cells(ws.rows.count, 156).End(xlUp).row, ws.Cells(ws.rows.count, 157).End(xlUp).row)
 
@@ -424,7 +424,7 @@ End Function
 '======================================================================
 
 
-'=== [TEMP] VAS蜊倅ｽ楢ｪｭ霎ｼ繝・ヰ繝・げ =======================================
+'=== [TEMP] VAS単体読込デバッグ =======================================
 Public Sub Debug_LoadVAS_FromLatest(ByVal owner As Object)
     Dim ws As Worksheet, lr As Long, s As String, t As String, alt As String
     Dim pg As Object
@@ -438,13 +438,13 @@ Public Sub Debug_LoadVAS_FromLatest(ByVal owner As Object)
 
     Debug.Print "[VAS-DBG] lr=", lr, "| IO.VAS=", t, "| NOTE=", alt
 
-    ' 縺ｾ縺壹け繝ｪ繧｢
+    ' まずクリア
     On Error Resume Next
     pg.controls("fraVAS").controls("txtVAS").text = ""
     pg.controls("fraVAS").controls("sldVAS").value = 0
     On Error GoTo 0
 
-    ' IO縺ｫ縺ゅｌ縺ｰ縺昴ｌ繧偵∫┌縺代ｌ縺ｰNOTE謨ｰ蛟､繧帝←逕ｨ
+    ' IOにあればそれを、無ければNOTE数値を適用
     If Len(t) = 0 And IsNumeric(alt) Then t = Trim$(alt)
     If Len(t) > 0 Then
         On Error Resume Next
@@ -457,7 +457,7 @@ Public Sub Debug_LoadVAS_FromLatest(ByVal owner As Object)
 End Sub
 '======================================================================
 
-'=== [TEMP] Pain UI Clear (襍ｷ蜍墓凾縺ｯ遨ｺ縺ｧ髢句ｧ・ ===========================
+'=== [TEMP] Pain UI Clear (起動時は空で開始) ===========================
 Public Sub ClearPainUI(ByVal owner As Object)
     Dim pg As Object, c As Object, lb As MSForms.ListBox
     Set pg = owner.controls("mpPhys").Pages(4)
@@ -477,7 +477,7 @@ Public Sub ClearPainUI(ByVal owner As Object)
     pg.controls("fraVAS").controls("sldVAS").value = 0
     On Error GoTo 0
 
-    ' --- ListBox 蜈ｨ隗｣髯､ ---
+    ' --- ListBox 全解除 ---
     On Error Resume Next
     Set lb = pg.controls("lstPainQual")
     If Not lb Is Nothing Then
@@ -497,7 +497,7 @@ On Error GoTo 0
 
 
 
-    ' --- Factors 蜈ｨ繝√ぉ繝・け隗｣髯､・亥・蟶ｰ・・--
+    ' --- Factors 全チェック解除（再帰）---
     ClearChecksRecursive pg
 End Sub
 
@@ -512,7 +512,7 @@ End Sub
 
 
 
-'=== [TEMP] 謇句虚・壽怙譁ｰ陦後ｒ蜊ｳ隱ｭ霎ｼ ======================================
+'=== [TEMP] 手動：最新行を即読込 ======================================
 Public Sub LoadLatestPainNow()
     
 
@@ -529,7 +529,7 @@ End Sub
 
 Sub ExportAllVBA()
     Dim p As String, vbComp As Object, ext As String
-    p = ThisWorkbook.path & "\vba_export"  ' 蜃ｺ蜉帛・繝輔か繝ｫ繝
+    p = ThisWorkbook.path & "\vba_export"  ' 出力先フォルダ
     On Error Resume Next
     MkDir p
     On Error GoTo 0
@@ -546,7 +546,7 @@ Sub ExportAllVBA()
 End Sub
 
 
-'=== LoadLatestSensoryNow・・025-10-22邨ｱ蜷育沿・・==
+'=== LoadLatestSensoryNow（2025-10-22統合版）===
 Public Sub LoadLatestSensoryNow(Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim r As Long: r = LatestRowByHeader("IO_Sensory", ws)
@@ -555,11 +555,11 @@ Public Sub LoadLatestSensoryNow(Optional ByVal ws As Worksheet)
         Exit Sub
     End If
 
-    '--- 譌ｧ隱ｭ霎ｼ繝ｭ繧ｸ繝・け縺ｯ蠕梧婿莠呈鋤縺ｮ縺溘ａ繧ｳ繝｡繝ｳ繝医い繧ｦ繝・---
+    '--- 旧読込ロジックは後方互換のためコメントアウト ---
     'Call ParseSensoryData(ws.Cells(r, HeaderCol("IO_Sensory", ws)).Value)
     '------------------------------------------------------------
 
-    ' 譁ｰ繝ｭ繧ｸ繝・け・夂峩謗･API縺ｧ隱ｭ縺ｿ霎ｼ縺ｿ
+    ' 新ロジック：直接APIで読み込み
     Dim raw As String
     raw = LoadLatestSensoryNow_Raw(ws)
     Debug.Print "[LoadSensory] R=" & r & " Len=" & Len(raw) & " | " & Left$(raw, 60)

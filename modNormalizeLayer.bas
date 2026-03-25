@@ -1,7 +1,7 @@
 Attribute VB_Name = "modNormalizeLayer"
 Option Explicit
 
-' 謚ｽ蜃ｺ繝・・繧ｿ繧貞愛螳壼庄閭ｽ縺ｪ蠖｢縺ｫ豁｣隕丞喧縺吶ｋ縲・
+' 抽出データを判定可能な形に正規化する。
 Public Function NormalizeBasicSourceData(ByVal extracted As Object) As Object
     Dim normalized As Object
 

@@ -31,7 +31,7 @@ Private Sub DumpControlsRecursive(ByVal parent As Object, ByVal depth As Long)
     For Each c In parent.controls
         DumpOne c, depth
 
-        ' 蟄舌ｒ謖√▽蜿ｯ閭ｽ諤ｧ縺後≠繧九ｂ縺ｮ縺縺第ｽ懊ｋ・・rame / MultiPage / Page・・
+        ' 子を持つ可能性があるものだけ潜る（Frame / MultiPage / Page）
         If HasControls(c) Then
             DumpControlsRecursive c, depth + 1
         End If
@@ -53,11 +53,11 @@ Private Sub DumpOne(ByVal c As Object, ByVal depth As Long)
                   " W=" & f2(SafeProp(c, "Width")) & _
                   " H=" & f2(SafeProp(c, "Height"))
 
-    ' 繧医￥莠区腐繧狗ｳｻ繧よ而縺医ａ縺ｫ諡ｾ縺・ｼ亥叙繧後↑縺・・繝ｭ繝代ユ繧｣縺ｯ辟｡隕厄ｼ・
+    ' よく事故る系も控えめに拾う（取れないプロパティは無視）
     line = line & "  Vis=" & SafeProp(c, "Visible")
     line = line & "  En=" & SafeProp(c, "Enabled")
 
-    ' MultiPage / Page / Frame縺ｯInside/Scroll繧ょ・縺・
+    ' MultiPage / Page / FrameはInside/Scrollも出す
     If TypeName(c) = "MultiPage" Or TypeName(c) = "Page" Or TypeName(c) = "Frame" Then
         line = line & "  InH=" & f2(SafeProp(c, "InsideHeight")) & " InW=" & f2(SafeProp(c, "InsideWidth"))
         line = line & "  ScrH=" & f2(SafeProp(c, "ScrollHeight")) & " ScrW=" & f2(SafeProp(c, "ScrollWidth"))
@@ -68,7 +68,7 @@ Private Sub DumpOne(ByVal c As Object, ByVal depth As Long)
     Debug.Print line
 #End If
 
-    ' MultiPage 縺ｮ Pages 繧呈・遉ｺ逧・↓蛻玲嫌
+    ' MultiPage の Pages を明示的に列挙
     If TypeName(c) = "MultiPage" Then
         DumpMultiPagePages c, depth + 1
     End If
@@ -155,7 +155,7 @@ End Function
 
 Public Sub DumpUFTree_ToFile(ByVal uf As Object)
 
-MsgBox "縺薙・Dump縺ｯ蜊ｱ髯ｺ迚医〒縺吶ＮodUFDumpSafe 縺ｮ DumpFrmEvalTree_ToFile_Safe 繧剃ｽｿ縺｣縺ｦ縺上□縺輔＞縲・, vbExclamation
+MsgBox "このDumpは危険版です。modUFDumpSafe の DumpFrmEvalTree_ToFile_Safe を使ってください。", vbExclamation
 Exit Sub
 
 
@@ -215,7 +215,7 @@ Private Sub DumpPages_ToFile(ByVal mp As Object, ByVal depth As Long, ByVal ff A
         Print #ff, Ind(depth) & "* Page(" & i & ") Name=" & pg.name & _
                    " Caption=" & pg.caption
 
-        ' 笘・縺薙％縺碁㍾隕・ｼ啀age 繧定ｵｷ轤ｹ縺ｫ蜀榊ｸｰ
+        ' ★ ここが重要：Page を起点に再帰
         DumpControlsRecursive_ToFile pg, depth + 1, ff
     Next
     Exit Sub
@@ -528,7 +528,7 @@ Public Sub DumpMP_OnePage_TreeByParent_ToFile(ByVal uf As Object, ByVal mpName A
     Print #ff, String(90, "=")
     Print #ff, "[TREE BY PARENT] " & mpName & " / " & pageName
 
-    ' 逶ｴ荳具ｼ・arent縺継g縺ｮ繧ゅ・・峨□縺代ｒ蛻玲嫌縺励※縲√◎縺薙°繧牙・蟶ｰ
+    ' 直下（Parentがpgのもの）だけを列挙して、そこから再帰
     DumpChildrenByParent_ToFile pg, pg, 0, ff
 
     Close #ff
@@ -553,7 +553,7 @@ Private Sub DumpChildrenByParent_ToFile(ByVal root As Object, ByVal parent As Ob
                            " T=" & f2(SafeProp(c, "Top")) & _
                            " W=" & f2(SafeProp(c, "Width")) & _
                            " H=" & f2(SafeProp(c, "Height"))
-                ' 谺｡縺ｮ髫主ｱ､縺ｸ
+                ' 次の階層へ
                 If CanHaveChildren(c) Then
                     DumpChildrenByParent_ToFile root, c, depth + 1, ff
                 End If
@@ -718,7 +718,7 @@ End Sub
 
 
 
-'=== 蜈ｨ繝ｬ繧､繧｢繧ｦ繝域ｧ矩繧剃ｸ諡ｬ繝繝ｳ繝暦ｼ・mmediate縺ｯ縺薙ｌ繧貞他縺ｶ縺縺托ｼ・==
+'=== 全レイアウト構造を一括ダンプ（Immediateはこれを呼ぶだけ）===
 Public Sub Dump_AllLayout_Snapshot()
     On Error GoTo EH
 
@@ -726,7 +726,7 @@ Public Sub Dump_AllLayout_Snapshot()
     Dim mpPhys As Object, mpADL As Object
     Dim mp2 As Object, mp3 As Object
 
-    '--- 1) 繝ｫ繝ｼ繝・MultiPage1 (8繝壹・繧ｸ) ---
+    '--- 1) ルート MultiPage1 (8ページ) ---
     Set mp1 = frmEval.controls("MultiPage1")
 
     Dim i As Long
@@ -735,25 +735,25 @@ Public Sub Dump_AllLayout_Snapshot()
         DumpTreeByParent_ToFile pg
     Next i
 
-    '--- 2) Page3 -> Frame3 -> mpPhys (6繝壹・繧ｸ) ---
+    '--- 2) Page3 -> Frame3 -> mpPhys (6ページ) ---
     Set mpPhys = mp1.Pages(2).controls("Frame3").controls("mpPhys")
     For i = 0 To mpPhys.Pages.count - 1
         DumpTreeByParent_ToFile mpPhys.Pages(i)
     Next i
 
-    '--- 3) Page4 -> Frame4 -> mpADL (3繝壹・繧ｸ) ---
+    '--- 3) Page4 -> Frame4 -> mpADL (3ページ) ---
     Set mpADL = mp1.Pages(3).controls("Frame4").controls("mpADL")
     For i = 0 To mpADL.Pages.count - 1
         DumpTreeByParent_ToFile mpADL.Pages(i)
     Next i
 
-    '--- 4) Page6 -> Frame6 -> MultiPage2 (3繝壹・繧ｸ) ---
+    '--- 4) Page6 -> Frame6 -> MultiPage2 (3ページ) ---
     Set mp2 = mp1.Pages(5).controls("Frame6").controls("MultiPage2")
     For i = 0 To mp2.Pages.count - 1
         DumpTreeByParent_ToFile mp2.Pages(i)
     Next i
 
-    '--- 5) MultiPage2 縺ｮ Page9 -> Frame26 -> MultiPage3 (2繝壹・繧ｸ) ---
+    '--- 5) MultiPage2 の Page9 -> Frame26 -> MultiPage3 (2ページ) ---
     Set mp3 = mp2.Pages(1).controls("Frame26").controls("MultiPage3")
     For i = 0 To mp3.Pages.count - 1
         DumpTreeByParent_ToFile mp3.Pages(i)
@@ -772,15 +772,15 @@ Private Function GetCaptionSafe(ByVal o As Object) As String
     On Error GoTo EH
     Dim s As String
     s = CStr(CallByName(o, "Caption", VbGet))
-    s = Replace(s, "\", "・ｼ")
-    s = Replace(s, "/", "・・)
-    s = Replace(s, ":", "・・)
-    s = Replace(s, "*", "・・)
-    s = Replace(s, "?", "・・)
+    s = Replace(s, "\", "＼")
+    s = Replace(s, "/", "／")
+    s = Replace(s, ":", "：")
+    s = Replace(s, "*", "＊")
+    s = Replace(s, "?", "？")
    s = Replace(s, Chr(34), ChrW(&H201D))
-    s = Replace(s, "<", "・・)
-    s = Replace(s, ">", "・・)
-    s = Replace(s, "|", "・・)
+    s = Replace(s, "<", "＜")
+    s = Replace(s, ">", "＞")
+    s = Replace(s, "|", "｜")
     GetCaptionSafe = s
     Exit Function
 EH:

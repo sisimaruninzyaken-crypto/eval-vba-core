@@ -18,14 +18,14 @@ Public Function BuildBasicPlanStructure(ByVal mainCause As String, _
     Set mmtMap = FilterMMTMap(mmtMap, result("Activity_Long"))
     
     Select Case result("Activity_Long")
-          Case "螻句・豁ｩ陦・
-              mmtTargetMuscle = PickMMTTarget_WithPriority(mmtMap, "閧｡螟冶ｻ｢,閭悟ｱ・閹昜ｼｸ螻・)
-          Case "繝医う繝ｬ蜍穂ｽ・
-              mmtTargetMuscle = PickMMTTarget_WithPriority(mmtMap, "閧｡螟冶ｻ｢,閹昜ｼｸ螻・)
-          Case "螻句､匁ｭｩ陦・
-              mmtTargetMuscle = PickMMTTarget_WithPriority(mmtMap, "閭悟ｱ・閧｡螟冶ｻ｢,閹昜ｼｸ螻・)
-          Case "遶九■荳翫′繧・
-              mmtTargetMuscle = PickMMTTarget_WithPriority(mmtMap, "閹昜ｼｸ螻・閧｡螟冶ｻ｢,閧｡莨ｸ螻・)
+          Case "屋内歩行"
+              mmtTargetMuscle = PickMMTTarget_WithPriority(mmtMap, "股外転,背屈,膝伸展")
+          Case "トイレ動作"
+              mmtTargetMuscle = PickMMTTarget_WithPriority(mmtMap, "股外転,膝伸展")
+          Case "屋外歩行"
+              mmtTargetMuscle = PickMMTTarget_WithPriority(mmtMap, "背屈,股外転,膝伸展")
+          Case "立ち上がり"
+              mmtTargetMuscle = PickMMTTarget_WithPriority(mmtMap, "膝伸展,股外転,股伸展")
           Case Else
               mmtTargetMuscle = PickMMTTarget(mmtMap)
     End Select
@@ -36,103 +36,103 @@ Public Function BuildBasicPlanStructure(ByVal mainCause As String, _
 
     
         If Len(Trim$(needSelf)) > 0 Then
-          reason = "譛ｬ莠ｺ蟶梧悍"
+          reason = "本人希望"
         ElseIf Len(Trim$(needFamily)) > 0 Then
-          reason = "螳ｶ譌丞ｸ梧悍"
+          reason = "家族希望"
         Else
-          reason = "蝗ｰ髮｣蠎ｦ荳贋ｽ・
+          reason = "困難度上位"
         End If
 
     result("Activity_Reason") = reason
 
     Select Case mainCause
-        Case "鮗ｻ逞ｺ"
+        Case "麻痺"
         
         If result("MMT_MinScore") <= 2 Then
-            fxCore = mmtTargetMuscle & "縺ｮ髫乗э蜿守ｸｮ迯ｲ蠕励↓繧医ｊ"
+            fxCore = mmtTargetMuscle & "の随意収縮獲得により"
         Else
-            fxCore = mmtTargetMuscle & "縺ｮ遲句鴨謾ｹ蝟・↓繧医ｊ"
+            fxCore = mmtTargetMuscle & "の筋力改善により"
         End If
 
     Select Case result("Activity_Long")
     
-        Case "螻句・豁ｩ陦・
-            result("Function_Long") = fxCore & "遶玖・譛溷ｮ牙ｮ壽ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "屋内歩行"
+            result("Function_Long") = fxCore & "立脚期安定性向上を図る。"
         
-        Case "遶九■荳翫′繧・
-            result("Function_Long") = fxCore & "遶九■荳翫′繧頑凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "立ち上がり"
+            result("Function_Long") = fxCore & "立ち上がり時の麻痺側支持性向上を図る。"
         
-        Case "繝医う繝ｬ", "繝医う繝ｬ蜍穂ｽ・
-            result("Function_Long") = fxCore & "萓ｿ蠎ｧ遘ｻ荵玲凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "トイレ", "トイレ動作"
+            result("Function_Long") = fxCore & "便座移乗時の麻痺側支持性向上を図る。"
         
-        Case "螻句､匁ｭｩ陦・
-            result("Function_Long") = fxCore & "谿ｵ蟾ｮ譏・剄譎ゅ・螳牙ｮ壽ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "屋外歩行"
+            result("Function_Long") = fxCore & "段差昇降時の安定性向上を図る。"
         
-        Case "蜈･豬ｴ荳騾｣蜍穂ｽ・
-            result("Function_Long") = fxCore & "豬ｴ讒ｽ縺ｾ縺溘℃蜍穂ｽ懈凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "入浴一連動作"
+            result("Function_Long") = fxCore & "浴槽またぎ動作時の麻痺側支持性向上を図る。"
 
-        Case "遘ｻ荵・
-            result("Function_Long") = fxCore & "遘ｻ荵玲凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "移乗"
+            result("Function_Long") = fxCore & "移乗時の麻痺側支持性向上を図る。"
 
-        Case "襍ｷ螻・ｸ騾｣蜍穂ｽ・
-            result("Function_Long") = fxCore & "襍ｷ縺堺ｸ翫′繧頑凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "起居一連動作"
+            result("Function_Long") = fxCore & "起き上がり時の麻痺側支持性向上を図る。"
            
         Case Else
-            result("Function_Long") = mmtTargetMuscle & "縺ｮ遲句鴨謾ｹ蝟・ｒ蝗ｳ繧九・
+            result("Function_Long") = mmtTargetMuscle & "の筋力改善を図る。"
             
     End Select
    
-    Case "逍ｼ逞・
+    Case "疼痛"
 
     Select Case result("Activity_Long")
 
-        Case "螻句・豁ｩ陦・
-            result("Function_Long") = "豁ｩ陦梧凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
+        Case "屋内歩行"
+            result("Function_Long") = "歩行時の疼痛軽減を図る。"
 
-        Case "螻句､匁ｭｩ陦・
-            result("Function_Long") = "螻句､匁ｭｩ陦梧凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
+        Case "屋外歩行"
+            result("Function_Long") = "屋外歩行時の疼痛軽減を図る。"
 
-        Case "繝医う繝ｬ蜍穂ｽ・
-            result("Function_Long") = "遶九■荳翫′繧頑凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
+        Case "トイレ動作"
+            result("Function_Long") = "立ち上がり時の疼痛軽減を図る。"
 
-        Case "蜈･豬ｴ荳騾｣蜍穂ｽ・
-            result("Function_Long") = "蜈･豬ｴ蜍穂ｽ懈凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
+        Case "入浴一連動作"
+            result("Function_Long") = "入浴動作時の疼痛軽減を図る。"
 
-        Case "遘ｻ荵・
-            result("Function_Long") = "遘ｻ荵怜虚菴懈凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
+        Case "移乗"
+            result("Function_Long") = "移乗動作時の疼痛軽減を図る。"
 
-        Case "襍ｷ螻・ｸ騾｣蜍穂ｽ・
-            result("Function_Long") = "襍ｷ螻・虚菴懈凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
+        Case "起居一連動作"
+            result("Function_Long") = "起居動作時の疼痛軽減を図る。"
 
         Case Else
-            result("Function_Long") = "逍ｼ逞帙・霆ｽ貂帙ｒ蝗ｳ繧九・
+            result("Function_Long") = "疼痛の軽減を図る。"
 
     End Select
        
-    Case "蝗ｰ髮｣蠎ｦ"
+    Case "困難度"
 
     Select Case result("Activity_Long")
 
-        Case "螻句・豁ｩ陦・
-            result("Function_Long") = "譁ｹ蜷題ｻ｢謠帶凾縺ｮ螳牙ｮ壽ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "屋内歩行"
+            result("Function_Long") = "方向転換時の安定性向上を図る。"
 
-        Case "螻句､匁ｭｩ陦・
-            result("Function_Long") = "谿ｵ蟾ｮ譏・剄譎ゅ・螳牙ｮ壽ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "屋外歩行"
+            result("Function_Long") = "段差昇降時の安定性向上を図る。"
 
-        Case "繝医う繝ｬ蜍穂ｽ・
-            result("Function_Long") = "譁ｹ蜷題ｻ｢謠帛虚菴懊・螳牙ｮ壼喧繧貞峙繧九・
+        Case "トイレ動作"
+            result("Function_Long") = "方向転換動作の安定化を図る。"
 
-        Case "蜈･豬ｴ荳騾｣蜍穂ｽ・
-            result("Function_Long") = "豬ｴ螳､蜀・婿蜷題ｻ｢謠帙・螳牙ｮ壽ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "入浴一連動作"
+            result("Function_Long") = "浴室内方向転換の安定性向上を図る。"
 
-        Case "遘ｻ荵・
-            result("Function_Long") = "蛛ｴ譁ｹ遘ｻ蜍墓凾縺ｮ螳牙ｮ壽ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "移乗"
+            result("Function_Long") = "側方移動時の安定性向上を図る。"
 
-        Case "襍ｷ螻・ｸ騾｣蜍穂ｽ・
-            result("Function_Long") = "襍ｷ縺堺ｸ翫′繧雁虚菴懊・螳牙ｮ壼喧繧貞峙繧九・
+        Case "起居一連動作"
+            result("Function_Long") = "起き上がり動作の安定化を図る。"
 
         Case Else
-            result("Function_Long") = "荳玖い讖溯・縺ｮ蜈ｨ菴鍋噪蜷台ｸ翫ｒ蝗ｳ繧九・
+            result("Function_Long") = "下肢機能の全体的向上を図る。"
 
     End Select
     
@@ -141,43 +141,43 @@ Public Function BuildBasicPlanStructure(ByVal mainCause As String, _
     End Select
 
     Select Case mainCause
-      Case "鮗ｻ逞ｺ"
+      Case "麻痺"
        If result("MMT_MinScore") <= 2 Then
-    result("Function_Short") = mmtTargetMuscle & "縺ｮ髫乗э蜿守ｸｮ迯ｲ蠕励ｒ蝗ｳ繧九・
+    result("Function_Short") = mmtTargetMuscle & "の随意収縮獲得を図る。"
 Else
-    result("Function_Short") = mmtTargetMuscle & "縺ｮ遲句鴨謾ｹ蝟・ｒ蝗ｳ繧九・
+    result("Function_Short") = mmtTargetMuscle & "の筋力改善を図る。"
 End If
 
-      Case "逍ｼ逞・
-        result("Function_Short") = "逍ｼ逞幄ｪ倡匱蜍穂ｽ懊・霆ｽ貂帙♀繧医・雋闕ｷ隱ｿ謨ｴ繧貞峙繧九・
-      Case "蝗ｰ髮｣蠎ｦ"
-        result("Function_Short") = "荳ｻ隕√・繝医Ν繝阪ャ繧ｯ遲九・讖溯・謾ｹ蝟・ｒ蝗ｳ繧九・
+      Case "疼痛"
+        result("Function_Short") = "疼痛誘発動作の軽減および負荷調整を図る。"
+      Case "困難度"
+        result("Function_Short") = "主要ボトルネック筋の機能改善を図る。"
       Case Else
         result("Function_Short") = ""
     End Select
 
     result("Activity_Short") = BuildActivityShort_ByActivity(mainCause, result("Activity_Long"), mmtTargetMuscle, result("MMT_MinScore"))
-    result("Participation_Long") = "遘ｻ蜍戊・蜉帙・蜷台ｸ翫↓繧医ｊ" & result("Activity_Long") & "縺ｮ讖滉ｼ壹ｒ謖√※繧狗憾諷九ｒ逶ｮ謖・☆縲・
+    result("Participation_Long") = "移動能力の向上により" & result("Activity_Long") & "の機会を持てる状態を目指す。"
       
-    shortCore = Replace(result("Activity_Short"), "繧貞峙繧九・, "")
+    shortCore = Replace(result("Activity_Short"), "を図る。", "")
 
 
 Select Case result("Activity_Long")
 
-    Case "螻句､匁ｭｩ陦・
-        result("Participation_Short") = shortCore & "繧貞峙繧翫∝､門・讖滉ｼ壹・諡｡螟ｧ縺ｫ蜷代￠縺滓ｺ門ｙ繧定｡後≧縲・
+    Case "屋外歩行"
+        result("Participation_Short") = shortCore & "を図り、外出機会の拡大に向けた準備を行う。"
 
-    Case "繝医う繝ｬ蜍穂ｽ・
-        result("Participation_Short") = shortCore & "繧貞峙繧翫∬・遶区賜豕・ｩ滉ｼ壹・諡｡螟ｧ縺ｫ蜷代￠縺滓ｺ門ｙ繧定｡後≧縲・
+    Case "トイレ動作"
+        result("Participation_Short") = shortCore & "を図り、自立排泄機会の拡大に向けた準備を行う。"
 
-    Case "蜈･豬ｴ荳騾｣蜍穂ｽ・
-        result("Participation_Short") = shortCore & "繧貞峙繧翫∝・豬ｴ閾ｪ遶区ｩ滉ｼ壹・諡｡螟ｧ縺ｫ蜷代￠縺滓ｺ門ｙ繧定｡後≧縲・
+    Case "入浴一連動作"
+        result("Participation_Short") = shortCore & "を図り、入浴自立機会の拡大に向けた準備を行う。"
 
-    Case "遘ｻ荵・
-        result("Participation_Short") = shortCore & "繧貞峙繧翫∵律蟶ｸ逕滓ｴｻ蜀・ｧｻ蜍墓ｩ滉ｼ壹・諡｡螟ｧ縺ｫ蜷代￠縺滓ｺ門ｙ繧定｡後≧縲・
+    Case "移乗"
+        result("Participation_Short") = shortCore & "を図り、日常生活内移動機会の拡大に向けた準備を行う。"
 
     Case Else
-        result("Participation_Short") = shortCore & "繧貞峙繧翫・ & result("Activity_Long") & "縺ｮ讖滉ｼ壽僑螟ｧ縺ｫ蜷代￠縺滓ｺ門ｙ繧定｡後≧縲・
+        result("Participation_Short") = shortCore & "を図り、" & result("Activity_Long") & "の機会拡大に向けた準備を行う。"
 
 End Select
     
@@ -223,20 +223,20 @@ End Function
 
 Public Function GetCandidateMuscles(ByVal activityLong As String) As String
     Select Case activityLong
-        Case "螻句・豁ｩ陦・
-            GetCandidateMuscles = "閧｡螟冶ｻ｢,閭悟ｱ・閹昜ｼｸ螻・
-        Case "螻句､匁ｭｩ陦・
-            GetCandidateMuscles = "閭悟ｱ・閧｡螟冶ｻ｢,閹昜ｼｸ螻・
-        Case "繝医う繝ｬ蜍穂ｽ・
-            GetCandidateMuscles = "閧｡螟冶ｻ｢,閹昜ｼｸ螻・閭悟ｱ・
-        Case "遶九■荳翫′繧・
-            GetCandidateMuscles = "閹昜ｼｸ螻・閧｡莨ｸ螻・閧｡螟冶ｻ｢"
-        Case "遘ｻ荵・
-            GetCandidateMuscles = "閧｡螟冶ｻ｢,閹昜ｼｸ螻・
-        Case "蜈･豬ｴ荳騾｣蜍穂ｽ・
-            GetCandidateMuscles = "閧｡螟冶ｻ｢,閹昜ｼｸ螻・閭悟ｱ・
-        Case "襍ｷ螻・ｸ騾｣蜍穂ｽ・
-            GetCandidateMuscles = "閧｡螟冶ｻ｢,閹昜ｼｸ螻・
+        Case "屋内歩行"
+            GetCandidateMuscles = "股外転,背屈,膝伸展"
+        Case "屋外歩行"
+            GetCandidateMuscles = "背屈,股外転,膝伸展"
+        Case "トイレ動作"
+            GetCandidateMuscles = "股外転,膝伸展,背屈"
+        Case "立ち上がり"
+            GetCandidateMuscles = "膝伸展,股伸展,股外転"
+        Case "移乗"
+            GetCandidateMuscles = "股外転,膝伸展"
+        Case "入浴一連動作"
+            GetCandidateMuscles = "股外転,膝伸展,背屈"
+        Case "起居一連動作"
+            GetCandidateMuscles = "股外転,膝伸展"
         Case Else
             GetCandidateMuscles = ""
     End Select
@@ -255,10 +255,10 @@ Public Function PickActivityLong(ByVal needSelf As String, _
         rawValue = Trim$(needByDifficulty)
     End If
     
-    ' ---- 豁｣隕丞喧蜃ｦ逅・----
+    ' ---- 正規化処理 ----
     Select Case rawValue
-        Case "繝医う繝ｬ"
-            PickActivityLong = "繝医う繝ｬ蜍穂ｽ・
+        Case "トイレ"
+            PickActivityLong = "トイレ動作"
         Case Else
             PickActivityLong = rawValue
     End Select
@@ -268,14 +268,14 @@ End Function
 Public Function BuildActivityShort(ByVal mainCause As String, ByVal activityLong As String) As String
     
     Select Case mainCause
-        Case "鮗ｻ逞ｺ"
-            BuildActivityShort = activityLong & "譎ゅ・鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+        Case "麻痺"
+            BuildActivityShort = activityLong & "時の麻痺側支持性向上を図る。"
             
-        Case "逍ｼ逞・
-            BuildActivityShort = activityLong & "譎ゅ・逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
+        Case "疼痛"
+            BuildActivityShort = activityLong & "時の疼痛軽減を図る。"
             
         Case Else
-            BuildActivityShort = activityLong & "蜍穂ｽ懊・螳牙ｮ壼喧繧貞峙繧九・
+            BuildActivityShort = activityLong & "動作の安定化を図る。"
     End Select
     
     
@@ -292,93 +292,93 @@ Public Function BuildActivityShort_ByActivity(ByVal mainCause As String, _
                                               
     Select Case activityLong
     
-        Case "繝医う繝ｬ", "繝医う繝ｬ蜍穂ｽ・
+        Case "トイレ", "トイレ動作"
             Select Case mainCause
-                 Case "鮗ｻ逞ｺ"
+                 Case "麻痺"
                     If mmtMinScore <= 2 Then
-                        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ髫乗э蜿守ｸｮ迯ｲ蠕励ｒ騾壹§縺ｦ縲∽ｾｿ蠎ｧ遘ｻ荵玲凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                        BuildActivityShort_ByActivity = mmtTargetMuscle & "の随意収縮獲得を通じて、便座移乗時の麻痺側支持性向上を図る。"
                     Else
-                        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ遲句鴨謾ｹ蝟・ｒ騾壹§縺ｦ縲∽ｾｿ蠎ｧ遘ｻ荵玲凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                        BuildActivityShort_ByActivity = mmtTargetMuscle & "の筋力改善を通じて、便座移乗時の麻痺側支持性向上を図る。"
                     End If
                     
-                Case "逍ｼ逞・: BuildActivityShort_ByActivity = "遶九■荳翫′繧頑凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
-                Case Else:  BuildActivityShort_ByActivity = "譁ｹ蜷題ｻ｢謠帛虚菴懊・螳牙ｮ壼喧繧貞峙繧九・
+                Case "疼痛": BuildActivityShort_ByActivity = "立ち上がり時の疼痛軽減を図る。"
+                Case Else:  BuildActivityShort_ByActivity = "方向転換動作の安定化を図る。"
                 End Select
             
-        Case "螻句・豁ｩ陦・
+        Case "屋内歩行"
             Select Case mainCause
-  Case "鮗ｻ逞ｺ"
+  Case "麻痺"
     If mmtMinScore <= 2 Then
-        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ髫乗э蜿守ｸｮ迯ｲ蠕励ｒ騾壹§縺ｦ縲∝ｷｦ蜿ｳ闕ｷ驥榊ｷｮ縺ｮ霆ｽ貂帙ｒ蝗ｳ繧九・
+        BuildActivityShort_ByActivity = mmtTargetMuscle & "の随意収縮獲得を通じて、左右荷重差の軽減を図る。"
     Else
-        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ遲句鴨謾ｹ蝟・ｒ騾壹§縺ｦ縲∝ｷｦ蜿ｳ闕ｷ驥榊ｷｮ縺ｮ霆ｽ貂帙ｒ蝗ｳ繧九・
+        BuildActivityShort_ByActivity = mmtTargetMuscle & "の筋力改善を通じて、左右荷重差の軽減を図る。"
     End If
-                Case "逍ｼ逞・: BuildActivityShort_ByActivity = "豁ｩ陦梧凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
-                Case "蝗ｰ髮｣蠎ｦ": BuildActivityShort_ByActivity = "譁ｹ蜷題ｻ｢謠帶凾縺ｮ螳牙ｮ壽ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                Case "疼痛": BuildActivityShort_ByActivity = "歩行時の疼痛軽減を図る。"
+                Case "困難度": BuildActivityShort_ByActivity = "方向転換時の安定性向上を図る。"
                 Case Else: BuildActivityShort_ByActivity = BuildActivityShort(mainCause, activityLong)
  
             End Select
             
-        Case "螻句､匁ｭｩ陦・
+        Case "屋外歩行"
             Select Case mainCause
-                Case "鮗ｻ逞ｺ"
+                Case "麻痺"
                    If mmtMinScore <= 2 Then
-                       BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ髫乗э蜿守ｸｮ迯ｲ蠕励ｒ騾壹§縺ｦ縲∵ｮｵ蟾ｮ譏・剄譎ゅ・鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                       BuildActivityShort_ByActivity = mmtTargetMuscle & "の随意収縮獲得を通じて、段差昇降時の麻痺側支持性向上を図る。"
                 Else
-                       BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ遲句鴨謾ｹ蝟・ｒ騾壹§縺ｦ縲∵ｮｵ蟾ｮ譏・剄譎ゅ・鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                       BuildActivityShort_ByActivity = mmtTargetMuscle & "の筋力改善を通じて、段差昇降時の麻痺側支持性向上を図る。"
                 End If
                 
-                Case "逍ｼ逞・: BuildActivityShort_ByActivity = "螻句､匁ｭｩ陦梧凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
-                Case Else:  BuildActivityShort_ByActivity = "谿ｵ蟾ｮ譏・剄譎ゅ・螳牙ｮ壽ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                Case "疼痛": BuildActivityShort_ByActivity = "屋外歩行時の疼痛軽減を図る。"
+                Case Else:  BuildActivityShort_ByActivity = "段差昇降時の安定性向上を図る。"
             End Select
             
     
-        Case "遘ｻ荵・
+        Case "移乗"
             Select Case mainCause
-                Case "鮗ｻ逞ｺ"
+                Case "麻痺"
                     If mmtMinScore <= 2 Then
-                        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ髫乗э蜿守ｸｮ迯ｲ蠕励ｒ騾壹§縺ｦ縲√・繝・ラ繝ｻ讀・ｭ宣俣遘ｻ荵玲凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                        BuildActivityShort_ByActivity = mmtTargetMuscle & "の随意収縮獲得を通じて、ベッド・椅子間移乗時の麻痺側支持性向上を図る。"
                     Else
-                        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ遲句鴨謾ｹ蝟・ｒ騾壹§縺ｦ縲√・繝・ラ繝ｻ讀・ｭ宣俣遘ｻ荵玲凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                        BuildActivityShort_ByActivity = mmtTargetMuscle & "の筋力改善を通じて、ベッド・椅子間移乗時の麻痺側支持性向上を図る。"
                     End If
-                Case "逍ｼ逞・: BuildActivityShort_ByActivity = "遘ｻ荵玲凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
-                Case Else:  BuildActivityShort_ByActivity = "遘ｻ荵怜虚菴懊・螳牙ｮ壼喧繧貞峙繧九・
+                Case "疼痛": BuildActivityShort_ByActivity = "移乗時の疼痛軽減を図る。"
+                Case Else:  BuildActivityShort_ByActivity = "移乗動作の安定化を図る。"
             End Select
             
-        Case "蜈･豬ｴ荳騾｣蜍穂ｽ・
+        Case "入浴一連動作"
             Select Case mainCause
-                Case "鮗ｻ逞ｺ"
+                Case "麻痺"
                     If mmtMinScore <= 2 Then
-                        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ髫乗э蜿守ｸｮ迯ｲ蠕励ｒ騾壹§縺ｦ縲∵ｵｴ螳､蜀・ｧｻ蜍輔・遶九■蠎ｧ繧頑凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                        BuildActivityShort_ByActivity = mmtTargetMuscle & "の随意収縮獲得を通じて、浴室内移動・立ち座り時の麻痺側支持性向上を図る。"
                     Else
-                        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ遲句鴨謾ｹ蝟・ｒ騾壹§縺ｦ縲∵ｵｴ螳､蜀・ｧｻ蜍輔・遶九■蠎ｧ繧頑凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                        BuildActivityShort_ByActivity = mmtTargetMuscle & "の筋力改善を通じて、浴室内移動・立ち座り時の麻痺側支持性向上を図る。"
                     End If
-                Case "逍ｼ逞・: BuildActivityShort_ByActivity = "蜈･豬ｴ蜍穂ｽ懈凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
-                Case Else:  BuildActivityShort_ByActivity = "蜈･豬ｴ荳騾｣蜍穂ｽ懊・螳牙ｮ壼喧繧貞峙繧九・
+                Case "疼痛": BuildActivityShort_ByActivity = "入浴動作時の疼痛軽減を図る。"
+                Case Else:  BuildActivityShort_ByActivity = "入浴一連動作の安定化を図る。"
             End Select
             
-        Case "襍ｷ螻・ｸ騾｣蜍穂ｽ・
+        Case "起居一連動作"
             Select Case mainCause
-                Case "鮗ｻ逞ｺ"
+                Case "麻痺"
                     If mmtMinScore <= 2 Then
-                        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ髫乗э蜿守ｸｮ迯ｲ蠕励ｒ騾壹§縺ｦ縲∬ｵｷ縺堺ｸ翫′繧翫・遶九■荳翫′繧頑凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                        BuildActivityShort_ByActivity = mmtTargetMuscle & "の随意収縮獲得を通じて、起き上がり・立ち上がり時の麻痺側支持性向上を図る。"
                     Else
-                        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ遲句鴨謾ｹ蝟・ｒ騾壹§縺ｦ縲∬ｵｷ縺堺ｸ翫′繧翫・遶九■荳翫′繧頑凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                        BuildActivityShort_ByActivity = mmtTargetMuscle & "の筋力改善を通じて、起き上がり・立ち上がり時の麻痺側支持性向上を図る。"
                     End If
-                Case "逍ｼ逞・: BuildActivityShort_ByActivity = "襍ｷ螻・虚菴懈凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
-                Case Else:  BuildActivityShort_ByActivity = "襍ｷ螻・ｸ騾｣蜍穂ｽ懊・螳牙ｮ壼喧繧貞峙繧九・
+                Case "疼痛": BuildActivityShort_ByActivity = "起居動作時の疼痛軽減を図る。"
+                Case Else:  BuildActivityShort_ByActivity = "起居一連動作の安定化を図る。"
             End Select
             
-        Case "遶九■荳翫′繧・
+        Case "立ち上がり"
             Select Case mainCause
-                Case "鮗ｻ逞ｺ"
+                Case "麻痺"
                     If mmtMinScore <= 2 Then
-                        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ髫乗э蜿守ｸｮ迯ｲ蠕励ｒ騾壹§縺ｦ縲∫ｫ九■荳翫′繧頑凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                        BuildActivityShort_ByActivity = mmtTargetMuscle & "の随意収縮獲得を通じて、立ち上がり時の麻痺側支持性向上を図る。"
                     Else
-                        BuildActivityShort_ByActivity = mmtTargetMuscle & "縺ｮ遲句鴨謾ｹ蝟・ｒ騾壹§縺ｦ縲∫ｫ九■荳翫′繧頑凾縺ｮ鮗ｻ逞ｺ蛛ｴ謾ｯ謖∵ｧ蜷台ｸ翫ｒ蝗ｳ繧九・
+                        BuildActivityShort_ByActivity = mmtTargetMuscle & "の筋力改善を通じて、立ち上がり時の麻痺側支持性向上を図る。"
                     End If
-                Case "逍ｼ逞・: BuildActivityShort_ByActivity = "遶九■荳翫′繧頑凾縺ｮ逍ｼ逞幄ｻｽ貂帙ｒ蝗ｳ繧九・
-                Case Else:  BuildActivityShort_ByActivity = "遶九■荳翫′繧雁虚菴懊・螳牙ｮ壼喧繧貞峙繧九・
+                Case "疼痛": BuildActivityShort_ByActivity = "立ち上がり時の疼痛軽減を図る。"
+                Case Else:  BuildActivityShort_ByActivity = "立ち上がり動作の安定化を図る。"
             End Select
             
         Case Else
@@ -535,7 +535,7 @@ Public Function PickMMTTarget_WithPriority(ByVal mmtMap As Object, ByVal priorit
     best = ""
     bestScore = 9999
     
-    ' 譛蟆上せ繧ｳ繧｢繧貞叙繧・
+    ' 最小スコアを取る
     For Each k In mmtMap.keys
         If IsNumeric(mmtMap(k)) Then
             sc = CDbl(mmtMap(k))
@@ -548,7 +548,7 @@ Public Function PickMMTTarget_WithPriority(ByVal mmtMap As Object, ByVal priorit
         Exit Function
     End If
     
-    ' 蜷檎紫縺ｮ荳ｭ縺ｧ蜆ｪ蜈磯・↓驕ｸ縺ｶ
+    ' 同率の中で優先順に選ぶ
     pri = Split(priorityCsv, ",")
     For i = LBound(pri) To UBound(pri)
         If mmtMap.exists(Trim$(pri(i))) Then
@@ -561,7 +561,7 @@ Public Function PickMMTTarget_WithPriority(ByVal mmtMap As Object, ByVal priorit
         End If
     Next i
     
-    ' 蜆ｪ蜈医Μ繧ｹ繝医↓辟｡縺代ｌ縺ｰ譛蛻昴↓隕九▽縺九▲縺滓怙蟆上ｒ霑斐☆
+    ' 優先リストに無ければ最初に見つかった最小を返す
     For Each k In mmtMap.keys
         If IsNumeric(mmtMap(k)) Then
             If CDbl(mmtMap(k)) = bestScore Then
@@ -598,7 +598,7 @@ Public Function GetLowerMMTMap_FromFrmEval() As Object
         Exit Function
     End If
     
-    Set p = mp.Pages(1) ' 荳玖い
+    Set p = mp.Pages(1) ' 下肢
     
     For Each c In p.controls
         If TypeName(c) = "Label" Then
@@ -611,7 +611,7 @@ Public Function GetLowerMMTMap_FromFrmEval() As Object
                 vMin = vR
                 If vL < vMin Then vMin = vL
                 
-                ' 譛ｪ蜈･蜉・99)縺ｯ謐ｨ縺ｦ繧・
+                ' 未入力(99)は捨てる
                 If vMin < 99 Then
                     dict(nm) = vMin
                 End If
@@ -661,11 +661,11 @@ Private Function BuildMMTMapFromIO(ByVal mmtIO As String) As Object
     Dim m As Object
     Set m = CreateObject("Scripting.Dictionary")
 
-    ' TODO: 譌｢蟄弄MT_IO繝輔か繝ｼ繝槭ャ繝医・豁｣蠑上ヱ繝ｼ繧ｵ繝ｼ縺ｫ鄂ｮ謠帙☆繧九・
-    ' 譛菴朱剞縺ｮ繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ蛟､繧偵そ繝・ヨ縲・
-    m("螟ｧ閻ｿ蝗幃ｭ遲・) = 3
-    m("荳ｭ谿ｿ遲・) = 3
-    m("閻ｸ閻ｰ遲・) = 3
+    ' TODO: 既存MMT_IOフォーマットの正式パーサーに置換する。
+    ' 最低限のフォールバック値をセット。
+    m("大腿四頭筋") = 3
+    m("中殿筋") = 3
+    m("腸腰筋") = 3
 
     Set BuildMMTMapFromIO = m
 End Function

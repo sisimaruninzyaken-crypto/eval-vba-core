@@ -31,14 +31,14 @@ Public Sub TidyBasicInfo_TwoColumns()
     If c Is Nothing Then Exit Sub
     Set f32 = c.parent
 
-    ' 縲悟､画峩轤ｹ縺ｮ縺ｿ菫晏ｭ倥阪メ繧ｧ繝・け髱櫁｡ｨ遉ｺ・域悽菴薙・繝√ぉ繝・け繝懊ャ繧ｯ繧ｹ・・
+    ' 「変更点のみ保存」チェック非表示（本体はチェックボックス）
     Set c = frmEval.EvalCtl("chkDeltaOnly", "Page1")
     If Not c Is Nothing Then
         c.Visible = False
         c.Height = 0
     End If
 
-    ' 譌ｧ Label### 繧貞・縺ｦ髫縺呻ｼ・rame32逶ｴ荳九・縺ｿ・・
+    ' 旧 Label### を全て隠す（Frame32直下のみ）
     For Each c In f32.controls
         If TypeName(c) = "Label" Then
             If Left$(c.name, 5) = "Label" Then
@@ -47,7 +47,7 @@ Public Sub TidyBasicInfo_TwoColumns()
         End If
     Next c
 
-    ' 蜿ｳ繧ｫ繝ｩ繝逕ｨ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ繧堤｢ｺ菫晢ｼ育┌縺代ｌ縺ｰ霑ｽ蜉・・
+    ' 右カラム用コントロールを確保（無ければ追加）
     Set txtED = frmEval.EvalCtl("txtEDate", "Page1")
     
     Set t = frmEval.EvalCtl("txtEvaluatorJob", "Page1")
@@ -82,7 +82,7 @@ Public Sub TidyBasicInfo_TwoColumns()
     wLbl = 140
     wCtl = wCol - wLbl - 8
     wLblR = 60
-    ' 蟾ｦ繧ｫ繝ｩ繝騾壼ｸｸ蜈･蜉帙・遏ｭ繧・ｼ・eeds縺ｯ wCtl 縺ｮ縺ｾ縺ｾ・・
+    ' 左カラム通常入力は短め（Needsは wCtl のまま）
         wCtlShort = wCtl
         If wCtlShort > 260 Then wCtlShort = 260
     xLbl = 0
@@ -94,25 +94,25 @@ Public Sub TidyBasicInfo_TwoColumns()
     socialH = 50
     needsH = 58
 
-    ' 蜿ｳ繧ｫ繝ｩ繝縺ｮ蜈･蜉帑ｽ咲ｽｮ縺ｯ譌｢蟄・txtEDate 縺ｫ蜷医ｏ縺帙ｋ・医≠繧後・・・
+    ' 右カラムの入力位置は既存 txtEDate に合わせる（あれば）
      xCtlR = 60 + 8
      xRightCtl = xR + xCtlR
      wNeeds = wCol - xCtl
      wRightMulti = wCol - xCtlR
 
-    ' 髢句ｧ倶ｽ咲ｽｮ・亥ｷｦ蜿ｳ繧ｫ繝ｩ繝繧剃ｸ閾ｴ・・
+    ' 開始位置（左右カラムを一致）
     yR = 6
     yL = yR
 
-    ' Left: 蛟倶ｺｺ諠・ｱ・・鬆・岼・・
+    ' Left: 個人情報（7項目）
 aCapL = Array( _
-    "蟷ｴ鮨｢", _
-    "逕溷ｹｴ譛域律", _
-    "諤ｧ蛻･", _
-    "隕∽ｻ玖ｭｷ", _
-    "鬮倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ", _
-    "隱咲衍逞・ｫ倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ", _
-    "遉ｾ莨壼盾蜉迥ｶ豕・ _
+    "年齢", _
+    "生年月日", _
+    "性別", _
+    "要介護", _
+    "高齢者の日常生活自立度", _
+    "認知症高齢者の日常生活自立度", _
+    "社会参加状況" _
 )
     aCtlL = Array("txtAge", "txtBirth", "cboSex", "cboCare", "cboElder", "cboDementia", "txtLiving")
 
@@ -127,9 +127,9 @@ aCapL = Array( _
         End If
     Next i
 
-    ' Left: Needs・域悽莠ｺ/螳ｶ譌擾ｼ・
+    ' Left: Needs（本人/家族）
     yL = yL + 10
-    Call EnsureLabel(f32, "lblBI_NeedsPt", "譛ｬ莠ｺNeeds", xL + xLbl, yL, wLbl, rowH)
+    Call EnsureLabel(f32, "lblBI_NeedsPt", "本人Needs", xL + xLbl, yL, wLbl, rowH)
     Set t = frmEval.EvalCtl("txtNeedsPt", "Page1")
     t.multiline = True
     t.EnterKeyBehavior = True
@@ -137,7 +137,7 @@ aCapL = Array( _
     Call PlaceCtl(f32, "txtNeedsPt", xL + xCtl, yL - 1, wNeeds, needsH)
 
     yL = yL + needsH + gapY
-    Call EnsureLabel(f32, "lblBI_NeedsFam", "螳ｶ譌蒐eeds", xL + xLbl, yL, wLbl, rowH)
+    Call EnsureLabel(f32, "lblBI_NeedsFam", "家族Needs", xL + xLbl, yL, wLbl, rowH)
     Set t = frmEval.EvalCtl("txtNeedsFam", "Page1")
     t.multiline = True
     t.EnterKeyBehavior = True
@@ -149,7 +149,7 @@ aCapL = Array( _
 
    
 
-    aCapR = Array("隧穂ｾ｡譌･", "隧穂ｾ｡閠・, "隧穂ｾ｡閠・・遞ｮ")
+    aCapR = Array("評価日", "評価者", "評価者職種")
     aCtlR = Array("txtEDate", "txtEvaluator", "txtEvaluatorJob")
     
     For i = 0 To UBound(aCtlR)
@@ -163,8 +163,8 @@ aCapL = Array( _
 
     yR = yR + 4
 
-    ' Right: 蛹ｻ逋よュ蝣ｱ
-    Call EnsureLabel(f32, "lblBI_R_Header_Med", "縲仙現逋よュ蝣ｱ縲・, xR + xLbl, yR, wLblR, rowH)
+    ' Right: 医療情報
+    Call EnsureLabel(f32, "lblBI_R_Header_Med", "【医療情報】", xR + xLbl, yR, wLblR, rowH)
     Set c = frmEval.EvalCtl("lblBI_R_Header_Med", "Page1")
     If Not c Is Nothing Then c.Visible = False
     yR = yR + gapY
@@ -173,8 +173,8 @@ aCapL = Array( _
     If Not ControlExists(f32, "txtDisDate") Then f32.controls.Add "Forms.TextBox.1", "txtDisDate"
 
 
-    ' 鬆・ｺ擾ｼ夂匱逞・律竊剃ｸｻ險ｺ譁ｭ竊貞・髯｢譌･竊帝髯｢譌･
-    aCapR = Array("逋ｺ逞・律", "荳ｻ險ｺ譁ｭ", "蜈･髯｢譌･", "騾髯｢譌･")
+    ' 順序：発症日→主診断→入院日→退院日
+    aCapR = Array("発症日", "主診断", "入院日", "退院日")
     aCtlR = Array("txtOnset", "txtDx", "txtAdmDate", "txtDisDate")
 
    
@@ -185,21 +185,21 @@ aCapL = Array( _
         yR = yR + rowH + gapY
     Next i
 
-    ' 豐ｻ逋らｵ碁℃・郁､・焚陦鯉ｼ・
-    Call EnsureLabel(f32, "lblBI_R_M_5", "豐ｻ逋らｵ碁℃", xR + xLbl, yR, wLblR, rowH)
+    ' 治療経過（複数行）
+    Call EnsureLabel(f32, "lblBI_R_M_5", "治療経過", xR + xLbl, yR, wLblR, rowH)
     Call PlaceCtl(f32, "txtTxCourse", xRightCtl, yR - 1, wRightMulti, multiH)
     Set c = frmEval.EvalCtl("txtTxCourse", "Page1")
     If Not c Is Nothing Then c.IMEMode = fmIMEModeHiragana
     yR = yR + multiH + gapY
 
-    ' 蜷井ｽｵ逞・ｼ郁､・焚陦鯉ｼ・
-    Call EnsureLabel(f32, "lblBI_R_M_6", "蜷井ｽｵ逞・, xR + xLbl, yR, wLblR, rowH)
+    ' 合併症（複数行）
+    Call EnsureLabel(f32, "lblBI_R_M_6", "合併症", xR + xLbl, yR, wLblR, rowH)
     Call PlaceCtl(f32, "txtComplications", xRightCtl, yR - 1, wRightMulti, multiH)
     Set c = frmEval.EvalCtl("txtComplications", "Page1")
     If Not c Is Nothing Then c.IMEMode = fmIMEModeHiragana
     yR = yR + multiH + 8
 
-    ' 蜿ｳ荳具ｼ壹Μ繧ｹ繧ｯ鄒､・域怙荳区ｮｵ縺ｸ・・
+    ' 右下：リスク群（最下段へ）
     Dim riskFrame As Object
     Set riskFrame = FindBasicInfoRiskFrame(f32)
     

@@ -2,11 +2,11 @@ Attribute VB_Name = "modOpenAIResponses"
 
 
 
-'=== modOpenAIResponses (讓呎ｺ悶Δ繧ｸ繝･繝ｼ繝ｫ) 縺ｫ雋ｼ繧・===
+'=== modOpenAIResponses (標準モジュール) に貼る ===
 Option Explicit
 
 Private Const OPENAI_ENDPOINT As String = "https://api.openai.com/v1/responses"
-Private Const OPENAI_MODEL As String = "gpt-4.1-mini" '蠢・ｦ√↑繧・gpt-5.2 遲峨↓螟画峩蜿ｯ :contentReference[oaicite:1]{index=1}
+Private Const OPENAI_MODEL As String = "gpt-4.1-mini" '必要なら gpt-5.2 等に変更可 :contentReference[oaicite:1]{index=1}
 
 Public Function OpenAI_BuildDraft(ByVal systemInstructions As String, ByVal userInput As String) As String
     On Error GoTo EH
@@ -30,7 +30,7 @@ Public Function OpenAI_BuildDraft(ByVal systemInstructions As String, ByVal user
         Err.Raise vbObjectError + 513, "OpenAI_BuildDraft", "HTTP " & http.Status & ": " & Left$(http.ResponseText, 500)
     End If
 
-    OpenAI_BuildDraft = JsonGetOutputText(http.ResponseText) ' response.output_text 逶ｸ蠖薙ｒ謚懊￥ :contentReference[oaicite:2]{index=2}
+    OpenAI_BuildDraft = JsonGetOutputText(http.ResponseText) ' response.output_text 相当を抜く :contentReference[oaicite:2]{index=2}
     Exit Function
 
 EH:
@@ -38,14 +38,14 @@ EH:
 End Function
 
 Private Function GetOpenAIApiKey() As String
-    ' 蜷榊燕螳夂ｾｩ OPENAI_API_KEY 縺ｮ繧ｻ繝ｫ縺ｫ繧ｭ繝ｼ譁・ｭ怜・繧貞・繧後※縺・ｋ蜑肴署・亥燕縺ｫ菴懊▲縺溘ｄ縺､・・
+    ' 名前定義 OPENAI_API_KEY のセルにキー文字列を入れている前提（前に作ったやつ）
     GetOpenAIApiKey = CStr(ThisWorkbook.names("OPENAI_API_KEY").RefersToRange.value)
     GetOpenAIApiKey = Trim$(GetOpenAIApiKey)
-    If Len(GetOpenAIApiKey) = 0 Then Err.Raise vbObjectError + 514, "GetOpenAIApiKey", "OPENAI_API_KEY 縺檎ｩｺ縺ｧ縺・
+    If Len(GetOpenAIApiKey) = 0 Then Err.Raise vbObjectError + 514, "GetOpenAIApiKey", "OPENAI_API_KEY が空です"
 End Function
 
 Private Function JsonEsc(ByVal s As String) As String
-    ' JSON譁・ｭ怜・逕ｨ縺ｮ譛蟆上お繧ｹ繧ｱ繝ｼ繝・
+    ' JSON文字列用の最小エスケープ
     s = Replace(s, "\", "\\")
     s = Replace(s, """", "\""")
     s = Replace(s, vbCrLf, "\n")
@@ -55,10 +55,10 @@ Private Function JsonEsc(ByVal s As String) As String
 End Function
 
 Private Function JsonGetOutputText(ByVal json As String) As String
-    ' Responses API: output[] -> message -> content[] -> output_text -> text 繧呈栢縺擾ｼ域怙蟆丞ｮ溯｣・ｼ・
+    ' Responses API: output[] -> message -> content[] -> output_text -> text を抜く（最小実装）
     Dim p As Long, q As Long, k As String
 
-    ' 縺ｾ縺・output_text 繝悶Ο繝・け繧呈爾縺・
+    ' まず output_text ブロックを探す
     p = InStr(1, json, """type"": ""output_text""", vbTextCompare)
     If p = 0 Then p = InStr(1, json, """type"":""output_text""", vbTextCompare)
     If p = 0 Then
@@ -66,7 +66,7 @@ Private Function JsonGetOutputText(ByVal json As String) As String
         Exit Function
     End If
 
-    ' 縺昴・霑代￥縺ｮ "text":"...." 繧呈爾縺・
+    ' その近くの "text":"...." を探す
     k = """text"": """
     q = InStr(p, json, k, vbTextCompare)
     If q = 0 Then
@@ -79,7 +79,7 @@ Private Function JsonGetOutputText(ByVal json As String) As String
     End If
     q = q + Len(k)
 
-    ' 邨らｫｯ縺ｮ " 繧呈爾縺呻ｼ亥腰邏皮沿・壹お繧ｹ繧ｱ繝ｼ繝玲悴蟇ｾ蠢懊√∪縺壹・逍朱夂｢ｺ隱咲畑・・
+    ' 終端の " を探す（単純版：エスケープ未対応、まずは疎通確認用）
     p = InStr(q, json, """", vbBinaryCompare)
     If p = 0 Then
         JsonGetOutputText = ""
@@ -151,8 +151,8 @@ End Function
 
 Private Function BuildBasicSystemPrompt() As String
     BuildBasicSystemPrompt = _
-        "縺ゅ↑縺溘・蛹ｻ逋りｨ育判譖ｸ縺ｮ譁・ｫ菴懈・蟆ら畑繧｢繧ｷ繧ｹ繧ｿ繝ｳ繝医〒縺吶・ & _
-        "蛻､螳壹・險ｺ譁ｭ繝ｻ謨ｰ蛟､隗｣驥医・陦後ｏ縺壹∝・蜉帶ｸ医∩縺ｮ讒矩蛹悶ョ繝ｼ繧ｿ繧定・辟ｶ譁・↓謨ｴ蠖｢縺励※縺上□縺輔＞縲・
+        "あなたは医療計画書の文章作成専用アシスタントです。" & _
+        "判定・診断・数値解釈は行わず、入力済みの構造化データを自然文に整形してください。"
 End Function
 
 Private Function BuildBasicUserPrompt(ByVal planStructure As Object) As String
@@ -162,7 +162,7 @@ Private Function BuildBasicUserPrompt(ByVal planStructure As Object) As String
     Dim arr() As String
 
     Set lines = New Collection
-    lines.Add "莉･荳九・VBA蛻､螳壽ｸ医∩繝・・繧ｿ縺ｧ縺吶ょ愛譁ｭ繧定ｿｽ蜉縺帙★譁・ｫ蛹悶・縺ｿ陦後▲縺ｦ縺上□縺輔＞縲・
+    lines.Add "以下はVBA判定済みデータです。判断を追加せず文章化のみ行ってください。"
 
     For Each k In planStructure.keys
         lines.Add CStr(k) & ": " & CStr(planStructure(k))

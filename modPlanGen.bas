@@ -3,12 +3,12 @@ Attribute VB_Name = "modPlanGen"
 
 Option Explicit
 
-' [蠢・・ BASIC_KEYS_V1 縺ｮ譌｢蟄假ｼ医≠縺ｪ縺溘・迴ｾ陦後・縺ｾ縺ｾ・・
+' [必須] BASIC_KEYS_V1 の既存（あなたの現行のまま）
 Public Function BasicKeysV1() As Variant
  BasicKeysV1 = Split("care_level_band|primary_condition_cat|comorbidity_cat_list|history_flags|living_type|support_availability|bi_total|bi_low_items|iadl_limits|bed_mobility_band|rom_limit_tags|strength_band|pain_band|pain_site_tags|needs_patient|needs_family", "|")
 End Function
 
-' [蠢・・ BuildBasicInputV1・・ed_mobility_band 繧定ｿｽ蜉貂医∩・・
+' [必須] BuildBasicInputV1（bed_mobility_band を追加済み）
 Public Function BuildBasicInputV1() As String
     Dim keys As Variant
     Dim values() As String
@@ -39,13 +39,13 @@ Public Function BuildBasicInputV1() As String
     biLowItems = GetBILowItems()
     romLimitTags = GetRomLimitTags()
 
-    ' 笘・ｿｽ蜉・喘ed_mobility_band 縺ｯ1蝗槭□縺題ｨ育ｮ・
+    ' ★追加：bed_mobility_band は1回だけ計算
     bedMobilityBand = GetBedMobilityBand()
     painBand = GetPainBand()
     painSiteTags = GetPainSiteTags()
     strengthBand = GetStrengthBand()
-    needsPatient = GetLatestBasicTextByHeader("謔｣閠・eeds")
-    needsFamily = GetLatestBasicTextByHeader("螳ｶ譌蒐eeds")
+    needsPatient = GetLatestBasicTextByHeader("患者Needs")
+    needsFamily = GetLatestBasicTextByHeader("家族Needs")
 
 
     For i = LBound(keys) To UBound(keys)
@@ -67,7 +67,7 @@ Public Function BuildBasicInputV1() As String
                 values(i) = biLowItems
 
 
-            ' 笘・ｿｽ蜉・喘ed_mobility_band
+            ' ★追加：bed_mobility_band
             Case "bed_mobility_band"
                 values(i) = bedMobilityBand
             Case "pain_band"
@@ -131,7 +131,7 @@ Private Function GetPrimaryConditionCat() As String
     rLatest = FindLatestRowByName(ws, nm)
     If rLatest <= 0 Then Exit Function
 
-    GetPrimaryConditionCat = Trim$(ReadStr_Compat("荳ｻ險ｺ譁ｭ", rLatest, ws))
+    GetPrimaryConditionCat = Trim$(ReadStr_Compat("主診断", rLatest, ws))
 End Function
 
 Private Function GetStrengthBand() As String
@@ -176,13 +176,13 @@ Public Function ComputeStrengthBandFromMMTIO(ByVal mmtIO As String) As String
 
     Set targetItems = CreateObject("Scripting.Dictionary")
     targetItems.CompareMode = vbTextCompare
-    targetItems("閧｡螻域峇") = True
-    targetItems("閧｡莨ｸ螻・) = True
-    targetItems("閧｡螟冶ｻ｢]") = True
-    targetItems("閹昜ｼｸ螻・) = True
-    targetItems("雜ｳ髢｢遽閭悟ｱ・") = True
-    targetItems("雜ｳ髢｢遽蠎募ｱ・) = True
-    targetItems("豈崎ｶｾ莨ｸ螻・) = True
+    targetItems("股屈曲") = True
+    targetItems("股伸展") = True
+    targetItems("股外転]") = True
+    targetItems("膝伸展") = True
+    targetItems("足関節背屈w") = True
+    targetItems("足関節底屈") = True
+    targetItems("母趾伸展") = True
 
     Set itemScores = CreateObject("Scripting.Dictionary")
     itemScores.CompareMode = vbTextCompare
@@ -456,13 +456,13 @@ Private Function GetPainBand() As String
 
     Select Case vas
         Case 0
-            GetPainBand = "縺ｪ縺・
+            GetPainBand = "なし"
         Case 1 To 30
-            GetPainBand = "霆ｽ蠎ｦ"
+            GetPainBand = "軽度"
         Case 31 To 60
-            GetPainBand = "荳ｭ遲牙ｺｦ"
+            GetPainBand = "中等度"
         Case Else
-            GetPainBand = "驥榊ｺｦ"
+            GetPainBand = "重度"
     End Select
 End Function
 
@@ -496,7 +496,7 @@ Private Function GetIADLLimits() As String
    For i = 0 To 8
     v = Trim$(IO_GetVal(io, "IADL_" & CStr(i)))
     If LenB(v) > 0 Then
-        If StrComp(v, "閾ｪ遶・, vbTextCompare) = 0 Then GoTo NextI
+        If StrComp(v, "自立", vbTextCompare) = 0 Then GoTo NextI
         n = n + 1
         parts(n) = "IADL_" & CStr(i) & "=" & v
     End If
@@ -573,7 +573,7 @@ NextI:
     GetBILowItems = Join(arr, ", ")
 End Function
 
-' 笘・ｽｮ謠幢ｼ唔O_ADL・・yo_*・峨°繧・band 逕滓・・域怙驥榊ｺｦ蜆ｪ蜈茨ｼ・
+' ★置換：IO_ADL（Kyo_*）から band 生成（最重度優先）
 Private Function GetBedMobilityBand() As String
     Dim ws As Worksheet
     Dim nm As String
@@ -586,11 +586,11 @@ Private Function GetBedMobilityBand() As String
     nm = Trim$(frmEval.controls("txtName").text)
     If LenB(nm) = 0 Then Exit Function
 
-    ' 窶ｻ縺ゅ↑縺溘・譌｢蟄・FindLatestRowByName 繧剃ｽｿ縺・燕謠撰ｼ・ormalizeName蜷ｫ繧迚医〒OK・・
+    ' ※あなたの既存 FindLatestRowByName を使う前提（NormalizeName含む版でOK）
     r = FindLatestRowByName(ws, nm)
     If r <= 1 Then Exit Function
 
-    ' 窶ｻ譌｢蟄倥・ ReadStr_Compat / IO_GetVal 繧剃ｽｿ逕ｨ
+    ' ※既存の ReadStr_Compat / IO_GetVal を使用
     raw = ReadStr_Compat("IO_ADL", r, ws)
     If LenB(raw) = 0 Then Exit Function
 
@@ -600,18 +600,18 @@ Private Function GetBedMobilityBand() As String
         IO_GetVal(raw, "Kyo_StandUp") & "|" & _
         IO_GetVal(raw, "Kyo_StandHold")
 
-    If InStr(v, "蜈ｨ莉句勧") > 0 Then
-        GetBedMobilityBand = "蜈ｨ莉句勧"
-    ElseIf InStr(v, "荳驛ｨ莉句勧") > 0 Then
-        GetBedMobilityBand = "荳驛ｨ莉句勧"
-    ElseIf InStr(v, "隕句ｮ医ｊ") > 0 Then
-        GetBedMobilityBand = "隕句ｮ医ｊ"
+    If InStr(v, "全介助") > 0 Then
+        GetBedMobilityBand = "全介助"
+    ElseIf InStr(v, "一部介助") > 0 Then
+        GetBedMobilityBand = "一部介助"
+    ElseIf InStr(v, "見守り") > 0 Then
+        GetBedMobilityBand = "見守り"
     ElseIf Len(Replace$(v, "|", vbNullString)) > 0 Then
-        GetBedMobilityBand = "閾ｪ遶・
+        GetBedMobilityBand = "自立"
     End If
 End Function
 
-' --- 莉･荳九・譌｢蟄倥・縺ｾ縺ｾ・医≠縺ｪ縺溘・迴ｾ陦後さ繝ｼ繝峨ｒ邯ｭ謖・ｼ・---
+' --- 以下は既存のまま（あなたの現行コードを維持） ---
 
 Private Function GetFrmEvalControlText(ByVal controlName As String) As String
     Dim target As Object
@@ -640,11 +640,11 @@ Public Function FindControlRecursive(ByVal container As Object, ByVal targetName
     On Error GoTo 0
     If Not FindControlRecursive Is Nothing Then Exit Function
 
-    ' 窶ｻ縺薙％莉･髯阪ｂ縺ゅ↑縺溘・譌｢蟄伜ｮ溯｣・・縺ｾ縺ｾ
-    ' ・・asChildControls 繧剃ｽｿ縺・沿縺ｪ繧峨◎縺ｮ縺ｾ縺ｾ邯ｭ謖√〒OK・・
+    ' ※ここ以降もあなたの既存実装のまま
+    ' （HasChildControls を使う版ならそのまま維持でOK）
     ' ...
 End Function
 
-' UniqueLinesInOrder / FindLatestRowByName / ReadStr_Compat / IO_GetVal 縺ｪ縺ｩ繧よ里蟄倥・縺ｾ縺ｾ
+' UniqueLinesInOrder / FindLatestRowByName / ReadStr_Compat / IO_GetVal なども既存のまま
 
 

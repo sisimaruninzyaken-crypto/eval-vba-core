@@ -6,7 +6,7 @@ Public Sub RunHdrProbe()
 
     Debug.Print "=== HDR PROBE START ==="
 
-    ' frmEval縺碁幕縺・※縺ｪ縺代ｌ縺ｰ髢九￥・域里縺ｫ髢九＞縺ｦ繧後・縺昴・縺ｾ縺ｾ・・
+    ' frmEvalが開いてなければ開く（既に開いてればそのまま）
     If VBA.UserForms.count = 0 Then
         frmEval.Show vbModeless
         DoEvents
@@ -28,7 +28,7 @@ Public Sub RunHdrProbe()
                 " H=" & frmEval.controls("frHeader").controls("txtHdrKana").Height & _
                 " Visible=" & frmEval.controls("frHeader").controls("txtHdrKana").Visible
 
-    ' 逶ｮ逧・・繝懊ち繝ｳ
+    ' 目的のボタン
     Debug.Print "[cmdHdrLoadPrev] Exists? " & (Not (frmEval.controls("frHeader").controls("cmdHdrLoadPrev") Is Nothing))
     If Not (frmEval.controls("frHeader").controls("cmdHdrLoadPrev") Is Nothing) Then
         Debug.Print "[cmdHdrLoadPrev] Left=" & frmEval.controls("frHeader").controls("cmdHdrLoadPrev").Left & _

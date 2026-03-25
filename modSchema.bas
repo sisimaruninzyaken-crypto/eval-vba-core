@@ -1,26 +1,26 @@
 Attribute VB_Name = "modSchema"
 Option Explicit
 
-' ====== 蜈ｬ髢九お繝ｳ繝医Μ繝昴う繝ｳ繝・======
-' dryRun:=True 縺ｧ繝ｭ繧ｰ縺ｮ縺ｿ縲・alse 縺ｧ螳滄圀縺ｫ繝ｪ繝阪・繝繝ｻ霑ｽ蜉繝ｻ荳ｦ縺ｳ譖ｿ縺医ｒ螳溯｡後・
+' ====== 公開エントリポイント ======
+' dryRun:=True でログのみ。False で実際にリネーム・追加・並び替えを実行。
 Public Sub EnsureEvalDataSchema(Optional ByVal dryRun As Boolean = True)
     Dim ws As Worksheet
     Set ws = GetEvalDataSheet()
 
     Debug.Print "[SCHEMA] Start EvalData schema ensure. dryRun=" & dryRun
 
-    ' 1) 蟋ｿ蜍｢縺ｮ讓呎ｺ門・繧ｻ繝・ヨ繧貞ｮ夂ｾｩ
+    ' 1) 姿勢の標準列セットを定義
     Dim desiredPosture As Collection
     Set desiredPosture = PostureDesiredHeaders()
 
-    ' 2) 譌｢蟄倪・讓呎ｺ門錐縺ｸ縺ｮ繧ｨ繧､繝ｪ繧｢繧ｹ霎樊嶌
+    ' 2) 既存→標準名へのエイリアス辞書
     Dim dictAlias As Object
     Set dictAlias = BuildPostureAliasDict()
 
-    ' 3) 譌｢蟄伜・繧定ｵｰ譟ｻ縺励∬ｩｲ蠖薙☆繧九ｂ縺ｮ繧呈ｨ呎ｺ門錐縺ｸ謾ｹ蜷・
+    ' 3) 既存列を走査し、該当するものを標準名へ改名
     ApplyHeaderAliases ws, dictAlias, dryRun
 
-    ' 4) 谺謳榊・繧定｣懷ｮ鯉ｼ域忰蟆ｾ縺ｫ霑ｽ蜉・・
+    ' 4) 欠損列を補完（末尾に追加）
     EnsureHeaders ws, desiredPosture, dryRun
     
     Dim desiredBasic As Collection
@@ -28,135 +28,135 @@ Public Sub EnsureEvalDataSchema(Optional ByVal dryRun As Boolean = True)
     EnsureHeaders ws, desiredBasic, dryRun
 
 
-    ' 5) 窶懷ｧｿ蜍｢窶昴ヶ繝ｭ繝・け蜀・・荳ｦ縺ｳ鬆・ｒ謖・ｮ夐・∈・医す繝ｼ繝亥・菴薙・鬆・ｺ上・蠕梧ｮｵ諡｡蠑ｵ・・
+    ' 5) “姿勢”ブロック内の並び順を指定順へ（シート全体の順序は後段拡張）
     ReorderPostureBlock ws, desiredPosture, dryRun
 
     Debug.Print "[SCHEMA] Done."
 End Sub
 
-' ====== 繧ｷ繝ｼ繝亥叙蠕・======
+' ====== シート取得 ======
 Public Function GetEvalDataSheet() As Worksheet
     Dim ws As Worksheet
     On Error Resume Next
     Set ws = ThisWorkbook.Worksheets("EvalData")
     On Error GoTo 0
-    If ws Is Nothing Then Err.Raise 5, , "EvalData 繧ｷ繝ｼ繝医′縺ゅｊ縺ｾ縺帙ｓ縲・
+    If ws Is Nothing Then Err.Raise 5, , "EvalData シートがありません。"
     Set GetEvalDataSheet = ws
 End Function
 
-' ====== 蟋ｿ蜍｢・壽ｨ呎ｺ門・螳夂ｾｩ ======
+' ====== 姿勢：標準列定義 ======
 Private Function PostureDesiredHeaders() As Collection
     Dim c As New Collection
 
-    ' 隧穂ｾ｡・医メ繧ｧ繝・け/繧ｳ繝ｳ繝・蛯呵・ｼ・
-    c.Add "蟋ｿ蜍｢_隧穂ｾ｡_鬆ｭ驛ｨ蜑肴婿遯∝・"
-    c.Add "蟋ｿ蜍｢_隧穂ｾ｡_蜀・レ"
-    c.Add "蟋ｿ蜍｢_隧穂ｾ｡_蛛ｴ蠑ｯ"
-    c.Add "蟋ｿ蜍｢_隧穂ｾ｡_菴灘ｹｹ蝗樊雷"
-    c.Add "蟋ｿ蜍｢_隧穂ｾ｡_蜿榊ｼｵ閹・
-    c.Add "蟋ｿ蜍｢_隧穂ｾ｡_鬪ｨ逶､蛯ｾ譁・
-    c.Add "蟋ｿ蜍｢_隧穂ｾ｡_蛯呵・
+    ' 評価（チェック/コンボ/備考）
+    c.Add "姿勢_評価_頭部前方突出"
+    c.Add "姿勢_評価_円背"
+    c.Add "姿勢_評価_側弯"
+    c.Add "姿勢_評価_体幹回旋"
+    c.Add "姿勢_評価_反張膝"
+    c.Add "姿勢_評価_骨盤傾斜"
+    c.Add "姿勢_評価_備考"
 
-    ' 諡倡ｸｮ・亥腰髢｢遽竊貞ｷｦ蜿ｳ・・
-    c.Add "蟋ｿ蜍｢_諡倡ｸｮ_鬆ｸ驛ｨ"
-    c.Add "蟋ｿ蜍｢_諡倡ｸｮ_閧ｩ髢｢遽_R": c.Add "蟋ｿ蜍｢_諡倡ｸｮ_閧ｩ髢｢遽_L"
-    c.Add "蟋ｿ蜍｢_諡倡ｸｮ_閧倬未遽_R": c.Add "蟋ｿ蜍｢_諡倡ｸｮ_閧倬未遽_L"
-    c.Add "蟋ｿ蜍｢_諡倡ｸｮ_謇矩未遽_R": c.Add "蟋ｿ蜍｢_諡倡ｸｮ_謇矩未遽_L"
-    c.Add "蟋ｿ蜍｢_諡倡ｸｮ_閧｡髢｢遽_R": c.Add "蟋ｿ蜍｢_諡倡ｸｮ_閧｡髢｢遽_L"
-    c.Add "蟋ｿ蜍｢_諡倡ｸｮ_閹晞未遽_R": c.Add "蟋ｿ蜍｢_諡倡ｸｮ_閹晞未遽_L"
-    c.Add "蟋ｿ蜍｢_諡倡ｸｮ_雜ｳ髢｢遽_R": c.Add "蟋ｿ蜍｢_諡倡ｸｮ_雜ｳ髢｢遽_L"
-    c.Add "蟋ｿ蜍｢_諡倡ｸｮ_蛯呵・
+    ' 拘縮（単関節→左右）
+    c.Add "姿勢_拘縮_頸部"
+    c.Add "姿勢_拘縮_肩関節_R": c.Add "姿勢_拘縮_肩関節_L"
+    c.Add "姿勢_拘縮_肘関節_R": c.Add "姿勢_拘縮_肘関節_L"
+    c.Add "姿勢_拘縮_手関節_R": c.Add "姿勢_拘縮_手関節_L"
+    c.Add "姿勢_拘縮_股関節_R": c.Add "姿勢_拘縮_股関節_L"
+    c.Add "姿勢_拘縮_膝関節_R": c.Add "姿勢_拘縮_膝関節_L"
+    c.Add "姿勢_拘縮_足関節_R": c.Add "姿勢_拘縮_足関節_L"
+    c.Add "姿勢_拘縮_備考"
 
     Set PostureDesiredHeaders = c
 End Function
 
-' ====== 繧ｨ繧､繝ｪ繧｢繧ｹ霎樊嶌讒狗ｯ会ｼ郁｡ｨ險俶昭繧娯・讓呎ｺ門錐・・======
-' 縺薙％縺ｫ隕九▽縺九▲縺滓昭繧後ｒ縺ｩ繧薙←繧楢ｶｳ縺励※縺・￠縺ｰOK
+' ====== エイリアス辞書構築（表記揺れ→標準名） ======
+' ここに見つかった揺れをどんどん足していけばOK
 Private Function BuildPostureAliasDict() As Object
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary")
     d.CompareMode = 1 ' TextCompare
 
-    ' --- 隧穂ｾ｡ ---
-    d("蟋ｿ蜍｢_蜀・レ") = "蟋ｿ蜍｢_隧穂ｾ｡_蜀・レ"
-    d("蜀・レ") = "蟋ｿ蜍｢_隧穂ｾ｡_蜀・レ"
-    d("蟋ｿ蜍｢_鬆ｭ驛ｨ蜑肴婿遯∝・") = "蟋ｿ蜍｢_隧穂ｾ｡_鬆ｭ驛ｨ蜑肴婿遯∝・"
-    d("鬆ｭ驛ｨ蜑肴婿遯∝・") = "蟋ｿ蜍｢_隧穂ｾ｡_鬆ｭ驛ｨ蜑肴婿遯∝・"
-    d("蟋ｿ蜍｢_蛛ｴ蠑ｯ") = "蟋ｿ蜍｢_隧穂ｾ｡_蛛ｴ蠑ｯ"
-    d("蛛ｴ蠑ｯ") = "蟋ｿ蜍｢_隧穂ｾ｡_蛛ｴ蠑ｯ"
-    d("蟋ｿ蜍｢_菴灘ｹｹ蝗樊雷") = "蟋ｿ蜍｢_隧穂ｾ｡_菴灘ｹｹ蝗樊雷"
-    d("菴灘ｹｹ蝗樊雷") = "蟋ｿ蜍｢_隧穂ｾ｡_菴灘ｹｹ蝗樊雷"
-    d("蜿榊ｼｵ閹・) = "蟋ｿ蜍｢_隧穂ｾ｡_蜿榊ｼｵ閹・
-    d("蟋ｿ蜍｢_蜿榊ｼｵ閹・) = "蟋ｿ蜍｢_隧穂ｾ｡_蜿榊ｼｵ閹・
-    d("鬪ｨ逶､蛯ｾ譁・) = "蟋ｿ蜍｢_隧穂ｾ｡_鬪ｨ逶､蛯ｾ譁・
-    d("蟋ｿ蜍｢_鬪ｨ逶､蛯ｾ譁・) = "蟋ｿ蜍｢_隧穂ｾ｡_鬪ｨ逶､蛯ｾ譁・
+    ' --- 評価 ---
+    d("姿勢_円背") = "姿勢_評価_円背"
+    d("円背") = "姿勢_評価_円背"
+    d("姿勢_頭部前方突出") = "姿勢_評価_頭部前方突出"
+    d("頭部前方突出") = "姿勢_評価_頭部前方突出"
+    d("姿勢_側弯") = "姿勢_評価_側弯"
+    d("側弯") = "姿勢_評価_側弯"
+    d("姿勢_体幹回旋") = "姿勢_評価_体幹回旋"
+    d("体幹回旋") = "姿勢_評価_体幹回旋"
+    d("反張膝") = "姿勢_評価_反張膝"
+    d("姿勢_反張膝") = "姿勢_評価_反張膝"
+    d("骨盤傾斜") = "姿勢_評価_骨盤傾斜"
+    d("姿勢_骨盤傾斜") = "姿勢_評価_骨盤傾斜"
 
-    ' 蛯呵・ｼ井ｸ頑ｮｵ・・
-    d("蟋ｿ蜍｢_蛯呵・) = "蟋ｿ蜍｢_隧穂ｾ｡_蛯呵・
-    d("蟋ｿ蜍｢_隧穂ｾ｡_蛯呵・ｼ井ｸ頑ｮｵ・・) = "蟋ｿ蜍｢_隧穂ｾ｡_蛯呵・
-    d("蟋ｿ蜍｢隧穂ｾ｡_蛯呵・) = "蟋ｿ蜍｢_隧穂ｾ｡_蛯呵・
+    ' 備考（上段）
+    d("姿勢_備考") = "姿勢_評価_備考"
+    d("姿勢_評価_備考（上段）") = "姿勢_評価_備考"
+    d("姿勢評価_備考") = "姿勢_評価_備考"
 
-    ' --- 諡倡ｸｮ ---
-    d("髢｢遽諡倡ｸｮ_鬆ｸ驛ｨ") = "蟋ｿ蜍｢_諡倡ｸｮ_鬆ｸ驛ｨ"
-    d("諡倡ｸｮ_鬆ｸ驛ｨ") = "蟋ｿ蜍｢_諡倡ｸｮ_鬆ｸ驛ｨ"
+    ' --- 拘縮 ---
+    d("関節拘縮_頸部") = "姿勢_拘縮_頸部"
+    d("拘縮_頸部") = "姿勢_拘縮_頸部"
 
-    ' 蛛ｴ莉倥″蜷咲ｧｰ縺ｮ繧・ｌ・亥・隗偵・繧ｫ繝・さ遲会ｼ・
-    d("髢｢遽諡倡ｸｮ_閧ｩ髢｢遽・亥承・・) = "蟋ｿ蜍｢_諡倡ｸｮ_閧ｩ髢｢遽_R"
-    d("髢｢遽諡倡ｸｮ_閧ｩ髢｢遽・亥ｷｦ・・) = "蟋ｿ蜍｢_諡倡ｸｮ_閧ｩ髢｢遽_L"
-    d("髢｢遽諡倡ｸｮ_閧倬未遽・亥承・・) = "蟋ｿ蜍｢_諡倡ｸｮ_閧倬未遽_R"
-    d("髢｢遽諡倡ｸｮ_閧倬未遽・亥ｷｦ・・) = "蟋ｿ蜍｢_諡倡ｸｮ_閧倬未遽_L"
-    d("髢｢遽諡倡ｸｮ_謇矩未遽・亥承・・) = "蟋ｿ蜍｢_諡倡ｸｮ_謇矩未遽_R"
-    d("髢｢遽諡倡ｸｮ_謇矩未遽・亥ｷｦ・・) = "蟋ｿ蜍｢_諡倡ｸｮ_謇矩未遽_L"
-    d("髢｢遽諡倡ｸｮ_閧｡髢｢遽・亥承・・) = "蟋ｿ蜍｢_諡倡ｸｮ_閧｡髢｢遽_R"
-    d("髢｢遽諡倡ｸｮ_閧｡髢｢遽・亥ｷｦ・・) = "蟋ｿ蜍｢_諡倡ｸｮ_閧｡髢｢遽_L"
-    d("髢｢遽諡倡ｸｮ_閹晞未遽・亥承・・) = "蟋ｿ蜍｢_諡倡ｸｮ_閹晞未遽_R"
-    d("髢｢遽諡倡ｸｮ_閹晞未遽・亥ｷｦ・・) = "蟋ｿ蜍｢_諡倡ｸｮ_閹晞未遽_L"
-    d("髢｢遽諡倡ｸｮ_雜ｳ髢｢遽・亥承・・) = "蟋ｿ蜍｢_諡倡ｸｮ_雜ｳ髢｢遽_R"
-    d("髢｢遽諡倡ｸｮ_雜ｳ髢｢遽・亥ｷｦ・・) = "蟋ｿ蜍｢_諡倡ｸｮ_雜ｳ髢｢遽_L"
+    ' 側付き名称のゆれ（全角・カッコ等）
+    d("関節拘縮_肩関節（右）") = "姿勢_拘縮_肩関節_R"
+    d("関節拘縮_肩関節（左）") = "姿勢_拘縮_肩関節_L"
+    d("関節拘縮_肘関節（右）") = "姿勢_拘縮_肘関節_R"
+    d("関節拘縮_肘関節（左）") = "姿勢_拘縮_肘関節_L"
+    d("関節拘縮_手関節（右）") = "姿勢_拘縮_手関節_R"
+    d("関節拘縮_手関節（左）") = "姿勢_拘縮_手関節_L"
+    d("関節拘縮_股関節（右）") = "姿勢_拘縮_股関節_R"
+    d("関節拘縮_股関節（左）") = "姿勢_拘縮_股関節_L"
+    d("関節拘縮_膝関節（右）") = "姿勢_拘縮_膝関節_R"
+    d("関節拘縮_膝関節（左）") = "姿勢_拘縮_膝関節_L"
+    d("関節拘縮_足関節（右）") = "姿勢_拘縮_足関節_R"
+    d("関節拘縮_足関節（左）") = "姿勢_拘縮_足関節_L"
 
-    ' 蛯呵・ｼ井ｸ区ｮｵ・・
-    d("髢｢遽諡倡ｸｮ_蛯呵・) = "蟋ｿ蜍｢_諡倡ｸｮ_蛯呵・
-    d("蟋ｿ蜍｢_髢｢遽諡倡ｸｮ_蛯呵・) = "蟋ｿ蜍｢_諡倡ｸｮ_蛯呵・
+    ' 備考（下段）
+    d("関節拘縮_備考") = "姿勢_拘縮_備考"
+    d("姿勢_関節拘縮_備考") = "姿勢_拘縮_備考"
 
 
-    ' --- 蜿ｳ/蟾ｦ 竊・R/L 螟画鋤邉ｻ・井ｸ狗ｷ壼玄蛻・ｊ・・--
-    AddKoushukuSideAliases d, "閧ｩ髢｢遽"
-    AddKoushukuSideAliases d, "閧倬未遽"
-    AddKoushukuSideAliases d, "謇矩未遽"
-    AddKoushukuSideAliases d, "閧｡髢｢遽"
-    AddKoushukuSideAliases d, "閹晞未遽"
-    AddKoushukuSideAliases d, "雜ｳ髢｢遽"
+    ' --- 右/左 → R/L 変換系（下線区切り）---
+    AddKoushukuSideAliases d, "肩関節"
+    AddKoushukuSideAliases d, "肘関節"
+    AddKoushukuSideAliases d, "手関節"
+    AddKoushukuSideAliases d, "股関節"
+    AddKoushukuSideAliases d, "膝関節"
+    AddKoushukuSideAliases d, "足関節"
     
-        ' --- 縲碁未遽縲阪ｒ逵√＞縺溽洒邵ｮ陦ｨ險倥・蜷ｸ蜿趣ｼ郁か/閧・謇・閧｡/閹・雜ｳ・・---
-    AddKoushukuSideAliasesShort d, "閧ｩ", "閧ｩ髢｢遽"
-    AddKoushukuSideAliasesShort d, "閧・, "閧倬未遽"
-    AddKoushukuSideAliasesShort d, "謇・, "謇矩未遽"
-    AddKoushukuSideAliasesShort d, "閧｡", "閧｡髢｢遽"
-    AddKoushukuSideAliasesShort d, "閹・, "閹晞未遽"
-    AddKoushukuSideAliasesShort d, "雜ｳ", "雜ｳ髢｢遽"
+        ' --- 「関節」を省いた短縮表記の吸収（肩/肘/手/股/膝/足） ---
+    AddKoushukuSideAliasesShort d, "肩", "肩関節"
+    AddKoushukuSideAliasesShort d, "肘", "肘関節"
+    AddKoushukuSideAliasesShort d, "手", "手関節"
+    AddKoushukuSideAliasesShort d, "股", "股関節"
+    AddKoushukuSideAliasesShort d, "膝", "膝関節"
+    AddKoushukuSideAliasesShort d, "足", "足関節"
 
     
     Set BuildPostureAliasDict = d
 End Function
     
     
-    ' 萓具ｼ壼ｧｿ蜍｢_諡倡ｸｮ_閧ｩ髢｢遽_蜿ｳ 竊・蟋ｿ蜍｢_諡倡ｸｮ_閧ｩ髢｢遽_R
-'     蟋ｿ蜍｢_諡倡ｸｮ_閧ｩ髢｢遽_蟾ｦ 竊・蟋ｿ蜍｢_諡倡ｸｮ_閧ｩ髢｢遽_L
+    ' 例：姿勢_拘縮_肩関節_右 → 姿勢_拘縮_肩関節_R
+'     姿勢_拘縮_肩関節_左 → 姿勢_拘縮_肩関節_L
 Private Sub AddKoushukuSideAliases(ByVal d As Object, ByVal joint As String)
-    d("蟋ｿ蜍｢_諡倡ｸｮ_" & joint & "_蜿ｳ") = "蟋ｿ蜍｢_諡倡ｸｮ_" & joint & "_R"
-    d("蟋ｿ蜍｢_諡倡ｸｮ_" & joint & "_蟾ｦ") = "蟋ｿ蜍｢_諡倡ｸｮ_" & joint & "_L"
-    ' 蠢ｵ縺ｮ縺溘ａ蜈ｨ隗偵き繝・さ迚医′谿九▲縺ｦ縺・◆蝣ｴ蜷医↓繧ょｯｾ蠢懶ｼ域里縺ｫ荳驛ｨ縺ｯ逋ｻ骭ｲ貂医∩縺縺碁㍾隍⑯K・・
-    d("髢｢遽諡倡ｸｮ_" & joint & "・亥承・・) = "蟋ｿ蜍｢_諡倡ｸｮ_" & joint & "_R"
-    d("髢｢遽諡倡ｸｮ_" & joint & "・亥ｷｦ・・) = "蟋ｿ蜍｢_諡倡ｸｮ_" & joint & "_L"
+    d("姿勢_拘縮_" & joint & "_右") = "姿勢_拘縮_" & joint & "_R"
+    d("姿勢_拘縮_" & joint & "_左") = "姿勢_拘縮_" & joint & "_L"
+    ' 念のため全角カッコ版が残っていた場合にも対応（既に一部は登録済みだが重複OK）
+    d("関節拘縮_" & joint & "（右）") = "姿勢_拘縮_" & joint & "_R"
+    d("関節拘縮_" & joint & "（左）") = "姿勢_拘縮_" & joint & "_L"
 End Sub
 
 
 
-' ====== 譌｢蟄倥・繝・ム縺ｫ繧ｨ繧､繝ｪ繧｢繧ｹ驕ｩ逕ｨ・域隼蜷搾ｼ・======
-' ====== 譌｢蟄倥・繝・ム縺ｫ繧ｨ繧､繝ｪ繧｢繧ｹ驕ｩ逕ｨ・域隼蜷搾ｼ上・繝ｼ繧ｸ蟇ｾ蠢懶ｼ・======
+' ====== 既存ヘッダにエイリアス適用（改名） ======
+' ====== 既存ヘッダにエイリアス適用（改名／マージ対応） ======
 Private Sub ApplyHeaderAliases(ByVal ws As Worksheet, ByVal dictAlias As Object, ByVal dryRun As Boolean)
     Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim j As Long
-    For j = lastCol To 1 Step -1      ' 蜿ｳ竊貞ｷｦ縺ｫ襍ｰ譟ｻ・壼ｾ後ｍ縺九ｉ縺ｮ譁ｹ縺悟・蜑企勁縺ｫ蠑ｷ縺・
+    For j = lastCol To 1 Step -1      ' 右→左に走査：後ろからの方が列削除に強い
         Dim srcHdr As String: srcHdr = Trim$(CStr(ws.Cells(1, j).value))
         If Len(srcHdr) = 0 Then GoTo ContinueLoop
 
@@ -167,7 +167,7 @@ Private Sub ApplyHeaderAliases(ByVal ws As Worksheet, ByVal dictAlias As Object,
             If Not dryRun Then
                 Dim dstCol As Long: dstCol = FindColByHeaderExact(ws, dstHdr)
                 If dstCol > 0 And dstCol <> j Then
-                    ' 譌｢縺ｫ繧ｿ繝ｼ繧ｲ繝・ヨ蛻励′蟄伜惠・夂ｩｺ谺・ｒ蝓九ａ繧句ｽ｢縺ｧ繝槭・繧ｸ縺励∵立蛻励ｒ蜑企勁
+                    ' 既にターゲット列が存在：空欄を埋める形でマージし、旧列を削除
                     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, j).End(xlUp).row
                     Dim r As Long
                     For r = 2 To lastRow
@@ -177,7 +177,7 @@ Private Sub ApplyHeaderAliases(ByVal ws As Worksheet, ByVal dictAlias As Object,
                     Next r
                     ws.Columns(j).Delete
                 Else
-                    ' 繧ｿ繝ｼ繧ｲ繝・ヨ蛻励′辟｡縺・ｼ壹◎縺ｮ縺ｾ縺ｾ謾ｹ蜷・
+                    ' ターゲット列が無い：そのまま改名
                     ws.Cells(1, j).value = dstHdr
                 End If
             End If
@@ -186,7 +186,7 @@ ContinueLoop:
     Next j
 End Sub
 
-' 螳悟・荳閾ｴ縺ｧ隕句・縺怜・逡ｪ蜿ｷ繧定ｿ斐☆・育┌縺代ｌ縺ｰ0・・
+' 完全一致で見出し列番号を返す（無ければ0）
 Public Function FindColByHeaderExact(ByVal ws As Worksheet, ByVal headerName As String) As Long
     Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim c As Long
@@ -200,7 +200,7 @@ Public Function FindColByHeaderExact(ByVal ws As Worksheet, ByVal headerName As 
 End Function
 
 
-' ====== 谺謳阪・繝・ム縺ｮ陬懷ｮ鯉ｼ域忰蟆ｾ霑ｽ蜉・・======
+' ====== 欠損ヘッダの補完（末尾追加） ======
 Private Sub EnsureHeaders(ByVal ws As Worksheet, ByVal desired As Collection, ByVal dryRun As Boolean)
     Dim have As Object: Set have = CurrentHeaderSet(ws)
     Dim nm As Variant
@@ -216,7 +216,7 @@ Private Sub EnsureHeaders(ByVal ws As Worksheet, ByVal desired As Collection, By
     Next nm
 End Sub
 
-' 迴ｾ蝨ｨ縺ｮ繝倥ャ繝髮・粋・・extCompare・・
+' 現在のヘッダ集合（TextCompare）
 Private Function CurrentHeaderSet(ByVal ws As Worksheet) As Object
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary")
     d.CompareMode = 1
@@ -229,12 +229,12 @@ Private Function CurrentHeaderSet(ByVal ws As Worksheet) As Object
     Set CurrentHeaderSet = d
 End Function
 
-' ====== 蟋ｿ蜍｢繝悶Ο繝・け縺ｮ荳ｦ縺ｹ譖ｿ縺・======
-' 譌｢蟄倥・ 窶懷ｧｿ蜍｢_*窶・蛻礼ｾ､繧偵‥esired縺ｮ鬆・↓蟾ｦ隧ｰ繧√〒蜀埼・鄂ｮ・井ｻ悶そ繧ｯ繧ｷ繝ｧ繝ｳ蛻励・逶ｸ蟇ｾ鬆・ｒ菫晄戟・・
+' ====== 姿勢ブロックの並べ替え ======
+' 既存の “姿勢_*” 列群を、desiredの順に左詰めで再配置（他セクション列は相対順を保持）
 Private Sub ReorderPostureBlock(ByVal ws As Worksheet, ByVal desired As Collection, ByVal dryRun As Boolean)
     Dim hdrIdx As Object: Set hdrIdx = CurrentHeaderSet(ws)
 
-    ' 蟇ｾ雎｡蛻励・繧､繝ｳ繝・ャ繧ｯ繧ｹ蜿朱寔・亥ｭ伜惠縺吶ｋ繧ゅ・縺ｮ縺ｿ・・
+    ' 対象列のインデックス収集（存在するもののみ）
     Dim targetCols As Collection: Set targetCols = New Collection
     Dim nm As Variant
     For Each nm In desired
@@ -243,11 +243,11 @@ Private Sub ReorderPostureBlock(ByVal ws As Worksheet, ByVal desired As Collecti
         End If
     Next nm
     If targetCols.count = 0 Then
-        Debug.Print "[SCHEMA][ORDER] 蟋ｿ蜍｢_* 縺ｮ譌｢蟄伜・縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・
+        Debug.Print "[SCHEMA][ORDER] 姿勢_* の既存列が見つかりません。"
         Exit Sub
     End If
 
-    ' 蟋ｿ蜍｢繝悶Ο繝・け縺ｮ迴ｾ蝨ｨ縺ｮ譛蟆上・譛螟ｧ菴咲ｽｮ
+    ' 姿勢ブロックの現在の最小・最大位置
     Dim minC As Long, maxC As Long, i As Long
     minC = Columns.count: maxC = 0
     For i = 1 To targetCols.count
@@ -255,8 +255,8 @@ Private Sub ReorderPostureBlock(ByVal ws As Worksheet, ByVal desired As Collecti
         maxC = IIf(targetCols(i) > maxC, targetCols(i), maxC)
     Next i
 
-    ' 荳ｦ縺ｳ譖ｿ縺亥・縺ｮ髢句ｧ句・・茨ｼ晉樟繝悶Ο繝・け縺ｮ蜈磯ｭ菴咲ｽｮ・峨↓縲‥esired鬆・〒蜀埼・鄂ｮ
-    ' 蠕後ｍ縺九ｉ Cut竊棚nsert 縺ｧ繧､繝ｳ繝・ャ繧ｯ繧ｹ縺壹ｌ繧貞屓驕ｿ
+    ' 並び替え先の開始列（＝現ブロックの先頭位置）に、desired順で再配置
+    ' 後ろから Cut→Insert でインデックスずれを回避
     Dim desiredExisting As Collection: Set desiredExisting = New Collection
     For Each nm In desired
         If hdrIdx.exists(CStr(nm)) Then desiredExisting.Add CStr(nm)
@@ -265,7 +265,7 @@ Private Sub ReorderPostureBlock(ByVal ws As Worksheet, ByVal desired As Collecti
     Dim curPos As Long: curPos = minC
     Dim nameToCol As Object
 
-    Set nameToCol = CurrentHeaderSet(ws) ' 譛譁ｰ蛹・
+    Set nameToCol = CurrentHeaderSet(ws) ' 最新化
     Dim k As Long
     For k = desiredExisting.count To 1 Step -1
         Dim hName As String: hName = desiredExisting(k)
@@ -276,7 +276,7 @@ Private Sub ReorderPostureBlock(ByVal ws As Worksheet, ByVal desired As Collecti
                 ws.Columns(fromCol).Cut
                 ws.Columns(curPos).Insert Shift:=xlToRight
             End If
-            ' 蜀阪せ繧ｭ繝｣繝ｳ
+            ' 再スキャン
             Set nameToCol = CurrentHeaderSet(ws)
         Else
             Debug.Print "[SCHEMA][KEEP] " & hName & " at Col " & curPos
@@ -284,14 +284,14 @@ Private Sub ReorderPostureBlock(ByVal ws As Worksheet, ByVal desired As Collecti
         curPos = curPos + 1
     Next k
 
-    Debug.Print "[SCHEMA][ORDER] 蟋ｿ蜍｢繝悶Ο繝・け荳ｦ縺ｳ譖ｿ縺亥ｮ御ｺ・・
+    Debug.Print "[SCHEMA][ORDER] 姿勢ブロック並び替え完了。"
 End Sub
 
 
-' 萓具ｼ壼ｧｿ蜍｢_諡倡ｸｮ_閧ｩ_蜿ｳ 竊・蟋ｿ蜍｢_諡倡ｸｮ_閧ｩ髢｢遽_R
+' 例：姿勢_拘縮_肩_右 → 姿勢_拘縮_肩関節_R
 Private Sub AddKoushukuSideAliasesShort(ByVal d As Object, ByVal shortJoint As String, ByVal fullJoint As String)
-    d("蟋ｿ蜍｢_諡倡ｸｮ_" & shortJoint & "_蜿ｳ") = "蟋ｿ蜍｢_諡倡ｸｮ_" & fullJoint & "_R"
-    d("蟋ｿ蜍｢_諡倡ｸｮ_" & shortJoint & "_蟾ｦ") = "蟋ｿ蜍｢_諡倡ｸｮ_" & fullJoint & "_L"
+    d("姿勢_拘縮_" & shortJoint & "_右") = "姿勢_拘縮_" & fullJoint & "_R"
+    d("姿勢_拘縮_" & shortJoint & "_左") = "姿勢_拘縮_" & fullJoint & "_L"
 End Sub
 
 
@@ -308,14 +308,14 @@ Public Sub ListUnknownPostureHeaders()
     For j = 1 To lastCol
         h = Trim$(CStr(ws.Cells(1, j).value))
         If Len(h) > 0 Then
-            If Left$(h, 3) = "蟋ｿ蜍｢_" Then
+            If Left$(h, 3) = "姿勢_" Then
                 If Not allow.exists(h) Then unknown(h) = j
             End If
         End If
     Next j
 
     If unknown.count = 0 Then
-        Debug.Print "[SCHEMA][CHECK] 蟋ｿ蜍｢_* 縺ｮ譛ｪ遏･蛻励・縺ゅｊ縺ｾ縺帙ｓ縲・
+        Debug.Print "[SCHEMA][CHECK] 姿勢_* の未知列はありません。"
     Else
         Dim k: For Each k In unknown.keys
             Debug.Print "[SCHEMA][CHECK][UNKNOWN] "; k; "  Col "; unknown(k)
@@ -327,12 +327,12 @@ End Sub
 Private Function BasicInfoDesiredHeaders() As Collection
     Dim c As New Collection
 
-    c.Add "菴丞ｮ・憾豕・
-    c.Add "菴丞ｮ・ｙ閠・
-    c.Add "逶ｴ霑大・髯｢譌･"
-    c.Add "逶ｴ霑鷹髯｢譌･"
-    c.Add "豐ｻ逋らｵ碁℃"
-    c.Add "蜷井ｽｵ逍ｾ謔｣繝ｻ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ"
+    c.Add "住宅状況"
+    c.Add "住宅備考"
+    c.Add "直近入院日"
+    c.Add "直近退院日"
+    c.Add "治療経過"
+    c.Add "合併疾患・コントロール"
 
     Set BasicInfoDesiredHeaders = c
 End Function

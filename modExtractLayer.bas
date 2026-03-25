@@ -1,7 +1,7 @@
 Attribute VB_Name = "modExtractLayer"
 Option Explicit
 
-' frmEval 縺ｨ EvalData 縺九ｉ Basic逕滓・縺ｧ菴ｿ縺・怙蟆上ョ繝ｼ繧ｿ縺ｮ縺ｿ繧呈歓蜃ｺ縺吶ｋ縲・
+' frmEval と EvalData から Basic生成で使う最小データのみを抽出する。
 Public Function ExtractBasicSourceData(ByVal patientName As String) As Object
     Dim data As Object
 
@@ -10,8 +10,8 @@ Public Function ExtractBasicSourceData(ByVal patientName As String) As Object
     data("CareLevelRaw") = ReadFrmEvalControlText("cboCare")
     data("LivingTypeRaw") = ReadFrmEvalControlText("txtLiving")
     data("BITotalRaw") = ReadFrmEvalControlText("txtBITotal")
-    data("NeedPatientRaw") = ReadLatestEvalTextByHeader(patientName, "譛ｬ莠ｺNeeds")
-    data("NeedFamilyRaw") = ReadLatestEvalTextByHeader(patientName, "螳ｶ譌蒐eeds")
+    data("NeedPatientRaw") = ReadLatestEvalTextByHeader(patientName, "本人Needs")
+    data("NeedFamilyRaw") = ReadLatestEvalTextByHeader(patientName, "家族Needs")
     data("MMT_IO_Raw") = ReadLatestEvalTextByHeader(patientName, "MMT_IO")
 
     Set ExtractBasicSourceData = data

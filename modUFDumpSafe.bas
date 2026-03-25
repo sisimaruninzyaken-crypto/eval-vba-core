@@ -2,10 +2,10 @@ Attribute VB_Name = "modUFDumpSafe"
 Option Explicit
 
 '========================================================
-' Safe Dump: 驥崎､・ｷ｡蝗槭ｒ髦ｲ縺弱｀ultiPage/Page 繧貞ｮ牙・縺ｫ謇ｱ縺・沿
-' - Visited(Dictionary)縺ｧ螟夐㍾險ｪ蝠城亟豁｢
-' - MultiPage.Pages 縺ｯ蟆ら畑繝ｫ繝ｼ繝暦ｼ・age縺ｮLeft/Width遲峨・隗ｦ繧峨↑縺・ｼ・
-' - Page 縺ｯ縲檎峩荳気ontrols繧貞・謖吶阪□縺代ょ・蟶ｰ縺ｯ Frame 縺ｮ縺ｿ險ｱ蜿ｯ
+' Safe Dump: 重複巡回を防ぎ、MultiPage/Page を安全に扱う版
+' - Visited(Dictionary)で多重訪問防止
+' - MultiPage.Pages は専用ループ（PageのLeft/Width等は触らない）
+' - Page は「直下Controlsを列挙」だけ。再帰は Frame のみ許可
 '========================================================
 
 Public Sub DumpFrmEvalTree_ToFile_Safe(Optional ByVal outPath As String = "")
@@ -48,7 +48,7 @@ End Sub
 Private Sub DumpControl_Safe(ByVal ws As Object, ByVal parent As Object, ByVal depth As Long, ByVal visited As Object)
     On Error GoTo ErrH
 
-    ' parent閾ｪ霄ｫ繧歎isited・亥酔荳繧､繝ｳ繧ｹ繧ｿ繝ｳ繧ｹ縺ｮ蜀崎ｨｪ髦ｲ豁｢・・
+    ' parent自身をVisited（同一インスタンスの再訪防止）
     Dim keyP As String
     keyP = ObjKey(parent)
     If keyP <> "" Then
@@ -56,7 +56,7 @@ Private Sub DumpControl_Safe(ByVal ws As Object, ByVal parent As Object, ByVal d
         visited.Add keyP, True
     End If
 
-    ' parent縺ｮ逶ｴ荳九□縺大・謖呻ｼ・arent荳閾ｴ縺ｧ繝輔ぅ繝ｫ繧ｿ・・
+    ' parentの直下だけ列挙（Parent一致でフィルタ）
     Dim c As MSForms.Control
     For Each c In parent.controls
         If (c.parent Is parent) Then
@@ -69,7 +69,7 @@ Private Sub DumpControl_Safe(ByVal ws As Object, ByVal parent As Object, ByVal d
                 DumpMultiPage_Safe ws, c, depth + 1, visited
 
             Else
-                ' 縺昴ｌ莉･螟悶・蜀榊ｸｰ縺励↑縺・
+                ' それ以外は再帰しない
             End If
         End If
     Next c
@@ -92,10 +92,10 @@ Private Sub DumpMultiPage_Safe(ByVal ws As Object, ByVal mp As MSForms.MultiPage
         Dim pg As MSForms.page
         Set pg = mp.Pages(i)
 
-        ' Page縺ｯ菴咲ｽｮ諠・ｱ縺ｫ隗ｦ繧後↑縺・ｼ・38蝗樣∩・峨・ame/Caption縺縺・
+        ' Pageは位置情報に触れない（438回避）。Name/Captionだけ
         ws.WriteLine Indent(depth) & "[Page " & i & "] Name=" & SafeStr(pg, "Name") & " Caption=" & SafeStr(pg, "Caption")
 
-        ' Page逶ｴ荳気ontrols繧貞・謖呻ｼ・age閾ｪ菴薙・蜀榊ｸｰ蟇ｾ雎｡縺ｫ縺励↑縺・ｼ・
+        ' Page直下Controlsを列挙（Page自体は再帰対象にしない）
         DumpPageChildren_Safe ws, pg, depth + 1, visited
     Next i
 
@@ -115,7 +115,7 @@ Private Sub DumpPageChildren_Safe(ByVal ws As Object, ByVal pg As MSForms.page, 
         If (c.parent Is pg) Then
             DumpOne ws, c, depth
 
-            ' Page驟堺ｸ九・ Frame 縺縺大・蟶ｰOK・亥ｿ・ｦ√↑繧窺ultiPage繧０K・・
+            ' Page配下は Frame だけ再帰OK（必要ならMultiPageもOK）
             If TypeName(c) = "Frame" Then
                 DumpControl_Safe ws, c, depth, visited
             ElseIf TypeName(c) = "MultiPage" Then
@@ -138,7 +138,7 @@ Private Sub DumpOne(ByVal ws As Object, ByVal c As MSForms.Control, ByVal depth 
     Dim s As String
     s = Indent(depth) & TypeName(c) & " " & SafeStr(c, "Name")
 
-    ' 蠎ｧ讓吶・Control縺ｮ縺ｿ・・age縺ｯ隗ｦ繧峨↑縺・ｼ・
+    ' 座標はControlのみ（Pageは触らない）
     Dim L As Variant, t As Variant, w As Variant, h As Variant
     L = SafeNum(c, "Left")
     t = SafeNum(c, "Top")

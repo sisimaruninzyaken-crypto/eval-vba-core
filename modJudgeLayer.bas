@@ -1,7 +1,7 @@
 Attribute VB_Name = "modJudgeLayer"
 Option Explicit
 
-' 蛻､螳壹・縺吶∋縺ｦVBA縺ｧ螳溯｡後☆繧具ｼ・I蟋碑ｭｲ遖∵ｭ｢・峨・
+' 判定はすべてVBAで実行する（AI委譲禁止）。
 Public Function JudgeBasicPlanInputs(ByVal normalized As Object) As Object
     Dim judged As Object
 
@@ -21,28 +21,28 @@ Private Function JudgeActivityCandidate(ByVal normalized As Object) As String
     biTotal = ToLong(GetValue(normalized, "BITotal"), -1)
 
     Select Case biTotal
-        Case Is < 40: JudgeActivityCandidate = "襍ｷ螻・ｧｻ蜍・
-        Case 40 To 69: JudgeActivityCandidate = "螻句・豁ｩ陦・
-        Case Is >= 70: JudgeActivityCandidate = "螻句､匁ｭｩ陦・
-        Case Else: JudgeActivityCandidate = "荳肴・"
+        Case Is < 40: JudgeActivityCandidate = "起居移動"
+        Case 40 To 69: JudgeActivityCandidate = "屋内歩行"
+        Case Is >= 70: JudgeActivityCandidate = "屋外歩行"
+        Case Else: JudgeActivityCandidate = "不明"
     End Select
 End Function
 
 Private Function JudgeMainCause(ByVal normalized As Object) As String
-    If InStr(1, GetValue(normalized, "MMT_IO"), "逍ｼ逞・, vbTextCompare) > 0 Then
-        JudgeMainCause = "逍ｼ逞・
-    ElseIf InStr(1, GetValue(normalized, "MMT_IO"), "遲句鴨", vbTextCompare) > 0 Then
-        JudgeMainCause = "遲句鴨菴惹ｸ・
+    If InStr(1, GetValue(normalized, "MMT_IO"), "疼痛", vbTextCompare) > 0 Then
+        JudgeMainCause = "疼痛"
+    ElseIf InStr(1, GetValue(normalized, "MMT_IO"), "筋力", vbTextCompare) > 0 Then
+        JudgeMainCause = "筋力低下"
     Else
-        JudgeMainCause = "閠蝉ｹ・ｧ菴惹ｸ・
+        JudgeMainCause = "耐久性低下"
     End If
 End Function
 
 Private Function JudgeFunctionCandidate(ByVal normalized As Object) As String
     Select Case GetValue(normalized, "LivingType")
-        Case "迢ｬ螻・: JudgeFunctionCandidate = "遘ｻ荵怜ｮ牙ｮ壽ｧ"
-        Case "蜷悟ｱ・: JudgeFunctionCandidate = "豁ｩ陦梧戟荵・ｧ"
-        Case Else: JudgeFunctionCandidate = "蝓ｺ譛ｬ蜍穂ｽ・
+        Case "独居": JudgeFunctionCandidate = "移乗安定性"
+        Case "同居": JudgeFunctionCandidate = "歩行持久性"
+        Case Else: JudgeFunctionCandidate = "基本動作"
     End Select
 End Function
 

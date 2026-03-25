@@ -25,13 +25,13 @@ Public Function FindCtlDeep(ByVal container As Object, ByVal ctlName As String) 
         End If
 
         If TypeOf c Is MSForms.Frame Or TypeOf c Is MSForms.page Then
-            Set FindCtlDeep = FindCtlDeep(c, ctlName)   ' 竊・ctlName 縺ｫ邨ｱ荳
+            Set FindCtlDeep = FindCtlDeep(c, ctlName)   ' ← ctlName に統一
             If Not FindCtlDeep Is Nothing Then Exit Function
         End If
 
         If TypeOf c Is MSForms.MultiPage Then
             For Each pg In c.Pages
-                Set FindCtlDeep = FindCtlDeep(pg, ctlName)  ' 竊・ctlName 縺ｫ邨ｱ荳
+                Set FindCtlDeep = FindCtlDeep(pg, ctlName)  ' ← ctlName に統一
                 If Not FindCtlDeep Is Nothing Then Exit Function
             Next
         End If
@@ -47,5 +47,5 @@ End Function
 Public Function GetCtlCheck(ByVal owner As Object, ByVal ctlName As String) As String
     Dim ctl As MSForms.Control
     Set ctl = FindCtlDeep(owner, ctlName)
-    If Not ctl Is Nothing Then On Error Resume Next: GetCtlCheck = IIf(ctl.value = True, "譛・, "辟｡")  ' 竊・蜊願ｧ偵ム繝悶Ν繧ｯ繧ｩ繝ｼ繝・・繧ｷ繝ｧ繝ｳ
+    If Not ctl Is Nothing Then On Error Resume Next: GetCtlCheck = IIf(ctl.value = True, "有", "無")  ' ← 半角ダブルクォーテーション
 End Function

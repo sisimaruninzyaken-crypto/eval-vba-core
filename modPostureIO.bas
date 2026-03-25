@@ -1,6 +1,6 @@
 Attribute VB_Name = "modPostureIO"
 
-' ===== modPostureIO.bas・郁､・焚鬆・岼・句ｙ閠・迚茨ｼ・====
+' ===== modPostureIO.bas（複数項目＋備考 版）=====
 Option Explicit
 
 Public Sub SavePostureToSheet(ws As Worksheet, ByVal r As Long, owner As Object)
@@ -8,56 +8,56 @@ Public Sub SavePostureToSheet(ws As Worksheet, ByVal r As Long, owner As Object)
     caps = PostureCaptions()
     For i = LBound(caps) To UBound(caps)
         cap = CStr(caps(i))
-        col = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_" & cap)
+        col = EnsureHeaderCol_Posture(ws, "姿勢_" & cap)
         ws.Cells(r, col).value = GetCheckByCaption(owner, cap)
         Debug.Print "[SAVE][Posture]", cap, "=", ws.Cells(r, col).value
     Next
 
-   ' 鬪ｨ逶､蛯ｾ譁懶ｼ医さ繝ｳ繝懶ｼ・竊・譫縲悟ｧｿ蜍｢隧穂ｾ｡縲榊・縺ｮ繝ｩ繝吶Ν縲碁ｪｨ逶､蛯ｾ譁懊阪↓邏舌▼縺修ombo繧呈鏡縺・
+   ' 骨盤傾斜（コンボ）?→ 枠「姿勢評価」内のラベル「骨盤傾斜」に紐づくComboを拾う
 Dim cPel As Long, pel As String
-cPel = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_鬪ｨ逶､蛯ｾ譁・)
-pel = GetComboInFrameByLabelCaption_(owner, "蟋ｿ蜍｢隧穂ｾ｡", "鬪ｨ逶､蛯ｾ譁・)
+cPel = EnsureHeaderCol_Posture(ws, "姿勢_骨盤傾斜")
+pel = GetComboInFrameByLabelCaption_(owner, "姿勢評価", "骨盤傾斜")
 ws.Cells(r, cPel).value = pel
-Debug.Print "[SAVE][Posture] 鬪ｨ逶､蛯ｾ譁・=", pel
+Debug.Print "[SAVE][Posture] 骨盤傾斜 =", pel
 
-' 荳頑ｮｵ 蛯呵・ｼ亥ｧｿ蜍｢縺ｮ蛯呵・ｼ・竊・譫縲悟ｧｿ蜍｢隧穂ｾ｡縲榊・縺ｮ繝ｩ繝吶Ν縲悟ｙ閠・阪↓邏舌▼縺週extBox繧呈鏡縺・
+' 上段 備考（姿勢の備考）?→ 枠「姿勢評価」内のラベル「備考」に紐づくTextBoxを拾う
 Dim cNote As Long, noteVal As String
-cNote = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_蛯呵・)
-noteVal = GetTextInFrameByLabelCaption_(owner, "蟋ｿ蜍｢隧穂ｾ｡", "蛯呵・)
+cNote = EnsureHeaderCol_Posture(ws, "姿勢_備考")
+noteVal = GetTextInFrameByLabelCaption_(owner, "姿勢評価", "備考")
 ws.Cells(r, cNote).value = noteVal
-Debug.Print "[SAVE][Posture] 蛯呵・=", noteVal
+Debug.Print "[SAVE][Posture] 備考 =", noteVal
 
 
    
-   ' ?? 髢｢遽諡倡ｸｮ・夐ｸ驛ｨ・亥ｷｦ蜿ｳ縺ｪ縺暦ｼ・
+   ' ?? 関節拘縮：頸部（左右なし）
 Dim colNeck As Long
-colNeck = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_諡倡ｸｮ_鬆ｸ驛ｨ")
-ws.Cells(r, colNeck).value = GetCheckInFrameByCaptionLike_(owner, "髢｢遽諡倡ｸｮ", "鬆ｸ驛ｨ")
-Debug.Print "[SAVE][Posture] 諡倡ｸｮ_鬆ｸ驛ｨ =", ws.Cells(r, colNeck).value
+colNeck = EnsureHeaderCol_Posture(ws, "姿勢_拘縮_頸部")
+ws.Cells(r, colNeck).value = GetCheckInFrameByCaptionLike_(owner, "関節拘縮", "頸部")
+Debug.Print "[SAVE][Posture] 拘縮_頸部 =", ws.Cells(r, colNeck).value
 
    
 
-    ' ?? 髢｢遽諡倡ｸｮ・・驛ｨ菴搾ｼ亥承/蟾ｦ・・??
+    ' ?? 関節拘縮：6部位（右/左） ??
 Dim colJ As Long, joints As Variant, jr As String
 
-joints = Array("閧ｩ髢｢遽", "閧倬未遽", "謇矩未遽", "閧｡髢｢遽", "閹晞未遽", "雜ｳ髢｢遽")
+joints = Array("肩関節", "肘関節", "手関節", "股関節", "膝関節", "足関節")
 
 For i = LBound(joints) To UBound(joints)
     jr = CStr(joints(i))
-    colJ = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_諡倡ｸｮ_" & Replace(jr, "髢｢遽", "") & "_蜿ｳ")
-    ws.Cells(r, colJ).value = GetKoushuku_OnRow_(owner, jr, "蜿ｳ")
+    colJ = EnsureHeaderCol_Posture(ws, "姿勢_拘縮_" & Replace(jr, "関節", "") & "_右")
+    ws.Cells(r, colJ).value = GetKoushuku_OnRow_(owner, jr, "右")
 
-    colJ = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_諡倡ｸｮ_" & Replace(jr, "髢｢遽", "") & "_蟾ｦ")
-    ws.Cells(r, colJ).value = GetKoushuku_OnRow_(owner, jr, "蟾ｦ")
+    colJ = EnsureHeaderCol_Posture(ws, "姿勢_拘縮_" & Replace(jr, "関節", "") & "_左")
+    ws.Cells(r, colJ).value = GetKoushuku_OnRow_(owner, jr, "左")
 Next
 
 
-    ' 蛯呵・ｼ亥ｧｿ蜍｢繝悶Ο繝・け・・
+    ' 備考（姿勢ブロック）
     Dim cKNote As Long, kNote As String
-cKNote = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_諡倡ｸｮ_蛯呵・)
-kNote = GetTextInFrameByLabelCaption_(owner, "髢｢遽諡倡ｸｮ", "蛯呵・)
+cKNote = EnsureHeaderCol_Posture(ws, "姿勢_拘縮_備考")
+kNote = GetTextInFrameByLabelCaption_(owner, "関節拘縮", "備考")
 ws.Cells(r, cKNote).value = kNote
-Debug.Print "[SAVE][Posture] 諡倡ｸｮ_蛯呵・=", kNote
+Debug.Print "[SAVE][Posture] 拘縮_備考 =", kNote
 
 End Sub
 
@@ -71,7 +71,7 @@ Public Sub LoadPostureFromSheet(ws As Worksheet, ByVal r As Long, owner As Objec
     caps = PostureCaptions()
     For i = LBound(caps) To UBound(caps)
         cap = CStr(caps(i))
-        col = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_" & cap)
+        col = EnsureHeaderCol_Posture(ws, "姿勢_" & cap)
         v = ws.Cells(r, col).value
         
 
@@ -81,51 +81,51 @@ Public Sub LoadPostureFromSheet(ws As Worksheet, ByVal r As Long, owner As Objec
         
     Next
 
-    ' 鬪ｨ逶､蛯ｾ譁懶ｼ医さ繝ｳ繝懶ｼ・
+    ' 骨盤傾斜（コンボ）
 Dim cPel As Long, vPel As Variant
-cPel = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_鬪ｨ逶､蛯ｾ譁・)
+cPel = EnsureHeaderCol_Posture(ws, "姿勢_骨盤傾斜")
 vPel = ws.Cells(r, cPel).value
-SetComboInFrameByLabelCaption_ owner, "蟋ｿ蜍｢隧穂ｾ｡", "鬪ｨ逶､蛯ｾ譁・, CStr(vPel)
+SetComboInFrameByLabelCaption_ owner, "姿勢評価", "骨盤傾斜", CStr(vPel)
 
-' 荳頑ｮｵ 蛯呵・ｼ亥ｧｿ蜍｢縺ｮ蛯呵・ｼ・
+' 上段 備考（姿勢の備考）
 Dim cNote As Long, vNote As Variant
-cNote = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_蛯呵・)
+cNote = EnsureHeaderCol_Posture(ws, "姿勢_備考")
 vNote = ws.Cells(r, cNote).value
-SetTextInFrameByLabelCaption_ owner, "蟋ｿ蜍｢隧穂ｾ｡", "蛯呵・, CStr(vNote)
+SetTextInFrameByLabelCaption_ owner, "姿勢評価", "備考", CStr(vNote)
 
 
     
-    ' ?? 髢｢遽諡倡ｸｮ・夐ｸ驛ｨ・亥ｷｦ蜿ｳ縺ｪ縺暦ｼ・
+    ' ?? 関節拘縮：頸部（左右なし）
 Dim colNeck As Long, vNeck As Variant
-colNeck = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_諡倡ｸｮ_鬆ｸ驛ｨ")
+colNeck = EnsureHeaderCol_Posture(ws, "姿勢_拘縮_頸部")
 vNeck = ws.Cells(r, colNeck).value
-SetCheckInFrameByCaptionLike_ owner, "髢｢遽諡倡ｸｮ", "鬆ｸ驛ｨ", CBool(vNeck)
+SetCheckInFrameByCaptionLike_ owner, "関節拘縮", "頸部", CBool(vNeck)
 
 
     
 
-    ' ?? 髢｢遽諡倡ｸｮ・・驛ｨ菴搾ｼ亥承/蟾ｦ・・??
+    ' ?? 関節拘縮：6部位（右/左） ??
 Dim colJ As Long, joints As Variant, jr As String
 
-joints = Array("閧ｩ髢｢遽", "閧倬未遽", "謇矩未遽", "閧｡髢｢遽", "閹晞未遽", "雜ｳ髢｢遽")
+joints = Array("肩関節", "肘関節", "手関節", "股関節", "膝関節", "足関節")
 
 For i = LBound(joints) To UBound(joints)
     jr = CStr(joints(i))
 
-    colJ = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_諡倡ｸｮ_" & Replace(jr, "髢｢遽", "") & "_蜿ｳ")
+    colJ = EnsureHeaderCol_Posture(ws, "姿勢_拘縮_" & Replace(jr, "関節", "") & "_右")
     v = ws.Cells(r, colJ).value
-    SetKoushuku_OnRow_ owner, jr, "蜿ｳ", CBool(v)
+    SetKoushuku_OnRow_ owner, jr, "右", CBool(v)
 
-    colJ = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_諡倡ｸｮ_" & Replace(jr, "髢｢遽", "") & "_蟾ｦ")
+    colJ = EnsureHeaderCol_Posture(ws, "姿勢_拘縮_" & Replace(jr, "関節", "") & "_左")
     v = ws.Cells(r, colJ).value
-    SetKoushuku_OnRow_ owner, jr, "蟾ｦ", CBool(v)
+    SetKoushuku_OnRow_ owner, jr, "左", CBool(v)
 Next i
 
-    ' 蛯呵・ｼ亥ｧｿ蜍｢繝悶Ο繝・け・・
+    ' 備考（姿勢ブロック）
     Dim cKNote As Long, vKNote As Variant
-cKNote = EnsureHeaderCol_Posture(ws, "蟋ｿ蜍｢_諡倡ｸｮ_蛯呵・)
+cKNote = EnsureHeaderCol_Posture(ws, "姿勢_拘縮_備考")
 vKNote = ws.Cells(r, cKNote).value
-SetTextInFrameByLabelCaption_ owner, "髢｢遽諡倡ｸｮ", "蛯呵・, CStr(vKNote)
+SetTextInFrameByLabelCaption_ owner, "関節拘縮", "備考", CStr(vKNote)
 
 
 Debug.Print "[POSTURE][EXIT] r=" & r
@@ -134,16 +134,16 @@ End Sub
 
 
 
-' ====== 縺薙％縺九ｉ繝倥Ν繝・======
+' ====== ここからヘルパ ======
 
-' 謇ｱ縺・メ繧ｧ繝・け鬆・岼蜷搾ｼ医く繝｣繝励す繝ｧ繝ｳ・峨ｒ縺薙％縺ｫ霑ｽ蜉縺励※縺・￥
+' 扱うチェック項目名（キャプション）をここに追加していく
 
 Private Function PostureCaptions() As Variant
-    PostureCaptions = Array("鬆ｭ驛ｨ蜑肴婿遯∝・", "蜀・レ", "蛛ｴ蠑ｯ", "菴灘ｹｹ蝗樊雷", "蜿榊ｼｵ閹・)
+    PostureCaptions = Array("頭部前方突出", "円背", "側弯", "体幹回旋", "反張膝")
 End Function
 
 
-' --- CheckBox・・aption荳閾ｴ・牙叙蠕・險ｭ螳・---
+' --- CheckBox（Caption一致）取得/設定 ---
 Private Function GetCheckByCaption(owner As Object, ByVal cap As String) As Boolean
     Dim chk As Object
     Set chk = FindCheckByCaptionLike_(owner, cap)
@@ -156,7 +156,7 @@ Private Sub SetCheckByCaption(owner As Object, ByVal cap As String, ByVal v As B
     If Not chk Is Nothing Then chk.value = v
 End Sub
 
-' --- Caption縺ｧ繝√ぉ繝・け繝懊ャ繧ｯ繧ｹ繧呈爾縺呻ｼ亥・繧悟ｭ仙・蟶ｰ繝ｻ驛ｨ蛻・ｸ閾ｴOK・・--
+' --- Captionでチェックボックスを探す（入れ子再帰・部分一致OK）---
 Private Function FindCheckByCaptionLike_(container As Object, ByVal needle As String) As Object
     Dim c As Object
     On Error Resume Next
@@ -173,7 +173,7 @@ Private Function FindCheckByCaptionLike_(container As Object, ByVal needle As St
     Next
 End Function
 
-' --- 蛯呵・ｼ壹Λ繝吶Ν縲悟ｙ閠・阪→蜷後§隕ｪ蜀・・TextBox繧呈鏡縺・---
+' --- 備考：ラベル「備考」と同じ親内のTextBoxを拾う ---
 Private Function GetTextByLabelCaption(owner As Object, ByVal labelCap As String) As String
     Dim tb As Object: Set tb = FindTextBoxNearLabel_(owner, labelCap)
     If Not tb Is Nothing Then GetTextByLabelCaption = CStr(tb.text)
@@ -184,14 +184,14 @@ Private Sub SetTextByLabelCaption(owner As Object, ByVal labelCap As String, ByV
     If Not tb Is Nothing Then tb.text = s
 End Sub
 
-' 繝ｩ繝吶Ν縺ｮCaption荳閾ｴ竊貞酔縺倩ｦｪ・・rame縺ｪ縺ｩ・牙・縺ｮTextBox繧定ｿ斐☆・域怙蛻昴・1縺､・・
+' ラベルのCaption一致→同じ親（Frameなど）内のTextBoxを返す（最初の1つ）
 Private Function FindTextBoxNearLabel_(container As Object, ByVal labelCap As String) As Object
     Dim c As Object, inner As Object
     On Error Resume Next
     For Each c In container.controls
         If TypeName(c) = "Label" Then
             If InStr(1, Trim$(c.caption), Trim$(labelCap), vbTextCompare) > 0 Then
-                ' 蜷後§隕ｪ蜀・・TextBox繧定ｿ斐☆
+                ' 同じ親内のTextBoxを返す
                 For Each inner In c.parent.controls
                     If TypeName(inner) = "TextBox" Then Set FindTextBoxNearLabel_ = inner: Exit Function
                 Next
@@ -204,13 +204,13 @@ Private Function FindTextBoxNearLabel_(container As Object, ByVal labelCap As St
     Next
 End Function
 
-' 蟄舌ｒ謖√▽縺九・蛻､螳夲ｼ亥ｮ牙・迚茨ｼ・
+' 子を持つかの判定（安全版）
 Private Function HasControls__(obj As Object) As Boolean
     On Error Resume Next
     HasControls__ = (obj.controls.count >= 0)
 End Function
 
-' --- 蟋ｿ蜍｢逕ｨ繝ｭ繝ｼ繧ｫ繝ｫ: 隕句・縺怜・繧堤｢ｺ菫昴＠縺ｦ蛻礼分蜿ｷ繧定ｿ斐☆ ---
+' --- 姿勢用ローカル: 見出し列を確保して列番号を返す ---
 Private Function EnsureHeaderCol_Posture(ws As Worksheet, ByVal header As String) As Long
     Dim c As Range
     Set c = Nothing
@@ -258,13 +258,13 @@ End Function
 
 
 
-' ==== 髢｢遽諡倡ｸｮ・郁｡後Λ繝吶Ν縺ｮ縲悟承・丞ｷｦ縲阪メ繧ｧ繝・け・峨・繝ｫ繝・====
+' ==== 関節拘縮（行ラベルの「右／左」チェック）ヘルパ ====
 
-' 繝ｩ繝吶ΝCaption・晞Κ菴榊錐・井ｾ九瑚か髢｢遽縲搾ｼ峨→蜷後§陦後・縲悟承・丞ｷｦ縲垢heckBox繧呈爾縺呻ｼ・op縺瑚ｿ代＞繧ゅ・繧呈治逕ｨ・・
+' ラベルCaption＝部位名（例「肩関節」）と同じ行の「右／左」CheckBoxを探す（Topが近いものを採用）
 Private Function FindSideCheck_OnSameRow_(owner As Object, ByVal rowLabel As String, ByVal sideCaption As String) As Object
     Dim lbl As Object, p As Object, c As Object
     Dim best As Object, bestDy As Single, dy As Single, tol As Single
-    tol = 18 ' 蜷後§陦後→縺ｿ縺ｪ縺儺op霍晞屬・医ヵ繧ｩ繝ｼ繝縺ｮ繧ｹ繧ｱ繝ｼ繝ｫ縺ｫ繧医ｊ隱ｿ謨ｴ蜿ｯ・・
+    tol = 18 ' 同じ行とみなすTop距離（フォームのスケールにより調整可）
 
     Set lbl = FindLabelByCaptionDeep_(owner, rowLabel)
     If lbl Is Nothing Then Exit Function
@@ -285,7 +285,7 @@ Private Function FindSideCheck_OnSameRow_(owner As Object, ByVal rowLabel As Str
     Set FindSideCheck_OnSameRow_ = best
 End Function
 
-' 繝ｩ繝吶Ν・磯Κ菴榊錐・峨ｒ豺ｱ縺乗爾縺・
+' ラベル（部位名）を深く探す
 Private Function FindLabelByCaptionDeep_(container As Object, ByVal cap As String) As Object
     Dim c As Object, r As Object
     On Error Resume Next
@@ -302,7 +302,7 @@ Private Function FindLabelByCaptionDeep_(container As Object, ByVal cap As Strin
     Next
 End Function
 
-' 蜿ｳ蟾ｦ縺ｮ蛟､蜿門ｾ励・險ｭ螳・
+' 右左の値取得・設定
 Private Function GetKoushuku_OnRow_(owner As Object, ByVal rowLabel As String, ByVal side As String) As Boolean
     Dim chk As Object
     Set chk = FindSideCheck_OnSameRow_(owner, rowLabel, side)
@@ -317,9 +317,9 @@ End Sub
 
 
 
-' === Frame・域棧・峨ｒCaption縺ｧ迚ｹ螳壹＠縺ｦ荳ｭ縺ｮ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ繧呈桶縺・===
+' === Frame（枠）をCaptionで特定して中のコントロールを扱う ===
 
-' 譫Caption縺ｫ驛ｨ蛻・ｸ閾ｴ縺吶ｋFrame繧呈ｷｱ縺乗爾縺・
+' 枠Captionに部分一致するFrameを深く探す
 Private Function FindFrameByCaptionDeep_(container As Object, ByVal capLike As String) As Object
     Dim c As Object, r As Object
     On Error Resume Next
@@ -336,7 +336,7 @@ Private Function FindFrameByCaptionDeep_(container As Object, ByVal capLike As S
     Next
 End Function
 
-' 譫蜀・〒Caption荳閾ｴ縺ｮCheckBox繧呈爾縺励※蜿門ｾ・險ｭ螳・
+' 枠内でCaption一致のCheckBoxを探して取得/設定
 Private Function GetCheckInFrameByCaptionLike_(owner As Object, ByVal frameCap As String, ByVal chkCap As String) As Boolean
     Dim fr As Object, c As Object
     Set fr = FindFrameByCaptionDeep_(owner, frameCap)
@@ -364,7 +364,7 @@ Private Sub SetCheckInFrameByCaptionLike_(owner As Object, ByVal frameCap As Str
     Next
 End Sub
 
-' 譫蜀・〒繝ｩ繝吶ΝCaption荳閾ｴ竊貞酔縺俶棧縺ｮTextBox繧呈鏡縺・
+' 枠内でラベルCaption一致→同じ枠のTextBoxを拾う
 Private Function GetTextInFrameByLabelCaption_(owner As Object, ByVal frameCap As String, ByVal labelCap As String) As String
     Dim fr As Object, c As Object, inner As Object
     Set fr = FindFrameByCaptionDeep_(owner, frameCap)
@@ -396,14 +396,14 @@ Private Sub SetTextInFrameByLabelCaption_(owner As Object, ByVal frameCap As Str
 End Sub
 
 
-' 譫蜀・〒繝ｩ繝吶ΝCaption荳閾ｴ 竊・蜷後§譫縺ｧ荳逡ｪ霑代＞ComboBox繧貞叙蠕・險ｭ螳・
+' 枠内でラベルCaption一致 → 同じ枠で一番近いComboBoxを取得/設定
 Private Function GetComboInFrameByLabelCaption_(owner As Object, ByVal frameCap As String, ByVal labelCap As String) As String
     Dim fr As Object, c As Object, best As Object, inner As Object
     Dim targetLbl As Object, bestDx As Single, dx As Single
     Set fr = FindFrameByCaptionDeep_(owner, frameCap)
     If fr Is Nothing Then Exit Function
 
-    ' 繝ｩ繝吶Ν繧定ｦ九▽縺代ｋ
+    ' ラベルを見つける
     For Each c In fr.controls
         If TypeName(c) = "Label" Then
             If InStr(1, Trim$(c.caption), Trim$(labelCap), vbTextCompare) > 0 Then
@@ -413,7 +413,7 @@ Private Function GetComboInFrameByLabelCaption_(owner As Object, ByVal frameCap 
     Next
     If targetLbl Is Nothing Then Exit Function
 
-    ' 繝ｩ繝吶Ν縺ｨ蜷後§隕ｪ蜀・〒縲∵ｨｪ譁ｹ蜷代↓荳逡ｪ霑代＞ComboBox繧帝∈縺ｶ
+    ' ラベルと同じ親内で、横方向に一番近いComboBoxを選ぶ
     bestDx = 1E+20
     For Each inner In fr.controls
         If TypeName(inner) = "ComboBox" Then
@@ -455,7 +455,7 @@ End Sub
 
 
 
-' --- Caption縺ｧ繝√ぉ繝・け繝懊ャ繧ｯ繧ｹ繧呈爾縺呻ｼ磯Κ蛻・ｸ閾ｴOK・・---
+' --- Captionでチェックボックスを探す（部分一致OK） ---
 Public Function FindCheckByCaptionLike(container As Object, ByVal needle As String) As MSForms.CheckBox
     Dim c As Object
     On Error Resume Next
@@ -466,7 +466,7 @@ Public Function FindCheckByCaptionLike(container As Object, ByVal needle As Stri
                 Exit Function
             End If
         End If
-        ' Frame繧Пage縺ｪ縺ｩ蜈･繧悟ｭ舌ｂ霎ｿ繧・
+        ' FrameやPageなど入れ子も辿る
         If HasControls_(c) Then
             Set FindCheckByCaptionLike = FindCheckByCaptionLike(c, needle)
             If Not FindCheckByCaptionLike Is Nothing Then Exit Function

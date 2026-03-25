@@ -14,7 +14,7 @@ Attribute btn.VB_VarHelpID = -1
 Public Event Clicked()
 
 Private Sub btn_Click()
-    ' 荳区ｮｵ縺ｮ菫晏ｭ倥・繧ｿ繝ｳ縺梧款縺輔ｌ縺溘ｉ縲∬・蛻・・繧､繝吶Φ繝医ｒ逋ｺ轣ｫ縺輔○繧九□縺・
+    ' 下段の保存ボタンが押されたら、自分のイベントを発火させるだけ
     RaiseEvent Clicked
 End Sub
 

@@ -7,7 +7,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-'=== CboBIHook.cls: BI鬆・岼繧ｳ繝ｳ繝懊・Change繧定ｦｪ繝輔か繝ｼ繝縺ｸ騾夂衍 ===
+'=== CboBIHook.cls: BI項目コンボのChangeを親フォームへ通知 ===
 Option Explicit
 Public WithEvents c As MSForms.ComboBox
 Attribute c.VB_VarHelpID = -1

@@ -9,7 +9,7 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 
 
-'=== TxtImeHook.cls : TextBox 縺ｸ繝輔か繝ｼ繧ｫ繧ｹ譎ゅ↓IME繧偵・繧峨′縺ｪ縺ｸ ===
+'=== TxtImeHook.cls : TextBox へフォーカス時にIMEをひらがなへ ===
 Option Explicit
 Public WithEvents t As MSForms.TextBox
 Attribute t.VB_VarHelpID = -1

@@ -4,7 +4,7 @@ Option Explicit
 
 Private Sub WalkContainer(ByVal cont As Object, ByRef maxBottom As Double)
     
-   '--- MultiPage 縺ｯ Controls 繧呈戟縺溘↑縺・ｼ・ages 繧呈侍繧具ｼ・
+   '--- MultiPage は Controls を持たない（Pages を掘る）
 If TypeName(cont) = "MultiPage" Then
     Dim p As MSForms.page
     For Each p In cont.Pages
@@ -28,7 +28,7 @@ End If
                   Or (TypeOf c Is MSForms.MultiPage) _
                   Or (TypeOf c Is MSForms.page)
 
-    ' 闡会ｼ亥・蜉幃Κ蜩√↑縺ｩ・峨□縺代〒 maxBottom 繧呈峩譁ｰ縺吶ｋ
+    ' 葉（入力部品など）だけで maxBottom を更新する
     If c.Visible Then
         If Not isContainer Then
             If c.Top + c.Height > maxBottom Then maxBottom = c.Top + c.Height: lastMaxInfo = TypeName(c) & "  " & c.name & "  Bottom=" & (c.Top + c.Height)
@@ -37,7 +37,7 @@ End If
         End If
     End If
 
-    ' 繧ｳ繝ｳ繝・リ縺ｯ謗倥ｋ・井ｸｭ霄ｫ繧定ｦ九ｋ・・
+    ' コンテナは掘る（中身を見る）
     If isContainer Then
         WalkContainer c, maxBottom
     End If
@@ -83,7 +83,7 @@ Public Sub Fix_Page8_DailyLog_Once()
         pg.controls("lstDailyLogList").Height = 140
     End If
 
-    '讀懆ｨｼ繝ｭ繧ｰ・育ｵ先棡縺縺托ｼ・
+    '検証ログ（結果だけ）
     maxBottom = 0#
     WalkContainer pg, maxBottom
     Static callN As Long: callN = callN + 1: Debug.Print "[Fix_Page8] call#" & callN & " needShrink=" & needShrink & "  NewBottom=" & maxBottom & "  Overflow=" & (maxBottom - mp.Height)
@@ -97,12 +97,12 @@ Public Sub Fix_Page6_Walk_FrameScroll_Once()
     Dim f As Object
     Set f = frmEval.controls("MultiPage1").Pages("Page6").controls("Frame6")
 
-    '陦ｨ遉ｺ譫繧樽P1縺ｫ蜷医ｏ縺帙ｋ
+    '表示枠をMP1に合わせる
     f.Height = frmEval.controls("MultiPage1").Height
     f.ScrollBars = fmScrollBarsVertical
     f.ScrollTop = 0
 
-    '荳ｭ霄ｫ縺ｮ譛螟ｧBottom 竊・ScrollHeight
+    '中身の最大Bottom → ScrollHeight
     Dim maxBottom As Double: maxBottom = 0#
     Dim c As Object
     For Each c In f.controls
@@ -151,9 +151,9 @@ Public Sub Temp_SetScroll_Frame1_PostureTab()
     Dim pg As Object: Set pg = mp.Pages(mp.value)
 
     With pg.controls("Frame1")
-        .Height = mp.Height                '竊占｡ｨ遉ｺ譫縺ｫ蜿弱ａ繧具ｼ医％縺薙′譛ｬ荳ｸ・・
+        .Height = mp.Height                '←表示枠に収める（ここが本丸）
         .ScrollBars = fmScrollBarsVertical
-        .ScrollHeight = 396 + 24           '竊蝉ｸｭ霄ｫBottom(396) + 菴咏區
+        .ScrollHeight = 396 + 24           '←中身Bottom(396) + 余白
     End With
 End Sub
 

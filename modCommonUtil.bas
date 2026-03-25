@@ -21,7 +21,7 @@ Public Sub Cleanup_DuplicateROMHeaders_KeepRightmost()
 
     lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
 
-    ' 1) ROM_* 縺ｮ菴咲ｽｮ繧貞・襍ｰ譟ｻ
+    ' 1) ROM_* の位置を全走査
     For c = 1 To lastCol
         h = CStr(ws.Cells(1, c).value)
         If Len(h) > 0 Then
@@ -32,7 +32,7 @@ Public Sub Cleanup_DuplicateROMHeaders_KeepRightmost()
         End If
     Next c
 
-    ' 2) 蜿ｳ遶ｯ(譛螟ｧ蛻・縺縺第ｮ九＠縲∽ｻ悶・蜑企勁蟇ｾ雎｡縺ｨ縺励※蜿朱寔
+    ' 2) 右端(最大列)だけ残し、他は削除対象として収集
     Dim toDel As New Collection
     Dim k As Variant, i As Long, keepCol As Long
     For Each k In map.keys
@@ -47,7 +47,7 @@ Public Sub Cleanup_DuplicateROMHeaders_KeepRightmost()
         End If
     Next k
 
-    ' 3) 髯埼・〒蜑企勁
+    ' 3) 降順で削除
     Dim arr() As Long, n As Long
     n = toDel.count
     If n > 0 Then
@@ -55,7 +55,7 @@ Public Sub Cleanup_DuplicateROMHeaders_KeepRightmost()
         For i = 1 To n
             arr(i) = toDel(i)
         Next i
-        ' 髯埼・た繝ｼ繝・
+        ' 降順ソート
         Dim j As Long, tmp As Long
         For i = 1 To n - 1
             For j = i + 1 To n
@@ -64,7 +64,7 @@ Public Sub Cleanup_DuplicateROMHeaders_KeepRightmost()
                 End If
             Next j
         Next i
-        ' 蜑企勁螳溯｡・
+        ' 削除実行
         For i = 1 To n
             Debug.Print "[DUP-CLEAN] delete col", arr(i), "(" & ws.Cells(1, arr(i)).value & ")"
             ws.Columns(arr(i)).Delete
@@ -75,7 +75,7 @@ Public Sub Cleanup_DuplicateROMHeaders_KeepRightmost()
     Application.ScreenUpdating = True
 End Sub
 
-' 隕句・縺励′螳悟・荳閾ｴ縺吶ｋ縲御ｸ逡ｪ蜿ｳ縺ｮ蛻礼分蜿ｷ縲阪ｒ霑斐☆繝ｦ繝ｼ繝・ぅ繝ｪ繝・ぅ
+' 見出しが完全一致する「一番右の列番号」を返すユーティリティ
 Public Function HeaderCol_Compat_Rightmost(ByVal name As String, ByVal ws As Worksheet) As Long
     Dim lastCol As Long, c As Long
     lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
@@ -87,20 +87,20 @@ Public Function HeaderCol_Compat_Rightmost(ByVal name As String, ByVal ws As Wor
     Next c
 End Function
 
-' IO騾｣邨先枚蟄怜・ "key=value|key=value|..." 縺九ｉ縲∵欠螳嗅ey縺ｮ value 繧定ｿ斐☆邁｡譏薙ヱ繝ｼ繧ｵ
+' IO連結文字列 "key=value|key=value|..." から、指定keyの value を返す簡易パーサ
 Public Function GetIOValue(ByVal ioStr As String, ByVal key As String) As String
     Dim token As Variant, klen As Long
-    klen = Len(key) + 1 ' "key=" 縺ｮ髟ｷ縺・
+    klen = Len(key) + 1 ' "key=" の長さ
     For Each token In Split(ioStr, "|")
         If Left$(token, klen) = key & "=" Then
-            GetIOValue = Mid$(token, klen + 1) ' "=" 縺ｮ蠕後ｍ
+            GetIOValue = Mid$(token, klen + 1) ' "=" の後ろ
             Exit Function
         End If
     Next token
 End Function
 
-' "key=value|key:...|" 縺ｮ豺ｷ蝨ｨ繧呈Φ螳壹・
-' 謖・ｮ・key 縺ｮ蜿ｳ蛛ｴ・・ 縺ｾ縺溘・ : 縺ｮ蠕後ｍ・峨ｒ窶懊◎縺ｮ縺ｾ縺ｾ窶晁ｿ斐☆縲・
+' "key=value|key:...|" の混在を想定。
+' 指定 key の右側（= または : の後ろ）を“そのまま”返す。
 Public Function GetIOChunk(ByVal ioStr As String, ByVal key As String) As String
     Dim token As Variant, t As String, k1 As String, k2 As String, p As Long
     k1 = key & "=": k2 = key & ":"
@@ -116,17 +116,17 @@ Public Function GetIOChunk(ByVal ioStr As String, ByVal key As String) As String
     Next token
 End Function
 
-' 萓・ chunk="R=,L=豸亥､ｱ" -> GetIOSubVal(chunk,"R")="" / GetIOSubVal(chunk,"L")="豸亥､ｱ"
+' 例: chunk="R=,L=消失" -> GetIOSubVal(chunk,"R")="" / GetIOSubVal(chunk,"L")="消失"
 Public Function GetIOSubVal(ByVal chunk As String, ByVal subkey As String) As String
     Dim parts As Variant, p As Variant, k As String, pos As Long, tail As String, nextPos As Long
     k = subkey & "="
-    ' 繧ｫ繝ｳ繝槫玄蛻・ｊ縺ｧ襍ｰ譟ｻ・・=... , L=... , 縺ｪ縺ｩ・・
+    ' カンマ区切りで走査（R=... , L=... , など）
     parts = Split(chunk, ",")
     For Each p In parts
         p = Trim$(CStr(p))
         If Left$(p, Len(k)) = k Then
             tail = Mid$(p, Len(k) + 1)
-            ' 繧ゅ＠ "R=xxx L=yyy" 縺ｿ縺溘＞縺ｫ繧ｫ繝ｳ繝樒┌縺励〒邯壹￥蝣ｴ蜷医↓蛯吶∴縲∵ｬ｡縺ｮ繧ｹ繝壹・繧ｹ縺ｾ縺ｧ繧貞､縺ｨ縺ｿ縺ｪ縺・
+            ' もし "R=xxx L=yyy" みたいにカンマ無しで続く場合に備え、次のスペースまでを値とみなす
             nextPos = InStr(1, tail, " ", vbBinaryCompare)
             If nextPos > 0 Then
                 GetIOSubVal = Left$(tail, nextPos - 1)
@@ -150,12 +150,12 @@ Public Sub App_Main()
         .Left = 0
         .Top = 0
 
-        ' 逕ｻ髱｢縺ｫ蜿弱∪繧九ｈ縺・↓荳企剞
+        ' 画面に収まるように上限
         If .Height > Application.UsableHeight + 156 Then .Height = Application.UsableHeight + 156
 
     End With
 
-    ' 笘・蔵 縺ｾ縺夊｡ｨ遉ｺ・医％縺薙〒 InsideHeight 縺檎｢ｺ螳夲ｼ・
+    ' ★① まず表示（ここで InsideHeight が確定）
     frmEval.Show vbModeless
 
         Dim yBtn As Single
@@ -178,7 +178,7 @@ Call frmEval.AdjustBottomButtons
 
 End Sub
 
-'=== Basic.* 縺ｨ譌ｧ蛻暦ｼ域ｰ丞錐/隧穂ｾ｡譌･ 縺ｪ縺ｩ・峨ｒ 1 陦悟・縺縺大酔譛溘☆繧・=====================
+'=== Basic.* と旧列（氏名/評価日 など）を 1 行分だけ同期する =====================
 Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal r As Long)
     Dim headersBasic As Variant
     Dim headersLegacy As Variant
@@ -186,10 +186,10 @@ Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal r As Long)
     Dim cb As Long, cL As Long
     Dim vB As Variant, vL As Variant
 
-    ' Basic.* 邉ｻ繧偵梧ｭ｣縲阪→縺ｿ縺ｪ縺吶′縲・
-    ' 迚・婿縺励°蜈･縺｣縺ｦ縺・↑縺・ｴ蜷医・縲∝・縺｣縺ｦ縺・ｋ譁ｹ縺九ｉ繧ゅ≧迚・婿縺ｸ繧ｳ繝斐・縺吶ｋ縲・
+    ' Basic.* 系を「正」とみなすが、
+    ' 片方しか入っていない場合は、入っている方からもう片方へコピーする。
      headersBasic = Array("Basic.EvalDate", "Basic.Name", "Basic.Age", "Basic.Evaluator")
-     headersLegacy = Array("隧穂ｾ｡譌･", "豌丞錐", "蟷ｴ鮨｢", "隧穂ｾ｡閠・)
+     headersLegacy = Array("評価日", "氏名", "年齢", "評価者")
 
 
     For i = LBound(headersBasic) To UBound(headersBasic)
@@ -197,7 +197,7 @@ Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal r As Long)
         cL = modEvalIOEntry.FindColByHeaderExact(ws, headersLegacy(i))
 
 
-        ' 縺ｩ縺｡繧峨°縺ｮ蛻励′蟄伜惠縺励※縺・ｌ縺ｰ蜷梧悄蟇ｾ雎｡
+        ' どちらかの列が存在していれば同期対象
         If cb > 0 Or cL > 0 Then
             If cb > 0 Then
                 vB = ws.Cells(r, cb).value
@@ -211,9 +211,9 @@ Public Sub SyncBasicInfoColumns(ws As Worksheet, ByVal r As Long)
                 vL = vbNullString
             End If
 
-            ' 蜆ｪ蜈亥ｺｦ・・
-            ' 1) Basic 蛛ｴ縺ｫ蛟､縺後≠縺｣縺ｦ譌ｧ蛻励′遨ｺ 竊・Basic 竊・譌ｧ蛻励∈繧ｳ繝斐・
-            ' 2) Basic 蛛ｴ縺檎ｩｺ縺ｧ譌ｧ蛻励↓蛟､ 竊・譌ｧ蛻・竊・Basic 縺ｸ繧ｳ繝斐・
+            ' 優先度：
+            ' 1) Basic 側に値があって旧列が空 → Basic → 旧列へコピー
+            ' 2) Basic 側が空で旧列に値 → 旧列 → Basic へコピー
             If cb > 0 And Len(vB) > 0 And cL > 0 And Len(vL) = 0 Then
                 ws.Cells(r, cL).value = vB
             ElseIf cL > 0 And Len(vL) > 0 And cb > 0 And Len(vB) = 0 Then
@@ -348,7 +348,7 @@ Public Sub Tighten_DailyLog_Boxes()
     Dim uf As Object: Set uf = frmEval
 
     Dim mp As Object: Set mp = uf.controls("MultiPage1")
-    Dim pg As Object: Set pg = mp.Pages(7) ' 譌･縲・・險倬鹸
+    Dim pg As Object: Set pg = mp.Pages(7) ' 日々の記録
 
     Dim f As MSForms.Frame: Set f = pg.controls("fraDailyLog")
     Dim txtTraining As MSForms.TextBox: Set txtTraining = f.controls("txtDailyTraining")
@@ -369,12 +369,12 @@ Public Sub Tighten_DailyLog_Boxes()
 
 
 
-    ' 繝ｩ繝吶Ν繧偵御ｸ隕ｧ縺ｮ逶ｴ荳翫阪↓鄂ｮ縺・
+    ' ラベルを「一覧の直上」に置く
     Dim lbl As MSForms.label
     Set lbl = f.controls("lblDailyHistory")
 
 
-    ' ListBox縺ｯ貅｢繧後◆繧芽・蜍輔〒繧ｹ繧ｯ繝ｭ繝ｼ繝ｫ縺悟・繧具ｼ亥ｸｸ譎り｡ｨ遉ｺ縺ｯ莉墓ｧ倅ｸ翫〒縺阪↑縺・ｼ・
+    ' ListBoxは溢れたら自動でスクロールが出る（常時表示は仕様上できない）
     lbl.Top = fieldsBottom + 15
     lst.Top = lbl.Top + lbl.Height + 4
     lst.Height = Application.Max(60, f.Height - lst.Top - 8)
@@ -449,16 +449,16 @@ Public Sub Build_POST_Narrative()
     posture = CollectTrueTags("Posture.")
     contr = CollectTrueTags("Contracture.")
 
-    note = GetTagText("Posture.蛯呵・)
-    noteC = GetTagText("Contracture.蛯呵・)
+    note = GetTagText("Posture.備考")
+    noteC = GetTagText("Contracture.備考")
 
-    If posture = "" Then posture = "蟋ｿ蜍｢・夂音險倥↑縺・ Else posture = "蟋ｿ蜍｢・・ & posture
-    If contr = "" Then contr = "諡倡ｸｮ・夂音險倥↑縺・ Else contr = "諡倡ｸｮ・・ & contr
+    If posture = "" Then posture = "姿勢：特記なし" Else posture = "姿勢：" & posture
+    If contr = "" Then contr = "拘縮：特記なし" Else contr = "拘縮：" & contr
 
     Debug.Print posture
     Debug.Print contr
-    If note <> "" Then Debug.Print "蟋ｿ蜍｢蛯呵・ｼ・ & note
-    If noteC <> "" Then Debug.Print "諡倡ｸｮ蛯呵・ｼ・ & noteC
+    If note <> "" Then Debug.Print "姿勢備考：" & note
+    If noteC <> "" Then Debug.Print "拘縮備考：" & noteC
 End Sub
 
 Private Function CollectTrueTags(ByVal prefix As String) As String
@@ -473,7 +473,7 @@ Private Function CollectTrueTags(ByVal prefix As String) As String
     res = res & CollectInFrame(f36, prefix)
 
     If Len(res) > 0 Then
-        If Right$(res, 1) = "縲・ Then res = Left$(res, Len(res) - 1)
+        If Right$(res, 1) = "、" Then res = Left$(res, Len(res) - 1)
     End If
     CollectTrueTags = res
 End Function
@@ -485,7 +485,7 @@ Private Function CollectInFrame(ByVal fr As Object, ByVal prefix As String) As S
             If TypeName(c) = "CheckBox" Then
                 t = CStr(c.tag)
                 If Len(t) > 0 And Left$(t, Len(prefix)) = prefix Then
-                    If c.value = True Then s = s & Replace$(t, prefix, "") & "縲・
+                    If c.value = True Then s = s & Replace$(t, prefix, "") & "、"
                 End If
             End If
         End If
@@ -536,16 +536,16 @@ Public Function AsLongArray(ByVal v As Variant) As Variant
 End Function
 
 Public Function NormalizeName(ByVal s As String) As String
-    s = Replace$(CStr(s), " ", "")   ' 蜊願ｧ偵せ繝壹・繧ｹ髯､蜴ｻ
-    s = Replace$(s, "縲", "")        ' 蜈ｨ隗偵せ繝壹・繧ｹ髯､蜴ｻ
+    s = Replace$(CStr(s), " ", "")   ' 半角スペース除去
+    s = Replace$(s, "　", "")        ' 全角スペース除去
     NormalizeName = s
 End Function
 
 
 
-' 豌丞錐繧貞魂蛻ｷ逕ｨ縺ｫ莨丞ｭ怜喧縺吶ｋ
-' 4?5譁・ｭ暦ｼ・繝ｻ4譁・ｭ礼岼繧偵・ｼ医Θ繝ｼ繧ｶ繝ｼ謖・ｮ夲ｼ・
-Public Function MaskNameForPrint(ByVal s As String, Optional ByVal maskChar As String = "縲・) As String
+' 氏名を印刷用に伏字化する
+' 4?5文字：2・4文字目を〇（ユーザー指定）
+Public Function MaskNameForPrint(ByVal s As String, Optional ByVal maskChar As String = "〇") As String
     Dim n As Long, i As Long
     Dim out As String, ch As String
 
@@ -570,7 +570,7 @@ Public Function MaskNameForPrint(ByVal s As String, Optional ByVal maskChar As S
             Case 4, 5
                 If (i = 2) Or (i = 4) Then out = out & maskChar Else out = out & ch
             Case Else
-                ' 6譁・ｭ嶺ｻ･荳奇ｼ壼・謨ｰ菴咲ｽｮ繧剃ｼ丞ｭ暦ｼ・,4,6,...・・
+                ' 6文字以上：偶数位置を伏字（2,4,6,...）
                 If (i Mod 2 = 0) Then out = out & maskChar Else out = out & ch
         End Select
     Next i
@@ -580,8 +580,8 @@ End Function
 
 
 
-' 譛亥腰菴阪・繝悶ャ繧ｯ縺ｫ縲∝茜逕ｨ閠・す繝ｼ繝医ｒ霑ｽ蜉縺励※縺・￥
-' ymKey 萓・ "2026-02" 縺ｪ縺ｩ・域怦蜊倅ｽ阪〒荳諢上↓縺ｪ繧区枚蟄怜・・・
+' 月単位のブックに、利用者シートを追加していく
+' ymKey 例: "2026-02" など（月単位で一意になる文字列）
 Public Sub ExportMonitoring_ToMonthlyWorkbook(ByVal dailyDate As Date, ByVal clientName As String, ByVal bodyText As String)
     
     If Len(Trim$(clientName)) = 0 Then
@@ -627,7 +627,7 @@ Else
 End If
 
 
-    ' 譌｢縺ｫ蜷悟錐繧ｷ繝ｼ繝医′縺ゅｌ縺ｰ蜑企勁縺励※菴懊ｊ逶ｴ縺暦ｼ井ｸ頑嶌縺埼°逕ｨ・・
+    ' 既に同名シートがあれば削除して作り直し（上書き運用）
     If Len(Trim$(clientName)) > 0 Then
     On Error Resume Next
     Application.DisplayAlerts = False
@@ -637,7 +637,7 @@ End If
 End If
 
 
-    ' 繝・Φ繝励Ξ Monitoring 繧偵％縺ｮ譛医ヶ繝・け縺ｸ繧ｳ繝斐・
+    ' テンプレ Monitoring をこの月ブックへコピー
     ThisWorkbook.Worksheets("Monitoring").Copy After:=wbNew.Worksheets(wbNew.Worksheets.count)
     Set wsNew = wbNew.Worksheets(wbNew.Worksheets.count)
     
@@ -658,42 +658,42 @@ End With
 
 
 
-    ' 繧ｷ繝ｼ繝亥錐縺ｯ螳溷錐縺ｧOK
+    ' シート名は実名でOK
 If Trim$(clientName) = "" Then
-    MsgBox "蛻ｩ逕ｨ閠・錐繧貞・蜉帙＠縺ｦ縺上□縺輔＞", vbExclamation
+    MsgBox "利用者名を入力してください", vbExclamation
     Exit Sub
 End If
 
-    ' 蜊ｰ蛻ｷ迚ｩ縺ｮ陦ｨ遉ｺ蜷阪□縺台ｼ丞ｭ暦ｼ医す繝ｼ繝亥錐縺ｯ螳溷錐・・
+    ' 印刷物の表示名だけ伏字（シート名は実名）
     wsNew.Range("C7").value = MaskNameForPrint(clientName)
 
-    ' 譛ｬ譁・
+    ' 本文
     wsNew.Range("A32:J37").Merge
     Dim p As Long
 Dim s As String
 
 s = bodyText
-p = InStr(1, s, "笆 繧ｳ繝｡繝ｳ繝医・閠・ｯ・, vbTextCompare)
+p = InStr(1, s, "■ コメント・考察", vbTextCompare)
 
 If p > 0 Then
-    s = Mid$(s, p + Len("笆 繧ｳ繝｡繝ｳ繝医・閠・ｯ・))
+    s = Mid$(s, p + Len("■ コメント・考察"))
     s = Trim$(s)
 Else
-    s = bodyText ' 隕九▽縺九ｉ縺ｪ縺・凾縺ｯ菫晞匱縺ｧ蜈ｨ譁・
+    s = bodyText ' 見つからない時は保険で全文
 End If
 
 
 Dim p1 As Long, p2 As Long
 Dim tok As String, special As String
 
-tok = "笆 縺薙・譛医↓險倬鹸縺輔ｌ縺溽音險倅ｺ矩・
+tok = "■ この月に記録された特記事項"
 p1 = InStr(1, bodyText, tok, vbTextCompare)
 
 If p1 > 0 Then
     special = Mid$(bodyText, p1 + Len(tok))
-    ' 谺｡縺ｮ隕句・縺励〒豁｢繧√ｋ・亥呵｣懶ｼ・
-    p2 = InStr(1, special, "笆 繧ｳ繝｡繝ｳ繝医・閠・ｯ・, vbTextCompare)
-    If p2 = 0 Then p2 = InStr(1, special, "笆 譛ｬ譁・, vbTextCompare)
+    ' 次の見出しで止める（候補）
+    p2 = InStr(1, special, "■ コメント・考察", vbTextCompare)
+    If p2 = 0 Then p2 = InStr(1, special, "■ 本文", vbTextCompare)
     If p2 > 0 Then special = Left$(special, p2 - 1)
     special = Trim$(special)
 Else
@@ -703,19 +703,19 @@ End If
 
 
 Dim tmplNoSpecial As String
-tmplNoSpecial = "縺薙・譛医・迚ｹ險倅ｺ矩・→縺ｪ繧玖ｨ倬鹸縺ｯ縺ゅｊ縺ｾ縺帙ｓ縺ｧ縺励◆縲・ & vbCrLf & _
-                "菴楢ｪｿ髱｢縺ｫ螟ｧ縺阪↑螟牙虚縺ｯ縺ｪ縺上∵律縲・・繝ｪ繝上ン繝ｪ縺ｫ繧ょｮ牙ｮ壹＠縺ｦ蜿悶ｊ邨・∪繧後※縺・∪縺励◆縲・ & vbCrLf & _
-                "莉雁ｾ後ｂ迴ｾ蝨ｨ縺ｮ迥ｶ諷九ｒ邯ｭ謖√〒縺阪ｋ繧医≧縲∝ｼ輔″邯壹″邨碁℃繧定ｦｳ蟇溘＠縺ｦ縺・″縺ｾ縺吶・
+tmplNoSpecial = "この月は特記事項となる記録はありませんでした。" & vbCrLf & _
+                "体調面に大きな変動はなく、日々のリハビリにも安定して取り組まれていました。" & vbCrLf & _
+                "今後も現在の状態を維持できるよう、引き続き経過を観察していきます。"
 
-If Len(Trim$(special)) = 0 Or InStr(special, "迚ｹ險倅ｺ矩・→縺ｪ繧玖ｨ倬鹸縺ｯ縺ゅｊ縺ｾ縺帙ｓ") > 0 Then
+If Len(Trim$(special)) = 0 Or InStr(special, "特記事項となる記録はありません") > 0 Then
     
-    ' 迚ｹ險倅ｺ矩・↑縺・
+    ' 特記事項なし
     wsNew.Range("A24").value = tmplNoSpecial
     wsNew.Range("A31:J37").ClearContents
 
 Else
     
-    ' 迚ｹ險倅ｺ矩・≠繧・
+    ' 特記事項あり
     wsNew.Range("A24").value = special
     wsNew.Range("A31").value = s
 
@@ -744,7 +744,7 @@ End With
     
     wsNew.Range("A24:J29").Merge
     With wsNew.Range("A31: J37 ")
-      .Font.name = "・ｭ・ｳ ・ｰ繧ｴ繧ｷ繝・け"
+      .Font.name = "ＭＳ Ｐゴシック"
       .Font.Size = 11
     End With
     

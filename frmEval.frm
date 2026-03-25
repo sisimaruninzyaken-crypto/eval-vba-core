@@ -1,12 +1,12 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} frmEval 
-   Caption         =   "隧穂ｾ｡繝輔か繝ｼ繝"
+   Caption         =   "評価フォーム"
    ClientHeight    =   8580.001
    ClientLeft      =   108
    ClientTop       =   456
    ClientWidth     =   17124
    OleObjectBlob   =   "frmEval.frx":0000
-   StartUpPosition =   1  '繧ｪ繝ｼ繝翫・ 繝輔か繝ｼ繝縺ｮ荳ｭ螟ｮ
+   StartUpPosition =   1  'オーナー フォームの中央
 End
 Attribute VB_Name = "frmEval"
 Attribute VB_GlobalNameSpace = False
@@ -16,9 +16,9 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-'=== frmEval 繝倥ャ繝・壼・騾壹〒菴ｿ縺・､画焚 ===
-Private mp As MSForms.MultiPage            ' 繝ｫ繝ｼ繝・MultiPage
-Private mpWalk As MSForms.MultiPage        ' 豁ｩ陦瑚ｩ穂ｾ｡繧ｿ繝門・縺ｮ繧ｵ繝・MultiPage  竊・縺薙ｌ縺御ｻ雁屓縺ｮ霑ｽ蜉
+'=== frmEval ヘッダ：共通で使う変数 ===
+Private mp As MSForms.MultiPage            ' ルート MultiPage
+Private mpWalk As MSForms.MultiPage        ' 歩行評価タブ内のサブ MultiPage  ← これが今回の追加
 Private hostWalkGait As MSForms.Frame
 Private fGait As MSForms.Frame
 Private hostBasic As MSForms.Frame, hostPost As MSForms.Frame, hostMove As MSForms.Frame
@@ -33,7 +33,7 @@ Private Const ADL_TOP_OFFSET As Long = -30
 Private ImeHooks As Collection
 Private MPHs As Collection
 Private builtPosture As Boolean
-Private Const CAP_POSTURE_PAGE As String = "霄ｫ菴捺ｩ溯・・玖ｵｷ螻・虚菴・
+Private Const CAP_POSTURE_PAGE As String = "身体機能＋起居動作"
 Private Const POSTURE_TAG_PREFIX As String = "POSTURE|"
 Private Const POSTURE_COLS As Long = 2
 Private mStyleDone As Boolean
@@ -43,18 +43,18 @@ Private mHooked As Boolean
 Private mLayoutDone As Boolean
 Private mPainBuilt As Boolean
 Private mPainLayoutDone As Boolean
-' 譌｢蟄倥・縲後す繝ｼ繝医∈菫晏ｭ倥阪悟燕蝗槭・蛟､繧定ｪｭ縺ｿ霎ｼ繧縲阪↓繝輔ャ繧ｯ縺吶ｋ
+' 既存の「シートへ保存」「前回の値を読み込む」にフックする
 Private WithEvents btnHdrSave     As MSForms.CommandButton
 Attribute btnHdrSave.VB_VarHelpID = -1
 Private WithEvents btnHdrLoadPrev As MSForms.CommandButton
 Attribute btnHdrLoadPrev.VB_VarHelpID = -1
 Private fBasicRef As MSForms.Frame
 Private nextTop As Single
-' BI繧ｳ繝ｳ繝懊・繧､繝吶Φ繝医ヵ繝・け繧剃ｿ晄戟
+' BIコンボのイベントフックを保持
 Private BIHooks As Collection
-' 繝ｬ繧､繧｢繧ｦ繝育畑
+' レイアウト用
 Private FWIDTH As Single, COL_LX As Single, COL_RX As Single, lblW As Single, pad As Single, rowH As Single
-' === 繧ｦ繧｣繝ｳ繝峨え蛻ｶ邏・ｼ医せ繧ｯ繝ｭ繝ｼ繝ｫ辟｡縺礼畑縺ｮ譛蟆上し繧､繧ｺ・・==
+' === ウィンドウ制約（スクロール無し用の最小サイズ）===
 Private Const MIN_W As Long = 720
 Private Const MIN_H As Long = 520
 Private WithEvents mVAS As MSForms.ScrollBar
@@ -91,7 +91,7 @@ Private mScrollOnce_347 As Boolean
 Private mQuitExcelRequested As Boolean
 Private Enum QuitMode
     qmNone = 0
-    qmAsk   '髢峨§繧九・繧ｿ繝ｳ・壻ｿ晏ｭ倡｢ｺ隱阪＠縺ｦExcel邨ゆｺ・
+    qmAsk   '閉じるボタン：保存確認してExcel終了
 End Enum
 
 Private mQuitMode As QuitMode
@@ -140,7 +140,7 @@ Public Function TryGetBirthDateForStorage(ByVal raw As String, ByRef outDate As 
 End Function
 
 
-'=== 蜈ｱ騾壹・繝ｫ繝代・・壹ヵ繝ｬ繝ｼ繝縺ｮ鬮倥＆繧貞ｭ舌さ繝ｳ繝医Ο繝ｼ繝ｫ縺ｮ荳逡ｪ荳具ｼ倶ｽ咏區縺ｾ縺ｧ莨ｸ縺ｰ縺・===
+'=== 共通ヘルパー：フレームの高さを子コントロールの一番下＋余白まで伸ばす ===
 Private Sub FitFrameHeightToChildren(f As MSForms.Frame, Optional margin As Single = 6)
     
     'FitFrameHeightToChildren Me.Controls("Frame7")
@@ -167,11 +167,11 @@ End Sub
 
 
 
-'--- 蛻苓ｧ｣豎ｺ縺ｮ螳牙・繝ｩ繝・ヱ・医≠繧後・ ResolveColumnLocal縲√↑縺代ｌ縺ｰ隕句・縺怜錐縺ｧ謗｢縺呻ｼ・--
+'--- 列解決の安全ラッパ（あれば ResolveColumnLocal、なければ見出し名で探す）---
 Private Function RCol(ws As Worksheet, look As Object, ParamArray headers()) As Long
     Dim c As Long, i As Long
     On Error Resume Next
-    c = ResolveColumnLocal(look, CStr(headers(LBound(headers))))  ' 蟄伜惠縺励↑縺・腸蠅・〒繧０K
+    c = ResolveColumnLocal(look, CStr(headers(LBound(headers))))  ' 存在しない環境でもOK
     On Error GoTo 0
     If c > 0 Then
         RCol = c
@@ -186,9 +186,9 @@ End Function
 
 
 
-' 譌｢蟄倥さ繝ｼ繝峨〒蜿ら・縺輔ｌ繧九′譛ｪ螳夂ｾｩ縺縺｣縺溘ｂ縺ｮ繧呈怙蟆城剞縺縺醍畑諢・
+' 既存コードで参照されるが未定義だったものを最小限だけ用意
 Private Sub SetupLayout()
-    ' 窶ｻ謨ｰ蛟､縺ｯ荳闊ｬ逧・↑譌｢螳壹し繧､繧ｺ縲６I隕九◆逶ｮ縺ｯ螟峨∴縺ｪ縺・ｯ・峇縺ｧ螳牙・縺ｪ蛟､縲・
+    ' ※数値は一般的な既定サイズ。UI見た目は変えない範囲で安全な値。
     FWIDTH = 800
     lblW = 70
     COL_LX = 12
@@ -197,18 +197,18 @@ Private Sub SetupLayout()
     rowH = 24
 End Sub
 
-' 譌｢蟄倥さ繝ｼ繝峨〒 Call 縺輔ｌ繧九′荳ｭ霄ｫ縺御ｸ崎ｦ√↑莠呈鋤繝繝溘・・・o-op・・
+' 既存コードで Call されるが中身が不要な互換ダミー（No-op）
 Private Sub BuildBliadlControls(ByVal mp As MSForms.MultiPage)
-    ' no-op・井ｺ呈鋤逕ｨ・・
+    ' no-op（互換用）
 End Sub
 Private Sub BuildBIPage(ByVal mpADL As MSForms.MultiPage)
-    ' no-op・井ｺ呈鋤逕ｨ・・
+    ' no-op（互換用）
 End Sub
 Private Sub BuildIADLPage(ByVal mpADL As MSForms.MultiPage)
-    ' no-op・井ｺ呈鋤逕ｨ・・
+    ' no-op（互換用）
 End Sub
 
-' 譌｢蟄倥・菫晏ｭ伜・逅・〒蜿ら・縺輔ｌ繧九Λ繝・ヱ繝ｼ・郁ｦ九◆逶ｮ縺ｨ謖吝虚縺ｯ螟峨∴縺ｪ縺・ｼ・
+' 既存の保存処理で参照されるラッパー（見た目と挙動は変えない）
 Private Function CtrlText(ByVal ctrlName As String) As String
     On Error Resume Next
     CtrlText = Trim$(Me.controls(ctrlName).text & "")
@@ -265,7 +265,7 @@ Private Function DailyLogCtl(ByVal ctrlName As String) As Object
 End Function
 
 
-'=== 縺薙％縺九ｉ 逕ｻ髱｢菴懈・繝倥Ν繝代・縺ｮ譛蟆丞ｮ溯｣・=========================
+'=== ここから 画面作成ヘルパーの最小実装 =========================
 Private Function CreateFrameP(parent As MSForms.Frame, title As String, _
                               Optional minHeight As Single = 120) As MSForms.Frame
     Dim f As MSForms.Frame
@@ -293,7 +293,7 @@ End Sub
 
 
 
-' 譌｢蟄伜他縺ｳ蜃ｺ縺嶺ｺ呈鋤・喞aption 竊・x 竊・y 竊・[w] 竊・[name]
+' 既存呼び出し互換：caption → x → y → [w] → [name]
 Function CreateLabel( _
     parent As MSForms.Frame, _
     ByVal caption As String, _
@@ -394,7 +394,7 @@ Private Sub PositionTopRightButtons(f As MSForms.Frame)
     End If
 End Sub
 
-'=== 繝√ぉ繝・け繝懊ャ繧ｯ繧ｹ繧剃ｸｦ縺ｹ繧区ｱ守畑繝輔Ξ繝ｼ繝 ===
+'=== チェックボックスを並べる汎用フレーム ===
 Private Function BuildCheckFrame(parent As MSForms.Frame, _
     title As String, x As Single, y As Single, w As Single, _
     items As Variant, Optional groupTag As String = "") As MSForms.Frame
@@ -406,11 +406,11 @@ Private Function BuildCheckFrame(parent As MSForms.Frame, _
         .Left = x
         .Top = y
         .Width = w
-        .Height = 60                ' 莉ｮ鬮倥＆縲ゆｸ九〒荳ｭ霄ｫ縺ｫ蜷医ｏ縺帙※莨ｸ縺ｰ縺・
+        .Height = 60                ' 仮高さ。下で中身に合わせて伸ばす
         .ScrollBars = fmScrollBarsNone
     End With
 
-    ' 繝√ぉ繝・け繧・蛻励〒驟咲ｽｮ・磯聞縺上↑繧翫☆縺弱↑縺・ｨ句ｺｦ・・
+    ' チェックを2列で配置（長くなりすぎない程度）
     Dim i As Long, col As Long, row As Long
     Dim colW As Single: colW = (w - 24) / 2
     Dim rowH As Single: rowH = 20
@@ -430,7 +430,7 @@ Private Function BuildCheckFrame(parent As MSForms.Frame, _
         If row > maxRow Then maxRow = row
     Next i
 
-    ' 荳ｭ霄ｫ縺ｮ鬮倥＆縺ｫ蜷医ｏ縺帙※繝輔Ξ繝ｼ繝繧剃ｼｸ縺ｰ縺・
+    ' 中身の高さに合わせてフレームを伸ばす
     f.Height = 18 + (maxRow + 1) * rowH + 12
 
     Set BuildCheckFrame = f
@@ -462,7 +462,7 @@ Private Sub BuildAssistiveChecksInWalkEval(ByVal assistiveCsv As String)
     addTop = IIf(maxBottom <= 0, 120, maxBottom + 120)
 
     Dim frAssist As MSForms.Frame
-    Set frAssist = BuildCheckFrame(frTarget, "陬懷勧蜈ｷ", 8, addTop, frTarget.InsideWidth - 16, MakeList(assistiveCsv), "AssistiveGroup")
+    Set frAssist = BuildCheckFrame(frTarget, "補助具", 8, addTop, frTarget.InsideWidth - 16, MakeList(assistiveCsv), "AssistiveGroup")
 
     If frAssist.Top + frAssist.Height + 8 > frTarget.Height Then
         frTarget.Height = frAssist.Top + frAssist.Height + 8
@@ -501,39 +501,39 @@ Public Function GetWalkAssistiveTargetFrame() As MSForms.Frame
     
 End Function
 
-'=== 髢｢遽諡倡ｸｮ・壼ｷｦ蜿ｳ繝√ぉ繝・け繧・陦檎函謌舌☆繧九・繝ｫ繝代・ ======================
+'=== 関節拘縮：左右チェックを1行生成するヘルパー ======================
 Private Sub CreateContractureRLRow(parent As MSForms.Frame, _
                                    ByRef y As Single, _
                                    ByVal partCaption As String, _
                                    ByVal baseTag As String)
-    ' 繧ｬ繧､繝会ｼ壼・鬆ｭ縺ｧ隕句・縺励ｒ菴懊▲縺溘Ξ繧､繧｢繧ｦ繝医↓蜷医ｏ縺帙ｋ
-    '   驛ｨ菴・ COL_LX
-    '   蜿ｳ  : COL_LX + 90 + 20
-    '   蟾ｦ  : ・亥承縺ｮ蛻暦ｼ・ 60
+    ' ガイド：先頭で見出しを作ったレイアウトに合わせる
+    '   部位: COL_LX
+    '   右  : COL_LX + 90 + 20
+    '   左  : （右の列）+ 60
 
-    ' 隕句・縺暦ｼ磯Κ菴榊錐・・
+    ' 見出し（部位名）
     Call CreateLabel(parent, partCaption, COL_LX, y)
 
-    ' 蜿ｳ繝√ぉ繝・け
-    Call CreateCheck(parent, "蜿ｳ", COL_LX + 90 + 20, y, , baseTag & ".蜿ｳ")
+    ' 右チェック
+    Call CreateCheck(parent, "右", COL_LX + 90 + 20, y, , baseTag & ".右")
 
-    ' 蟾ｦ繝√ぉ繝・け
-    Call CreateCheck(parent, "蟾ｦ", COL_LX + 90 + 20 + 60, y, , baseTag & ".蟾ｦ")
+    ' 左チェック
+    Call CreateCheck(parent, "左", COL_LX + 90 + 20 + 60, y, , baseTag & ".左")
 
-    ' 谺｡縺ｮ陦後∈
+    ' 次の行へ
     nL y
 End Sub
 
 
 
 
-'=== RLA繝√ぉ繝・け鄒､繧剃ｽ懊ｋ譛蟆丞ｮ溯｣・======================================
+'=== RLAチェック群を作る最小実装 ======================================
 Private Sub Build_RLA_ChecksPart(f As MSForms.Frame, ByVal kind As String)
     Dim phases As Variant
     If LCase$(kind) = "stance" Then
-        phases = Array("IC", "LR", "MSt", "TSt")        ' 遶玖・譛・
+        phases = Array("IC", "LR", "MSt", "TSt")        ' 立脚期
     Else
-        phases = Array("PSw", "ISw", "MSw", "TSw")      ' 驕願・譛・
+        phases = Array("PSw", "ISw", "MSw", "TSw")      ' 遊脚期
     End If
 
     Dim i As Long, y As Single
@@ -542,28 +542,28 @@ Private Sub Build_RLA_ChecksPart(f As MSForms.Frame, ByVal kind As String)
     For i = LBound(phases) To UBound(phases)
         Dim key As String: key = CStr(phases(i))
 
-        ' 蟾ｦ遶ｯ・壹ヵ繧ｧ繝ｼ繧ｺ蜷阪Λ繝吶Ν
+        ' 左端：フェーズ名ラベル
         Call CreateLabel(f, RLAPhaseCaption(key), 12, y, 90)
 
-        ' 邁｡譏薙メ繧ｧ繝・け・・縺､・俄ｻ蜷榊燕縺ｯ "RLA_<key>_<逡ｪ蜿ｷ>" 縺ｨ縺吶ｋ
-        Call AddRLAChk(f, key, "蜿ｯ蜍募沺荳崎ｶｳ", 120, y)
-        Call AddRLAChk(f, key, "遲句鴨菴惹ｸ・, 300, y)
+        ' 簡易チェック（4つ）※名前は "RLA_<key>_<番号>" とする
+        Call AddRLAChk(f, key, "可動域不足", 120, y)
+        Call AddRLAChk(f, key, "筋力低下", 300, y)
         y = y + 22
-        Call AddRLAChk(f, key, "逍ｼ逞・荳榊ｮ牙ｮ・, 120, y)
-        Call AddRLAChk(f, key, "蜊碑ｪｿ荳崎憶", 300, y)
+        Call AddRLAChk(f, key, "疼痛/不安定", 120, y)
+        Call AddRLAChk(f, key, "協調不良", 300, y)
 
-        ' 蜿ｳ遶ｯ・壹Ξ繝吶Ν驕ｸ謚橸ｼ・ptionButton, GroupName=key・・
-        Call AddRLAOpt(f, key, "霆ｽ蠎ｦ", f.Width - 180, y - 22)
-        Call AddRLAOpt(f, key, "荳ｭ遲牙ｺｦ", f.Width - 120, y - 22)
-        Call AddRLAOpt(f, key, "鬮伜ｺｦ", f.Width - 60, y - 22)
+        ' 右端：レベル選択（OptionButton, GroupName=key）
+        Call AddRLAOpt(f, key, "軽度", f.Width - 180, y - 22)
+        Call AddRLAOpt(f, key, "中等度", f.Width - 120, y - 22)
+        Call AddRLAOpt(f, key, "高度", f.Width - 60, y - 22)
 
         y = y + 30
     Next
 
-    ' 繝輔Ξ繝ｼ繝縺ｮ鬮倥＆縺ｯ蜻ｼ縺ｳ蜃ｺ縺怜・縺ｧ ResizeFrameToContent 縺励※縺・ｋ縺溘ａ縺薙％縺ｧ縺ｯ隗ｦ繧峨↑縺・
+    ' フレームの高さは呼び出し元で ResizeFrameToContent しているためここでは触らない
 End Sub
 
-' 繝輔ぉ繝ｼ繧ｺ蜷搾ｼ郁ｦ句・縺礼畑・・
+' フェーズ名（見出し用）
 Private Function RLAPhaseCaption(ByVal key As String) As String
     Select Case key
         Case "IC":  RLAPhaseCaption = "IC"
@@ -578,7 +578,7 @@ Private Function RLAPhaseCaption(ByVal key As String) As String
     End Select
 End Function
 
-' 繝√ぉ繝・け繝懊ャ繧ｯ繧ｹ霑ｽ蜉・亥錐蜑阪・ RLA_<key>_n・・
+' チェックボックス追加（名前は RLA_<key>_n）
 Private Sub AddRLAChk(f As MSForms.Frame, ByVal key As String, ByVal caption As String, _
                       ByVal x As Single, ByVal y As Single)
     Dim ck As MSForms.CheckBox
@@ -590,7 +590,7 @@ Private Sub AddRLAChk(f As MSForms.Frame, ByVal key As String, ByVal caption As 
     End With
 End Sub
 
-' 繝ｬ繝吶Ν逕ｨ繧ｪ繝励す繝ｧ繝ｳ繝懊ち繝ｳ・・roupName=key・・
+' レベル用オプションボタン（GroupName=key）
 Private Sub AddRLAOpt(f As MSForms.Frame, ByVal key As String, ByVal caption As String, _
                       ByVal x As Single, ByVal y As Single)
     Dim ob As MSForms.OptionButton
@@ -603,28 +603,28 @@ Private Sub AddRLAOpt(f As MSForms.Frame, ByVal key As String, ByVal caption As 
     End With
 End Sub
 
-' 蜻ｼ縺ｳ蜃ｺ縺怜・縺ｧ蜿ら・縺励※縺・ｋ縺溘ａ縺ｮ莠呈鋤繝繝溘・・域里螳夐∈謚槭・迚ｹ縺ｫ險ｭ螳壹＠縺ｪ縺・ｼ・
+' 呼び出し元で参照しているための互換ダミー（既定選択は特に設定しない）
 Private Sub InitRLAdefaults()
     ' no-op
 End Sub
 '======================================================================
 
-'=== 縺薙％縺九ｉ・壹・繝・ム讀懃ｴ｢邉ｻ縺ｮ莠呈鋤繝ｩ繝・ヱ繝ｼ =========================
-' Local螳溯｣・ｒ譌｢縺ｫ蜈･繧後※縺・ｋ蜑肴署・・uildHeaderLookupLocal / ResolveColumnLocal / EnsureHeaderColumnLocal・・
-' 蜻ｼ縺ｳ蜃ｺ縺怜・縺ｨ繧ｷ繧ｰ繝阪メ繝｣繧貞粋繧上○繧九◆繧√・阮・＞繝ｩ繝・ヱ繝ｼ縺縺醍畑諢・
+'=== ここから：ヘッダ検索系の互換ラッパー =========================
+' Local実装を既に入れている前提（BuildHeaderLookupLocal / ResolveColumnLocal / EnsureHeaderColumnLocal）
+' 呼び出し元とシグネチャを合わせるための薄いラッパーだけ用意
 
-' 1) BuildHeaderLookup 縺ｮ蛻･蜷阪Λ繝・ヱ繝ｼ
+' 1) BuildHeaderLookup の別名ラッパー
 Private Function BuildHeaderLookup(ByVal ws As Worksheet) As Object
     Set BuildHeaderLookup = BuildHeaderLookupLocal(ws)
 End Function
 
-' 2) ResolveColumn 縺ｮ蛻･蜷阪Λ繝・ヱ繝ｼ
+' 2) ResolveColumn の別名ラッパー
 Private Function ResolveColumn(ByVal look As Object, ByVal key As String) As Long
     ResolveColumn = ResolveColumnLocal(look, key)
 End Function
 
 ' 3) ResolveColOrCreate
-'    隨ｬ1蜆ｪ蜈医く繝ｼ縺檎┌縺代ｌ縺ｰ繧ｨ繧､繝ｪ繧｢繧ｹ繧帝・↓謗｢縺励√◎繧後〒繧ら┌縺代ｌ縺ｰ隨ｬ1蜆ｪ蜈医く繝ｼ縺ｧ蛻励ｒ譁ｰ隕丈ｽ懈・
+'    第1優先キーが無ければエイリアスを順に探し、それでも無ければ第1優先キーで列を新規作成
 Private Function ResolveColOrCreate(ByVal ws As Worksheet, ByVal look As Object, _
                                     ByVal primaryKey As String, ParamArray aliases() As Variant) As Long
     Dim col As Long, i As Long
@@ -641,7 +641,7 @@ Private Function ResolveColOrCreate(ByVal ws As Worksheet, ByVal look As Object,
     ResolveColOrCreate = col
 End Function
 
-'=== ComboBox 縺ｫ驟榊・繧堤｢ｺ螳溘↓豬√＠霎ｼ繧譛蟆上・繝ｫ繝代・ ===
+'=== ComboBox に配列を確実に流し込む最小ヘルパー ===
 Private Sub SetComboItems(ByRef cbo As MSForms.ComboBox, ByVal items As Variant)
     Dim k As Long
     cbo.Clear
@@ -656,25 +656,25 @@ End Sub
 
 
 
-'=== 繝ｬ繧､繧｢繧ｦ繝郁・蜍輔ヵ繧｣繝・ヨ・亥ｮ牙・繧ｬ繝ｼ繝我ｻ倥″・・===
+'=== レイアウト自動フィット（安全ガード付き） ===
 Private Sub FitLayout()
     On Error Resume Next
 
-    ' 繝ｫ繝ｼ繝医・譛牙柑蟇ｸ豕包ｼ井ｸ矩剞縺ｧ繧ｯ繝ｩ繝ｳ繝暦ｼ・
+    ' ルートの有効寸法（下限でクランプ）
     Dim iw As Single, iH As Single
     iw = Me.InsideWidth - 12
     iH = Me.InsideHeight - 60
-    If iw < 240 Then iw = 240          ' 蟷・・荳矩剞
-    If iH < 180 Then iH = 180          ' 鬮倥＆縺ｮ荳矩剞・遺・繧ｳ繧ｳ縺・0 莉･荳九↓縺ｪ繧九→ 380・・
+    If iw < 240 Then iw = 240          ' 幅の下限
+    If iH < 180 Then iH = 180          ' 高さの下限（←ココが 0 以下になると 380）
 
-    ' 繝ｫ繝ｼ繝・MultiPage
+    ' ルート MultiPage
     If Not mp Is Nothing Then
         mp.Left = 6: mp.Top = 6
         mp.Width = iw
         mp.Height = iH
     End If
 
-    ' 蜷・・繧ｹ繝医ヵ繝ｬ繝ｼ繝繧ょ酔讒倥↓繧ｯ繝ｩ繝ｳ繝・
+    ' 各ホストフレームも同様にクランプ
     Dim hosts As Variant, h As MSForms.Frame, i As Long
     hosts = Array(hostBasic, hostPost, hostMove, hostTests, hostWalk, hostCog)
     For i = LBound(hosts) To UBound(hosts)
@@ -687,7 +687,7 @@ Private Sub FitLayout()
         End If
     Next i
 
-    ' 縲碁哩縺倥ｋ縲阪・繧ｿ繝ｳ
+    ' 「閉じる」ボタン
     If Not btnCloseCtl Is Nothing Then
         btnCloseCtl.Left = Me.InsideWidth - btnCloseCtl.Width - 10
         btnCloseCtl.Top = 6 + iH + 8
@@ -698,18 +698,18 @@ Private Sub FitLayout()
 End Sub
 
 
-'=== 莠呈鋤繝繝溘・・壹ち繝夜・Μ繧ｻ繝・ヨ・井ｽ輔ｂ縺励↑縺・ｼ・=================
+'=== 互換ダミー：タブ順リセット（何もしない） =================
 Private Sub ResetTabOrder()
 End Sub
 '============================================================
 
-'=== 豌丞錐縺ｧ蛟呵｣懆｡後ｒ髮・ａ縺ｦ Variant 驟榊・縺ｫ縺励※霑斐☆ =====================
+'=== 氏名で候補行を集めて Variant 配列にして返す =====================
 Private Function CollectCandidatesByNameLocal(ByVal ws As Worksheet, _
                                               ByVal look As Object, _
                                               ByVal pname As String) As Variant
     Dim nameCol As Long
     nameCol = ResolveColumnLocal(look, "Basic.Name")
-    If nameCol = 0 Then nameCol = ResolveColumnLocal(look, "豌丞錐")
+    If nameCol = 0 Then nameCol = ResolveColumnLocal(look, "氏名")
     If nameCol = 0 Then nameCol = ResolveColumnLocal(look, "Name")
     If nameCol = 0 Then Exit Function
 
@@ -736,13 +736,13 @@ End Function
 
 
 
-' 窶ｻ譌｢縺ｫ蜷悟錐縺ｮ髢｢謨ｰ縺後≠繧後・縺昴■繧峨ｒ菴ｿ縺｣縺ｦ縺上□縺輔＞
+' ※既に同名の関数があればそちらを使ってください
 Private Function NormName(ByVal s As String) As String
     s = Replace(s, vbCrLf, "")
     s = Replace(s, " ", "")
-    s = Replace(s, "縲", "")
+    s = Replace(s, "　", "")
     On Error Resume Next
-    s = StrConv(s, vbNarrow)    ' 蜈ｨ隗停・蜊願ｧ抵ｼ育腸蠅・↓繧医ｊ螟ｱ謨励＠縺ｦ繧０K・・
+    s = StrConv(s, vbNarrow)    ' 全角→半角（環境により失敗してもOK）
     On Error GoTo 0
     NormName = LCase$(s)
 End Function
@@ -751,43 +751,43 @@ End Function
 
 
 
-'=== 譁・ｭ怜・縺ｮ豁｣隕丞喧・壼濠隗・蜈ｨ隗偵・菴吝・繧ｹ繝壹・繧ｹ繝ｻ螟ｧ蟆上ｒ蜷ｸ蜿弱＠縺ｦ辣ｧ蜷育畑繧ｭ繝ｼ縺ｫ縺吶ｋ ===
+'=== 文字列の正規化：半角/全角・余分スペース・大小を吸収して照合用キーにする ===
 Private Function KeyNormalize(ByVal v As Variant) As String
     Dim s As String: s = CStr(v)
 
-    ' 謾ｹ陦後ｄ蜈ｨ隗偵せ繝壹・繧ｹ繧帝壼ｸｸ繧ｹ繝壹・繧ｹ縺ｫ
+    ' 改行や全角スペースを通常スペースに
     s = Replace(s, vbCrLf, " ")
     s = Replace(s, vbCr, " ")
     s = Replace(s, vbLf, " ")
-    s = Replace(s, ChrW(&H3000), " ") ' 蜈ｨ隗偵せ繝壹・繧ｹ竊貞濠隗・
+    s = Replace(s, ChrW(&H3000), " ") ' 全角スペース→半角
 
-    ' 騾｣邯壹せ繝壹・繧ｹ蝨ｧ邵ｮ・・燕蠕後ヨ繝ｪ繝
+    ' 連続スペース圧縮＆前後トリム
     Do While InStr(s, "  ") > 0: s = Replace(s, "  ", " "): Loop
     s = Trim$(s)
 
-    ' 蜈ｨ隗停・蜊願ｧ抵ｼ・SCII/謨ｰ蟄・繧ｫ繧ｿ繧ｫ繝翫↑縺ｩ蟇ｾ雎｡・・
+    ' 全角→半角（ASCII/数字/カタカナなど対象）
     On Error Resume Next
     s = StrConv(s, vbNarrow)
     On Error GoTo 0
 
-    ' 繧医￥縺ゅｋ繝上う繝輔Φ鬘槭・邨ｱ荳・・?・坂絶・-・・
-    s = Replace(s, "・・, "-")
+    ' よくあるハイフン類の統一（??－‐→-）
+    s = Replace(s, "－", "-")
     s = Replace(s, "?", "-")
     s = Replace(s, "?", "-")
-    s = Replace(s, "窶・, "-")
+    s = Replace(s, "‐", "-")
 
-    ' 螟ｧ譁・ｭ怜喧・郁恭蟄励ｆ繧峨℃蟇ｾ遲厄ｼ・
+    ' 大文字化（英字ゆらぎ対策）
     s = UCase$(s)
 
-    ' 辣ｧ蜷域凾縺ｯ繧ｹ繝壹・繧ｹ辟｡隕・
+    ' 照合時はスペース無視
     s = Replace(s, " ", "")
 
     KeyNormalize = s
 End Function
 
-'=== 蜈･蜉帙Δ繝ｼ繝会ｼ壽律譛ｬ隱・蜊願ｧ偵・閾ｪ蜍募・譖ｿ ===============================
+'=== 入力モード：日本語/半角の自動切替 ===============================
 
-' 逕ｻ髱｢蜈ｨ菴薙・繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ縺ｫ IME 繝｢繝ｼ繝峨ｒ驕ｩ逕ｨ・亥・蟶ｰ・・
+' 画面全体のコントロールに IME モードを適用（再帰）
 Private Sub SetupInputModesJP()
     ApplyInputModeJP Me
 
@@ -811,7 +811,7 @@ End If
 
 End Sub
 
-'=== 繝倥Ν繝代・・壹さ繝ｳ繝医Ο繝ｼ繝ｫ蟄伜惠繝√ぉ繝・け・郁｡晉ｪ∝屓驕ｿ縺ｮ蛻･蜷搾ｼ・===
+'=== ヘルパー：コントロール存在チェック（衝突回避の別名） ===
 Private Function FnHasControl(ByVal nm As String) As Boolean
     Dim c As MSForms.Control
     For Each c In Me.controls
@@ -830,7 +830,7 @@ End Function
 
 
 
-'=== IME蛻・崛・壹さ繝ｳ繝・リ繧貞・蟶ｰ逧・↓蜃ｦ逅・ｼ・ultiPage蟇ｾ蠢懃沿・・==============
+'=== IME切替：コンテナを再帰的に処理（MultiPage対応版） ==============
 Private Sub ApplyInputModeJP(container As Object)
     Dim typ As String
     On Error Resume Next
@@ -846,7 +846,7 @@ Private Sub ApplyInputModeJP(container As Object)
       End If
 
 
-    ' Controls 繧呈戟縺溘↑縺・ｂ縺ｮ縺ｯ邨ゆｺ・ｼ・rame/Page 莉･螟悶・螳牙・蟇ｾ遲厄ｼ・
+    ' Controls を持たないものは終了（Frame/Page 以外の安全対策）
     If Not HasControls(container) Then Exit Sub
 
     Dim c As MSForms.Control
@@ -855,17 +855,17 @@ Private Sub ApplyInputModeJP(container As Object)
             Case "TextBox", "ComboBox"
                 On Error Resume Next
                 If ShouldBeNumericField(c) Then
-                    c.IMEMode = fmIMEModeDisable     ' 蜊願ｧ定恭謨ｰ
+                    c.IMEMode = fmIMEModeDisable     ' 半角英数
                 Else
-                    c.IMEMode = fmIMEModeHiragana     ' 縺ｲ繧峨′縺ｪ
+                    c.IMEMode = fmIMEModeHiragana     ' ひらがな
                 End If
                 On Error GoTo 0
 
             Case "Frame", "Page"
-                ApplyInputModeJP c                   ' 蟄舌∈蜀榊ｸｰ
+                ApplyInputModeJP c                   ' 子へ再帰
 
             Case "MultiPage"
-                ' 蟄舌↓ MultiPage 縺後・繧我ｸ九′縺｣縺ｦ縺・ｋ蝣ｴ蜷医・ Pages 繧貞屓縺・
+                ' 子に MultiPage がぶら下がっている場合は Pages を回す
                 Dim p As MSForms.page
                 For Each p In c.Pages
                     ApplyInputModeJP p
@@ -875,12 +875,12 @@ Private Sub ApplyInputModeJP(container As Object)
 End Sub
 
 
-' 縺薙・繝輔か繝ｼ繝縺ｧ縲梧焚蟄玲ｬ・阪→隕九↑縺吝愛螳・
+' このフォームで「数字欄」と見なす判定
 Private Function ShouldBeNumericField(c As MSForms.Control) As Boolean
     Dim nm As String: nm = LCase$(c.name & "")
     Dim tg As String: tg = LCase$(c.tag & "")
 
-    ' 蜷榊燕縺ｧ蛻､螳夲ｼ亥ｿ・ｦ√↑繧峨％縺薙↓霑ｽ險假ｼ・
+    ' 名前で判定（必要ならここに追記）
     If nm = "txtage" Or nm = "txtedate" Or nm = "txtonset" _
        Or nm = "txttenmwalk" Or nm = "txttug" Or nm = "txtfivests" _
        Or nm = "txtsemi" Or nm = "txtgripr" Or nm = "txtgripl" _
@@ -888,13 +888,13 @@ Private Function ShouldBeNumericField(c As MSForms.Control) As Boolean
         ShouldBeNumericField = True: Exit Function
     End If
 
-    ' Tag縺ｧ蛻､螳夲ｼ域里蟄倥・Tag繧呈ｴｻ逕ｨ・・
+    ' Tagで判定（既存のTagを活用）
     If InStr(tg, "evaldate") > 0 Or InStr(tg, "onsetdate") > 0 Then ShouldBeNumericField = True: Exit Function
     If Left$(tg, 5) = "test." Or Left$(tg, 5) = "grip." Then ShouldBeNumericField = True: Exit Function
     If Right$(tg, 4) = ".age" Or tg = "bi.total" Then ShouldBeNumericField = True: Exit Function
 End Function
 
-' ・井ｻｻ諢擾ｼ我ｿ晏ｭ伜燕縺ｫ謨ｰ蟄玲ｬ・ｒ蜊願ｧ偵↓邨ｱ荳縺励※縺翫￥
+' （任意）保存前に数字欄を半角に統一しておく
 Private Sub NormalizeNumericInputsToHalfwidth()
     Dim c As MSForms.Control
     For Each c In Me.controls
@@ -902,7 +902,7 @@ Private Sub NormalizeNumericInputsToHalfwidth()
     Next
 End Sub
 
-'=== 謨ｰ蛟､谺・・蜊願ｧ堤ｵｱ荳・哺ultiPage蟇ｾ蠢懃沿 ================================
+'=== 数値欄の半角統一：MultiPage対応版 ================================
 Private Sub NormalizeNumericInContainer(container As Object)
     Dim typ As String
     On Error Resume Next
@@ -925,7 +925,7 @@ Private Sub NormalizeNumericInContainer(container As Object)
             Case "TextBox", "ComboBox"
                 If ShouldBeNumericField(c) Then
                     On Error Resume Next
-                    c.text = StrConv(c.text, vbNarrow) ' 蜈ｨ隗停・蜊願ｧ・
+                    c.text = StrConv(c.text, vbNarrow) ' 全角→半角
                     On Error GoTo 0
                 End If
 
@@ -951,7 +951,7 @@ Private Function HasControls(o As Object) As Boolean
 End Function
 '====================================================================
 
-'=== ComboBox 縺ｫ驟榊・繧堤｢ｺ螳溘↓豬√＠霎ｼ繧譛蟆上・繝ｫ繝代・ ===
+'=== ComboBox に配列を確実に流し込む最小ヘルパー ===
 Private Sub FillComboItems(ByRef cbo As MSForms.ComboBox, ByVal items As Variant)
     Dim k As Long
     cbo.Clear
@@ -960,18 +960,18 @@ Private Sub FillComboItems(ByRef cbo As MSForms.ComboBox, ByVal items As Variant
             cbo.AddItem CStr(items(k))
         Next
     End If
-    ' 譌｢螳夐∈謚槭↑縺・
+    ' 既定選択なし
     On Error Resume Next
     cbo.ListIndex = -1
 End Sub
 
 
 
-'=== BI/IADL 繧貞ｼｷ蛻ｶ蜀肴ｧ狗ｯ会ｼ亥ｿ・★荳ｭ霄ｫ繧定｡ｨ遉ｺ・・===============================
+'=== BI/IADL を強制再構築（必ず中身を表示） ===============================
 Private Function EnsureBI_IADL() As MSForms.MultiPage
     On Error Resume Next
 
-    Trace "EnsureBI_IADL start", "BI/IADL"   ' 竊絶蔵縺薙％
+    Trace "EnsureBI_IADL start", "BI/IADL"   ' ←①ここ
 
 
 
@@ -983,20 +983,20 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
 
  
 
- ' 1) 繝ｫ繝ｼ繝・MultiPage 縺ｨ縲梧律蟶ｸ逕滓ｴｻ蜍穂ｽ懊阪・繝ｼ繧ｸ繧堤音螳・
+ ' 1) ルート MultiPage と「日常生活動作」ページを特定
     Dim mp As MSForms.MultiPage: Set mp = FindMainMultiPage()
     If mp Is Nothing Then Exit Function
 
-    Dim pgMove As MSForms.page: Set pgMove = FindPageByCaption(mp, "譌･蟶ｸ逕滓ｴｻ蜍穂ｽ・)
+    Dim pgMove As MSForms.page: Set pgMove = FindPageByCaption(mp, "日常生活動作")
     If pgMove Is Nothing Then
         If mp.Pages.count >= 3 Then
-            Set pgMove = mp.Pages(2) ' 繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ
+            Set pgMove = mp.Pages(2) ' フォールバック
         Else
             Exit Function
         End If
     End If
 
-    ' 2) 繝壹・繧ｸ蜀・・繝帙せ繝・Frame 繧貞叙蠕暦ｼ育┌縺代ｌ縺ｰ菴懈・・・
+    ' 2) ページ内のホスト Frame を取得（無ければ作成）
     Dim host As MSForms.Frame, c As Control
     For Each c In pgMove.controls
         If TypeName(c) = "Frame" Then Set host = c: Exit For
@@ -1008,7 +1008,7 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
         host.Height = pgMove.InsideHeight - 12
     End If
 
-    ' 3) host 蜀・・ MultiPage 縺縺代ｒ蜈ｨ豸亥悉・医⊇縺九・隗ｦ繧峨↑縺・ｼ・
+    ' 3) host 内の MultiPage だけを全消去（ほかは触らない）
     Dim i As Long
     For i = host.controls.count - 1 To 0 Step -1
         If TypeName(host.controls(i)) = "MultiPage" Then
@@ -1016,7 +1016,7 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
         End If
     Next
 
-    ' 4) mpADL 繧剃ｽ懈・・・譫壻ｿ晁ｨｼ・・:BI / 1:IADL / 2:襍ｷ螻・虚菴懶ｼ・
+    ' 4) mpADL を作成＆3枚保証（0:BI / 1:IADL / 2:起居動作）
     Set mpADL = host.controls.Add("Forms.MultiPage.1", "mpADL")
     Trace "mpADL ready; pages=" & mpADL.Pages.count, "BI/IADL"
 
@@ -1029,22 +1029,22 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
         AttachMPHook mpADL
     End With
     Do While mpADL.Pages.count < 3: mpADL.Pages.Add: Loop
-    mpADL.Pages(0).caption = "繝舌・繧ｵ繝ｫ繧､繝ｳ繝・ャ繧ｯ繧ｹ"
+    mpADL.Pages(0).caption = "バーサルインデックス"
     mpADL.Pages(1).caption = "IADL"
-    mpADL.Pages(2).caption = "襍ｷ螻・虚菴・
+    mpADL.Pages(2).caption = "起居動作"
     
     
 Trace "EnsureBI_IADL end; pages=" & mpADL.Pages.count, "BI/IADL"
 Set EnsureBI_IADL = mpADL
 
-    ' 5) 襍ｷ螻・虚菴懊ち繝悶・UI
+    ' 5) 起居動作タブのUI
     mp.value = 0
     BuildKyoOnADL mpADL.Pages(2)
 
 
-    '======================== BI・・0鬆・岼・・========================
+    '======================== BI（10項目） ========================
     Dim pBI As MSForms.page: Set pBI = mpADL.Pages(0)
-    ' 荳譌ｦ繧ｯ繝ｪ繧｢縺励※縺九ｉ菴懈・・育ｩｺ・城㍾隍・←縺｡繧峨↓繧ょｯｾ蠢懶ｼ・
+    ' 一旦クリアしてから作成（空／重複どちらにも対応）
     Dim iCtl As Long
     
      For iCtl = pBI.controls.count - 1 To 0 Step -1
@@ -1057,8 +1057,8 @@ Set EnsureBI_IADL = mpADL
 Next
 
     Dim biItems As Variant, biChoices As Variant
-    biItems = Array("鞫る｣・, "霆翫＞縺・繝吶ャ繝臥ｧｻ荵・, "謨ｴ螳ｹ", "繝医う繝ｬ蜍穂ｽ・, "蜈･豬ｴ", _
-                    "豁ｩ陦・霆翫＞縺咏ｧｻ蜍・, "髫取ｮｵ譏・剄", "譖ｴ陦｣", "謗剃ｾｿ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ", "謗貞ｰｿ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ")
+    biItems = Array("摂食", "車いす-ベッド移乗", "整容", "トイレ動作", "入浴", _
+                    "歩行/車いす移動", "階段昇降", "更衣", "排便コントロール", "排尿コントロール")
     biChoices = Array()
 
 
@@ -1068,7 +1068,7 @@ Next
     Dim lblBI As MSForms.label, txtBI As MSForms.TextBox
     Set lblBI = pBI.controls.Add("Forms.Label.1", "lblBIHeader")
     With lblBI
-        .caption = "繝舌・繧ｵ繝ｫ繧､繝ｳ繝・ャ繧ｯ繧ｹ・育せ・・
+        .caption = "バーサルインデックス（点）"
         .Left = 12: .Top = yBI: .Width = 160
     End With
     Set txtBI = pBI.controls.Add("Forms.TextBox.1", "txtBITotal")
@@ -1094,27 +1094,27 @@ Next
             .Width = 200
             .Style = fmStyleDropDownList
         End With
-               ' 鬆・岼縺斐→縺ｫ繝舌・繧ｵ繝ｫ讓呎ｺ悶・轤ｹ謨ｰ蛟呵｣懊ｒ險ｭ螳・
+               ' 項目ごとにバーサル標準の点数候補を設定
         Select Case idx
-            ' 0: 鞫る｣・
-            ' 3: 繝医う繝ｬ蜍穂ｽ・
-            ' 6: 髫取ｮｵ譏・剄
-            ' 7: 譖ｴ陦｣
-            ' 8: 謗剃ｾｿ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ
-            ' 9: 謗貞ｰｿ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ
-            ' 竊・0 / 5 / 10 轤ｹ
+            ' 0: 摂食
+            ' 3: トイレ動作
+            ' 6: 階段昇降
+            ' 7: 更衣
+            ' 8: 排便コントロール
+            ' 9: 排尿コントロール
+            ' → 0 / 5 / 10 点
             Case 0, 3, 6, 7, 8, 9
                 AddItemsToCombo cb, Array("0", "5", "10")
 
-            ' 2: 謨ｴ螳ｹ
-            ' 4: 蜈･豬ｴ
-            ' 竊・0 / 5 轤ｹ
+            ' 2: 整容
+            ' 4: 入浴
+            ' → 0 / 5 点
             Case 2, 4
                 AddItemsToCombo cb, Array("0", "5")
 
-            ' 1: 霆翫＞縺・繝吶ャ繝臥ｧｻ荵・
-            ' 5: 豁ｩ陦・霆翫＞縺咏ｧｻ蜍・
-            ' 竊・0 / 5 / 10 / 15 轤ｹ
+            ' 1: 車いす-ベッド移乗
+            ' 5: 歩行/車いす移動
+            ' → 0 / 5 / 10 / 15 点
             Case 1, 5
                 AddItemsToCombo cb, Array("0", "5", "10", "15")
         End Select
@@ -1130,7 +1130,7 @@ Next
 
 Set frHomeEnv = pBI.controls.Add("Forms.Frame.1", "frBIHomeEnv")
 With frHomeEnv
-    .caption = "菴丞ｮ・憾豕・ｼ郁ｩｲ蠖薙・縺ｿ繝√ぉ繝・け・・
+    .caption = "住宅状況（該当のみチェック）"
     .Left = 420
     .ZOrder 0
     .Top = yBI + 6
@@ -1138,13 +1138,13 @@ With frHomeEnv
 End With
 
 homeItems = Array( _
-    "邇・未縺ｾ縺ｧ縺ｮ谿ｵ蟾ｮ", _
-    "荳翫′繧頑｡・ｼ域ｮｵ蟾ｮ・・, _
-    "螻句・縺ｮ谿ｵ蟾ｮ", _
-    "髫取ｮｵ縺ゅｊ", _
-    "謇九☆繧翫≠繧・, _
-    "繧ｹ繝ｭ繝ｼ繝励≠繧・, _
-    "騾夊ｷｯ縺檎強縺・ _
+    "玄関までの段差", _
+    "上がり框（段差）", _
+    "屋内の段差", _
+    "階段あり", _
+    "手すりあり", _
+    "スロープあり", _
+    "通路が狭い" _
 )
 
 homeNames = Array( _
@@ -1170,7 +1170,7 @@ For h = LBound(homeItems) To UBound(homeItems)
         .Left = 12 + col * (frHomeEnv.InsideWidth / 2)
         .Top = 18 + row * 20
         .Width = (frHomeEnv.InsideWidth / 2) - 18
-        .tag = "BI.HomeEnv." & CStr(h)   '竊慎ag縺ｯ縺昴・縺ｾ縺ｾ
+        .tag = "BI.HomeEnv." & CStr(h)   '←Tagはそのまま
         .value = False
     End With
 Next h
@@ -1179,7 +1179,7 @@ yHome = 18 + ((UBound(homeItems) + 1 + 1) \ 2) * 20
 
 Set lblHomeNote = frHomeEnv.controls.Add("Forms.Label.1", "lblBIHomeEnvNote")
 With lblHomeNote
-    .caption = "蛯呵・
+    .caption = "備考"
     .Left = 12
     .Top = yHome + 4
     .Width = 60
@@ -1187,7 +1187,7 @@ End With
 
 Set txtHomeNote = frHomeEnv.controls.Add("Forms.TextBox.1", "txtBIHomeEnvNote")
 With txtHomeNote
-    .tag = "BI.HomeEnv.Note"           '竊慎ag縺ｯ縺昴・縺ｾ縺ｾ
+    .tag = "BI.HomeEnv.Note"           '←Tagはそのまま
     .Left = 12
     .Top = lblHomeNote.Top + 14
     .Width = frHomeEnv.InsideWidth - 18
@@ -1196,23 +1196,23 @@ With txtHomeNote
     .EnterKeyBehavior = True
 End With
 
-'笘・鬮倥＆繧偵％縺薙〒遒ｺ螳夲ｼ亥崋螳・30繧偵ｄ繧√ｋ・・
+'★ 高さをここで確定（固定230をやめる）
 frHomeEnv.Height = txtHomeNote.Top + txtHomeNote.Height + 12
   
     pBI.ScrollBars = fmScrollBarsNone
     pBI.ScrollHeight = yBI + 8
 
 
-    '======================== IADL・・鬆・岼・・========================
+    '======================== IADL（9項目） ========================
     Dim pIADL As MSForms.page: Set pIADL = mpADL.Pages(1)
     For iCtl = pIADL.controls.count - 1 To 0 Step -1
         pIADL.controls.Remove pIADL.controls(iCtl).name
     Next
 
     Dim iadlItems As Variant, iadlChoices As Variant
-    iadlItems = Array("隱ｿ逅・, "豢玲ｿｯ", "謗・勁", "雋ｷ縺・黄", "驥鷹姦邂｡逅・, "譛崎脈邂｡逅・, _
-                      "雜｣蜻ｳ繝ｻ菴呎嚊豢ｻ蜍・, "遉ｾ莨壼盾蜉・亥､門・繝ｻ蝨ｰ蝓滓ｴｻ蜍包ｼ・, "繧ｳ繝溘Η繝九こ繝ｼ繧ｷ繝ｧ繝ｳ・磯崕隧ｱ繝ｻ莨夊ｩｱ・・)
-    iadlChoices = Array("閾ｪ遶・, "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・, "荳驛ｨ莉句勧", "蜈ｨ莉句勧")
+    iadlItems = Array("調理", "洗濯", "掃除", "買い物", "金銭管理", "服薬管理", _
+                      "趣味・余暇活動", "社会参加（外出・地域活動）", "コミュニケーション（電話・会話）")
+    iadlChoices = Array("自立", "見守り（監視下）", "一部介助", "全介助")
 
     Dim iadlCount As Long, iadlCols As Long, iadlRows As Long
     iadlCount = UBound(iadlItems) - LBound(iadlItems) + 1
@@ -1247,10 +1247,10 @@ frHomeEnv.Height = txtHomeNote.Top + txtHomeNote.Height + 12
     Dim gridBottom As Single: gridBottom = 18 + iadlRows * rowH
     Dim lblINote As MSForms.label, txtINote As MSForms.TextBox
     Set lblINote = pIADL.controls.Add("Forms.Label.1", "lblIADLNote")
-    With lblINote: .caption = "蛯呵・: .Left = 12: .Top = gridBottom + 12: .Width = 40: End With
+    With lblINote: .caption = "備考": .Left = 12: .Top = gridBottom + 12: .Width = 40: End With
     Set txtINote = pIADL.controls.Add("Forms.TextBox.1", "txtIADLNote")
     With txtINote
-        .tag = "IADL.蛯呵・
+        .tag = "IADL.備考"
         .Left = 60
         .Top = lblINote.Top - 3
         .Width = mpADL.Width - 84
@@ -1259,7 +1259,7 @@ frHomeEnv.Height = txtHomeNote.Top + txtHomeNote.Height + 12
         .EnterKeyBehavior = True
     End With
 
-    '---- 鬮倥＆譖ｴ譁ｰ ----
+    '---- 高さ更新 ----
     Dim bottomI As Single: bottomI = txtINote.Top + txtINote.Height + 18
     pIADL.ScrollBars = fmScrollBarsNone
     pIADL.ScrollHeight = bottomI
@@ -1270,7 +1270,7 @@ frHomeEnv.Height = txtHomeNote.Top + txtHomeNote.Height + 12
     nextTop = mpADL.Top + mpADL.Height + 10
     If Not hostMove Is Nothing Then hostMove.ScrollHeight = nextTop + 10
 
-    '--- BI: 菴丞ｮ・憾豕√ｒ蜿ｳ蛛ｴ縺ｸ蝗ｺ螳夲ｼ域怙蠕後↓蠖薙※繧具ｼ壽紛蛻励〒謌ｻ縺輔ｌ縺ｪ縺・ｈ縺・↓・・--
+    '--- BI: 住宅状況を右側へ固定（最後に当てる：整列で戻されないように）---
 On Error Resume Next
 pBI.controls("frBIHomeEnv").Left = 600
 pBI.controls("frBIHomeEnv").Top = 12
@@ -1282,7 +1282,7 @@ On Error GoTo 0
 End Function
 '=================================================================
 
-'=== BI繧ｳ繝ｳ繝懊↓繧､繝吶Φ繝医ヵ繝・け繧貞ｼｵ繧・===
+'=== BIコンボにイベントフックを張る ===
 Private Sub AttachBIHook(ByRef cb As MSForms.ComboBox)
     If BIHooks Is Nothing Then Set BIHooks = New Collection
     Dim h As CboBIHook
@@ -1291,76 +1291,76 @@ Private Sub AttachBIHook(ByRef cb As MSForms.ComboBox)
     BIHooks.Add h
 End Sub
 
-'=== BI・夐・岼ﾃ鈴∈謚櫁い 竊・轤ｹ謨ｰ・・arthel讓呎ｺ悶↓豐ｿ縺・ｼ・==================
+'=== BI：項目×選択肢 → 点数（Barthel標準に沿う） ==================
 Private Function BIItemScore(ByVal itemName As String, ByVal level As String) As Long
     Select Case itemName
-        Case "鞫る｣・                         ' 10 / 5 / 0
+        Case "摂食"                         ' 10 / 5 / 0
             Select Case level
-                Case "閾ｪ遶・:                   BIItemScore = 10
-                Case "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・, "荳驛ｨ莉句勧": BIItemScore = 5
+                Case "自立":                   BIItemScore = 10
+                Case "見守り（監視下）", "一部介助": BIItemScore = 5
                 Case Else:                     BIItemScore = 0
             End Select
 
-        Case "霆翫＞縺・繝吶ャ繝臥ｧｻ荵・            ' 15 / 10 / 5 / 0
+        Case "車いす-ベッド移乗"            ' 15 / 10 / 5 / 0
             Select Case level
-                Case "閾ｪ遶・:                   BIItemScore = 15
-                Case "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・:       BIItemScore = 10
-                Case "荳驛ｨ莉句勧":               BIItemScore = 5
+                Case "自立":                   BIItemScore = 15
+                Case "見守り（監視下）":       BIItemScore = 10
+                Case "一部介助":               BIItemScore = 5
                 Case Else:                     BIItemScore = 0
             End Select
 
-        Case "謨ｴ螳ｹ"                         ' 5 / 0
+        Case "整容"                         ' 5 / 0
             Select Case level
-                Case "閾ｪ遶・:                   BIItemScore = 5
+                Case "自立":                   BIItemScore = 5
                 Case Else:                     BIItemScore = 0
             End Select
 
-        Case "繝医う繝ｬ蜍穂ｽ・                   ' 10 / 5 / 0
+        Case "トイレ動作"                   ' 10 / 5 / 0
             Select Case level
-                Case "閾ｪ遶・:                   BIItemScore = 10
-                Case "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・, "荳驛ｨ莉句勧": BIItemScore = 5
+                Case "自立":                   BIItemScore = 10
+                Case "見守り（監視下）", "一部介助": BIItemScore = 5
                 Case Else:                     BIItemScore = 0
             End Select
 
-        Case "蜈･豬ｴ"                         ' 5 / 0
+        Case "入浴"                         ' 5 / 0
             Select Case level
-                Case "閾ｪ遶・:                   BIItemScore = 5
+                Case "自立":                   BIItemScore = 5
                 Case Else:                     BIItemScore = 0
             End Select
 
-        Case "豁ｩ陦・霆翫＞縺咏ｧｻ蜍・              ' 15 / 10 / 5 / 0
+        Case "歩行/車いす移動"              ' 15 / 10 / 5 / 0
             Select Case level
-                Case "閾ｪ遶・:                   BIItemScore = 15
-                Case "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・:       BIItemScore = 10
-                Case "荳驛ｨ莉句勧":               BIItemScore = 5
+                Case "自立":                   BIItemScore = 15
+                Case "見守り（監視下）":       BIItemScore = 10
+                Case "一部介助":               BIItemScore = 5
                 Case Else:                     BIItemScore = 0
             End Select
 
-        Case "髫取ｮｵ譏・剄"                     ' 10 / 5 / 0
+        Case "階段昇降"                     ' 10 / 5 / 0
             Select Case level
-                Case "閾ｪ遶・:                   BIItemScore = 10
-                Case "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・, "荳驛ｨ莉句勧": BIItemScore = 5
+                Case "自立":                   BIItemScore = 10
+                Case "見守り（監視下）", "一部介助": BIItemScore = 5
                 Case Else:                     BIItemScore = 0
             End Select
 
-        Case "譖ｴ陦｣"                         ' 10 / 5 / 0
+        Case "更衣"                         ' 10 / 5 / 0
             Select Case level
-                Case "閾ｪ遶・:                   BIItemScore = 10
-                Case "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・, "荳驛ｨ莉句勧": BIItemScore = 5
+                Case "自立":                   BIItemScore = 10
+                Case "見守り（監視下）", "一部介助": BIItemScore = 5
                 Case Else:                     BIItemScore = 0
             End Select
 
-        Case "謗剃ｾｿ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ"             ' 10 / 5 / 0
+        Case "排便コントロール"             ' 10 / 5 / 0
             Select Case level
-                Case "閾ｪ遶・:                   BIItemScore = 10
-                Case "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・, "荳驛ｨ莉句勧": BIItemScore = 5
+                Case "自立":                   BIItemScore = 10
+                Case "見守り（監視下）", "一部介助": BIItemScore = 5
                 Case Else:                     BIItemScore = 0
             End Select
 
-        Case "謗貞ｰｿ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ"             ' 10 / 5 / 0
+        Case "排尿コントロール"             ' 10 / 5 / 0
             Select Case level
-                Case "閾ｪ遶・:                   BIItemScore = 10
-                Case "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・, "荳驛ｨ莉句勧": BIItemScore = 5
+                Case "自立":                   BIItemScore = 10
+                Case "見守り（監視下）", "一部介助": BIItemScore = 5
                 Case Else:                     BIItemScore = 0
             End Select
 
@@ -1382,13 +1382,13 @@ Public Sub RecalcBI()
 
     On Error Resume Next
 
-    ' --- 縲後ヰ繝ｼ繧ｵ繝ｫ繧､繝ｳ繝・ャ繧ｯ繧ｹ縲阪ち繝悶ｒ謖√▽ MultiPage 繧呈爾縺・---
+    ' --- 「バーサルインデックス」タブを持つ MultiPage を探す ---
     Set mpADL = Nothing
     For Each ctrl In Me.controls
         If TypeOf ctrl Is MSForms.MultiPage Then
             Set mpADL = ctrl
             If mpADL.Pages.count > 0 Then
-                If mpADL.Pages(0).caption = "繝舌・繧ｵ繝ｫ繧､繝ｳ繝・ャ繧ｯ繧ｹ" Then
+                If mpADL.Pages(0).caption = "バーサルインデックス" Then
                     Exit For
                 End If
             End If
@@ -1398,9 +1398,9 @@ Public Sub RecalcBI()
 
     If mpADL Is Nothing Then Exit Sub
 
-    Set pBI = mpADL.Pages(0)   ' 0繝壹・繧ｸ逶ｮ縺後ヰ繝ｼ繧ｵ繝ｫ繧､繝ｳ繝・ャ繧ｯ繧ｹ
+    Set pBI = mpADL.Pages(0)   ' 0ページ目がバーサルインデックス
 
-    ' --- 10鬆・岼蛻・・轤ｹ謨ｰ繧貞腰邏斐↓蜷郁ｨ医☆繧具ｼ医さ繝ｳ繝懊・蛟､縺後◎縺ｮ縺ｾ縺ｾ轤ｹ謨ｰ・・---
+    ' --- 10項目分の点数を単純に合計する（コンボの値がそのまま点数） ---
     total = 0
     For idx = 0 To 9
         Set cb = Nothing
@@ -1413,7 +1413,7 @@ Public Sub RecalcBI()
         End If
     Next idx
 
-    ' --- 蜷郁ｨ医ｒ txtBITotal 縺ｫ蜿肴丐 ---
+    ' --- 合計を txtBITotal に反映 ---
     Set txt = pBI.controls("txtBITotal")
     If Not txt Is Nothing Then
         txt.value = total
@@ -1421,19 +1421,19 @@ Public Sub RecalcBI()
 End Sub
 
 
-'=== 莉ｻ諢上・TextBox縺ｫIME縺ｲ繧峨′縺ｪ繝輔ャ繧ｯ繧貞ｼｵ繧・===
+'=== 任意のTextBoxにIMEひらがなフックを張る ===
 Private Sub AttachImeHiragana(tb As MSForms.TextBox)
     If ImeHooks Is Nothing Then Set ImeHooks = New Collection
     Dim h As TxtImeHook
     Set h = New TxtImeHook
     h.Init tb
     ImeHooks.Add h
-    ' 蠢ｵ縺ｮ縺溘ａ逶ｴ縺｡縺ｫ蜿肴丐
+    ' 念のため直ちに反映
     On Error Resume Next
     tb.IMEMode = fmIMEModeHiragana
 End Sub
 
-'=== MultiPage 縺ｫ繝輔ャ繧ｯ繧貞ｼｵ繧・===
+'=== MultiPage にフックを張る ===
 Private Sub AttachMPHook(mp As MSForms.MultiPage)
     If MPHs Is Nothing Then Set MPHs = New Collection
     Dim h As MPHook
@@ -1442,7 +1442,7 @@ Private Sub AttachMPHook(mp As MSForms.MultiPage)
     MPHs.Add h
 End Sub
 
-'=== IADL蛯呵・↓IME縺ｲ繧峨′縺ｪ繧貞・驕ｩ逕ｨ・磯・蠎ｦ蜻ｼ縺ｶ・・===
+'=== IADL備考にIMEひらがなを再適用（都度呼ぶ） ===
 Public Sub ApplyImeToIADLNote()
     On Error Resume Next
      Dim mpA As MSForms.MultiPage, c As Control
@@ -1525,10 +1525,10 @@ EH:
     
 End Sub
 
-'=== 縺ｩ縺薙°縺ｫ谿九▲縺ｦ縺・ｋ mpADL 繧貞・驛ｨ豸医☆ ===
+'=== どこかに残っている mpADL を全部消す ===
 Private Sub RemoveAllMpADL()
     Dim i As Long, c As Control
-    ' 繝輔か繝ｼ繝逶ｴ荳・
+    ' フォーム直下
     For i = Me.controls.count - 1 To 0 Step -1
         If TypeName(Me.controls(i)) = "MultiPage" Then
             If Me.controls(i).name = "mpADL" Then
@@ -1537,7 +1537,7 @@ Private Sub RemoveAllMpADL()
         End If
     Next i
 
-    ' 繝ｫ繝ｼ繝・MultiPage・・p・峨・蜷・・繝ｼ繧ｸ蜀・
+    ' ルート MultiPage（mp）の各ページ内
     Dim mp As MSForms.MultiPage, p As MSForms.page
     For Each c In Me.controls
         If TypeName(c) = "MultiPage" Then Set mp = c: Exit For
@@ -1554,20 +1554,20 @@ Private Sub RemoveAllMpADL()
 End Sub
 
 
-'=== ADL繧ｿ繝門・縺ｮ3譫夂岼縲瑚ｵｷ螻・虚菴懊阪・繝ｼ繧ｸ繧堤ｵ・∩遶九※繧・======================
+'=== ADLタブ内の3枚目「起居動作」ページを組み立てる ======================
 Private Sub BuildKyoOnADL(pg As MSForms.page)
 
     Dim fr As MSForms.Frame
-    ' 譌｢蟄倥′縺ゅｌ縺ｰ蜀榊茜逕ｨ縲∫┌縺代ｌ縺ｰ菴懈・・・indOrAddFrame縺ｯ譌｢蟄倥・繝ｫ繝代・・・
+    ' 既存があれば再利用、無ければ作成（FindOrAddFrameは既存ヘルパー）
     Set fr = FindOrAddFrame(pg, "frKyo")
-    fr.caption = "襍ｷ螻・虚菴・
+    fr.caption = "起居動作"
     ClearChildren fr
     
-     ' 笘・ｿｽ蜉・壻ｽ咲ｽｮ縺ｨ繧ｵ繧､繧ｺ・医・繝ｼ繧ｸ縺・▲縺ｱ縺・↓蠎・￡繧具ｼ・
+     ' ★追加：位置とサイズ（ページいっぱいに広げる）
     With fr
         .Left = 12
         .Top = 12
-        .Width = pg.parent.Width - 24   ' 竊・MultiPage縺ｮ蟷・↓霑ｽ蠕・
+        .Width = pg.parent.Width - 24   ' ← MultiPageの幅に追従
     End With
     
 
@@ -1575,51 +1575,51 @@ Private Sub BuildKyoOnADL(pg As MSForms.page)
     Dim lb As MSForms.label, cb As MSForms.ComboBox, txt As MSForms.TextBox
     Dim choices As Variant
 
-    ' 蛟呵｣懶ｼ壽里蟄倥・ PostureChoices() 縺後≠繧後・蛻ｩ逕ｨ縲∫┌縺代ｌ縺ｰ繝・ヵ繧ｩ繝ｫ繝・
+    ' 候補：既存の PostureChoices() があれば利用、無ければデフォルト
     On Error Resume Next
     choices = PostureChoices()
     If Err.Number <> 0 Then
-        choices = Array("閾ｪ遶・, "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・, "荳驛ｨ莉句勧", "蜈ｨ莉句勧")
+        choices = Array("自立", "見守り（監視下）", "一部介助", "全介助")
         Err.Clear
     End If
     On Error GoTo 0
     
     
-' 蟇晁ｿ斐ｊ
-Set lb = CreateLabel(fr, "蟇晁ｿ斐ｊ", COL_LX, y)
+' 寝返り
+Set lb = CreateLabel(fr, "寝返り", COL_LX, y)
 Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_Roll", True)
 With cb: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
 AddItemsToCombo cb, choices
 y = y + rowH
 
-' 襍ｷ縺堺ｸ翫′繧・
-Set lb = CreateLabel(fr, "襍ｷ縺堺ｸ翫′繧・, COL_LX, y)
+' 起き上がり
+Set lb = CreateLabel(fr, "起き上がり", COL_LX, y)
 Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_SitUp", True)
 With cb: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
 AddItemsToCombo cb, choices
 y = y + rowH
 
-' 蠎ｧ菴堺ｿ晄戟
-Set lb = CreateLabel(fr, "蠎ｧ菴堺ｿ晄戟", COL_LX, y)
+' 座位保持
+Set lb = CreateLabel(fr, "座位保持", COL_LX, y)
 Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_SitHold", True)
 With cb: .Left = COL_LX + lblW + 60: .Top = y - 3: .Width = 120: End With
 AddItemsToCombo cb, choices
 y = y + rowH
 
     
-  ' 蜿ｳ蛻暦ｼ夂ｫ九■荳翫′繧・/ 遶倶ｽ堺ｿ晄戟・亥ｷｦ蛻励→蜷後§陦刑=22,46・上が繝輔そ繝・ヨ+60・丞ｹ・20縺ｧ謠・∴繧具ｼ・
-CreateLabel fr, "遶九■荳翫′繧・, COL_RX, 22
+  ' 右列：立ち上がり / 立位保持（左列と同じ行Y=22,46／オフセット+60／幅120で揃える）
+CreateLabel fr, "立ち上がり", COL_RX, 22
 Dim cboUp As MSForms.ComboBox
-Set cboUp = CreateCombo(fr, COL_RX + lblW + 60, 22, 120, , "POSTURE|遶九■荳翫′繧・)
-cboUp.List = MakeList("閾ｪ遶・隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・荳驛ｨ莉句勧,蜈ｨ莉句勧")
+Set cboUp = CreateCombo(fr, COL_RX + lblW + 60, 22, 120, , "POSTURE|立ち上がり")
+cboUp.List = MakeList("自立,見守り（監視下）,一部介助,全介助")
 
-CreateLabel fr, "遶倶ｽ堺ｿ晄戟", COL_RX, 46
+CreateLabel fr, "立位保持", COL_RX, 46
 Dim cboStand As MSForms.ComboBox
-Set cboStand = CreateCombo(fr, COL_RX + lblW + 60, 46, 120, , "POSTURE|遶倶ｽ堺ｿ晄戟")
-cboStand.List = MakeList("閾ｪ遶・隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・荳驛ｨ莉句勧,蜈ｨ莉句勧")
+Set cboStand = CreateCombo(fr, COL_RX + lblW + 60, 46, 120, , "POSTURE|立位保持")
+cboStand.List = MakeList("自立,見守り（監視下）,一部介助,全介助")
 
-    ' 蛯呵・
-    Set lb = CreateLabel(fr, "蛯呵・, COL_LX, y)
+    ' 備考
+    Set lb = CreateLabel(fr, "備考", COL_LX, y)
     Set txt = fr.controls.Add("Forms.TextBox.1", "txtKyoNote")
     With txt
         .Left = COL_LX + 40
@@ -1634,7 +1634,7 @@ cboStand.List = MakeList("閾ｪ遶・隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・
     fr.Height = y + 12
 End Sub
 
-'ADL-襍ｷ螻・虚菴懃畑・壹さ繝ｳ繝懊↓蛟呵｣懊ｒ繧ｻ繝・ヨ
+'ADL-起居動作用：コンボに候補をセット
 Private Sub AddItemsToCombo(cb As MSForms.ComboBox, items As Variant)
     Dim k As Long
     On Error Resume Next
@@ -1656,15 +1656,15 @@ End Sub
 
 
 '======================================================================
-' 襍ｷ螻・虚菴懶ｼ医瑚ｺｫ菴捺ｩ溯・・玖ｵｷ螻・虚菴懊阪・繝ｼ繧ｸ・・ 螳牙ｮ壹ユ繝ｳ繝励Ξ・亥ｙ閠・≠繧奇ｼ・
-' 繝ｻ騾比ｸｭ縺ｫ繧ｿ繝悶ｒ謖ｿ蜈･縺励※繧ょ｣翫ｌ縺ｪ縺・ｼ咾aption讀懃ｴ｢
-' 繝ｻ逕滓・・・uild・峨→謨ｴ蛻暦ｼ・ayout・峨ｒ蛻・屬・壽僑蠑ｵ譎ゅ・莠区腐繧呈怙蟆丞喧
-' 繝ｻ菫晏ｭ・隱ｭ霎ｼ縺ｯ Tag="POSTURE|窶ｦ" 縺ｧ譌｢蟄倥Ο繧ｸ繝・け縺ｫ縺昴・縺ｾ縺ｾ荵励ｋ
+' 起居動作（「身体機能＋起居動作」ページ）? 安定テンプレ（備考あり）
+' ・途中にタブを挿入しても壊れない：Caption検索
+' ・生成（Build）と整列（Layout）を分離：拡張時の事故を最小化
+' ・保存/読込は Tag="POSTURE|…" で既存ロジックにそのまま乗る
 '======================================================================
 
 
 
-'窶補・繝輔か繝ｼ繝蜀・・ MultiPage 繧定・蜍墓､懷・・亥錐蜑阪↓萓晏ｭ倥＠縺ｪ縺・ｼ・
+'―― フォーム内の MultiPage を自動検出（名前に依存しない）
 Private Function FindMainMultiPage() As MSForms.MultiPage
     Dim c As MSForms.Control
     For Each c In Me.controls
@@ -1675,7 +1675,7 @@ Private Function FindMainMultiPage() As MSForms.MultiPage
     Next
 End Function
 
-'窶補・Caption 縺ｫ謖・ｮ壽枚蟄怜・繧貞性繧繝壹・繧ｸ繧定ｿ斐☆・育┌縺代ｌ縺ｰ Nothing・・
+'―― Caption に指定文字列を含むページを返す（無ければ Nothing）
 Private Function FindPageByCaption(mp As MSForms.MultiPage, cap As String) As MSForms.page
     Dim pg As MSForms.page
     For Each pg In mp.Pages
@@ -1686,7 +1686,7 @@ Private Function FindPageByCaption(mp As MSForms.MultiPage, cap As String) As MS
     Next
 End Function
 
-'窶補・Page 蜀・〒 Frame 繧貞叙蠕暦ｼ育┌縺代ｌ縺ｰ菴懈・・・
+'―― Page 内で Frame を取得（無ければ作成）
 Private Function FindOrAddFrame(pg As MSForms.page, nm As String) As MSForms.Frame
     Dim c As MSForms.Control
     For Each c In pg.controls
@@ -1700,7 +1700,7 @@ Private Function FindOrAddFrame(pg As MSForms.page, nm As String) As MSForms.Fra
     Set FindOrAddFrame = pg.controls.Add("Forms.Frame.1", nm, True)
 End Function
 
-'窶補・蟄舌さ繝ｳ繝医Ο繝ｼ繝ｫ蜈ｨ蜑企勁・育函謌仙燕縺ｫ荳蠎ｦ縺縺托ｼ・
+'―― 子コントロール全削除（生成前に一度だけ）
 Private Sub ClearChildren(fr As MSForms.Frame)
     Dim i As Long
     For i = fr.controls.count - 1 To 0 Step -1
@@ -1710,17 +1710,17 @@ End Sub
 
 
 Private Function PostureItems() As Variant
-    PostureItems = Array("蟇晁ｿ斐ｊ", "襍ｷ縺堺ｸ翫′繧・, "蠎ｧ菴堺ｿ晄戟", "遶九■荳翫′繧・, "遶倶ｽ堺ｿ晄戟")
+    PostureItems = Array("寝返り", "起き上がり", "座位保持", "立ち上がり", "立位保持")
 End Function
 
 
 
 Private Function PostureChoices() As Variant
-    PostureChoices = Array("閾ｪ遶・, "隕句ｮ医ｊ・育屮隕紋ｸ具ｼ・, "荳驛ｨ莉句勧", "蜈ｨ莉句勧")
+    PostureChoices = Array("自立", "見守り（監視下）", "一部介助", "全介助")
 End Function
 '======================================================================
 
-'窶補・蛻晏屓縺縺鯛懃函謌絶昴☆繧具ｼ・ctivate 縺九ｉ蜻ｼ縺ｰ繧後ｋ・・
+'―― 初回だけ“生成”する（Activate から呼ばれる）
 Private Sub BuildPostureUI()
 
 Debug.Print "BuildPostureUI CALLED", Join(PostureItems, " / ")
@@ -1728,45 +1728,45 @@ Debug.Print "BuildPostureUI CALLED", Join(PostureItems, " / ")
     Dim mp As MSForms.MultiPage: Set mp = FindMainMultiPage()
     If mp Is Nothing Then Exit Sub
 
-    ' 隧ｲ蠖薙・繝ｼ繧ｸ繧・Caption 縺ｧ蜿門ｾ暦ｼ育┌縺代ｌ縺ｰ菴懊ｋ・・
+    ' 該当ページを Caption で取得（無ければ作る）
     Dim pg As MSForms.page
     Set pg = FindPageByCaption(mp, CAP_POSTURE_PAGE)
     If pg Is Nothing Then
         Set pg = mp.Pages.Add
         pg.caption = CAP_POSTURE_PAGE
     End If
-    mp.value = pg.Index   ' 縺薙・繧ｿ繝悶ｒ蜑埼擇縺ｸ
+    mp.value = pg.Index   ' このタブを前面へ
 
-    ' 繝輔Ξ繝ｼ繝蜿門ｾ・
+    ' フレーム取得
     Dim fr As MSForms.Frame: Set fr = FindOrAddFrame(pg, "frPosture")
 
-    ' 譌｢蟄倥ｒ繧ｯ繝ｪ繧｢ 竊・陦檎函謌・
+    ' 既存をクリア → 行生成
     ClearChildren fr
-    CreatePostureRows fr    ' 繝ｩ繝吶Ν/繧ｳ繝ｳ繝・蛯呵・ｒ菴懊ｋ・亥ｺｧ讓吶・ Layout 縺ｧ隱ｿ謨ｴ・・
+    CreatePostureRows fr    ' ラベル/コンボ/備考を作る（座標は Layout で調整）
 
-    ' 逕滓・逶ｴ蠕後↓荳蠎ｦ繝ｬ繧､繧｢繧ｦ繝・
+    ' 生成直後に一度レイアウト
     LayoutPosture
 End Sub
 
-'窶補・繝ｩ繝吶Ν・・さ繝ｳ繝懆｡鯉ｼ句ｙ閠・ｬ・ｒ菴懊ｋ・井ｽ咲ｽｮ縺ｯ縺薙％縺ｧ縺ｯ豎ｺ繧√↑縺・ｼ・
+'―― ラベル＆コンボ行＋備考欄を作る（位置はここでは決めない）
 Private Sub CreatePostureRows(fr As MSForms.Frame)
     Dim items As Variant:   items = PostureItems()
     Dim choices As Variant: choices = PostureChoices()
 
     Dim i As Long
     For i = LBound(items) To UBound(items)
-        ' 繝ｩ繝吶Ν
+        ' ラベル
         Dim lb As MSForms.label
         Set lb = fr.controls.Add("Forms.Label.1", "lblPost_" & CStr(i), True)
         lb.caption = CStr(items(i))
 
-        ' 繧ｳ繝ｳ繝懶ｼ井ｿ晏ｭ・隱ｭ霎ｼ縺ｫ菴ｿ縺・Tag 繧剃ｻ倅ｸ趣ｼ・
+        ' コンボ（保存/読込に使う Tag を付与）
         Dim cb As MSForms.ComboBox
         Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPost_" & CStr(i), True)
         cb.Style = fmStyleDropDownList
         cb.tag = POSTURE_TAG_PREFIX & CStr(items(i))
 
-        ' 驕ｸ謚櫁い縺ｮ險ｭ螳夲ｼ壼・騾夐未謨ｰ縺後≠繧後・蜆ｪ蜈医∫┌縺代ｌ縺ｰ繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ
+        ' 選択肢の設定：共通関数があれば優先、無ければフォールバック
         On Error Resume Next
         SetComboItems cb, choices
         If Err.Number <> 0 Then
@@ -1778,10 +1778,10 @@ Private Sub CreatePostureRows(fr As MSForms.Frame)
         On Error GoTo 0
     Next i
 
-    '窶補・蛯呵・Λ繝吶Ν・九ユ繧ｭ繧ｹ繝医・繝・け繧ｹ・・陦檎嶌蠖難ｼ・
+    '―― 備考ラベル＋テキストボックス（5行相当）
     Dim lbNote As MSForms.label
     Set lbNote = fr.controls.Add("Forms.Label.1", "lblPost_Note", True)
-    lbNote.caption = "蛯呵・
+    lbNote.caption = "備考"
 
     Dim txtNote As MSForms.TextBox
     Set txtNote = fr.controls.Add("Forms.TextBox.1", "txtPost_Note", True)
@@ -1789,12 +1789,12 @@ Private Sub CreatePostureRows(fr As MSForms.Frame)
         .multiline = True
         .EnterKeyBehavior = True
         .ScrollBars = fmScrollBarsVertical
-        .IMEMode = fmIMEModeHiragana   ' 竊・譌･譛ｬ隱槫・蜉幢ｼ亥・隗抵ｼ峨ｒ譏守､ｺ
-        .tag = POSTURE_TAG_PREFIX & "蛯呵・
+        .IMEMode = fmIMEModeHiragana   ' ← 日本語入力（全角）を明示
+        .tag = POSTURE_TAG_PREFIX & "備考"
     End With
 End Sub
 
-'窶補・菴咲ｽｮ繝ｻ繧ｵ繧､繧ｺ隱ｿ謨ｴ・・esize 豈弱↓蜻ｼ縺ｶ・丞・逕滓・縺励↑縺・ｼ・
+'―― 位置・サイズ調整（Resize 毎に呼ぶ／再生成しない）
 Private Sub LayoutPosture()
     Dim mp As MSForms.MultiPage: Set mp = FindMainMultiPage()
     If mp Is Nothing Then Exit Sub
@@ -1804,14 +1804,14 @@ Private Sub LayoutPosture()
 
     Dim fr As MSForms.Frame: Set fr = FindOrAddFrame(pg, "frPosture")
 
-    ' 繝輔Ξ繝ｼ繝縺ｮ蝓ｺ貅門ｯｸ豕包ｼ・ultiPage 縺・0 縺ｮ蝣ｴ蜷医・ Form 縺九ｉ繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ・・
+    ' フレームの基準寸法（MultiPage が 0 の場合は Form からフォールバック）
     fr.Visible = True
     fr.Left = 6: fr.Top = 6
     fr.Width = Application.Max(120, IIf(mp.Width > 0, mp.Width, Me.InsideWidth) - 12)
     fr.Height = Application.Max(120, IIf(mp.Height > 0, mp.Height, Me.InsideHeight) - 30)
     fr.ZOrder 0
 
-    ' 繝ｬ繧､繧｢繧ｦ繝茨ｼ・蛻暦ｼ・
+    ' レイアウト（2列）
     Dim items As Variant: items = PostureItems()
     Dim cols As Long: cols = POSTURE_COLS
     Dim colW As Single: colW = Application.Max(120, (fr.Width - 24) / cols)
@@ -1842,7 +1842,7 @@ Private Sub LayoutPosture()
         End With
     Next i
 
-    '窶補・蛯呵・・菴咲ｽｮ縺ｨ繧ｵ繧､繧ｺ・・陦悟・ 竕・邏・0px・・
+    '―― 備考の位置とサイズ（5行分 ≒ 約90px）
     Dim noteTop As Single: noteTop = startY + rows * rowH + 10
     With fr.controls("lblPost_Note")
         .Left = 12
@@ -1854,16 +1854,16 @@ Private Sub LayoutPosture()
         .Left = 12 + 40 + 6
         .Top = noteTop
         .Width = fr.Width - 24 - 46
-        .Height = 90          ' 竊・縺縺・◆縺・陦檎嶌蠖・
+        .Height = 90          ' ← だいたい5行相当
         .Visible = True
     End With
 
-    ' 繧ｹ繧ｯ繝ｭ繝ｼ繝ｫ・亥ｙ閠・・荳狗ｫｯ縺ｾ縺ｧ繧偵き繝舌・・・
+    ' スクロール（備考の下端までをカバー）
     fr.ScrollBars = fmScrollBarsNone
     fr.ScrollHeight = noteTop + 90 + 12
     If fr.Height < fr.ScrollHeight Then fr.ScrollBars = fmScrollBarsVertical
     
-    ' Call UserForm_Resize  ' NOTE: 逶ｴ蜻ｼ縺ｳ縺吶ｋ縺ｨ mpPhys 縺ｮ鬮倥＆縺悟・險育ｮ励＆繧後悟・菴薙′遏ｭ縺・榊・逋ｺ貅舌↓縺ｪ繧九◆繧∫ｦ∵ｭ｢
+    ' Call UserForm_Resize  ' NOTE: 直呼びすると mpPhys の高さが再計算され「全体が短い」再発源になるため禁止
 
     
     Debug.Print "[init] call phys root"
@@ -1920,7 +1920,7 @@ End Sub
 
 
 '====================
-' 繝倥Ν繝代・髢｢謨ｰ
+' ヘルパー関数
 '====================
 
 Private Function RequiredOk() As Boolean
@@ -1967,7 +1967,7 @@ Public Sub UpdateNameSuggest()
 
 
 
-    ' 蛟呵｣懊Μ繧ｹ繝育｢ｺ菫・
+    ' 候補リスト確保
     On Error Resume Next
         Dim i As Long
         Set lb = Nothing
@@ -1995,13 +1995,13 @@ Next i
 
     Set ws = ThisWorkbook.Worksheets(EVAL_SHEET_NAME)
 
-    ' 豌丞錐蛻暦ｼ域里蟄倥Ο繧ｸ繝・け縺ｨ蜷後§謗｢縺玲婿・・
+    ' 氏名列（既存ロジックと同じ探し方）
     cName = FindHeaderColLocal(ws, "Basic.Name")
-    If cName = 0 Then cName = FindHeaderColLocal(ws, "豌丞錐")
+    If cName = 0 Then cName = FindHeaderColLocal(ws, "氏名")
     If cName = 0 Then cName = FindHeaderColLocal(ws, "Name")
     If cName = 0 Then Exit Sub
 
-    ' ID蛻暦ｼ医≠繧後・菴ｵ險假ｼ・
+    ' ID列（あれば併記）
     cID = FindHeaderColLocal(ws, "Basic.ID")
     If cID = 0 Then cID = FindHeaderColLocal(ws, "ID")
     If cID = 0 Then cID = FindHeaderColLocal(ws, "PID")
@@ -2009,7 +2009,7 @@ Next i
 
     lastRow = ws.Cells(ws.rows.count, cName).End(xlUp).row
 
-    ' 2蛻励↓縺励※縲・蛻礼岼・・D・峨・髱櫁｡ｨ遉ｺ驕狗畑・郁｡ｨ遉ｺ譁・ｭ怜・縺ｫ菴ｵ險倥☆繧具ｼ・
+    ' 2列にして、2列目（ID）は非表示運用（表示文字列に併記する）
     lb.ColumnCount = 2
     lb.ColumnWidths = CStr(lb.Width - 2) & ";0"
     
@@ -2050,7 +2050,7 @@ Next i
         mDupNameWarned = False
     ElseIf lb.ListCount > 1 Then
        If Not mDupNameWarned Then
-           MsgBox "蜷悟ｧ灘酔蜷阪・蛟呵｣懊′隍・焚縺ゅｊ縺ｾ縺吶ょｿ・ｦ√↑繧迂D縺ｧ邨槭ｊ霎ｼ縺ｿ縺励※縺上□縺輔＞縲・, vbInformation
+           MsgBox "同姓同名の候補が複数あります。必要ならIDで絞り込みしてください。", vbInformation
            mDupNameWarned = True
       End If
     End If
@@ -2080,7 +2080,7 @@ Private Sub txtAge_Change():  RefreshSaveEnabled: End Sub
 
 
 '========================
-' 繧ｹ繧ｯ繝ｭ繝ｼ繝ｫ辟｡縺励・繝帙せ繝医ヵ繝ｬ繝ｼ繝
+' スクロール無しのホストフレーム
 '========================
 Private Function CreateScrollHost(pg As MSForms.page) As MSForms.Frame
     Dim host As MSForms.Frame
@@ -2101,7 +2101,7 @@ End Function
 
 
 '========================
-' 繧ｷ繝ｼ繝茨ｼ・valData・・窶ｻfrmEval繝ｭ繝ｼ繧ｫ繝ｫ迚・
+' シート（EvalData） ※frmEvalローカル版
 '========================
 Private Function EnsureEvalData() As Worksheet
     Const sh As String = "EvalData"
@@ -2127,22 +2127,22 @@ Private Sub EnsureJapaneseHeaderRow(ws As Worksheet)
         For c = 1 To lastCol
             Select Case CStr(ws.Cells(1, c).value)
                 Case "PatientID":        ws.Cells(2, c).value = "ID"
-                Case "EvalDate":         ws.Cells(2, c).value = "隧穂ｾ｡譌･"
-                Case "Basic.Name":       ws.Cells(2, c).value = "豌丞錐"
-                Case "Basic.Age":        ws.Cells(2, c).value = "蟷ｴ鮨｢"
-                Case "Basic.Gender":     ws.Cells(2, c).value = "諤ｧ蛻･"
-                Case "Basic.PrimaryDx":  ws.Cells(2, c).value = "荳ｻ險ｺ譁ｭ"
-                Case "Basic.OnsetDate":  ws.Cells(2, c).value = "逋ｺ逞・律"
-                Case "Basic.Living":     ws.Cells(2, c).value = "逕滓ｴｻ迥ｶ豕・
-                Case "Basic.CareLevel":  ws.Cells(2, c).value = "隕∽ｻ玖ｭｷ蠎ｦ"
-                ' 蠢・ｦ√↓蠢懊§縺ｦ霑ｽ蜉
+                Case "EvalDate":         ws.Cells(2, c).value = "評価日"
+                Case "Basic.Name":       ws.Cells(2, c).value = "氏名"
+                Case "Basic.Age":        ws.Cells(2, c).value = "年齢"
+                Case "Basic.Gender":     ws.Cells(2, c).value = "性別"
+                Case "Basic.PrimaryDx":  ws.Cells(2, c).value = "主診断"
+                Case "Basic.OnsetDate":  ws.Cells(2, c).value = "発症日"
+                Case "Basic.Living":     ws.Cells(2, c).value = "生活状況"
+                Case "Basic.CareLevel":  ws.Cells(2, c).value = "要介護度"
+                ' 必要に応じて追加
             End Select
         Next
     End If
 End Sub
 
 '========================
-' 逶ｴ霑題｡梧爾邏｢・・ID・・
+' 直近行探索（PID）
 '========================
 Private Function FindLastRowByPID(ByVal pid As String, ByVal ws As Worksheet) As Long
     Dim colPID As Variant, colDate As Variant, colTS As Variant
@@ -2192,7 +2192,7 @@ Private Function FindLastRowByPID(ByVal pid As String, ByVal ws As Worksheet) As
 End Function
 
 '========================
-' RLA 繝ｬ繝吶Ν蜿門ｾ・
+' RLA レベル取得
 '========================
 Private Function GetRLAGroupLevel(ByVal grp As String) As String
     Dim c As MSForms.Control, p As MSForms.page, fr As MSForms.Control, ob As MSForms.Control
@@ -2214,7 +2214,7 @@ Private Function GetRLAGroupLevel(ByVal grp As String) As String
 End Function
 
 '========================
-' 蜿朱寔
+' 収集
 '========================
 Private Function CollectFormData() As Object
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary")
@@ -2252,7 +2252,7 @@ Private Function CollectFormData() As Object
     d("Basic.Assistive") = AggregateChecks("AssistiveGroup")
     d("Basic.Risks") = AggregateChecks("RiskGroup")
 
-    Dim frames As Collection: Set frames = FindAllFramesByCaptionPart("RLA豁ｩ陦悟捉譛・)
+    Dim frames As Collection: Set frames = FindAllFramesByCaptionPart("RLA歩行周期")
     Dim keys As Variant: keys = Array("IC", "LR", "MSt", "TSt", "PSw", "ISw", "MSw", "TSw")
     Dim f As MSForms.Frame, k As Variant, s As String
     For Each k In keys
@@ -2274,7 +2274,7 @@ Private Sub CollectOne(ByRef d As Object, ByVal ctl As MSForms.Control)
         Case "TextBox", "ComboBox": d(ctl.tag) = ctl.text
         Case "CheckBox"
             If ctl.tag <> "AssistiveGroup" And ctl.tag <> "RiskGroup" Then
-                d(ctl.tag) = IIf(ctl.value, "譛・, "辟｡")
+                d(ctl.tag) = IIf(ctl.value, "有", "無")
             End If
     End Select
 End Sub
@@ -2338,15 +2338,15 @@ Private Function FindAllFramesByCaptionPart(ByVal part As String) As Collection
 End Function
 
 '========================
-' 蜈･蜉帙メ繧ｧ繝・け
+' 入力チェック
 '========================
 Private Function CheckRange(frm As Object, ByVal nm As String, ByVal lo As Double, ByVal hi As Double, ByVal message As String, ByRef sb As String) As Boolean
     If Not FnHasControl(nm) Then CheckRange = True: Exit Function
     Dim t As String: t = Trim$(frm.controls(nm).text & "")
     If t = "" Then CheckRange = True: Exit Function
-    If Not IsNumeric(t) Then sb = sb & "繝ｻ" & message & vbCrLf: CheckRange = False: Exit Function
+    If Not IsNumeric(t) Then sb = sb & "・" & message & vbCrLf: CheckRange = False: Exit Function
     Dim v As Double: v = CDbl(t)
-    If v < lo Or v > hi Then sb = sb & "繝ｻ" & message & vbCrLf: CheckRange = False: Exit Function
+    If v < lo Or v > hi Then sb = sb & "・" & message & vbCrLf: CheckRange = False: Exit Function
     CheckRange = True
 End Function
 
@@ -2354,28 +2354,28 @@ Private Function ValidateForm(ByRef errmsg As String) As Boolean
     Dim ok As Boolean: ok = True
     Dim sb As String: sb = ""
 
-    If FnHasControl("txtName") Then If Trim$(Me.controls("txtName").text) = "" Then ok = False: sb = sb & "繝ｻ豌丞錐繧貞・蜉帙＠縺ｦ縺上□縺輔＞縲・ & vbCrLf
+    If FnHasControl("txtName") Then If Trim$(Me.controls("txtName").text) = "" Then ok = False: sb = sb & "・氏名を入力してください。" & vbCrLf
     If FnHasControl("txtAge") Then
         If Trim$(Me.controls("txtAge").text) = "" Or Not IsNumeric(Me.controls("txtAge").text) Then
-            ok = False: sb = sb & "繝ｻ蟷ｴ鮨｢繧呈焚蛟､縺ｧ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・ & vbCrLf
+            ok = False: sb = sb & "・年齢を数値で入力してください。" & vbCrLf
         ElseIf val(Me.controls("txtAge").text) < 0 Or val(Me.controls("txtAge").text) > 120 Then
-            ok = False: sb = sb & "繝ｻ蟷ｴ鮨｢縺ｯ0・・20縺ｧ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・ & vbCrLf
+            ok = False: sb = sb & "・年齢は0～120で入力してください。" & vbCrLf
         End If
     End If
 
-    ' 隧穂ｾ｡譌･繝√ぉ繝・け
+    ' 評価日チェック
     If FnHasControl("txtEDate") Then
         If Not IsDate(Me.controls("txtEDate").text) Then
-            ok = False: sb = sb & "繝ｻ隧穂ｾ｡譌･繧呈ｭ｣縺励＞譌･莉假ｼ・yyy/mm/dd 遲会ｼ峨〒蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・ & vbCrLf
+            ok = False: sb = sb & "・評価日を正しい日付（yyyy/mm/dd 等）で入力してください。" & vbCrLf
         End If
     End If
 
-    ok = ok And CheckRange(Me, "txtTenMWalk", 0, 300, "10m豁ｩ陦鯉ｼ育ｧ抵ｼ峨・0・・00縺ｧ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・, sb)
-    ok = ok And CheckRange(Me, "txtTUG", 0, 300, "TUG・育ｧ抵ｼ峨・0・・00縺ｧ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・, sb)
-    ok = ok And CheckRange(Me, "txtFiveSTS", 0, 300, "5蝗樒ｫ九■荳翫′繧奇ｼ育ｧ抵ｼ峨・0・・00縺ｧ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・, sb)
-    ok = ok And CheckRange(Me, "txtSemi", 0, 300, "繧ｻ繝溘ち繝ｳ繝・Β・育ｧ抵ｼ峨・0・・00縺ｧ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・, sb)
-    ok = ok And CheckRange(Me, "txtGripR", 0, 120, "謠｡蜉・蜿ｳ・・g・峨・0・・20縺ｧ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・, sb)
-    ok = ok And CheckRange(Me, "txtGripL", 0, 120, "謠｡蜉・蟾ｦ・・g・峨・0・・20縺ｧ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・, sb)
+    ok = ok And CheckRange(Me, "txtTenMWalk", 0, 300, "10m歩行（秒）は0～300で入力してください。", sb)
+    ok = ok And CheckRange(Me, "txtTUG", 0, 300, "TUG（秒）は0～300で入力してください。", sb)
+    ok = ok And CheckRange(Me, "txtFiveSTS", 0, 300, "5回立ち上がり（秒）は0～300で入力してください。", sb)
+    ok = ok And CheckRange(Me, "txtSemi", 0, 300, "セミタンデム（秒）は0～300で入力してください。", sb)
+    ok = ok And CheckRange(Me, "txtGripR", 0, 120, "握力 右（kg）は0～120で入力してください。", sb)
+    ok = ok And CheckRange(Me, "txtGripL", 0, 120, "握力 左（kg）は0～120で入力してください。", sb)
 
     errmsg = IIf(ok, "", sb)
     ValidateForm = ok
@@ -2389,7 +2389,7 @@ End Sub
 
 
 
-'=== frmEval・壼燕蝗櫁ｪｭ霎ｼ繝懊ち繝ｳ 螳悟・雋ｼ繧頑崛縺・============================
+'=== frmEval：前回読込ボタン 完全貼り替え ============================
 Private Sub btnLoadPrevCtl_Click()
 
 Me.controls("txtName").text = Me.controls("txtHdrName").text
@@ -2415,19 +2415,19 @@ Private Sub cmdHdrLoadPrev_Click()
 End Sub
 
 
-' 荳九°繧蛾■縺｣縺ｦ豌丞錐荳閾ｴ縺ｮ縲梧怙譁ｰ?譛螟ｧ5莉ｶ縲阪ｒ髮・ａ縲・
-' 莉ｶ謨ｰ=1縺ｪ繧峨◎繧後ｒ霑斐＠縲・莉･荳翫↑繧臥分蜿ｷ驕ｸ謚槭・InputBox繧貞・縺・
+' 下から遡って氏名一致の「最新?最大5件」を集め、
+' 件数=1ならそれを返し、2以上なら番号選択のInputBoxを出す
 Private Function FindRowByNameWithPickLocal(ws As Worksheet, nameText As String, Optional maxCount As Long = 5) As Long
     Dim colName As Long, colDate As Long
-    colName = modEvalIOEntry.FindColByHeaderExact(ws, "豌丞錐")
-    If colName = 0 Then colName = modEvalIOEntry.FindColByHeaderExact(ws, "蛻ｩ逕ｨ閠・錐")
-    If colName = 0 Then colName = modEvalIOEntry.FindColByHeaderExact(ws, "蜷榊燕")
+    colName = modEvalIOEntry.FindColByHeaderExact(ws, "氏名")
+    If colName = 0 Then colName = modEvalIOEntry.FindColByHeaderExact(ws, "利用者名")
+    If colName = 0 Then colName = modEvalIOEntry.FindColByHeaderExact(ws, "名前")
     If colName = 0 Then Exit Function
 
-    colDate = modEvalIOEntry.FindColByHeaderExact(ws, "隧穂ｾ｡譌･")
-    If colDate = 0 Then colDate = modEvalIOEntry.FindColByHeaderExact(ws, "險倬鹸譌･")
-    If colDate = 0 Then colDate = modEvalIOEntry.FindColByHeaderExact(ws, "譖ｴ譁ｰ譌･")
-    If colDate = 0 Then colDate = modEvalIOEntry.FindColByHeaderExact(ws, "菴懈・譌･")
+    colDate = modEvalIOEntry.FindColByHeaderExact(ws, "評価日")
+    If colDate = 0 Then colDate = modEvalIOEntry.FindColByHeaderExact(ws, "記録日")
+    If colDate = 0 Then colDate = modEvalIOEntry.FindColByHeaderExact(ws, "更新日")
+    If colDate = 0 Then colDate = modEvalIOEntry.FindColByHeaderExact(ws, "作成日")
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, colName).End(xlUp).row
     Dim rows() As Long, cnt As Long, r As Long
@@ -2454,7 +2454,7 @@ Private Function FindRowByNameWithPickLocal(ws As Worksheet, nameText As String,
             If IsDate(d) Then
                 disp = disp & i & ") " & Format$(d, "yyyy-mm-dd") & "   Row:" & rows(i) & vbCrLf
             Else
-                disp = disp & i & ") ・域律莉倥↑縺暦ｼ・ Row:" & rows(i) & vbCrLf
+                disp = disp & i & ") （日付なし）  Row:" & rows(i) & vbCrLf
             End If
         Else
             disp = disp & i & ") Row:" & rows(i) & vbCrLf
@@ -2463,8 +2463,8 @@ Private Function FindRowByNameWithPickLocal(ws As Worksheet, nameText As String,
 
     Dim idx As Variant
     idx = Application.InputBox( _
-            prompt:="蜷悟ｧ灘酔蜷阪・逶ｴ霑・ & cnt & "莉ｶ・域怙譁ｰ竊貞商縺・ｼ・" & vbCrLf & disp & vbCrLf & _
-                    "逡ｪ蜿ｷ繧貞・蜉幢ｼ・-" & cnt & "縲√く繝｣繝ｳ繧ｻ繝ｫ=荳ｭ豁｢・・, _
+            prompt:="同姓同名の直近" & cnt & "件（最新→古い）:" & vbCrLf & disp & vbCrLf & _
+                    "番号を入力（1-" & cnt & "、キャンセル=中止）", _
             Type:=1)
     If idx = False Then Exit Function
     If idx >= 1 And idx <= cnt Then
@@ -2474,7 +2474,7 @@ End Function
 
 
 
-'=== 蛟呵｣應ｸ隕ｧ繧定｡ｨ遉ｺ縺励※逡ｪ蜿ｷ蜈･蜉帙〒1縺､驕ｸ繧薙〒繧ゅｉ縺・======================
+'=== 候補一覧を表示して番号入力で1つ選んでもらう ======================
 Public Function PickCandidateRowByNameLocal(ByVal ws As Worksheet, _
                                              ByVal look As Object, _
                                              ByVal candidates As Variant, _
@@ -2487,11 +2487,11 @@ Public Function PickCandidateRowByNameLocal(ByVal ws As Worksheet, _
     If Not IsArray(candidates) Then Exit Function
 
     Dim pidCol As Long, ageCol As Long, dtCol As Long
-    pidCol = RCol(ws, look, "Basic.ID", "ID", "蛟倶ｺｺID")
-ageCol = RCol(ws, look, "Basic.Age", "蟷ｴ鮨｢")
-dtCol = RCol(ws, look, "Basic.EvalDate", "隧穂ｾ｡譌･", "險倬鹸譌･", "譖ｴ譁ｰ譌･", "菴懈・譌･")
+    pidCol = RCol(ws, look, "Basic.ID", "ID", "個人ID")
+ageCol = RCol(ws, look, "Basic.Age", "年齢")
+dtCol = RCol(ws, look, "Basic.EvalDate", "評価日", "記録日", "更新日", "作成日")
 
-    If dtCol = 0 Then dtCol = ResolveColumnLocal(look, "隧穂ｾ｡譌･")
+    If dtCol = 0 Then dtCol = ResolveColumnLocal(look, "評価日")
     If dtCol = 0 Then dtCol = ResolveColumnLocal(look, "EvalDate")
 
     Dim lb As Long, ub As Long, cnt As Long
@@ -2501,7 +2501,7 @@ dtCol = RCol(ws, look, "Basic.EvalDate", "隧穂ｾ｡譌･", "險倬鹸譌･"
 
 
     Dim i As Long, r As Long, msg As String, disp As Long
-    msg = "蜷悟ｧ灘酔蜷阪′隕九▽縺九ｊ縺ｾ縺励◆縲りｪｭ縺ｿ霎ｼ繧繝・・繧ｿ繧帝∈謚槭＠縺ｦ縺上□縺輔＞・育分蜿ｷ繧貞・蜉幢ｼ峨・ & vbCrLf & vbCrLf
+    msg = "同姓同名が見つかりました。読み込むデータを選択してください（番号を入力）。" & vbCrLf & vbCrLf
     For i = lb To ub
         r = candidates(i)
         disp = i - lb + 1
@@ -2513,20 +2513,20 @@ dtCol = RCol(ws, look, "Basic.EvalDate", "隧穂ｾ｡譌･", "險倬鹸譌･"
                 msg = msg & CStr(ws.Cells(r, dtCol).value)
             End If
         Else
-            msg = msg & "(隧穂ｾ｡譌･縺ｪ縺・"
+            msg = msg & "(評価日なし)"
         End If
-        If ageCol > 0 Then msg = msg & " | 蟷ｴ鮨｢:" & Trim$(CStr(ws.Cells(r, ageCol).value))
+        If ageCol > 0 Then msg = msg & " | 年齢:" & Trim$(CStr(ws.Cells(r, ageCol).value))
         If pidCol > 0 Then msg = msg & " | ID:" & Trim$(CStr(ws.Cells(r, pidCol).value))
         msg = msg & vbCrLf
     Next i
 
-   ' 蜈･蜉帛叙蠕暦ｼ域焚蛟､縺ｮ縺ｿ・・
+   ' 入力取得（数値のみ）
 Dim sel As Variant
-sel = Application.InputBox(msg, "蛟呵｣憺∈謚・- " & pname, Type:=1)
+sel = Application.InputBox(msg, "候補選択 - " & pname, Type:=1)
 
-' Cancel / 繧ｨ繝ｩ繝ｼ / 髱樊焚蛟､ / 遨ｺ 繧貞ｼｾ縺擾ｼ育洒邨｡縺ｧ蛻､螳夲ｼ・
+' Cancel / エラー / 非数値 / 空 を弾く（短絡で判定）
 If VarType(sel) = vbBoolean Then Exit Function   ' Cancel
-If IsError(sel) Then Exit Function               ' 縺ｾ繧後↓ CVErr
+If IsError(sel) Then Exit Function               ' まれに CVErr
 If Not IsNumeric(sel) Then Exit Function
 If Len(CStr(sel)) = 0 Then Exit Function
 
@@ -2559,7 +2559,7 @@ End Sub
 
 
 
-'=== 縺薙％縺九ｉ陬懷勧髢｢謨ｰ鄒､・・rmEval 繝ｭ繝ｼ繧ｫ繝ｫ・・============================
+'=== ここから補助関数群（frmEval ローカル） ============================
 Private Function FxGetText(ByVal ctrlName As String) As String
     On Error Resume Next
     FxGetText = Trim$(Me.controls(ctrlName).text)
@@ -2651,14 +2651,14 @@ Private Function FindLastRowByPIDLocal(ByVal ws As Worksheet, ByVal look As Obje
     FindLastRowByPIDLocal = pick
 End Function
 
-'=== 豌丞錐縺ｧ譛譁ｰ陦後ｒ謗｢縺呻ｼ・D迚医・螳悟・莠呈鋤繝ｭ繧ｸ繝・け・・=====================
+'=== 氏名で最新行を探す（ID版の完全互換ロジック） =====================
 Private Function FindLastRowByNameLocal(ByVal ws As Worksheet, _
                                         ByVal look As Object, _
                                         ByVal pname As String) As Long
-    ' 隕句・縺励・蛻嶺ｽ咲ｽｮ・育┌縺代ｌ縺ｰ菴懈・縺励※謠・∴繧具ｼ唔D迚医→蜷後§譁ｹ驥晢ｼ・
-    Dim nameCol As Long: nameCol = ResolveColOrCreate(ws, look, "Basic.Name", "豌丞錐", "Name")
+    ' 見出しの列位置（無ければ作成して揃える：ID版と同じ方針）
+    Dim nameCol As Long: nameCol = ResolveColOrCreate(ws, look, "Basic.Name", "氏名", "Name")
     Dim tsCol As Long:   tsCol = ResolveColOrCreate(ws, look, "Timestamp")
-    Dim dtCol As Long:   dtCol = ResolveColOrCreate(ws, look, "Basic.EvalDate", "隧穂ｾ｡譌･", "EvalDate")
+    Dim dtCol As Long:   dtCol = ResolveColOrCreate(ws, look, "Basic.EvalDate", "評価日", "EvalDate")
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, nameCol).End(xlUp).row
     Dim r As Long, pick As Long, best As Date, curTs As Date, curDt As Date
@@ -2697,11 +2697,11 @@ Private Function NormalizeKeyLocal(ByVal s As String) As String
     s = Trim$(s)
     s = Replace(s, vbCr, " ")
     s = Replace(s, vbLf, " ")
-    s = Replace(s, "縲", " ")
+    s = Replace(s, "　", " ")
     Do While InStr(s, "  ") > 0: s = Replace(s, "  ", " "): Loop
     NormalizeKeyLocal = LCase$(s)
 End Function
-'=== 陬懷勧髢｢謨ｰ鄒､ 縺薙％縺ｾ縺ｧ ===============================================
+'=== 補助関数群 ここまで ===============================================
 
 Private Sub btnCloseCtl_Click()
 
@@ -2721,7 +2721,7 @@ Private Sub SetImeRecursive(container As Object)
 
             Case "MultiPage"
                 Dim p As MSForms.page
-                For Each p In ctl.Pages          ' 笘・Pages 繧貞・謖吶☆繧九・縺碁㍾隕・
+                For Each p In ctl.Pages          ' ★ Pages を列挙するのが重要
                     SetImeRecursive p
                 Next
         End Select
@@ -2731,13 +2731,13 @@ End Sub
 Private Sub FixRestNRS_Once()
     Dim L As Control, c As Control
     On Error Resume Next
-    Set c = Me.controls("cmbNRS_Move")                  ' 蜍穂ｽ懈凾NRS縺ｮ繧ｳ繝ｳ繝・
+    Set c = Me.controls("cmbNRS_Move")                  ' 動作時NRSのコンボ
     If c Is Nothing Then Exit Sub
 
-    ' 霑代＞鬮倥＆縺ｫ縺ゅｋ繝ｩ繝吶Ν繧呈爾縺呻ｼ郁ｦ九▽縺九ｉ縺ｪ縺代ｌ縺ｰ譁ｰ隕上↓菴懊ｋ・・
+    ' 近い高さにあるラベルを探す（見つからなければ新規に作る）
     For Each L In Me.controls
         If TypeName(L) = "Label" Then
-            If L.caption = "螳蛾撕譎・RS" Or (Abs(L.Top - c.Top) <= 20 And L.Left < c.Left) Then
+            If L.caption = "安静時NRS" Or (Abs(L.Top - c.Top) <= 20 And L.Left < c.Left) Then
                 Exit For
             End If
         End If
@@ -2746,8 +2746,8 @@ Private Sub FixRestNRS_Once()
         Set L = c.parent.controls.Add("Forms.Label.1", "lblNRS_Rest", True)
     End If
 
-    ' 陦ｨ遉ｺ繝ｻ菴咲ｽｮ繝ｻ繧ｵ繧､繧ｺ繧堤｢ｺ螳・
-    L.caption = "螳蛾撕譎・RS"
+    ' 表示・位置・サイズを確定
+    L.caption = "安静時NRS"
     L.Visible = True
     L.WordWrap = False
     L.Width = 72
@@ -2765,11 +2765,11 @@ End Sub
 
 
 
-'=== 霑ｽ蜉・哺ultiPage縺ｮ譌｢螳壹・繝ｼ繧ｸ繧呈祉髯､・・Page*" 繧貞・驛ｨ蜑企勁・・===
+'=== 追加：MultiPageの既定ページを掃除（"Page*" を全部削除） ===
 Private Sub CleanDefaultPages(mp As MSForms.MultiPage)
     On Error Resume Next
     Dim i As Long
-    ' 繧ｭ繝｣繝励す繝ｧ繝ｳ縺・"Page" 縺ｧ蟋九∪繧九・繝ｼ繧ｸ繧貞ｾ後ｍ縺九ｉ蜑企勁
+    ' キャプションが "Page" で始まるページを後ろから削除
     For i = mp.Pages.count - 1 To 0 Step -1
         If Left$(mp.Pages(i).caption, 4) = "Page" Then
             mp.Pages.Remove i
@@ -2778,7 +2778,7 @@ Private Sub CleanDefaultPages(mp As MSForms.MultiPage)
 End Sub
 
 
-' 謖・ｮ壹く繝｣繝励す繝ｧ繝ｳ縺ｮ繝懊ち繝ｳ繧貞・蟶ｰ縺ｧ謗｢縺・
+' 指定キャプションのボタンを再帰で探す
 Private Function FindButtonByCaption(container As Object, ByVal cap As String) As MSForms.CommandButton
     Dim c As Object, hit As MSForms.CommandButton
     For Each c In container.controls
@@ -2800,22 +2800,22 @@ Private Sub HookHeaderButtons()
     Set btnHdrSave = Nothing
     Set btnHdrLoadPrev = Nothing
 
-    ' 縺ｾ縺壹く繝｣繝励す繝ｧ繝ｳ驛ｨ蛻・ｸ閾ｴ縺ｧ
-    '=== 縺ｾ縺壹く繝｣繝励す繝ｧ繝ｳ荳閾ｴ・亥ｮ壽焚縺ｧ蜴ｳ蟇・↓・・===
-Const CAP_SAVE As String = "繧ｷ繝ｼ繝医∈菫晏ｭ・          ' 竊・cap=[ ] 縺ｮ荳ｭ霄ｫ縺縺・
-Const CAP_LOAD As String = "蜑榊屓縺ｮ蛟､繧定ｪｭ縺ｿ霎ｼ繧"    ' 竊・cap=[ ] 縺ｮ荳ｭ霄ｫ縺縺・
+    ' まずキャプション部分一致で
+    '=== まずキャプション一致（定数で厳密に） ===
+Const CAP_SAVE As String = "シートへ保存"          ' ← cap=[ ] の中身だけ
+Const CAP_LOAD As String = "前回の値を読み込む"    ' ← cap=[ ] の中身だけ
 
-Debug.Print "[TEST] 菫晏ｭ詫ike:", TypeName(FindButtonByCaptionLike(Me, "菫晏ｭ・))
-Debug.Print "[TEST] 隱ｭ縺ｿ霎ｼlike:", TypeName(FindButtonByCaptionLike(Me, "隱ｭ縺ｿ霎ｼ"))
+Debug.Print "[TEST] 保存like:", TypeName(FindButtonByCaptionLike(Me, "保存"))
+Debug.Print "[TEST] 読み込like:", TypeName(FindButtonByCaptionLike(Me, "読み込"))
 
 
 Set btnHdrSave = FindButtonByCaptionLike(Me, CAP_SAVE)
 Set btnHdrLoadPrev = FindButtonByCaptionLike(Me, CAP_LOAD)
 
 
-    If btnHdrLoadPrev Is Nothing Then Set btnHdrLoadPrev = FindButtonByCaptionLike(Me, "隱ｭ")
+    If btnHdrLoadPrev Is Nothing Then Set btnHdrLoadPrev = FindButtonByCaptionLike(Me, "読")
 
-    ' 隕九▽縺九ｉ縺ｪ縺代ｌ縺ｰ譛荳頑ｮｵ縺ｮ蜿ｳ蛛ｴ・偵▽繧呈治逕ｨ
+    ' 見つからなければ最上段の右側２つを採用
     If (btnHdrSave Is Nothing) Or (btnHdrLoadPrev Is Nothing) Then
         FindHeaderButtonsByPosition Me, btnHdrSave, btnHdrLoadPrev
     End If
@@ -2828,7 +2828,7 @@ End Sub
 
 
 
-'=== 繝懊ち繝ｳ繧偵く繝｣繝励す繝ｧ繝ｳ驛ｨ蛻・ｸ閾ｴ縺ｧ謗｢縺呻ｼ・rame/MultiPage/Page 繧貞・蟶ｰ・・==
+'=== ボタンをキャプション部分一致で探す（Frame/MultiPage/Page を再帰）===
 Public Function FindButtonByCaptionLike(container As Object, _
                                         ByVal needle As String) As Object
 SafeExit:
@@ -2838,7 +2838,7 @@ SafeExit:
     Dim pg As MSForms.page
     Dim hit As Object
 
-    ' MultiPage 縺ｯ Pages 邨檎罰縺ｧ貎懊ｋ・医％縺薙′驥崎ｦ・ｼ・
+    ' MultiPage は Pages 経由で潜る（ここが重要）
     If TypeName(container) = "MultiPage" Then
         For Each pg In container.Pages
             Set hit = FindButtonByCaptionLike(pg, needle)
@@ -2850,7 +2850,7 @@ SafeExit:
         Exit Function
     End If
 
-    ' 縺昴ｌ莉･螟悶・ Controls 繧定ｵｰ譟ｻ
+    ' それ以外は Controls を走査
     For Each c In container.controls
         If TypeName(c) = "CommandButton" Then
             If InStr(Replace$(c.caption, vbCrLf, ""), needle) > 0 Then
@@ -2870,12 +2870,12 @@ SafeExit:
 End Function
 
 
-'=== 菴咲ｽｮ縺ｧ繝倥ャ繝陦後・繝懊ち繝ｳ繧呈鏡縺・ｼ域怙荳頑ｮｵ縺ｮ蜿ｳ蛛ｴ 2 蛟九ｒ謗｡逕ｨ・・==
+'=== 位置でヘッダ行のボタンを拾う（最上段の右側 2 個を採用）===
 Private Sub GatherButtons(container As Object, ByRef arr As Collection)
     Dim c  As Object
     Dim pg As MSForms.page
 
-    ' MultiPage 縺ｯ Pages 繧貞・蟶ｰ
+    ' MultiPage は Pages を再帰
     If TypeName(container) = "MultiPage" Then
         For Each pg In container.Pages
             GatherButtons pg, arr
@@ -2883,7 +2883,7 @@ Private Sub GatherButtons(container As Object, ByRef arr As Collection)
         Exit Sub
     End If
 
-    ' 縺昴ｌ莉･螟悶・ Controls
+    ' それ以外は Controls
     For Each c In container.controls
         If TypeName(c) = "CommandButton" Then arr.Add c
         If TypeName(c) = "Frame" Or TypeName(c) = "Page" Then
@@ -2906,15 +2906,15 @@ Private Sub FindHeaderButtonsByPosition(container As Object, _
 
     Dim cand As New Collection
     For i = 1 To arr.count
-        If arr(i).Top <= minTop + 10 Then cand.Add arr(i)   '譛荳頑ｮｵﾂｱ10px
+        If arr(i).Top <= minTop + 10 Then cand.Add arr(i)   '最上段±10px
     Next
-    ' 繧ｭ繝ｼ繝ｯ繝ｼ繝峨〒蜆ｪ蜈亥愛螳・
+    ' キーワードで優先判定
     For i = 1 To cand.count
         Dim cap As String: cap = Replace(CStr(cand(i).caption), vbCrLf, "")
-        If InStr(cap, "菫晏ｭ・) > 0 Then Set bSave = cand(i)
-        If InStr(cap, "隱ｭ") > 0 Or InStr(cap, "霎ｼ") > 0 Then Set bLoad = cand(i)
+        If InStr(cap, "保存") > 0 Then Set bSave = cand(i)
+        If InStr(cap, "読") > 0 Or InStr(cap, "込") > 0 Then Set bLoad = cand(i)
     Next
-    ' 縺ｾ縺遨ｺ縺・※縺・◆繧牙承蛛ｴ・偵▽繧貞牡繧雁ｽ薙※
+    ' まだ空いていたら右側２つを割り当て
     Dim right1 As MSForms.CommandButton, right2 As MSForms.CommandButton
     For i = 1 To cand.count
         If right1 Is Nothing Or cand(i).Left > right1.Left Then
@@ -2930,18 +2930,18 @@ End Sub
 
 
 
-'=== 荳隕ｧ繧貞・縺吝・蜿｣・亥・髢具ｼ・===
+'=== 一覧を出す入口（公開） ===
 Public Sub Debug_ListButtons()
     DumpButtonsProc Me
 End Sub
 
-'=== 繝懊ち繝ｳ蛻玲嫌・・ultiPage蟇ｾ蠢懃沿・・===
+'=== ボタン列挙（MultiPage対応版） ===
 Private Sub DumpButtonsProc(container As Object)
     Dim c As Control
     Dim pg As MSForms.page
 
     If TypeName(container) = "MultiPage" Then
-        'MultiPage 縺ｯ Pages 驟堺ｸ九ｒ蝗槭☆
+        'MultiPage は Pages 配下を回す
         For Each pg In container.Pages
             For Each c In pg.controls
                 If TypeName(c) = "CommandButton" Then
@@ -2954,7 +2954,7 @@ Private Sub DumpButtonsProc(container As Object)
             Next
         Next
     Else
-        '騾壼ｸｸ縺ｮ繧ｳ繝ｳ繝・リ・・serForm / Frame / Page 縺ｪ縺ｩ・・
+        '通常のコンテナ（UserForm / Frame / Page など）
         For Each c In container.controls
             If TypeName(c) = "CommandButton" Then
                 Debug.Print "Type=CommandButton, cap=[" & c.caption & _
@@ -2969,7 +2969,7 @@ End Sub
 
 
 
-' ========= 縺薙％縺九ｉ雋ｼ繧具ｼ・mdLoadPrev_Click 蜈ｨ菴難ｼ・========
+' ========= ここから貼る（cmdLoadPrev_Click 全体）=========
 Private Sub cmdLoadPrev_Click()
 Debug.Print "[ENTER] cmdLoadPrev_Click", Timer
 
@@ -3003,7 +3003,7 @@ End Sub
 
 
 
-'==== UserForm 繧ｳ繝ｼ繝峨Δ繧ｸ繝･繝ｼ繝ｫ・・raDynPainBox 縺瑚ｼ峨▲縺ｦ縺・ｋ繝輔か繝ｼ繝・・===
+'==== UserForm コードモジュール（fraDynPainBox が載っているフォーム）====
 
 Private Sub UserForm_Initialize()
 
@@ -3058,8 +3058,8 @@ Call RemoveLegacyPainUI
         mPainLayoutDone = True
     End If
     
-    TidyPainBoxes        ' 竊・蜿ｳ蛻・隱伜屏繝ｻ霆ｽ貂帛屏蟄・縺ｮ諱剃ｹ・・鄂ｮ
-    TidyPainCourse       ' 竊・笘・ｿｽ蜉・夂ｵ碁℃繝ｻ譎る俣縺ｮ螟牙喧縺ｮ諱剃ｹ・・鄂ｮ
+    TidyPainBoxes        ' ← 右列(誘因・軽減因子)の恒久配置
+    TidyPainCourse       ' ← ★追加：経過・時間の変化の恒久配置
     Me.WidenAndTidyPainCourse
  
    
@@ -3071,7 +3071,7 @@ If Not mPainTidyBusy Then
     'TidyPainUI_Once
     Me.Height = h
     DoEvents
-    ClearPainUI Me   ' 竊・襍ｷ蜍墓凾縺ｯ遨ｺ縺ｧ髢句ｧ具ｼ郁ｪｭ縺ｿ霎ｼ縺ｿ縺ｯ謇句虚縺ｧ・・
+    ClearPainUI Me   ' ← 起動時は空で開始（読み込みは手動で）
 End If
 
         BuildWalkUI_All
@@ -3080,8 +3080,8 @@ End If
     Set cogRoot = GetCogRootFrame()
     If Not cogRoot Is Nothing Then cogRoot.caption = ""
     BuildCogMentalUI_Simple
-    BuildCog_CognitionCore      '竊・隱咲衍6鬆・岼繧堤函謌・
-    BuildCog_DementiaBlock      '竊・隱咲衍逞・・遞ｮ鬘橸ｼ句ｙ閠・ｒ逕滓・
+    BuildCog_CognitionCore      '← 認知6項目を生成
+    BuildCog_DementiaBlock      '← 認知症の種類＋備考を生成
     BuildCog_BPSD
     BuildCog_MentalBlock
     BuildDailyLogTab
@@ -3124,7 +3124,7 @@ If mBaseLayoutDone Then
 End If
 
 
-'--- Fix: 蟄信ultiPage隕句・繧悟ｯｾ遲厄ｼ・025-12-13 OK繧ｹ繝翫ャ繝励す繝ｧ繝・ヨ蝗ｺ螳夲ｼ・
+'--- Fix: 子MultiPage見切れ対策（2025-12-13 OKスナップショット固定）
 
 
 On Error Resume Next
@@ -3264,7 +3264,7 @@ End Sub
     cmb.Style = fmStyleDropDownList
     cmb.MatchRequired = True
 End Sub
-'=== frmEval 縺ｮ繧ｳ繝ｼ繝峨Δ繧ｸ繝･繝ｼ繝ｫ縺ｫ雋ｼ繧具ｼ医％縺薙∪縺ｧ・・===
+'=== frmEval のコードモジュールに貼る（ここまで） ===
 
 
 
@@ -3280,10 +3280,10 @@ Private Sub LegacyInit()
 
 SetupLayout
 
-    Me.caption = "隧穂ｾ｡繝輔か繝ｼ繝"
+    Me.caption = "評価フォーム"
 Me.ScrollBars = fmScrollBarsNone
 
-' 逕ｻ髱｢繧ｵ繧､繧ｺ縺ｫ蜷医ｏ縺帙※荳企剞繧偵°縺代ｋ・域怙蟆丞､画峩・・
+' 画面サイズに合わせて上限をかける（最小変更）
 Const MARGIN_W As Single = 80
 Const MARGIN_H As Single = 140
 
@@ -3296,11 +3296,11 @@ If initH < 640 Then initH = 640
 If initH > 820 Then initH = 820
 Me.Width = initW
 'Me.Height = initH
-Me.StartUpPosition = 1      ' CenterOwner・井ｻｻ諢擾ｼ壻ｸｭ螟ｮ縺ｫ蜃ｺ縺励◆縺・ｴ蜷茨ｼ・
+Me.StartUpPosition = 1      ' CenterOwner（任意：中央に出したい場合）
 
 
 
-    ' 繝ｫ繝ｼ繝・MultiPage
+    ' ルート MultiPage
     Set mp = Me.controls.Add("Forms.MultiPage.1")
     With mp
         .Left = 6: .Top = 6
@@ -3308,26 +3308,26 @@ Me.StartUpPosition = 1      ' CenterOwner・井ｻｻ諢擾ｼ壻ｸｭ螟ｮ縺
         .Height = Me.InsideHeight - 60
         .Style = fmTabStyleTabs
     End With
-    ' 螳牙・遲厄ｼ壽怙菴・繝壹・繧ｸ繧剃ｿ晁ｨｼ・育腸蠅・ｷｮ蟇ｾ遲厄ｼ・
+    ' 安全策：最低2ページを保証（環境差対策）
     If mp.Pages.count = 0 Then mp.Pages.Add: mp.Pages.Add
 
-    ' 蜈磯ｭ2譫壹・譌｢蟄・
-mp.Pages(0).caption = "蝓ｺ譛ｬ諠・ｱ"
-mp.Pages(1).caption = "蟋ｿ蜍｢隧穂ｾ｡"
+    ' 先頭2枚は既存
+mp.Pages(0).caption = "基本情報"
+mp.Pages(1).caption = "姿勢評価"
 
-' 竊舌％縺薙〒縲瑚ｺｫ菴捺ｩ溯・隧穂ｾ｡縲阪ｒ蜈医↓霑ｽ蜉
-Dim pgPhys  As MSForms.page: Set pgPhys = mp.Pages.Add: pgPhys.caption = "霄ｫ菴捺ｩ溯・隧穂ｾ｡"
+' ←ここで「身体機能評価」を先に追加
+Dim pgPhys  As MSForms.page: Set pgPhys = mp.Pages.Add: pgPhys.caption = "身体機能評価"
 
-' 谿九ｊ縺ｮ隕ｪ繧ｿ繝・
-Dim pgMove  As MSForms.page: Set pgMove = mp.Pages.Add: pgMove.caption = "譌･蟶ｸ逕滓ｴｻ蜍穂ｽ・
-Dim pgTests As MSForms.page: Set pgTests = mp.Pages.Add: pgTests.caption = "繝・せ繝医・隧穂ｾ｡"
-Dim pgWalk  As MSForms.page: Set pgWalk = mp.Pages.Add: pgWalk.caption = "豁ｩ陦瑚ｩ穂ｾ｡"
-Dim pgCog   As MSForms.page: Set pgCog = mp.Pages.Add: pgCog.caption = "隱咲衍繝ｻ邊ｾ逾・
+' 残りの親タブ
+Dim pgMove  As MSForms.page: Set pgMove = mp.Pages.Add: pgMove.caption = "日常生活動作"
+Dim pgTests As MSForms.page: Set pgTests = mp.Pages.Add: pgTests.caption = "テスト・評価"
+Dim pgWalk  As MSForms.page: Set pgWalk = mp.Pages.Add: pgWalk.caption = "歩行評価"
+Dim pgCog   As MSForms.page: Set pgCog = mp.Pages.Add: pgCog.caption = "認知・精神"
 
-' --- 繝帙せ繝亥､画焚縺ｮ螳｣險・医％縺薙ｒ霑ｽ蜉・・--
-' --- 繝帙せ繝亥､画焚縺ｮ螳｣險 ---
+' --- ホスト変数の宣言（ここを追加）---
+' --- ホスト変数の宣言 ---
 Dim hostBasic As MSForms.Frame
-Dim hostPost  As MSForms.Frame   ' 竊・譌ｧ hostBody 繧剃ｽｿ縺｣縺ｦ縺・◆繧臥ｽｮ謠・
+Dim hostPost  As MSForms.Frame   ' ← 旧 hostBody を使っていたら置換
 Dim hostPhys  As MSForms.Frame
 Dim hostMove  As MSForms.Frame
 Dim hostTests As MSForms.Frame
@@ -3335,7 +3335,7 @@ Dim hostWalk  As MSForms.Frame
 Dim hostCog   As MSForms.Frame
 
 
-' --- 縺薙％縺九ｉ譌｢蟄倥・繝帙せ繝育函謌・---
+' --- ここから既存のホスト生成 ---
 Set hostBasic = CreateScrollHost(mp.Pages(0))
 Set hostPost = CreateScrollHost(mp.Pages(1))
 Set hostPhys = CreateScrollHost(pgPhys)
@@ -3352,34 +3352,34 @@ Set hostCog = CreateScrollHost(pgCog)
     
     
     
-' --- 霑ｷ蟄舌・ mpADL 繧貞・豸亥悉・井ｿ晞匱・・---
+' --- 迷子の mpADL を全消去（保険） ---
 Trace "RemoveAllMpADL()", "Initialize"
 RemoveAllMpADL
 Trace "RemoveAllMpADL() done", "Initialize"
 
 
-' --- mpADL 縺ｮ蝎ｨ繧堤畑諢擾ｼ医・繝ｼ繧ｸ0縺ｨ1繧剃ｽ懊ｋ・・---
+' --- mpADL の器を用意（ページ0と1を作る） ---
 Trace "EnsureBI_IADL() call", "Initialize"
 Dim mpADL As MSForms.MultiPage
 Set mpADL = EnsureBI_IADL()
 Trace "EnsureBI_IADL() returned; pages=" & mpADL.Pages.count, "Initialize"
 
 
-' --- 襍ｷ螻・虚菴懊・繝ｼ繧ｸ縺ｮUI繧剃ｽ懊ｋ ---
+' --- 起居動作ページのUIを作る ---
 Trace "BuildKyoOnADL Page(2) start", "Initialize"
 BuildKyoOnADL mpADL.Pages(2)
 Trace "BuildKyoOnADL Page(2) end", "Initialize"
 
 
 
-' 蛻晄悄陦ｨ遉ｺ縺ｯBI縺ｧOK縺ｪ繧・0 縺ｮ縺ｾ縺ｾ
+' 初期表示はBIでOKなら 0 のまま
 mpADL.value = 0
 
 
-' ・井ｻｻ諢擾ｼ迂ADL蛯呵・・IME蜀崎ｨｭ螳・
+' （任意）IADL備考のIME再設定
 ApplyImeToIADLNote
 
-' --- 荳九↓邯壹￥ nextTop 縺ｮ譖ｴ譁ｰ縺ｪ縺ｩ ---
+' --- 下に続く nextTop の更新など ---
 Trace "update nextTop start", "Initialize"
 
 nextTop = mpADL.Top + mpADL.Height + 10
@@ -3394,11 +3394,11 @@ Dim y As Single, cboTmp As MSForms.ComboBox
 
 
 
-    '================ 繝・せ繝医・隧穂ｾ｡ ================
+    '================ テスト・評価 ================
     Trace "TESTS start", "Init"
     
     nextTop = pad
-    Dim fTests As MSForms.Frame: Set fTests = CreateFrameP(hostTests, "繝・せ繝医・隧穂ｾ｡・育ｧ・蟆乗焚2譯√・謠｡蜉・蟆乗焚1譯√・0莉･荳奇ｼ・, 150)
+    Dim fTests As MSForms.Frame: Set fTests = CreateFrameP(hostTests, "テスト・評価（秒=小数2桁・握力=小数1桁・0以上）", 150)
 Dim colL As Single, colR As Single
 Dim row1 As Single, row2 As Single, row3 As Single
 Dim memoW As Single
@@ -3410,46 +3410,46 @@ row2 = 130
 row3 = 242
 memoW = 300
 
-CreateLabel fTests, "10m豁ｩ陦・, colL, row1, 110
-CreateLabel fTests, "遘・, colL, row1 + 22, 52
+CreateLabel fTests, "10m歩行", colL, row1, 110
+CreateLabel fTests, "秒", colL, row1 + 22, 52
 CreateTextBox fTests, colL + 58, row1 + 20, 80, 0, False, "txtTenMWalk", "Test.10m"
-CreateLabel fTests, "遘・, colL + 144, row1 + 22, 20
-CreateLabel fTests, "謇隕・, colL, row1 + 50, 52
+CreateLabel fTests, "秒", colL + 144, row1 + 22, 20
+CreateLabel fTests, "所見", colL, row1 + 50, 52
 CreateTextBox fTests, colL + 58, row1 + 48, memoW, 40, True, "txtMemo_10mWalk", "Memo.10m"
 
 CreateLabel fTests, "TUG", colR, row1, 110
-CreateLabel fTests, "遘・, colR, row1 + 22, 52
+CreateLabel fTests, "秒", colR, row1 + 22, 52
 CreateTextBox fTests, colR + 58, row1 + 20, 80, 0, False, "txtTUG", "Test.TUG"
-CreateLabel fTests, "遘・, colR + 144, row1 + 22, 20
-CreateLabel fTests, "謇隕・, colR, row1 + 50, 52
+CreateLabel fTests, "秒", colR + 144, row1 + 22, 20
+CreateLabel fTests, "所見", colR, row1 + 50, 52
 CreateTextBox fTests, colR + 58, row1 + 48, memoW, 40, True, "txtMemo_TUG", "Memo.TUG"
 
-CreateLabel fTests, "5蝗樒ｫ九■荳翫′繧・, colL, row2, 110
-CreateLabel fTests, "遘・, colL, row2 + 22, 52
+CreateLabel fTests, "5回立ち上がり", colL, row2, 110
+CreateLabel fTests, "秒", colL, row2 + 22, 52
 CreateTextBox fTests, colL + 58, row2 + 20, 80, 0, False, "txtFiveSTS", "Test.5xSTS"
-CreateLabel fTests, "遘・, colL + 144, row2 + 22, 20
-CreateLabel fTests, "謇隕・, colL, row2 + 50, 52
+CreateLabel fTests, "秒", colL + 144, row2 + 22, 20
+CreateLabel fTests, "所見", colL, row2 + 50, 52
 CreateTextBox fTests, colL + 58, row2 + 48, memoW, 40, True, "txtMemo_STS5", "Memo.5xSTS"
 
-CreateLabel fTests, "繧ｻ繝溘ち繝ｳ繝・Β", colR, row2, 110
-CreateLabel fTests, "遘・, colR, row2 + 22, 52
+CreateLabel fTests, "セミタンデム", colR, row2, 110
+CreateLabel fTests, "秒", colR, row2 + 22, 52
 CreateTextBox fTests, colR + 58, row2 + 20, 80, 0, False, "txtSemi", "Test.Semi"
-CreateLabel fTests, "遘・, colR + 144, row2 + 22, 20
-CreateLabel fTests, "謇隕・, colR, row2 + 50, 52
+CreateLabel fTests, "秒", colR + 144, row2 + 22, 20
+CreateLabel fTests, "所見", colR, row2 + 50, 52
 CreateTextBox fTests, colR + 58, row2 + 48, memoW, 40, True, "txtMemo_SemiTandem", "Memo.Semi"
 
-CreateLabel fTests, "謠｡蜉帛承", colL, row3, 110
+CreateLabel fTests, "握力右", colL, row3, 110
 CreateLabel fTests, "kg", colL, row3 + 22, 52
 CreateTextBox fTests, colL + 58, row3 + 20, 80, 0, False, "txtGripR", "Grip.R"
 CreateLabel fTests, "kg", colL + 144, row3 + 22, 20
-CreateLabel fTests, "謇隕・, colL, row3 + 50, 52
+CreateLabel fTests, "所見", colL, row3 + 50, 52
 CreateTextBox fTests, colL + 58, row3 + 48, memoW, 40, True, "txtMemo_GripR", "Memo.GripR"
 
-CreateLabel fTests, "謠｡蜉帛ｷｦ", colR, row3, 110
+CreateLabel fTests, "握力左", colR, row3, 110
 CreateLabel fTests, "kg", colR, row3 + 22, 52
 CreateTextBox fTests, colR + 58, row3 + 20, 80, 0, False, "txtGripL", "Grip.L"
 CreateLabel fTests, "kg", colR + 144, row3 + 22, 20
-CreateLabel fTests, "謇隕・, colR, row3 + 50, 52
+CreateLabel fTests, "所見", colR, row3 + 50, 52
 CreateTextBox fTests, colR + 58, row3 + 48, memoW, 40, True, "txtMemo_GripL", "Memo.GripL"
 
 ResizeFrameToContent fTests, row3 + 112
@@ -3458,19 +3458,19 @@ ResizeFrameToContent fTests, row3 + 112
     Trace "TESTS end", "Init"
 
     
-    '================ 豁ｩ陦瑚ｩ穂ｾ｡・郁・遶句ｺｦ / RLA・・================
+    '================ 歩行評価（自立度 / RLA） ================
 Trace "WALK start", "Init"
 
 Set mpWalk = hostWalk.controls.Add("Forms.MultiPage.1")
 
-' 螟画焚螳｣險縺ｯ With 縺ｮ螟悶〒OK
+' 変数宣言は With の外でOK
 Dim w As Single, h As Single
 
 With mpWalk
     .Left = 0
     .Top = 0
 
-    ' 蜀・ｯｸ繝吶・繧ｹ縺ｧ邂怜・縺励∽ｸ矩剞繧剃ｻ倥￠縺ｦ繧ｯ繝ｩ繝ｳ繝・
+    ' 内寸ベースで算出し、下限を付けてクランプ
     w = hostWalk.InsideWidth - 12:  If w < 200 Then w = 200
     h = hostWalk.InsideHeight - 12: If h < 150 Then h = 150
 
@@ -3479,11 +3479,11 @@ With mpWalk
     .Style = fmTabStyleTabs
 End With
 
-' 繝壹・繧ｸ(0),(1)繧定ｧｦ繧句燕縺ｫ2譫壻ｿ晁ｨｼ
+' ページ(0),(1)を触る前に2枚保証
 Do While mpWalk.Pages.count < 2
     mpWalk.Pages.Add
 Loop
-mpWalk.Pages(0).caption = "閾ｪ遶句ｺｦ"
+mpWalk.Pages(0).caption = "自立度"
 mpWalk.Pages(1).caption = "RLA"
 
 
@@ -3493,23 +3493,23 @@ mpWalk.Pages(1).caption = "RLA"
     .Left = 0: .Top = 0
     .Width = mpWalk.Width - 12
     Dim tGait As Single: tGait = mpWalk.Height - 30
-    If tGait < 120 Then tGait = 120     ' 竊・縺薙％繧・t 竊・tGait 縺ｫ
-    .Height = tGait                      ' 竊・縺薙％繧・t 竊・tGait 縺ｫ
+    If tGait < 120 Then tGait = 120     ' ← ここを t → tGait に
+    .Height = tGait                      ' ← ここも t → tGait に
     .ScrollBars = fmScrollBarsNone
 End With
 
 
     nextTop = pad
-        Set fGait = CreateFrameP(hostWalkGait, "豁ｩ陦瑚ｩ穂ｾ｡・郁・遶句ｺｦ・・, 90)
+        Set fGait = CreateFrameP(hostWalkGait, "歩行評価（自立度）", 90)
     
     fGait.name = "fGait"
     
     y = 22
     Dim rowH As Single: rowH = 28
     
-    CreateLabel fGait, "豁ｩ陦瑚・遶句ｺｦ", COL_LX, y
-    Dim cboGait As MSForms.ComboBox: Set cboGait = CreateCombo(fGait, COL_LX + lblW, y, 500, , "Gait.閾ｪ遶句ｺｦ")
-    cboGait.List = MakeList("螳悟・閾ｪ遶・菫ｮ豁｣閾ｪ遶具ｼ郁｣懷勧蜈ｷ菴ｿ逕ｨ・・逶｣隕悶・隕句ｮ医ｊ,霆ｽ莉句勧・・5%譛ｪ貅・・荳ｭ遲牙ｺｦ莉句勧・・5-50%・・驥堺ｻ句勧・・0%莉･荳奇ｼ・蜈ｨ莉句勧")
+    CreateLabel fGait, "歩行自立度", COL_LX, y
+    Dim cboGait As MSForms.ComboBox: Set cboGait = CreateCombo(fGait, COL_LX + lblW, y, 500, , "Gait.自立度")
+    cboGait.List = MakeList("完全自立,修正自立（補助具使用）,監視・見守り,軽介助（25%未満）,中等度介助（25-50%）,重介助（50%以上）,全介助")
     ResizeFrameToContent fGait, y + rowH
 
     Dim hostWalkRLA As MSForms.Frame
@@ -3524,8 +3524,8 @@ End With
         .Height = hostWalkRLA.Height - 6
         .Style = fmTabStyleTabs
     End With
-    mpRLA.Pages(0).caption = "遶玖・譛滂ｼ・C-TSt・・
-    mpRLA.Pages(1).caption = "驕願・譛滂ｼ・Sw-TSw・・
+    mpRLA.Pages(0).caption = "立脚期（IC-TSt）"
+    mpRLA.Pages(1).caption = "遊脚期（PSw-TSw）"
 
     Dim hostRLAStance As MSForms.Frame
     Set hostRLAStance = mpRLA.Pages(0).controls.Add("Forms.Frame.1")
@@ -3540,7 +3540,7 @@ With hostRLAStance
 End With
 
     nextTop = pad
-    Dim fRLA1 As MSForms.Frame: Set fRLA1 = CreateFrameP(hostRLAStance, "RLA豁ｩ陦悟捉譛滂ｼ・C / LR / MSt / TSt・・, 280)
+    Dim fRLA1 As MSForms.Frame: Set fRLA1 = CreateFrameP(hostRLAStance, "RLA歩行周期（IC / LR / MSt / TSt）", 280)
     Build_RLA_ChecksPart fRLA1, "stance": ResizeFrameToContent fRLA1, 260
 
     Dim hostRLASwing As MSForms.Frame
@@ -3557,7 +3557,7 @@ End With
 
 
     nextTop = pad
-    Dim fRLA2 As MSForms.Frame: Set fRLA2 = CreateFrameP(hostRLASwing, "RLA豁ｩ陦悟捉譛滂ｼ・Sw / ISw / MSw / TSw・・, 280)
+    Dim fRLA2 As MSForms.Frame: Set fRLA2 = CreateFrameP(hostRLASwing, "RLA歩行周期（PSw / ISw / MSw / TSw）", 280)
     Build_RLA_ChecksPart fRLA2, "swing": ResizeFrameToContent fRLA2, 260
 
     
@@ -3566,20 +3566,20 @@ End With
 
 
 
-    '================ 隱咲衍繝ｻ邊ｾ逾・================
+    '================ 認知・精神 ================
    Trace "COG start", "Init"
     
     nextTop = pad
-    Dim fCog As MSForms.Frame: Set fCog = CreateFrameP(hostCog, "隱咲衍讖溯・繝ｻ邊ｾ逾樣擇", 110)
+    Dim fCog As MSForms.Frame: Set fCog = CreateFrameP(hostCog, "認知機能・精神面", 110)
     y = 22
-    CreateLabel fCog, "隱咲衍讖溯・繝ｬ繝吶Ν", COL_LX, y
+    CreateLabel fCog, "認知機能レベル", COL_LX, y
     Dim cboCog As MSForms.ComboBox: Set cboCog = CreateCombo(fCog, COL_LX + lblW, y, 160, , "Cognition.Level")
-    cboCog.List = MakeList("豁｣蟶ｸ,霆ｽ蠎ｦ菴惹ｸ・荳ｭ遲牙ｺｦ菴惹ｸ・鬮伜ｺｦ菴惹ｸ・)
-    CreateLabel fCog, "邊ｾ逾樣擇", COL_RX, y
+    cboCog.List = MakeList("正常,軽度低下,中等度低下,高度低下")
+    CreateLabel fCog, "精神面", COL_RX, y
     Dim cboPsy As MSForms.ComboBox: Set cboPsy = CreateCombo(fCog, COL_RX + lblW, y, 160, , "Psych.Status")
-    cboPsy.List = MakeList("螳牙ｮ・荳榊ｮ牙だ蜷・謚代≧縺､蛯ｾ蜷・縺昴・莉・)
-    CreateLabel fCog, "蛯呵・, COL_LX, y + 28
-    CreateTextBox fCog, COL_LX + lblW, y + 26, 610, 50, True, , "Cognition.蛯呵・
+    cboPsy.List = MakeList("安定,不安傾向,抑うつ傾向,その他")
+    CreateLabel fCog, "備考", COL_LX, y + 28
+    CreateTextBox fCog, COL_LX + lblW, y + 26, 610, 50, True, , "Cognition.備考"
     ResizeFrameToContent fCog, y + 26 + 50
     
     Trace "COG end", "Init"
@@ -3587,12 +3587,12 @@ End With
 
 
 
-    '--- 荳矩Κ縺ｮ縲碁哩縺倥ｋ縲・---
+    '--- 下部の「閉じる」 ---
     Trace "CLOSE start", "Init"
 
 Set btnCloseCtl = Me.controls.Add("Forms.CommandButton.1")
 With btnCloseCtl
-    .caption = "髢峨§繧・
+    .caption = "閉じる"
     .Width = 60
     .Height = 26
     .Left = Me.InsideWidth - .Width - 20
@@ -3613,56 +3613,56 @@ RecalcBI
     
     
 
-    '================ 蝓ｺ譛ｬ諠・ｱ・壼・髱｢繝ｬ繧､繧｢繧ｦ繝・================
+    '================ 基本情報：全面レイアウト ================
     nextTop = pad
-  Dim fBasic As MSForms.Frame: Set fBasic = CreateFrameP(hostBasic, "蝓ｺ譛ｬ諠・ｱ", 360)
+  Dim fBasic As MSForms.Frame: Set fBasic = CreateFrameP(hostBasic, "基本情報", 360)
     Set fBasicRef = fBasic
     y = 22
 
-    ' --- 譛荳頑ｮｵ・壹Θ繝ｼ繝・ぅ繝ｪ繝・ぅ陦・---
+    ' --- 最上段：ユーティリティ行 ---
     Dim chkDelta As MSForms.CheckBox
-    Set chkDelta = CreateCheck(fBasic, "螟画峩轤ｹ縺ｮ縺ｿ菫晏ｭ假ｼ育ｩｺ谺・・蜑榊屓蛟､繧貞ｼ慕ｶ吶℃・・, COL_LX, 6, "chkDeltaOnly", "Delta.Only")
+    Set chkDelta = CreateCheck(fBasic, "変更点のみ保存（空欄は前回値を引継ぎ）", COL_LX, 6, "chkDeltaOnly", "Delta.Only")
     chkDelta.AutoSize = True: chkDelta.WordWrap = False
 
     Set btnLoadPrevCtl = fBasic.controls.Add("Forms.CommandButton.1")
     With btnLoadPrevCtl
-        .caption = "蜑榊屓縺ｮ蛟､繧定ｪｭ縺ｿ霎ｼ繧": .Accelerator = "L"
+        .caption = "前回の値を読み込む": .Accelerator = "L"
         .Width = 180: .Height = 24: .name = "btnLoadPrevCtl"
     End With
     Set btnSaveCtl = fBasic.controls.Add("Forms.CommandButton.1")
     With btnSaveCtl
-        .caption = "繧ｷ繝ｼ繝医∈菫晏ｭ・: .Accelerator = "S"
+        .caption = "シートへ保存": .Accelerator = "S"
         .Width = 120: .Height = 24: .name = "btnSaveCtl"
     End With
     PositionTopRightButtons fBasic
     nL y, 1
 
-    ' 陦・・唔D / 隧穂ｾ｡譌･ / 隧穂ｾ｡閠・ｼ亥ｰ上＆繧・ｼ・
+    ' 行1：ID / 評価日 / 評価者（小さめ）
     CreateLabel fBasic, "ID", COL_LX, y
     Dim tbPID As MSForms.TextBox
     Set tbPID = CreateTextBox(fBasic, COL_LX + lblW, y, 120, 0, False, "txtPID", "PatientID")
     btnLoadPrevCtl.Left = tbPID.Left + tbPID.Width + 12
     btnLoadPrevCtl.Top = tbPID.Top
-    CreateLabel fBasic, "隧穂ｾ｡譌･", COL_RX, y
+    CreateLabel fBasic, "評価日", COL_RX, y
     Dim tbED As MSForms.TextBox: Set tbED = CreateTextBox(fBasic, COL_RX + lblW, y, 120, 0, False, "txtEDate", "EvalDate")
     tbED.text = Format(Date, "yyyy/mm/dd")
-    CreateLabel fBasic, "隧穂ｾ｡閠・, COL_RX + lblW + 130, y
+    CreateLabel fBasic, "評価者", COL_RX + lblW + 130, y
     Dim tbEva As MSForms.TextBox: Set tbEva = CreateTextBox(fBasic, COL_RX + lblW + 180, y, 90, 0, False, "txtEvaluator", "Basic.Evaluator")
     tbEva.Font.Size = 8
     nL y
 
-    ' 陦・・壽ｰ丞錐 / 蟷ｴ鮨｢ / 諤ｧ蛻･
-    CreateLabel fBasic, "豌丞錐", COL_LX, y
+    ' 行2：氏名 / 年齢 / 性別
+    CreateLabel fBasic, "氏名", COL_LX, y
     CreateTextBox fBasic, COL_LX + lblW, y, 200, 0, False, "txtName", "Basic.Name"
-    CreateLabel fBasic, "蟷ｴ鮨｢", COL_RX, y
+    CreateLabel fBasic, "年齢", COL_RX, y
     CreateTextBox fBasic, COL_RX + lblW, y, 60, 0, False, "txtAge", "Basic.Age"
-    CreateLabel fBasic, "諤ｧ蛻･", COL_RX + lblW + 70, y
+    CreateLabel fBasic, "性別", COL_RX + lblW + 70, y
     Dim cboSex As MSForms.ComboBox: Set cboSex = CreateCombo(fBasic, COL_RX + lblW + 110, y, 90, "cboSex", "Basic.Gender")
-    cboSex.List = MakeList("逕ｷ諤ｧ,螂ｳ諤ｧ,縺昴・莉・荳肴・")
+    cboSex.List = MakeList("男性,女性,その他,不明")
     nL y
     
-    ' 陦・.5・夂函蟷ｴ譛域律
-    CreateLabel fBasic, "逕溷ｹｴ譛域律", COL_RX, y
+    ' 行2.5：生年月日
+    CreateLabel fBasic, "生年月日", COL_RX, y
     Dim tbBirth As MSForms.TextBox
     Set tbBirth = CreateTextBox(fBasic, COL_RX + lblW, y, 120, 0, False, "txtBirth", "Basic.BirthDate")
     tbBirth.IMEMode = fmIMEModeOff
@@ -3675,44 +3675,44 @@ RecalcBI
 
 
 
-    ' 陦・・壻ｸｻ險ｺ譁ｭ / 逋ｺ逞・律
-    CreateLabel fBasic, "荳ｻ險ｺ譁ｭ", COL_LX, y
+    ' 行3：主診断 / 発症日
+    CreateLabel fBasic, "主診断", COL_LX, y
     CreateTextBox fBasic, COL_LX + lblW, y, 260, 0, False, "txtDx", "Basic.PrimaryDx"
-    CreateLabel fBasic, "逋ｺ逞・律", COL_RX, y
+    CreateLabel fBasic, "発症日", COL_RX, y
     CreateTextBox fBasic, COL_RX + lblW, y, 120, 0, False, "txtOnset", "Basic.OnsetDate"
     nL y
 
-    ' 陦・・夂函豢ｻ迥ｶ豕・/ 隕∽ｻ玖ｭｷ蠎ｦ
-    CreateLabel fBasic, "逕滓ｴｻ迥ｶ豕・, COL_LX, y
+    ' 行4：生活状況 / 要介護度
+    CreateLabel fBasic, "生活状況", COL_LX, y
    CreateTextBox fBasic, COL_LX + lblW, y, 220, 50, True, "txtLiving", "Basic.Living"
-    CreateLabel fBasic, "隕∽ｻ玖ｭｷ蠎ｦ", COL_RX, y
+    CreateLabel fBasic, "要介護度", COL_RX, y
     Dim cboLev As MSForms.ComboBox: Set cboLev = CreateCombo(fBasic, COL_RX + lblW, y, 150, "cboCare", "Basic.CareLevel")
-    cboLev.List = MakeList("隕∵髪謠ｴ1,隕∵髪謠ｴ2,隕∽ｻ玖ｭｷ1,隕∽ｻ玖ｭｷ2,隕∽ｻ玖ｭｷ3,隕∽ｻ玖ｭｷ4,隕∽ｻ玖ｭｷ5")
+    cboLev.List = MakeList("要支援1,要支援2,要介護1,要介護2,要介護3,要介護4,要介護5")
     nL y
 
-    ' 陦・・夐囿螳ｳ鬮倬ｽ｢閠・ｼ剰ｪ咲衍逞・ｫ倬ｽ｢閠・ｼ医Λ繝吶Ν蛟句挨蟷・ｼ・
+    ' 行5：障害高齢者／認知症高齢者（ラベル個別幅）
     Dim LBLW_LONG_LEFT As Long:  LBLW_LONG_LEFT = 150
     Dim LBLW_LONG_RIGHT As Long: LBLW_LONG_RIGHT = 170
 
-    CreateLabel fBasic, "髫懷ｮｳ鬮倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ", COL_LX, y, LBLW_LONG_LEFT
+    CreateLabel fBasic, "障害高齢者の日常生活自立度", COL_LX, y, LBLW_LONG_LEFT
     Dim cboEL As MSForms.ComboBox
     Set cboEL = CreateCombo(fBasic, COL_LX + LBLW_LONG_LEFT + 6, y, 180, "cboElder", "Basic.ElderlyLevel")
-    cboEL.List = MakeList("閾ｪ遶・J1,J2,A1,A2,B1,B2,C1,C2")
+    cboEL.List = MakeList("自立,J1,J2,A1,A2,B1,B2,C1,C2")
 
-    CreateLabel fBasic, "隱咲衍逞・ｫ倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ", COL_RX, y, LBLW_LONG_RIGHT
+    CreateLabel fBasic, "認知症高齢者の日常生活自立度", COL_RX, y, LBLW_LONG_RIGHT
     Dim cboDL As MSForms.ComboBox
     Set cboDL = CreateCombo(fBasic, COL_RX + LBLW_LONG_RIGHT + 6, y, 160, "cboDementia", "Basic.DementiaLevel")
-    cboDL.List = MakeList("閾ｪ遶・I,IIa,IIb,IIIa,IIIb,IV,M")
+    cboDL.List = MakeList("自立,I,IIa,IIb,IIIa,IIIb,IV,M")
     nL y, 1
 
-    ' 陬懷勧蜈ｷ・上Μ繧ｹ繧ｯ・・蛻暦ｼ・
+    ' 補助具／リスク（2列）
     nL y, 1
 
     Dim frRisk As MSForms.Frame
-    Dim ASSISTIVE_CSV As String: ASSISTIVE_CSV = "譚・繧ｷ繝ｫ繝舌・繧ｫ繝ｼ,豁ｩ陦悟勣,霆翫＞縺・遏ｭ荳玖い陬・・,莉句勧繝吶Ν繝・謇九☆繧・繧ｹ繝ｭ繝ｼ繝・
-    Dim RISK_CSV As String: RISK_CSV = "霆｢蛟・隱､蝴･,螟ｱ遖・隍･逖｡,菴取・､・蠕伜ｾ・縺帙ｓ螯・ADL菴惹ｸ・
+    Dim ASSISTIVE_CSV As String: ASSISTIVE_CSV = "杖,シルバーカー,歩行器,車いす,短下肢装具,介助ベルト,手すり,スロープ"
+    Dim RISK_CSV As String: RISK_CSV = "転倒,誤嚥,失禁,褥瘡,低栄養,徘徊,せん妄,ADL低下"
 
-    Set frRisk = BuildCheckFrame(fBasic, "繝ｪ繧ｹ繧ｯ", COL_RX, y, 370, MakeList(RISK_CSV), "RiskGroup")
+    Set frRisk = BuildCheckFrame(fBasic, "リスク", COL_RX, y, 370, MakeList(RISK_CSV), "RiskGroup")
 
 
 
@@ -3722,11 +3722,11 @@ RecalcBI
 
     BuildAssistiveChecksInWalkEval ASSISTIVE_CSV
 
-    ' Needs・亥ｷｦ蜿ｳ2繧ｫ繝ｩ繝・・
+    ' Needs（左右2カラム）
     Dim needsH As Single: needsH = 36
-    CreateLabel fBasic, "謔｣閠・eeds", COL_LX, y
+    CreateLabel fBasic, "患者Needs", COL_LX, y
     CreateTextBox fBasic, COL_LX + lblW, y, 270, needsH, True, "txtNeedsPt", "Needs.Patient"
-    CreateLabel fBasic, "螳ｶ譌蒐eeds", COL_RX, y
+    CreateLabel fBasic, "家族Needs", COL_RX, y
     CreateTextBox fBasic, COL_RX + lblW, y, 270, needsH, True, "txtNeedsFam", "Needs.Family"
     y = y + needsH + 10
     
@@ -3735,79 +3735,79 @@ RecalcBI
     ResizeFrameToContent fBasic, y
     
     
-    ' 繝ｬ繧､繧｢繧ｦ繝茨ｼ・ち繝夜・
+    ' レイアウト＆タブ順
     FitLayout
     If Not fBasicRef Is Nothing Then PositionTopRightButtons fBasicRef
     ResetTabOrder
 
-    ' 蛻晄悄縺ｮ菫晏ｭ倥・繧ｿ繝ｳ豢ｻ諤ｧ迥ｶ諷九ｒ蜿肴丐
+    ' 初期の保存ボタン活性状態を反映
     RefreshSaveEnabled
-    Me.controls("btnSaveCtl").Enabled = True  ' 竊・荳譌ｦ縲∽ｿ晏ｭ倥・繧ｿ繝ｳ繧貞ｸｸ譎よ怏蜉ｹ蛹・
+    Me.controls("btnSaveCtl").Enabled = True  ' ← 一旦、保存ボタンを常時有効化
     
     
 
-    '================ 蟋ｿ蜍｢隧穂ｾ｡・亥､牙ｽ｢隕∝屏縺ｯ蛯呵・∈・・================
+    '================ 姿勢評価（変形要因は備考へ） ================
     nextTop = pad
     Dim fPost As MSForms.Frame
-    Set fPost = CreateFrameP(hostPost, "蟋ｿ蜍｢隧穂ｾ｡・亥､牙ｽ｢隕∝屏縺ｯ蛯呵・∈・・, 200)
+    Set fPost = CreateFrameP(hostPost, "姿勢評価（変形要因は備考へ）", 200)
 
     Dim yP As Single: yP = 22
 
-    ' 1陦檎岼
-    CreateCheck fPost, "鬆ｭ驛ｨ蜑肴婿遯∝・", COL_LX, yP, , "Posture.鬆ｭ驛ｨ蜑肴婿遯∝・"
-    CreateCheck fPost, "蜀・レ", COL_LX + 150, yP, , "Posture.蜀・レ"
-    CreateCheck fPost, "蛛ｴ蠑ｯ", COL_LX + 300, yP, , "Posture.蛛ｴ蠑ｯ"
-    CreateLabel fPost, "鬪ｨ逶､蛯ｾ譁・, COL_RX, yP - 2
+    ' 1行目
+    CreateCheck fPost, "頭部前方突出", COL_LX, yP, , "Posture.頭部前方突出"
+    CreateCheck fPost, "円背", COL_LX + 150, yP, , "Posture.円背"
+    CreateCheck fPost, "側弯", COL_LX + 300, yP, , "Posture.側弯"
+    CreateLabel fPost, "骨盤傾斜", COL_RX, yP - 2
     Dim cboPel As MSForms.ComboBox
-    Set cboPel = CreateCombo(fPost, COL_RX + lblW, yP - 2, 120, , "Posture.鬪ｨ逶､蛯ｾ譁・)
-    cboPel.List = MakeList("蜑榊だ,蠕悟だ,豁｣蟶ｸ,荳肴・")
+    Set cboPel = CreateCombo(fPost, COL_RX + lblW, yP - 2, 120, , "Posture.骨盤傾斜")
+    cboPel.List = MakeList("前傾,後傾,正常,不明")
     nL yP
 
-    ' 2陦檎岼
-    CreateCheck fPost, "菴灘ｹｹ蝗樊雷", COL_LX, yP, , "Posture.菴灘ｹｹ蝗樊雷"
-    CreateCheck fPost, "蜿榊ｼｵ閹・, COL_LX + 150, yP, , "Posture.蜿榊ｼｵ閹・
+    ' 2行目
+    CreateCheck fPost, "体幹回旋", COL_LX, yP, , "Posture.体幹回旋"
+    CreateCheck fPost, "反張膝", COL_LX + 150, yP, , "Posture.反張膝"
 
-    ' 蛯呵・ｼ亥承荳奇ｼ・
-    CreateLabel fPost, "蛯呵・, COL_RX, yP - 2
-    CreateTextBox fPost, COL_RX + lblW + 10, yP - 4, 190, 50, True, "", "Posture.蛯呵・
+    ' 備考（右上）
+    CreateLabel fPost, "備考", COL_RX, yP - 2
+    CreateTextBox fPost, COL_RX + lblW + 10, yP - 4, 190, 50, True, "", "Posture.備考"
 
     nL yP, 3
     ResizeFrameToContent fPost, yP
 
     nextTop = fPost.Top + fPost.Height + 6
 
-    '================ 髢｢遽諡倡ｸｮ・亥承繝ｻ蟾ｦ・会ｼ句ｙ閠・================
-    Dim fCon As MSForms.Frame: Set fCon = CreateFrameP(hostPost, "髢｢遽諡倡ｸｮ・亥承繝ｻ蟾ｦ・会ｼ句ｙ閠・, 180)
+    '================ 関節拘縮（右・左）＋備考 ================
+    Dim fCon As MSForms.Frame: Set fCon = CreateFrameP(hostPost, "関節拘縮（右・左）＋備考", 180)
     Dim y0 As Single: y0 = 22
     y = y0
 
-    ' 繧ｬ繧､繝芽ｦ句・縺・
-    CreateLabel fCon, "驛ｨ菴・, COL_LX, y
-    CreateLabel fCon, "蜿ｳ", COL_LX + 90 + 20, y
-    CreateLabel fCon, "蟾ｦ", COL_LX + 90 + 20 + 60, y
+    ' ガイド見出し
+    CreateLabel fCon, "部位", COL_LX, y
+    CreateLabel fCon, "右", COL_LX + 90 + 20, y
+    CreateLabel fCon, "左", COL_LX + 90 + 20 + 60, y
     nL y
 
-    CreateCheck fCon, "鬆ｸ驛ｨ・亥ｷｦ蜿ｳ縺ｪ縺暦ｼ・, COL_LX, y, "", "Contracture.鬆ｸ驛ｨ": nL y
+    CreateCheck fCon, "頸部（左右なし）", COL_LX, y, "", "Contracture.頸部": nL y
 
-    ' 驛ｨ菴阪＃縺ｨ縺ｫR/L繝√ぉ繝・け
-    CreateContractureRLRow fCon, y, "閧ｩ髢｢遽", "Contracture.閧ｩ"
-    CreateContractureRLRow fCon, y, "閧倬未遽", "Contracture.閧・
-    CreateContractureRLRow fCon, y, "謇矩未遽", "Contracture.謇矩未遽"
-    CreateContractureRLRow fCon, y, "閧｡髢｢遽", "Contracture.閧｡髢｢遽"
-    CreateContractureRLRow fCon, y, "閹晞未遽", "Contracture.閹晞未遽"
-    CreateContractureRLRow fCon, y, "雜ｳ髢｢遽", "Contracture.雜ｳ髢｢遽"
+    ' 部位ごとにR/Lチェック
+    CreateContractureRLRow fCon, y, "肩関節", "Contracture.肩"
+    CreateContractureRLRow fCon, y, "肘関節", "Contracture.肘"
+    CreateContractureRLRow fCon, y, "手関節", "Contracture.手関節"
+    CreateContractureRLRow fCon, y, "股関節", "Contracture.股関節"
+    CreateContractureRLRow fCon, y, "膝関節", "Contracture.膝関節"
+    CreateContractureRLRow fCon, y, "足関節", "Contracture.足関節"
 
-    ' 蛯呵・ｼ亥承蛛ｴ荳企Κ縺ｫ・・
-    CreateLabel fCon, "蛯呵・, COL_RX, y0 - 2
-    CreateTextBox fCon, COL_RX + lblW, y0 - 4, 250, 80, True, "", "Contracture.蛯呵・
+    ' 備考（右側上部に）
+    CreateLabel fCon, "備考", COL_RX, y0 - 2
+    CreateTextBox fCon, COL_RX + lblW, y0 - 4, 250, 80, True, "", "Contracture.備考"
 
-    ' 鬮倥＆隱ｿ謨ｴ
+    ' 高さ調整
     ResizeFrameToContent fCon, Application.WorksheetFunction.Max(y, y0 + 80)
 
 
   SetupInputModesJP
   
-'== ROM蜀・・遨ｺ繝壹・繧ｸ(Page14/15)繧定ｵｷ蜍墓凾縺ｫ閾ｪ蜍募炎髯､ ==
+'== ROM内の空ページ(Page14/15)を起動時に自動削除 ==
 Dim ctlZ As Object, mpZ As MSForms.MultiPage, iZ As Long, capZ As String
 For Each ctlZ In Me.controls
     If TypeName(ctlZ) = "MultiPage" Then
@@ -3820,11 +3820,11 @@ For Each ctlZ In Me.controls
 Next ctlZ
 
 
-'== 蛯呵・ｬ・ｼ医Λ繝吶Ν・句､ｧ縺阪＞TextBox・峨ｒ髱櫁｡ｨ遉ｺ ==
+'== 備考欄（ラベル＋大きいTextBox）を非表示 ==
 
 Dim mpN As Object, pgN As Object, pN As Object, cN As Object
 
-' --- ROM繝壹・繧ｸ迚ｹ螳夲ｼ・ROM" 縺ｾ縺溘・ "荳ｻ隕・未遽"・・---
+' --- ROMページ特定（"ROM" または "主要関節"） ---
 Set mpN = Nothing: Set pgN = Nothing
 For Each cN In Me.controls
     If TypeName(cN) = "MultiPage" Then
@@ -3836,7 +3836,7 @@ Next cN
 If Not mpN Is Nothing Then
     For Each pN In mpN.Pages
     If InStr(1, CStr(pN.caption), "ROM", vbTextCompare) > 0 _
-       Or InStr(1, CStr(pN.caption), "荳ｻ隕・未遽", vbTextCompare) > 0 Then
+       Or InStr(1, CStr(pN.caption), "主要関節", vbTextCompare) > 0 Then
         Set pgN = pN: Exit For
     End If
 Next pN
@@ -3850,7 +3850,7 @@ If Not pgN Is Nothing Then
     Dim parent As Object, ctl As Object
     Dim nLbl As Object, nTB As Object, isML As Boolean
 
-    ' 蟄舌さ繝ｳ繝・リ繧貞性繧√※豺ｱ縺募━蜈医〒謗｢邏｢
+    ' 子コンテナを含めて深さ優先で探索
     stk.Add pgN
     Do While stk.count > 0
         Set parent = stk(1): stk.Remove 1
@@ -3859,10 +3859,10 @@ If Not pgN Is Nothing Then
             On Error GoTo 0
             Select Case TypeName(ctl)
                 Case "Frame", "MultiPage", "Page"
-                    stk.Add ctl                      ' 蟄舌ｒ縺溘←繧・
+                    stk.Add ctl                      ' 子をたどる
                 Case "Label"
-                    If InStr(1, CStr(ctl.caption), "蛯呵・, vbTextCompare) > 0 Then
-                        Set nLbl = ctl              ' 縲悟ｙ閠・蛯呵・ｬ・阪ｒ謐墓拷
+                    If InStr(1, CStr(ctl.caption), "備考", vbTextCompare) > 0 Then
+                        Set nLbl = ctl              ' 「備考/備考欄」を捕捉
                     End If
                 Case "TextBox"
                     isML = False
@@ -3871,27 +3871,27 @@ If Not pgN Is Nothing Then
                         If nTB Is Nothing Then
                             Set nTB = ctl
                         ElseIf ctl.Height * ctl.Width > nTB.Height * nTB.Width Then
-                            Set nTB = ctl          ' 譛螟ｧ繧ｵ繧､繧ｺ繧貞ｙ閠・→縺励※謗｡逕ｨ
+                            Set nTB = ctl          ' 最大サイズを備考として採用
                         End If
                     End If
             End Select
         Next ctl
     Loop
 
-    ' 隕九▽縺九▲縺溘ｉ髱櫁｡ｨ遉ｺ
+    ' 見つかったら非表示
     If Not nLbl Is Nothing Then nLbl.Visible = False
     If Not nTB Is Nothing Then nTB.Visible = False
 End If
 
 
-'=== 蛯呵・Λ繝吶Ν縺ｨ蛯呵・ユ繧ｭ繧ｹ繝医ｒ蜀榊ｸｰ逧・↓髱櫁｡ｨ遉ｺ・亥・繧ｳ繝ｳ繝・リ蟇ｾ蠢懶ｼ・===
+'=== 備考ラベルと備考テキストを再帰的に非表示（全コンテナ対応） ===
 Dim qH As New Collection, parentH As Object, ctlH As Object, iH As Long
 Dim noteTB As Object, areaMax As Double
 
 
 
 
-' ROM繝壹・繧ｸ繧偵◎縺ｮ蝣ｴ縺ｧ迚ｹ螳壹＠縺ｦ縺九ｉ髢句ｧ・
+' ROMページをその場で特定してから開始
 Dim rootPg As Object, c0 As Object, mp0 As Object, i0 As Long
 Set rootPg = Nothing
 For Each c0 In Me.controls
@@ -3899,7 +3899,7 @@ For Each c0 In Me.controls
         Set mp0 = c0
         For i0 = 0 To mp0.Pages.count - 1
             If InStr(1, CStr(mp0.Pages(i0).caption), "ROM", vbTextCompare) > 0 _
-               Or InStr(1, CStr(mp0.Pages(i0).caption), "荳ｻ隕・未遽", vbTextCompare) > 0 Then
+               Or InStr(1, CStr(mp0.Pages(i0).caption), "主要関節", vbTextCompare) > 0 Then
                 Set rootPg = mp0.Pages(i0): Exit For
             End If
         Next i0
@@ -3913,7 +3913,7 @@ Do While qH.count > 0
     Set parentH = qH(1): qH.Remove 1
 
     If TypeName(parentH) = "MultiPage" Then
-        ' MultiPage 縺ｯ Controls 繧呈戟縺溘↑縺・・縺ｧ Pages 繧貞句挨縺ｫ霎ｿ繧・
+        ' MultiPage は Controls を持たないので Pages を個別に辿る
         For iH = 0 To parentH.Pages.count - 1
             qH.Add parentH.Pages(iH)
         Next iH
@@ -3923,22 +3923,22 @@ Do While qH.count > 0
             On Error GoTo 0
            Select Case TypeName(ctlH)
     Case "Frame", "Page"
-        qH.Add ctlH                      ' 蟄舌さ繝ｳ繝・リ繧定ｾｿ繧・
+        qH.Add ctlH                      ' 子コンテナを辿る
     Case "MultiPage"
         For iH = 0 To ctlH.Pages.count - 1
-            qH.Add ctlH.Pages(iH)        ' 繝壹・繧ｸ繧貞句挨縺ｫ霎ｿ繧・
+            qH.Add ctlH.Pages(iH)        ' ページを個別に辿る
         Next iH
     Case "Label"
-        If InStr(1, CStr(ctlH.caption), "蛯呵・, vbTextCompare) > 0 Then
+        If InStr(1, CStr(ctlH.caption), "備考", vbTextCompare) > 0 Then
             Set nLbl = ctlH
             Set noteTB = ctlH
-            ctlH.Visible = False         ' 蛯呵・Λ繝吶Ν繧呈ｶ医☆
+            ctlH.Visible = False         ' 備考ラベルを消す
         End If
     Case "TextBox"
         Dim mlH As Boolean: mlH = False
         On Error Resume Next: mlH = ctlH.multiline: On Error GoTo 0
         If mlH Or ctlH.Height >= 80 Or ctlH.Width >= 400 Then
-            ctlH.Visible = False         ' 螟ｧ縺阪＞繝・く繧ｹ繝・OX繧呈ｶ医☆
+            ctlH.Visible = False         ' 大きいテキストBOXを消す
         End If
 End Select
 
@@ -3949,7 +3949,7 @@ Loop
 If Not noteTB Is Nothing Then noteTB.Visible = False
 'Debug.Print "[ROM_Note] hidden lbl=" & (Not (nLbl Is Nothing)) & "  tb=" & (Not (noteTB Is Nothing))
 
-'=== /蛯呵・撼陦ｨ遉ｺ ===
+'=== /備考非表示 ===
 
 Call ROM_Fix_TextBoxHeight_Recursive_OnROM_Once
 Call ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2
@@ -3960,21 +3960,21 @@ Dim c As Control
 For Each c In Me.controls
     If TypeName(c) = "Label" Then
         If c.caption = "NRS" Then
-            c.caption = "螳蛾撕譎・RS"
+            c.caption = "安静時NRS"
             Exit For
         End If
     End If
 Next
 
-'--- 蜍穂ｽ懈凾NRS繧定・蜍戊ｿｽ蜉・・蝗槭□縺托ｼ・---
+'--- 動作時NRSを自動追加（1回だけ） ---
 Dim srcLbl As MSForms.label, srcCmb As MSForms.ComboBox
 Dim lbl As MSForms.label, cmb As MSForms.ComboBox
 Dim ct As Control
 
-' 螳蛾撕譎・RS繝ｩ繝吶Ν繧堤音螳・
+' 安静時NRSラベルを特定
 For Each ct In Me.controls
     If TypeName(ct) = "Label" Then
-        If ct.caption = "螳蛾撕譎・RS" Then
+        If ct.caption = "安静時NRS" Then
             Set srcLbl = ct
             Exit For
         End If
@@ -3982,7 +3982,7 @@ For Each ct In Me.controls
 Next
 
 If Not srcLbl Is Nothing Then
-    ' 螳蛾撕譎・RS縺ｮ蜿ｳ蛛ｴ縺ｫ縺ゅｋ譌｢蟄呂ombo繧呈耳螳夲ｼ亥酔縺倬ｫ倥＆ﾂｱ6・・
+    ' 安静時NRSの右側にある既存Comboを推定（同じ高さ±6）
     For Each ct In Me.controls
         If TypeName(ct) = "ComboBox" Then
             If Abs(ct.Top - srcLbl.Top) <= 20 And ct.Left > srcLbl.Left Then
@@ -3991,7 +3991,7 @@ If Not srcLbl Is Nothing Then
         End If
     Next
 
-    ' 譌｢縺ｫ菴懈・貂医∩縺ｪ繧我ｽ輔ｂ縺励↑縺・
+    ' 既に作成済みなら何もしない
     For Each ct In Me.controls
         If TypeName(ct) = "Label" And ct.name = "lblNRS_Move" Then Set lbl = ct
         If TypeName(ct) = "ComboBox" And ct.name = "cmbNRS_Move" Then Set cmb = ct
@@ -3999,7 +3999,7 @@ If Not srcLbl Is Nothing Then
 
     If lbl Is Nothing Then
        Set lbl = srcLbl.parent.controls.Add("Forms.Label.1", "lblNRS_Move", True)
-        lbl.caption = "蜍穂ｽ懈凾NRS"
+        lbl.caption = "動作時NRS"
     End If
 
     If cmb Is Nothing Then
@@ -4009,7 +4009,7 @@ If Not srcLbl Is Nothing Then
         For i = 0 To 10: cmb.AddItem CStr(i): Next i
     End If
 
-    ' 菴咲ｽｮ豎ｺ繧・ｼ亥ｮ蛾撕譎・RS縺ｮ縲御ｸ九阪↓驟咲ｽｮ・・
+    ' 位置決め（安静時NRSの「下」に配置）
 Dim baseLeft As Single, baseTop As Single, gap As Single
 gap = 8
 baseLeft = 12
@@ -4044,15 +4044,15 @@ Sub ShowFrame12()
         If TypeName(f) = "Frame" Then
             For Each t In f.controls
                 If TypeName(t) = "TextBox" And t.name = "TextBox2" Then
-                    f.ZOrder 0                 '荳逡ｪ謇句燕縺ｫ
-                    f.caption = "笘・％繧後′Frame12笘・ '隕九▽縺代ｄ縺吶￥縺吶ｋ
+                    f.ZOrder 0                 '一番手前に
+                    f.caption = "★これがFrame12★" '見つけやすくする
                     Beep
                     Exit Sub
                 End If
             Next
         End If
     Next
-    MsgBox "TextBox2 縺ｮ隕ｪ繝輔Ξ繝ｼ繝縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・
+    MsgBox "TextBox2 の親フレームが見つかりません。"
 End Sub
 
 
@@ -4074,23 +4074,23 @@ Public Sub AddPainQualUI()
     Dim items As Variant
     Dim i As Long
 
-    ' 譌｢蟄倥メ繧ｧ繝・け・磯㍾隍・函謌宣亟豁｢・・
+    ' 既存チェック（重複生成防止）
     Dim t As Object
     Set t = FindCtlDeep(Me, "lstPainQual")
     If Not t Is Nothing Then Exit Sub
 
 
-    ' 譌｢蟄朗RS縺ｮ隕ｪ繝輔Ξ繝ｼ繝縺ｫ霑ｽ蜉縺吶ｋ
+    ' 既存NRSの親フレームに追加する
     Set host = GetPainHost()
 
-    ' 隕句・縺・
+    ' 見出し
     Set cap = host.controls.Add("Forms.Label.1", "lblPainQual", True)
-    cap.caption = "逞帙∩縺ｮ諤ｧ雉ｪ・郁､・焚驕ｸ謚槫庄・・
+    cap.caption = "痛みの性質（複数選択可）"
     cap.Left = 12
     cap.Top = 12
     cap.AutoSize = True
 
-    ' 繝ｪ繧ｹ繝医・繝・け繧ｹ・郁､・焚驕ｸ謚橸ｼ・
+    ' リストボックス（複数選択）
     Set lb = host.controls.Add("Forms.ListBox.1", "lstPainQual", True)
     lb.Left = 12
     lb.Top = cap.Top + cap.Height + 6
@@ -4099,9 +4099,9 @@ Public Sub AddPainQualUI()
     lb.MultiSelect = fmMultiSelectMulti
     lb.IntegralHeight = False
 
-    ' 驕ｸ謚櫁い
-    items = Array("驤咲李", "蛻ｺ縺吶ｈ縺・↑逞帙∩", "縺励・繧・, "轣ｼ辭ｱ諢・, "繧ｺ繧ｭ繧ｺ繧ｭ", _
-                  "邱繧∽ｻ倥￠諢・, "蝨ｧ霑ｫ諢・, "蠑輔″縺､繧・, "髮ｻ謦・李", "縺薙ｏ縺ｰ繧・, "縺代＞繧後ｓ", "縺昴・莉・)
+    ' 選択肢
+    items = Array("鈍痛", "刺すような痛み", "しびれ", "灼熱感", "ズキズキ", _
+                  "締め付け感", "圧迫感", "引きつり", "電撃痛", "こわばり", "けいれん", "その他")
     For i = LBound(items) To UBound(items)
         lb.AddItem items(i)
     Next i
@@ -4132,43 +4132,43 @@ Public Sub AddPainFactorsUI()
     Set t = FindCtlDeep(Me, "fraPainFactors")
     If Not t Is Nothing Then Exit Sub
 
-    ' 霑ｽ蜉蜈医・逍ｼ逞帙ち繝悶・繝輔Ξ繝ｼ繝・・RS縺ｮ隕ｪ・・
+    ' 追加先は疼痛タブのフレーム（NRSの親）
     Set host = GetPainHost()
 
-    ' 隕句・縺・
+    ' 見出し
     Set cap = host.controls.Add("Forms.Label.1", "lblPainFactors", True)
-    cap.caption = "隱伜屏繝ｻ霆ｽ貂帛屏蟄・
+    cap.caption = "誘因・軽減因子"
     cap.Left = 270
     cap.Top = 280
     cap.AutoSize = True
 
-    ' 繧ｳ繝ｳ繝・リ繝輔Ξ繝ｼ繝
+    ' コンテナフレーム
     Set fr = host.controls.Add("Forms.Frame.1", "fraPainFactors", True)
     fr.Left = cap.Left
     fr.Top = cap.Top + cap.Height + 4
     fr.Width = 360
     fr.Height = 120
 
-    ' 蟾ｦ蛻暦ｼ夊ｪ伜屏・・rovoking・・
+    ' 左列：誘因（Provoking）
     Dim provItems As Variant, relItems As Variant
     provItems = Array( _
-        Array("chkPainProv_Move", "蜍穂ｽ・), _
-        Array("chkPainProv_Posture", "蟋ｿ蜍｢"), _
-        Array("chkPainProv_Walk", "豁ｩ陦・), _
-        Array("chkPainProv_Lift", "謖√■荳翫￡"), _
-        Array("chkPainProv_Cough", "蜥ｳ/縺上＠繧・∩") _
+        Array("chkPainProv_Move", "動作"), _
+        Array("chkPainProv_Posture", "姿勢"), _
+        Array("chkPainProv_Walk", "歩行"), _
+        Array("chkPainProv_Lift", "持ち上げ"), _
+        Array("chkPainProv_Cough", "咳/くしゃみ") _
     )
 
-    ' 蜿ｳ蛻暦ｼ夊ｻｽ貂幢ｼ・elieving・・
+    ' 右列：軽減（Relieving）
     relItems = Array( _
-        Array("chkPainRelief_Rest", "螳蛾撕"), _
-        Array("chkPainRelief_Heat", "貂ｩ辭ｱ"), _
-        Array("chkPainRelief_Cold", "蜀ｷ蜊ｴ"), _
-        Array("chkPainRelief_Med", "譛崎脈"), _
-        Array("chkPainRelief_Brace", "繧ｳ繝ｫ繧ｻ繝・ヨ") _
+        Array("chkPainRelief_Rest", "安静"), _
+        Array("chkPainRelief_Heat", "温熱"), _
+        Array("chkPainRelief_Cold", "冷却"), _
+        Array("chkPainRelief_Med", "服薬"), _
+        Array("chkPainRelief_Brace", "コルセット") _
     )
 
-    ' 蟾ｦ蛻鈴・鄂ｮ
+    ' 左列配置
     y = 8
     For i = LBound(provItems) To UBound(provItems)
         Dim cb As MSForms.CheckBox
@@ -4179,7 +4179,7 @@ Public Sub AddPainFactorsUI()
         y = y + cb.Height + 2
     Next i
 
-    ' 蜿ｳ蛻鈴・鄂ｮ
+    ' 右列配置
     y = 8
     For i = LBound(relItems) To UBound(relItems)
         Dim cb2 As MSForms.CheckBox
@@ -4198,36 +4198,36 @@ Public Sub AddVASUI()
     Dim tb As MSForms.TextBox
     Dim sb As MSForms.ScrollBar
 
-    ' 譌｢蟄倥メ繧ｧ繝・け・磯㍾隍・函謌宣亟豁｢・・
+    ' 既存チェック（重複生成防止）
     Dim t As Object
     Set t = FindCtlDeep(Me, "fraVAS")
     If Not t Is Nothing Then Exit Sub
     
-    ' 霑ｽ蜉蜈茨ｼ晉名逞帙ち繝悶・繝輔Ξ繝ｼ繝・・RS縺ｮ隕ｪ・・
+    ' 追加先＝疼痛タブのフレーム（NRSの親）
     Set host = GetPainHost()
 
-    ' 隕句・縺・
+    ' 見出し
     Set cap = host.controls.Add("Forms.Label.1", "lblVAS", True)
-    cap.caption = "VAS・・?100・・
+    cap.caption = "VAS（0?100）"
     cap.Left = 640
     cap.Top = 280
     cap.AutoSize = True
 
-    ' 繧ｳ繝ｳ繝・リ
+    ' コンテナ
     Set fr = host.controls.Add("Forms.Frame.1", "fraVAS", True)
     fr.Left = cap.Left
     fr.Top = cap.Top + cap.Height + 4
     fr.Width = 122
     fr.Height = 64
 
-    ' 繝・く繧ｹ繝医・繝・け繧ｹ・域焚蛟､ 0?100・・
+    ' テキストボックス（数値 0?100）
     Set tb = fr.controls.Add("Forms.TextBox.1", "txtVAS", True)
     tb.Left = 8
     tb.Top = 10
     tb.Width = 40
     tb.text = "0"
 
-    ' 繧ｹ繧ｯ繝ｭ繝ｼ繝ｫ繝舌・・域ｨｪ・・?100
+    ' スクロールバー（横）0?100
     Set sb = fr.controls.Add("Forms.ScrollBar.1", "sldVAS", True)
     sb.Left = tb.Left + tb.Width + 6
     sb.Top = tb.Top + 2
@@ -4269,22 +4269,22 @@ Public Sub AddPainCourseUI()
     Dim tb As MSForms.TextBox
     Dim i As Long
 
-    ' 譌｢蟄倥メ繧ｧ繝・け・磯㍾隍・函謌宣亟豁｢・・
+    ' 既存チェック（重複生成防止）
     Dim t As Object
     Set t = FindCtlDeep(Me, "fraPainCourse")
     If Not t Is Nothing Then Exit Sub
 
-    ' 霑ｽ蜉蜈茨ｼ晉名逞帙ち繝悶・繝輔Ξ繝ｼ繝・・RS縺ｮ隕ｪ・・
+    ' 追加先＝疼痛タブのフレーム（NRSの親）
     Set host = GetPainHost()
 
-    ' 隕句・縺・
+    ' 見出し
     Set lb = host.controls.Add("Forms.Label.1", "lblPainCourse", True)
-    lb.caption = "逞帙∩縺ｮ邨碁℃繝ｻ譎る俣螟牙喧"
+    lb.caption = "痛みの経過・時間変化"
     lb.Left = 12
     lb.Top = 280
     lb.AutoSize = True
 
-    ' 繧ｳ繝ｳ繝・リ
+    ' コンテナ
     Dim fr As MSForms.Frame
     Set fr = host.controls.Add("Forms.Frame.1", "fraPainCourse", True)
     fr.Left = lb.Left
@@ -4292,18 +4292,18 @@ Public Sub AddPainCourseUI()
     fr.Width = 610
     fr.Height = 78
 
-    ' 逋ｺ逞・凾譛・
+    ' 発症時期
     Set lb = fr.controls.Add("Forms.Label.1", "lblPainOnset", True)
-    lb.caption = "逋ｺ逞・凾譛・
+    lb.caption = "発症時期"
     lb.Left = 12: lb.Top = 10: lb.AutoSize = True
 
     Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPainOnset", True)
     cb.Left = lb.Left + 60: cb.Top = 8: cb.Width = 140
-    cb.List = Array("諤･諤ｧ・・1騾ｱ・・, "莠懈･諤ｧ・・3縺区怦・・, "諷｢諤ｧ・・縺区怦?・・, "蜀咲㏍・丞・逋ｺ", "荳肴・")
+    cb.List = Array("急性（?1週）", "亜急性（?3か月）", "慢性（3か月?）", "再燃／再発", "不明")
 
-    ' 謖∫ｶ壽凾髢・
+    ' 持続時間
     Set lb = fr.controls.Add("Forms.Label.1", "lblPainDuration", True)
-    lb.caption = "謖∫ｶ・
+    lb.caption = "持続"
     lb.Left = 260: lb.Top = 10: lb.AutoSize = True
 
     Set tb = fr.controls.Add("Forms.TextBox.1", "txtPainDuration", True)
@@ -4311,16 +4311,16 @@ Public Sub AddPainCourseUI()
 
     Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPainDurationUnit", True)
     cb.Left = tb.Left + tb.Width + 6: cb.Top = 8: cb.Width = 70
-    cb.List = Array("譌･", "騾ｱ", "縺区怦", "蟷ｴ")
+    cb.List = Array("日", "週", "か月", "年")
 
-    ' 譌･蜀・､牙虚
+    ' 日内変動
     Set lb = fr.controls.Add("Forms.Label.1", "lblPainDayPeriod", True)
-    lb.caption = "譌･蜀・､牙虚"
+    lb.caption = "日内変動"
     lb.Left = 12: lb.Top = 38: lb.AutoSize = True
 
     Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPainDayPeriod", True)
     cb.Left = lb.Left + 54: cb.Top = 36: cb.Width = 260
-    cb.List = Array("譛昴↓蠑ｷ縺・, "譏ｼ縺ｫ蠑ｷ縺・, "螟懊↓蠑ｷ縺・, "蜈･豬ｴ蠕後↓霆ｽ貂・, "豢ｻ蜍募ｾ後↓蠅玲が", "荳螳壹〒螟牙喧縺ｪ縺・)
+    cb.List = Array("朝に強い", "昼に強い", "夜に強い", "入浴後に軽減", "活動後に増悪", "一定で変化なし")
 End Sub
 
 
@@ -4338,29 +4338,29 @@ Public Sub AddPainSiteUI()
     Dim i As Long
     Dim items As Variant
 
-    ' 譌｢蟄倥メ繧ｧ繝・け・磯㍾隍・函謌宣亟豁｢・・
+    ' 既存チェック（重複生成防止）
     Dim t As Object
     Set t = FindCtlDeep(Me, "fraPainSite")
     If Not t Is Nothing Then Exit Sub
 
-    ' 霑ｽ蜉蜈茨ｼ晉名逞帙ち繝悶・繝輔Ξ繝ｼ繝・・RS縺ｮ隕ｪ・・
+    ' 追加先＝疼痛タブのフレーム（NRSの親）
     Set host = GetPainHost()
 
-    ' 隕句・縺・
+    ' 見出し
     Set lb = host.controls.Add("Forms.Label.1", "lblPainSite", True)
-    lb.caption = "逍ｼ逞幃Κ菴搾ｼ郁､・焚驕ｸ謚槫庄・・
+    lb.caption = "疼痛部位（複数選択可）"
     lb.Left = 12
     lb.Top = 380
     lb.AutoSize = True
 
-    ' 繝輔Ξ繝ｼ繝
+    ' フレーム
     Set fr = host.controls.Add("Forms.Frame.1", "fraPainSite", True)
     fr.Left = lb.Left
     fr.Top = lb.Top + lb.Height + 4
     fr.Width = 360
     fr.Height = 140
 
-    ' 繝ｪ繧ｹ繝茨ｼ郁､・焚驕ｸ謚橸ｼ・
+    ' リスト（複数選択）
     Set lst = fr.controls.Add("Forms.ListBox.1", "lstPainSite", True)
     lst.Left = 12
     lst.Top = 10
@@ -4369,12 +4369,12 @@ Public Sub AddPainSiteUI()
     lst.MultiSelect = fmMultiSelectMulti
     lst.IntegralHeight = False
 
-    ' 驛ｨ菴榊呵｣・
+    ' 部位候補
     items = Array( _
-        "鬆ｭ驛ｨ", "鬆ｸ驛ｨ", "閧ｩ", "閧ｩ逕ｲ驛ｨ", "荳願・", "閧・, "蜑崎・", "謇矩ｦ・, "謇・謖・, _
-        "閭ｸ驛ｨ", "閭碁Κ荳企Κ", "閭碁Κ荳矩Κ・郁・・・, _
-        "鬪ｨ逶､驛ｨ/莉呵・驛ｨ", _
-        "閧｡", "螟ｧ閻ｿ", "閹・, "荳玖・", "雜ｳ鬥・, "雜ｳ/雜ｾ" _
+        "頭部", "頸部", "肩", "肩甲部", "上腕", "肘", "前腕", "手首", "手/指", _
+        "胸部", "背部上部", "背部下部（腰）", _
+        "骨盤部/仙腸部", _
+        "股", "大腿", "膝", "下腿", "足首", "足/趾" _
     )
     For i = LBound(items) To UBound(items)
         lst.AddItem items(i)
@@ -4397,7 +4397,7 @@ Public Sub SummarizePainUI()
 
     Set fr = GetPainHost()
     
-    ' 蜿ら・蜿門ｾ・
+    ' 参照取得
     On Error Resume Next
     Set lbQ = fr.controls("lstPainQual")
     Set lbS = SafeGetControl(fr, "fraPainSite").controls("lstPainSite")
@@ -4409,47 +4409,47 @@ Public Sub SummarizePainUI()
     day = SafeGetControl(fr, "fraPainCourse").controls("cmbPainDayPeriod").text
     On Error GoTo 0
 
-    ' 逞帙∩縺ｮ諤ｧ雉ｪ
-    s = "縲千名逞帙∪縺ｨ繧√・
-    s = s & " 諤ｧ雉ｪ: "
+    ' 痛みの性質
+    s = "【疼痛まとめ】"
+    s = s & " 性質: "
     If Not lbQ Is Nothing Then
         For i = 0 To lbQ.ListCount - 1
-            If lbQ.Selected(i) Then s = s & lbQ.List(i) & "・・
+            If lbQ.Selected(i) Then s = s & lbQ.List(i) & "／"
         Next
-        If Right$(s, 1) = "・・ Then s = Left$(s, Len(s) - 1)
+        If Right$(s, 1) = "／" Then s = Left$(s, Len(s) - 1)
     End If
 
-    ' 驛ｨ菴・
-    s = s & "・憺Κ菴・ "
+    ' 部位
+    s = s & "｜部位: "
     If Not lbS Is Nothing Then
         Dim tmpS As String: tmpS = ""
         For i = 0 To lbS.ListCount - 1
-            If lbS.Selected(i) Then tmpS = tmpS & lbS.List(i) & "・・
+            If lbS.Selected(i) Then tmpS = tmpS & lbS.List(i) & "／"
         Next
         If tmpS <> "" Then tmpS = Left$(tmpS, Len(tmpS) - 1)
         s = s & tmpS
     End If
 
-    ' 隱伜屏繝ｻ霆ｽ貂帛屏蟄・
-    s = s & "・懷屏蟄・ "
+    ' 誘因・軽減因子
+    s = s & "｜因子: "
     If Not frF Is Nothing Then
         Dim tmpF As String: tmpF = ""
         For Each c In frF.controls
             If TypeName(c) = "CheckBox" Then
-                If c.value = True Then tmpF = tmpF & c.caption & "・・
+                If c.value = True Then tmpF = tmpF & c.caption & "／"
             End If
         Next
         If tmpF <> "" Then tmpF = Left$(tmpF, Len(tmpF) - 1)
         s = s & tmpF
     End If
 
-    ' 邨碁℃・儀AS
-    If onset <> "" Then s = s & "・懃匱逞・ " & onset
-    If dura <> "" Or unit <> "" Then s = s & "・懈戟邯・ " & dura & unit
-    If day <> "" Then s = s & "・懈律蜀・ " & day
-    If vas <> "" Then s = s & "・弖AS: " & vas
+    ' 経過＋VAS
+    If onset <> "" Then s = s & "｜発症: " & onset
+    If dura <> "" Or unit <> "" Then s = s & "｜持続: " & dura & unit
+    If day <> "" Then s = s & "｜日内: " & day
+    If vas <> "" Then s = s & "｜VAS: " & vas
 
-    ' 繝｡繝｢縺ｸ蜿肴丐
+    ' メモへ反映
     On Error Resume Next
    EvalCtl("txtPainMemo").text = s
 End Sub
@@ -4461,13 +4461,13 @@ Private Sub mBtnPainSum_Click()
 End Sub
 
 
-' 逍ｼ逞帙ち繝・ Frame12 )縺ｫ谿九▲縺ｦ縺・ｋ譌ｧUI繧帝勁蜴ｻ縺吶ｋ
+' 疼痛タブ( Frame12 )に残っている旧UIを除去する
 Public Sub RemoveLegacyPainUI()
     Dim f As MSForms.Frame, n As Variant
     Set f = GetPainHost()
     If f Is Nothing Then Exit Sub
 
-    ' Probe縺ｧ[LEGACY?]縺ｨ蛻､螳壹＆繧後◆繧ゅ・縺縺大炎髯､・域眠UI繧НRS/蛯呵・・谿九☆・・
+    ' Probeで[LEGACY?]と判定されたものだけ削除（新UIやNRS/備考は残す）
     For Each n In Array("Label85", "TextBox1", "Label86", "Label87", "ComboBox39", "TextBox2", "txtPainMemo_lbl", "txtPainMemo", "lblNRS_Move", "cmbNRS_Move")
         On Error Resume Next
         f.controls.Remove CStr(n)
@@ -4491,7 +4491,7 @@ If GetPainHost Is Nothing Then Exit Sub
    Set f = GetPainHost()
     If f Is Nothing Then Exit Sub
 
-    ' 荳頑ｮｵ・壼ｷｦ・晄ｧ雉ｪ縲∝承・抃AS
+    ' 上段：左＝性質、右＝VAS
     With f.controls("lblPainQual")
         .Left = 12: .Top = 12: .ZOrder 0
     End With
@@ -4510,7 +4510,7 @@ If GetPainHost Is Nothing Then Exit Sub
         .ZOrder 0
     End With
 
-    ' 荳ｭ谿ｵ・壼ｷｦ・晉ｵ碁℃縲∝承・晁ｪ伜屏繝ｻ霆ｽ貂・
+    ' 中段：左＝経過、右＝誘因・軽減
     With f.controls("lblPainCourse")
         .Left = 12: .Top = 160: .ZOrder 0
     End With
@@ -4530,7 +4530,7 @@ If GetPainHost Is Nothing Then Exit Sub
         .ZOrder 0
     End With
 
-    ' 荳区ｮｵ・壼ｷｦ・晞Κ菴阪∵怙荳区ｮｵ・晏ｙ閠・
+    ' 下段：左＝部位、最下段＝備考
     With f.controls("lblPainSite")
         .Left = 12: .Top = 300: .ZOrder 0
     End With
@@ -4603,7 +4603,7 @@ End Sub
 
 
 
-'== frmEval 縺ｮ繧ｳ繝ｼ繝峨↓雋ｼ繧贋ｻ倥￠ ==
+'== frmEval のコードに貼り付け ==
 Public Sub TidyPainBoxes()
     Const gap As Single = 24
 
@@ -4618,15 +4618,15 @@ Public Sub TidyPainBoxes()
     Set lbPS = z.controls("lblPainSite")
     Set lbPF = z.controls("lblPainFactors")
 
-    ' 逍ｼ逞幃Κ菴阪・繝ｩ繝吶Ν繧呈棧逶ｴ荳翫↓謠・∴繧具ｼ井ｽ咲ｽｮ縺ｯ迴ｾ迥ｶ邯ｭ謖√↑繧我ｸ崎ｦ・ｼ・
+    ' 疼痛部位のラベルを枠直上に揃える（位置は現状維持なら不要）
     lbPS.Left = ps.Left: lbPS.Top = ps.Top - lbPS.Height - 4
 
-    ' 隱伜屏繝ｻ霆ｽ貂帛屏蟄舌ｒ縲檎名逞幃Κ菴阪・蜿ｳ髫｣縲阪↓驟咲ｽｮ
+    ' 誘因・軽減因子を「疼痛部位の右隣」に配置
     pf.Top = ps.Top
     pf.Left = ps.Left + ps.Width + gap
-    pf.Height = ps.Height   ' 鬮倥＆荳閾ｴ
+    pf.Height = ps.Height   ' 高さ一致
 
-    ' 繝ｩ繝吶Ν繧よ棧縺ｮ逶ｴ荳翫↓
+    ' ラベルも枠の直上に
     lbPF.Left = pf.Left
     lbPF.Top = pf.Top - lbPF.Height - 4
 
@@ -4641,14 +4641,14 @@ End Sub
 
 
 '--------------------------------------------
-' 豎守畑: 繝輔Ξ繝ｼ繝蜀・さ繝ｳ繝医Ο繝ｼ繝ｫ蜿門ｾ暦ｼ・othing險ｱ螳ｹ・・
+' 汎用: フレーム内コントロール取得（Nothing許容）
 Private Function GetCtl(ByVal host As Object, ByVal name As String) As Object
     On Error Resume Next
     Set GetCtl = host.controls(name)
     On Error GoTo 0
 End Function
 
-' 逞帙∩縺ｮ邨碁℃繝ｻ譎る俣繝悶Ο繝・け繧呈￡荵・Ξ繧､繧｢繧ｦ繝・
+' 痛みの経過・時間ブロックを恒久レイアウト
 Public Sub TidyPainCourse()
     Dim f As MSForms.Frame
     Dim frCourse As MSForms.Frame, lbCourse As MSForms.label
@@ -4659,7 +4659,7 @@ Public Sub TidyPainCourse()
      Set f = GetPainHost()
     If f Is Nothing Then Exit Sub
 
-    ' 蜿ら・・亥ｭ伜惠縺励↑縺・ｴ蜷医・菴輔ｂ縺励↑縺・ｼ・
+    ' 参照（存在しない場合は何もしない）
     Set lbCourse = GetCtl(f, "lblPainCourse")
     Set frCourse = GetCtl(f, "fraPainCourse")
     Set frSite = GetCtl(f, "fraPainSite")
@@ -4667,33 +4667,33 @@ Public Sub TidyPainCourse()
 
     If lbCourse Is Nothing Or frCourse Is Nothing Then Exit Sub
 
-    ' 繝ｬ繧､繧｢繧ｦ繝亥ｮ壽焚
-    m = 12        ' 繝輔Ξ繝ｼ繝蜀・・蟾ｦ蜿ｳ繝槭・繧ｸ繝ｳ
-    gap = 8       ' 繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ髢薙・繧ｮ繝｣繝・・
-    L0 = frSite.Left                        ' 蟾ｦ蛻励・髢句ｧ倶ｽ咲ｽｮ・育名逞幃Κ菴阪→蜷医ｏ縺帙ｋ・・
-    wLeftCol = frSite.Width                 ' 蟾ｦ蛻励・蟷・ｒ逍ｼ逞幃Κ菴阪→荳閾ｴ縺輔○繧・
+    ' レイアウト定数
+    m = 12        ' フレーム内の左右マージン
+    gap = 8       ' コントロール間のギャップ
+    L0 = frSite.Left                        ' 左列の開始位置（疼痛部位と合わせる）
+    wLeftCol = frSite.Width                 ' 左列の幅を疼痛部位と一致させる
 
-    ' 縲瑚ｪ伜屏繝ｻ霆ｽ貂帛屏蟄舌阪ｒ蜿ｳ蛻励↓荳九￡縺溷燕謠舌〒縲∝ｷｦ蛻励・蟷・〒蠎・￡繧・
+    ' 「誘因・軽減因子」を右列に下げた前提で、左列の幅で広げる
     lbCourse.Left = L0
     frCourse.Left = L0
-    frCourse.Width = wLeftCol               ' 竊・蟾ｦ蛻励→蜷後§蟷・↓諱剃ｹ・喧
-    ' 鬮倥＆縺ｯ荳ｭ縺ｮ繝ｬ繧､繧｢繧ｦ繝医↓萓晏ｭ倥ょｿ・ｦ√↑繧画怙蠕後↓閾ｪ蜍輔〒閭御ｸ郁ｪｿ謨ｴ繧ょ庄
+    frCourse.Width = wLeftCol               ' ← 左列と同じ幅に恒久化
+    ' 高さは中のレイアウトに依存。必要なら最後に自動で背丈調整も可
 
-    ' 邵ｦ菴咲ｽｮ・夂李縺ｿ縺ｮ諤ｧ雉ｪ縺ｮ荳具ｼ育樟蝨ｨ驟咲ｽｮ縺輔ｌ縺ｦ縺・ｋ菴咲ｽｮ縺九ｉ蟆代＠隧ｰ繧√ｋ・・
-    ' 縺薙％縺ｧ縺ｯ縲檎李縺ｿ縺ｮ諤ｧ雉ｪ縲阪Μ繧ｹ繝医・荳狗ｫｯ・倶ｽ咏區縺ｧ蜷医ｏ縺帙ｋ
+    ' 縦位置：痛みの性質の下（現在配置されている位置から少し詰める）
+    ' ここでは「痛みの性質」リストの下端＋余白で合わせる
     Dim lstQual As MSForms.ListBox
     Set lstQual = GetCtl(f, "lstPainQual")
     If Not lstQual Is Nothing Then
         lbCourse.Top = lstQual.Top + lstQual.Height + 20
     Else
-        ' 繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ・育樟蝨ｨ縺ｮTop繧貞ｰ企㍾・・
+        ' フォールバック（現在のTopを尊重）
         lbCourse.Top = lbCourse.Top
     End If
     frCourse.Top = lbCourse.Top + lbCourse.Height + gap
 
-    ' --- 蜀・Κ鬆・岼縺ｮ荳ｦ縺ｳ・域里蟄倥・逶ｸ蟇ｾ驟咲ｽｮ繧堤ｶｭ謖√＠縺､縺､蟷・□縺題ｿｽ蠕難ｼ・---
-    '   [逋ｺ逞・凾譛歉 [謖∫ｶ・謨ｰ蛟､][蜊倅ｽ江     竊・谿ｵ逶ｮ
-    '   [譌･蜀・､牙虚: ・ｿ・ｿ・ｿ・ｿ・ｿ・ｿ・ｿ・ｿ・ｿ・ｿ ] 竊・谿ｵ逶ｮ 蟷・＞縺｣縺ｱ縺・
+    ' --- 内部項目の並び（既存の相対配置を維持しつつ幅だけ追従） ---
+    '   [発症時期] [持続 数値][単位]     ←1段目
+    '   [日内変動: ＿＿＿＿＿＿＿＿＿＿ ] ←2段目 幅いっぱい
     Dim lblOn As MSForms.label, cmbOn As MSForms.ComboBox
     Dim lblDur As MSForms.label, txtDur As MSForms.TextBox, cmbUnit As MSForms.ComboBox
     Dim lblDay As MSForms.label, cmbDay As MSForms.ComboBox
@@ -4706,20 +4706,20 @@ Public Sub TidyPainCourse()
     Set lblDay = GetCtl(frCourse, "lblPainDayPeriod")
     Set cmbDay = GetCtl(frCourse, "cmbPainDayPeriod")
 
-    ' 1谿ｵ逶ｮ縺ｯ譌｢蟄倥・Left繧剃ｽｿ縺・▽縺､縲∝承遶ｯ縺後・縺ｿ蜃ｺ縺輔↑縺・ｈ縺・↓蠕ｮ隱ｿ謨ｴ
+    ' 1段目は既存のLeftを使いつつ、右端がはみ出さないように微調整
     Dim right1 As Single
     right1 = cmbUnit.Left + cmbUnit.Width
     If right1 > frCourse.Width - m Then
         cmbUnit.Left = frCourse.Width - m - cmbUnit.Width
-        ' 謨ｰ蛟､繝ｻ繝ｩ繝吶Ν繧ょｷｦ縺ｸ隧ｰ繧√ｋ
+        ' 数値・ラベルも左へ詰める
         If Not txtDur Is Nothing Then txtDur.Left = cmbUnit.Left - gap - txtDur.Width
-        If Not lblDur Is Nothing Then lblDur.Left = txtDur.Left - gap - lblDur.Width - 4   ' 竊・笘・ｰ代＠菴咏區
+        If Not lblDur Is Nothing Then lblDur.Left = txtDur.Left - gap - lblDur.Width - 4   ' ← ★少し余白
     Else
-        ' 笘・壼ｸｸ譎ゅｂ霆ｽ縺丞ｷｦ縺ｫ菴咏區繧偵→繧具ｼ郁｢ｫ繧企亟豁｢・・
+        ' ★通常時も軽く左に余白をとる（被り防止）
         If Not lblDur Is Nothing Then lblDur.Left = txtDur.Left - gap - lblDur.Width - 4
     End If
 
-    ' 2谿ｵ逶ｮ・医梧律蜀・､牙虚縲阪さ繝ｳ繝懶ｼ峨・譫蜀・＞縺｣縺ｱ縺・↓
+    ' 2段目（「日内変動」コンボ）は枠内いっぱいに
     If Not lblDay Is Nothing Then lblDay.Left = m
     If Not cmbDay Is Nothing Then
         cmbDay.Left = IIf(lblDay Is Nothing, m, lblDay.Left + lblDay.Width + gap)
@@ -4727,7 +4727,7 @@ Public Sub TidyPainCourse()
         If cmbDay.Width < 80 Then cmbDay.Width = 80
     End If
 
-    ' 鬮倥＆繧定・蜍戊ｪｿ謨ｴ・域怙荳矩Κ縺ｮ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ荳狗ｫｯ・九・繝ｼ繧ｸ繝ｳ・・
+    ' 高さを自動調整（最下部のコントロール下端＋マージン）
     Dim bottomY As Single
     bottomY = 0
     Dim c As Control
@@ -4740,13 +4740,13 @@ End Sub
 
 
 Public Sub WidenAndTidyPainCourse()
-    ' 逶ｸ莠貞他縺ｳ蜃ｺ縺励↑縺暦ｼ乗焔蜍募ｮ溯｡悟燕謠・
+    ' 相互呼び出しなし／手動実行前提
     Dim f As MSForms.Frame
    Set f = SafeGetControl(Me, "fraPainCourse")
     If f Is Nothing Then Exit Sub
 
     With f
-        ' 蜿ら・
+        ' 参照
         Dim cmbOnset As MSForms.ComboBox
         Dim lblDur As MSForms.label
         Dim txtDur As MSForms.TextBox
@@ -4757,7 +4757,7 @@ Public Sub WidenAndTidyPainCourse()
         Set txtDur = .controls("txtPainDuration")
         Set cmbUnit = .controls("cmbPainDurationUnit")
 
-        ' 讓ｪ荳ｦ縺ｳ縺ｮ遒ｺ螳壹Ο繧ｸ繝・け・井ｻ雁屓縲悟ｮ檎挑縲阪↓縺ｪ縺｣縺溷ｼ上→蜷後§・・
+        ' 横並びの確定ロジック（今回「完璧」になった式と同じ）
         lblDur.Left = cmbOnset.Left + cmbOnset.Width + 12
         txtDur.Left = lblDur.Left + lblDur.Width + 12
         cmbUnit.Left = txtDur.Left + txtDur.Width + 8
@@ -4765,7 +4765,7 @@ Public Sub WidenAndTidyPainCourse()
 
       
 
-        ' 蜿ｳ菴咏區繧・4pt遒ｺ菫・
+        ' 右余白を24pt確保
         .Width = cmbUnit.Left + cmbUnit.Width + 24
     End With
 
@@ -4780,39 +4780,39 @@ Public Sub TidyPainUI_Once()
 
 
 
-    Me.TidyPainBoxes   '窶ｻ蜀・Κ縺ｧ WidenAndTidyPainCourse 繧・蝗槭□縺大他縺ｶ
+    Me.TidyPainBoxes   '※内部で WidenAndTidyPainCourse を1回だけ呼ぶ
 
 Clean:
 
     mPainTidyBusy = False
-    Call FixPainCaptionsAndWidth   ' 竊・縺薙・陦後□縺題ｿｽ蜉・・・・
+    Call FixPainCaptionsAndWidth   ' ← この行だけ追加（1）
     
     '=== Pain headings finalize (once) ===
 Dim f As MSForms.Frame
 Dim L As MSForms.label
 
 On Error Resume Next
-'--- 逶ｴ荳・---
-Set L = Me.controls("lblVAS"):           If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS・・・・00・・: L.WordWrap = False: L.AutoSize = False: L.Width = 120
+'--- 直下 ---
+Set L = Me.controls("lblVAS"):           If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
 Set L = Me.controls("lblPainQual"):      If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
 Set L = Me.controls("lblPainCourse"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
 Set L = Me.controls("lblPainSite"):      If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
 Set L = Me.controls("lblPainFactors"):   If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
 
-'--- Frame3 蜀・---
+'--- Frame3 内 ---
 Set f = SafeGetControl(Me, "Frame3")
 If Not f Is Nothing Then
-    Set L = f.controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS・・・・00・・: L.WordWrap = False: L.AutoSize = False: L.Width = 120
+    Set L = f.controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
     Set L = f.controls("lblPainQual"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
     Set L = f.controls("lblPainCourse"):  If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
     Set L = f.controls("lblPainSite"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
     Set L = f.controls("lblPainFactors"): If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
 End If
 
-'--- Frame12 蜀・---
+'--- Frame12 内 ---
 Set f = SafeGetControl(Me, "Frame12")
 If Not f Is Nothing Then
-    Set L = f.controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS・・・・00・・: L.WordWrap = False: L.AutoSize = False: L.Width = 120
+    Set L = f.controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
     Set L = f.controls("lblPainQual"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
     Set L = f.controls("lblPainCourse"):  If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
     Set L = f.controls("lblPainSite"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
@@ -4827,15 +4827,15 @@ Private Sub FixPainCaptionsAndWidth()
     Dim c As Control
     For Each c In Me.controls
         If TypeName(c) = "Frame" Then
-            ' 蟾ｦ・夊ｦ句・縺暦ｼ育李縺ｿ縺ｮ諤ｧ雉ｪ窶ｦ・峨ｒ謚倥ｊ霑斐＆縺ｪ縺・ｹ・↓縺吶ｋ・郁ｦｪ蜿ｳ遶ｯ?24pt・・
-            If InStr(c.caption, "逞・) > 0 And InStr(c.caption, "諤ｧ雉ｪ") > 0 Then
+            ' 左：見出し（痛みの性質…）を折り返さない幅にする（親右端?24pt）
+            If InStr(c.caption, "痛") > 0 And InStr(c.caption, "性質") > 0 Then
                 On Error Resume Next
                 c.Width = c.parent.InsideWidth - c.Left - 24
                 On Error GoTo 0
             End If
-            ' 蜿ｳ・啖AS縺ｮ陦ｨ險倥ｒ蝗ｺ螳・
+            ' 右：VASの表記を固定
             If InStr(c.caption, "VAS") > 0 Then
-                c.caption = "VAS・・・・00・・
+                c.caption = "VAS（0～100）"
             End If
         End If
     Next
@@ -4844,22 +4844,22 @@ End Sub
 Public Sub FixPainLabels_Final()
     Dim f As Control, c As Control, L As Object
 
-    '--- 逶ｴ荳九・繝ｩ繝吶Ν繧貞・逅・---
+    '--- 直下のラベルを処理 ---
     For Each c In Me.controls
         If TypeName(c) = "Label" Then
             If c.name = "lblPainQual" Then
                 Set L = c
                 On Error Resume Next
-                CallByName L, "AutoSize", VbLet, True   ' 蠢・ｦ∝ｹ・ｒ蜿門ｾ・
-                CallByName L, "AutoSize", VbLet, False  ' 蝗ｺ螳壹↓謌ｻ縺呻ｼ域釜霑斐＠髦ｲ豁｢・・
+                CallByName L, "AutoSize", VbLet, True   ' 必要幅を取得
+                CallByName L, "AutoSize", VbLet, False  ' 固定に戻す（折返し防止）
                 On Error GoTo 0
             ElseIf c.name = "lblVAS" Then
-                c.caption = "VAS・・・・00・・
+                c.caption = "VAS（0～100）"
             End If
         End If
     Next
 
-    '--- 蜷Ёrame蜀・・繝ｩ繝吶Ν繧貞・逅・---
+    '--- 各Frame内のラベルを処理 ---
     For Each f In Me.controls
         If TypeName(f) = "Frame" Then
             For Each c In f.controls
@@ -4871,7 +4871,7 @@ Public Sub FixPainLabels_Final()
                         CallByName L, "AutoSize", VbLet, False
                         On Error GoTo 0
                     ElseIf c.name = "lblVAS" Then
-                        c.caption = "VAS・・・・00・・
+                        c.caption = "VAS（0～100）"
                     End If
                 End If
             Next
@@ -4886,7 +4886,7 @@ Public Sub ListToneKeyCaptions()
         On Error Resume Next
         If TypeName(c) = "CheckBox" Or TypeName(c) = "OptionButton" Or TypeName(c) = "Label" Then
             Dim cap As String: cap = CStr(c.caption)
-            If InStr(cap, "MAS_") > 0 Or InStr(cap, "蜿榊ｰЮ") > 0 Then
+            If InStr(cap, "MAS_") > 0 Or InStr(cap, "反射_") > 0 Then
                 Debug.Print "[TONE-CTL]", TypeName(c), c.name, "|", cap
             End If
         End If
@@ -4997,21 +4997,21 @@ Private Sub BuildWalkIndep_DistanceOutdoor()
     If cmbOut Is Nothing Then Set cmbOut = CreateCombo(f, leftCombo, topOut, wCombo, "cmbWalkOutdoor", "WalkOutdoor")
 
     If cmbDist.ListCount = 0 Then
-      cmbDist.AddItem "5m譛ｪ貅"
-      cmbDist.AddItem "5m莉･荳・0m譛ｪ貅"
-      cmbDist.AddItem "10m莉･荳・0m譛ｪ貅"
-      cmbDist.AddItem "50m莉･荳・
+      cmbDist.AddItem "5m未満"
+      cmbDist.AddItem "5m以上10m未満"
+      cmbDist.AddItem "10m以上50m未満"
+      cmbDist.AddItem "50m以上"
     End If
 
     If cmbOut.ListCount = 0 Then
-      cmbOut.AddItem "螻句､匁ｭｩ陦悟庄"
-      cmbOut.AddItem "螻句､悶ｂ遏ｭ霍晞屬縺ｪ繧牙庄"
-      cmbOut.AddItem "螻句､悶・隕句ｮ医ｊ縺ｧ蜿ｯ"
-      cmbOut.AddItem "螻句､悶・莉句勧縺悟ｿ・ｦ・
+      cmbOut.AddItem "屋外歩行可"
+      cmbOut.AddItem "屋外も短距離なら可"
+      cmbOut.AddItem "屋外は見守りで可"
+      cmbOut.AddItem "屋外は介助が必要"
     End If
 
-    lblDist.caption = "豁ｩ陦瑚ｷ晞屬"
-    lblOut.caption = "螻句､匁ｭｩ陦・
+    lblDist.caption = "歩行距離"
+    lblOut.caption = "屋外歩行"
 
 
     lblDist.Left = leftLabel: lblDist.Top = topDist: lblDist.Width = wLabel
@@ -5059,33 +5059,33 @@ Private Sub BuildWalkIndep_Stability()
 
     
     Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Furatsuki", True)
-    chk.caption = "縺ｵ繧峨▽縺阪≠繧・: chk.Left = leftPos: chk.Top = top4: chk.Width = 90: chk.Height = 18
+    chk.caption = "ふらつきあり": chk.Left = leftPos: chk.Top = top4: chk.Width = 90: chk.Height = 18
     
     leftPos = leftPos + chk.Width + 12
     
 
     
     Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Foot", True)
-    chk.caption = "雜ｳ驕九・荳榊ｮ牙ｮ・: chk.Left = leftPos: chk.Top = top4: chk.Width = 100: chk.Height = 18
+    chk.caption = "足運び不安定": chk.Left = leftPos: chk.Top = top4: chk.Width = 100: chk.Height = 18
     
     leftPos = leftPos + chk.Width + 12
     
     
     Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Turn", True)
-    chk.caption = "譁ｹ蜷題ｻ｢謠帑ｸ榊ｮ・: chk.Left = leftPos: chk.Top = top4: chk.Width = 100: chk.Height = 18
+    chk.caption = "方向転換不安": chk.Left = leftPos: chk.Top = top4: chk.Width = 100: chk.Height = 18
     
     leftPos = leftPos + chk.Width + 12
     
     
     
     Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Slow", True)
-    chk.caption = "騾溷ｺｦ菴惹ｸ・: chk.Left = leftPos: chk.Top = top4: chk.Width = 80: chk.Height = 18
+    chk.caption = "速度低下": chk.Left = leftPos: chk.Top = top4: chk.Width = 80: chk.Height = 18
     
     leftPos = leftPos + chk.Width + 12
 
 
     Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_FallRisk", True)
-    chk.caption = "霆｢蛟偵Μ繧ｹ繧ｯ鬮倥＞": chk.Left = leftPos: chk.Top = top4: chk.Width = 110: chk.Height = 18
+    chk.caption = "転倒リスク高い": chk.Left = leftPos: chk.Top = top4: chk.Width = 110: chk.Height = 18
 End Sub
 
 
@@ -5107,15 +5107,15 @@ Private Sub BuildWalkIndep_Speed()
     f.controls.Remove "cmbGaitSpeedDetail"
     On Error GoTo 0
     
-    CreateLabel f, "豁ｩ陦碁溷ｺｦ", 12, top5, 60
+    CreateLabel f, "歩行速度", 12, top5, 60
     Set cmb = CreateCombo(f, 84, top5, 200, , "cmbGaitSpeedDetail")
 
     If cmb.ListCount = 0 Then
-          cmb.AddItem "騾溘＞"
-          cmb.AddItem "繧・ｄ騾溘＞"
-          cmb.AddItem "譎ｮ騾・
-          cmb.AddItem "繧・ｄ驕・＞"
-          cmb.AddItem "驕・＞"
+          cmb.AddItem "速い"
+          cmb.AddItem "やや速い"
+          cmb.AddItem "普通"
+          cmb.AddItem "やや遅い"
+          cmb.AddItem "遅い"
     End If
 
     If f.Height < top5 + 42 Then f.Height = top5 + 42
@@ -5126,7 +5126,7 @@ Private Sub BuildWalk_AbnormalTab()
     Dim mp As MSForms.MultiPage
     Dim pg As MSForms.page
 
-    ' 豁ｩ陦瑚ｩ穂ｾ｡逕ｨ縺ｮ MultiPage2 繧呈爾縺・
+    ' 歩行評価用の MultiPage2 を探す
     For Each ctl In Me.controls
         If TypeName(ctl) = "MultiPage" Then
             If ctl.name = "MultiPage2" Then
@@ -5138,22 +5138,22 @@ Private Sub BuildWalk_AbnormalTab()
 
     If mp Is Nothing Then Exit Sub
 
-    ' 譌｢縺ｫ縲檎焚蟶ｸ豁ｩ陦後阪ち繝悶′縺ゅｌ縺ｰ菴輔ｂ縺励↑縺・
+    ' 既に「異常歩行」タブがあれば何もしない
     On Error Resume Next
     Set pg = SafeGetPage(mp, "pgWalkAbnormal")
     On Error GoTo 0
     If Not pg Is Nothing Then Exit Sub
 
-    ' 譁ｰ縺励＞繝壹・繧ｸ繧定ｿｽ蜉・・ndex=2諠ｳ螳夲ｼ夊・遶句ｺｦ, RLA 縺ｮ谺｡・・
+    ' 新しいページを追加（Index=2想定：自立度, RLA の次）
     Set pg = mp.Pages.Add
     pg.name = "pgWalkAbnormal"
-    pg.caption = "逡ｰ蟶ｸ豁ｩ陦・
+    pg.caption = "異常歩行"
 
-    ' 縺ｲ縺ｨ縺ｾ縺壻ｸｭ縺ｫ遨ｺ縺ｮ繝輔Ξ繝ｼ繝縺縺醍ｽｮ縺・※縺翫￥・井ｸｭ霄ｫ縺ｯ蠕後〒菴懊ｋ・・
+    ' ひとまず中に空のフレームだけ置いておく（中身は後で作る）
     Dim f As MSForms.Frame
     Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbnormal", True)
     With f
-        .caption = "逡ｰ蟶ｸ豁ｩ陦後ヱ繧ｿ繝ｼ繝ｳ・医メ繧ｧ繝・け・・
+        .caption = "異常歩行パターン（チェック）"
         .Left = 6
         .Top = 6
         .Width = mp.Width - 24
@@ -5169,7 +5169,7 @@ Private Sub BuildWalkAbnormal_Frames()
     Dim f As MSForms.Frame
     Dim w As Single, h As Single
 
-    ' MultiPage2・域ｭｩ陦瑚ｩ穂ｾ｡・峨ｒ蜿門ｾ・
+    ' MultiPage2（歩行評価）を取得
     For Each ctl In Me.controls
         If TypeName(ctl) = "MultiPage" And ctl.name = "MultiPage2" Then
             Set mp = ctl
@@ -5178,57 +5178,57 @@ Private Sub BuildWalkAbnormal_Frames()
     Next
     If mp Is Nothing Then Exit Sub
 
-    ' 逡ｰ蟶ｸ豁ｩ陦後・繝ｼ繧ｸ蜿門ｾ・
+    ' 異常歩行ページ取得
     On Error Resume Next
     Set pg = SafeGetPage(mp, "pgWalkAbnormal")
     On Error GoTo 0
     If pg Is Nothing Then Exit Sub
 
-    ' 繝壹・繧ｸ縺ｮ繝ｯ繝ｼ繧ｯ繧ｨ繝ｪ繧｢繧ｵ繧､繧ｺ
+    ' ページのワークエリアサイズ
     w = mp.Width - 24
     h = mp.Height - 24
 
-    ' 譌｢蟄倥ヵ繝ｬ繝ｼ繝蜑企勁・亥・逕滓・逕ｨ・・
+    ' 既存フレーム削除（再生成用）
     For Each ctl In pg.controls
         If TypeName(ctl) = "Frame" Then
             pg.controls.Remove ctl.name
         End If
     Next
 
-    ' --- A・夂援鮗ｻ逞ｺ邉ｻ ---
+    ' --- A：片麻痺系 ---
     Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbn_A", True)
     With f
-        .caption = "A・夂援鮗ｻ逞ｺ繝ｻ閼ｳ陦邂｡髫懷ｮｳ繝代ち繝ｼ繝ｳ"
+        .caption = "A：片麻痺・脳血管障害パターン"
         .Left = 6
         .Top = 6
         .Width = w / 2 - 12
         .Height = h / 2 - 12
     End With
 
-    ' --- B・壹ヱ繝ｼ繧ｭ繝ｳ繧ｽ繝ｳ邉ｻ ---
+    ' --- B：パーキンソン系 ---
     Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbn_B", True)
     With f
-        .caption = "B・壹ヱ繝ｼ繧ｭ繝ｳ繧ｽ繝ｳ髢｢騾｣繝代ち繝ｼ繝ｳ"
+        .caption = "B：パーキンソン関連パターン"
         .Left = w / 2 + 6
         .Top = 6
         .Width = w / 2 - 12
         .Height = h / 2 - 12
     End With
 
-    ' --- C・壽紛蠖｢繝ｻ鬮倬ｽ｢閠・ｸ榊ｮ牙ｮ壽ｭｩ陦・---
+    ' --- C：整形・高齢者不安定歩行 ---
     Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbn_C", True)
     With f
-        .caption = "C・壽紛蠖｢繝ｻ鬮倬ｽ｢閠・ｸ榊ｮ牙ｮ壽ｭｩ陦・
+        .caption = "C：整形・高齢者不安定歩行"
         .Left = 6
         .Top = h / 2 + 6
         .Width = w / 2 - 12
         .Height = h / 2 - 12
     End With
 
-    ' --- D・壼鵠隱ｿ髫懷ｮｳ繝ｻ螟ｱ隱ｿ ---
+    ' --- D：協調障害・失調 ---
     Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbn_D", True)
     With f
-        .caption = "D・壼鵠隱ｿ髫懷ｮｳ繝ｻ螟ｱ隱ｿ繝代ち繝ｼ繝ｳ"
+        .caption = "D：協調障害・失調パターン"
         .Left = w / 2 + 6
         .Top = h / 2 + 6
         .Width = w / 2 - 12
@@ -5246,7 +5246,7 @@ Private Sub BuildWalkAbnormal_Checks()
     Dim items As Variant
     Dim i As Long, topPos As Single
     
-    ' MultiPage2 繧貞叙蠕・
+    ' MultiPage2 を取得
     For Each ctl In Me.controls
         If TypeName(ctl) = "MultiPage" And ctl.name = "MultiPage2" Then
             Set mp = ctl
@@ -5255,13 +5255,13 @@ Private Sub BuildWalkAbnormal_Checks()
     Next
     If mp Is Nothing Then Exit Sub
 
-    ' 逡ｰ蟶ｸ豁ｩ陦後・繝ｼ繧ｸ繧貞叙蠕・
+    ' 異常歩行ページを取得
     On Error Resume Next
     Set pg = SafeGetPage(mp, "pgWalkAbnormal")
     On Error GoTo 0
     If pg Is Nothing Then Exit Sub
 
-    ' 4縺､縺ｮ繝輔Ξ繝ｼ繝繧帝・分縺ｫ蜃ｦ逅・
+    ' 4つのフレームを順番に処理
     Dim fNames As Variant
     fNames = Array("fraWalkAbn_A", "fraWalkAbn_B", "fraWalkAbn_C", "fraWalkAbn_D")
     
@@ -5271,67 +5271,67 @@ Private Sub BuildWalkAbnormal_Checks()
     Dim D_items As Variant
 
     ' ----------------------
-    ' A・夂援鮗ｻ逞ｺ繝ｻ閼ｳ陦邂｡髫懷ｮｳ・・・・0・・
+    ' A：片麻痺・脳血管障害（1～10）
     ' ----------------------
     A_items = Array( _
-        "縺吶ｊ雜ｳ豁ｩ陦・, _
-        "縺ｶ繧灘屓縺玲ｭｩ陦・, _
-        "蜿榊ｼｵ閹晄ｭｩ陦鯉ｼ郁・驕惹ｼｸ螻包ｼ・, _
-        "繝医Ξ繝ｳ繝・Ξ繝ｳ繝悶Ν繧ｰ豁ｩ陦・, _
-        "繝・Η繧ｷ繧ｧ繝ｳ繝梧ｭｩ陦・, _
-        "荳句桙雜ｳ・医ヵ繝・ヨ繧ｹ繝ｩ繝・・・・, _
-        "蜈ｱ蜷碁°蜍輔ヱ繧ｿ繝ｼ繝ｳ縺ｮ蠑ｷ縺・, _
-        "鬪ｨ逶､蠕悟だ・丈ｽ灘ｹｹ蠕悟だ縺ｮ遶玖・", _
-        "迚・・遶玖・縺ｮ闡励＠縺・洒邵ｮ", _
-        "雜ｳ驛ｨ繧ｯ繝ｪ繧｢繝ｩ繝ｳ繧ｹ荳崎憶" _
+        "すり足歩行", _
+        "ぶん回し歩行", _
+        "反張膝歩行（膝過伸展）", _
+        "トレンデレンブルグ歩行", _
+        "デュシェンヌ歩行", _
+        "下垂足（フットスラップ）", _
+        "共同運動パターンの強さ", _
+        "骨盤後傾／体幹後傾の立脚", _
+        "片脚立脚の著しい短縮", _
+        "足部クリアランス不良" _
     )
 
     ' ----------------------
-    ' B・壹ヱ繝ｼ繧ｭ繝ｳ繧ｽ繝ｳ邉ｻ・・・・・・
+    ' B：パーキンソン系（1～9）
     ' ----------------------
     B_items = Array( _
-        "蟆丞綾縺ｿ豁ｩ陦・, _
-        "蜑榊だ蟋ｿ蜍｢豁ｩ陦・, _
-        "繝輔Μ繝ｼ繧ｺ・育ｪ∫┯蛛懈ｭ｢・・, _
-        "豁ｩ陦碁幕蟋句峅髮｣・医せ繧ｿ繝ｼ繝・hesitation・・, _
-        "遯・ｲ豁ｩ陦鯉ｼ医ヵ繧ｧ繧ｹ繝・ぅ繝阪・繧ｷ繝ｧ繝ｳ・・, _
-        "豁ｩ蟷・ｸ帛ｰ・, _
-        "謇九・謖ｯ繧頑ｶ亥､ｱ", _
-        "譁ｹ蜷題ｻ｢謠帛峅髮｣", _
-        "繝ｪ繧ｺ繝諤ｧ豸亥､ｱ" _
+        "小刻み歩行", _
+        "前傾姿勢歩行", _
+        "フリーズ（突然停止）", _
+        "歩行開始困難（スタート hesitation）", _
+        "突進歩行（フェスティネーション）", _
+        "歩幅減少", _
+        "手の振り消失", _
+        "方向転換困難", _
+        "リズム性消失" _
     )
 
     ' ----------------------
-    ' C・壽紛蠖｢繝ｻ鬮倬ｽ｢閠・ｸ榊ｮ牙ｮ壽ｭｩ陦鯉ｼ・・・0・・
+    ' C：整形・高齢者不安定歩行（1～10）
     ' ----------------------
     C_items = Array( _
-        "繧医■繧医■豁ｩ陦鯉ｼ育ｭ句鴨菴惹ｸ具ｼ・, _
-        "閹晄釜繧鯉ｼ・nee buckling・・, _
-        "閧｡OA縺ｮ逍ｼ逞帶ｧ豁ｩ陦・, _
-        "菴灘ｹｹ蟾ｦ蜿ｳ謠ｺ繧鯉ｼ医Ζ繧ｳ繝薙・蠕ｴ蛟呎ｧ假ｼ・, _
-        "蜑崎ｶｳ驛ｨ闕ｷ驥阪′縺励↓縺上＞", _
-        "豁ｩ蟷・・縺ｰ繧峨▽縺・, _
-        "髱ｴ縺ｮ蠑輔″縺壹ｊ", _
-        "譚悶・豁ｩ陦悟勣縺ｸ縺ｮ蠑ｷ縺・ｾ晏ｭ・, _
-        "迚・・闕ｷ驥榊屓驕ｿ", _
-        "逍ｼ逞帛屓驕ｿ諤ｧ縺ｮ逡ｰ蟶ｸ豁ｩ螳ｹ" _
+        "よちよち歩行（筋力低下）", _
+        "膝折れ（knee buckling）", _
+        "股OAの疼痛性歩行", _
+        "体幹左右揺れ（ヤコビー徴候様）", _
+        "前足部荷重がしにくい", _
+        "歩幅のばらつき", _
+        "靴の引きずり", _
+        "杖・歩行器への強い依存", _
+        "片脚荷重回避", _
+        "疼痛回避性の異常歩容" _
     )
 
     ' ----------------------
-    ' D・壼鵠隱ｿ髫懷ｮｳ繝ｻ螟ｱ隱ｿ・・・・・・
+    ' D：協調障害・失調（1～8）
     ' ----------------------
     D_items = Array( _
-        "螟ｱ隱ｿ諤ｧ豁ｩ陦鯉ｼ医Ρ繧､繝峨・繝ｼ繧ｹ・・, _
-        "蜊・ｳ･雜ｳ豁ｩ陦・, _
-        "繧ｹ繝・ャ繝斐Φ繧ｰ豁ｩ陦・, _
-        "縺弱￥縺励ｃ縺上＠縺滓ｭｩ陦・, _
-        "譁ｹ蜷題ｻ｢謠帶凾縺ｮ螟ｧ縺阪↑謠ｺ繧・, _
-        "荳願い縺ｨ縺ｮ蜊碑ｪｿ荳崎憶", _
-        "縺ｵ繧峨▽縺榊､ｧ", _
-        "雜ｳ縺ｮ菴咲ｽｮ豎ｺ繧√′荳肴ｭ｣遒ｺ" _
+        "失調性歩行（ワイドベース）", _
+        "千鳥足歩行", _
+        "ステッピング歩行", _
+        "ぎくしゃくした歩行", _
+        "方向転換時の大きな揺れ", _
+        "上肢との協調不良", _
+        "ふらつき大", _
+        "足の位置決めが不正確" _
     )
 
-    ' --------- 縺薙％縺九ｉ逕滓・蜃ｦ逅・---------
+    ' --------- ここから生成処理 ---------
 
     Dim listSets As Variant
     listSets = Array(A_items, B_items, C_items, D_items)
@@ -5339,18 +5339,18 @@ Private Sub BuildWalkAbnormal_Checks()
     Dim idx As Long, arr As Variant
 
     For idx = 0 To 3
-        ' 蟇ｾ雎｡繝輔Ξ繝ｼ繝蜿門ｾ・
+        ' 対象フレーム取得
         Set f = pg.controls(fNames(idx))
         If f Is Nothing Then GoTo ContinueNext
         
-        ' 譌｢蟄倥メ繧ｧ繝・け蜑企勁
+        ' 既存チェック削除
         For Each ctl In f.controls
             If TypeName(ctl) = "CheckBox" Then
                 f.controls.Remove ctl.name
             End If
         Next ctl
         
-                ' 霑ｽ蜉
+                ' 追加
         arr = listSets(idx)
         topPos = 24
 
@@ -5367,14 +5367,14 @@ Private Sub BuildWalkAbnormal_Checks()
                 .Height = 18
             End With
 
-            ' 縺薙・繝√ぉ繝・け繝懊ャ繧ｯ繧ｹ縺ｮ荳狗ｫｯ繧定ｨ倬鹸
+            ' このチェックボックスの下端を記録
             If chk.Top + chk.Height > maxBottom Then
                 maxBottom = chk.Top + chk.Height
             End If
 
             topPos = topPos + 20
         Next i
-        ' 荳ｭ霄ｫ縺ｫ蜷医ｏ縺帙※繝輔Ξ繝ｼ繝鬮倥＆繧呈怙菴朱剞縺ｾ縺ｧ莨ｸ縺ｰ縺呻ｼ医Ο繧ｰ莉倥″・・
+        ' 中身に合わせてフレーム高さを最低限まで伸ばす（ログ付き）
         If maxBottom + 12 > f.Height Then
 #If APP_DEBUG Then
             Debug.Print "[ABN-RESIZE]", f.name, _
@@ -5395,10 +5395,10 @@ ContinueNext:
 End Sub
 
 Private Sub BuildWalkUI_All()
-    ' 豁ｩ陦・閾ｪ遶句ｺｦ繧ｿ繝厄ｼ郁ｷ晞屬繝ｻ螻句､悶・螳牙ｮ壽ｧ繝ｻ騾溷ｺｦ・・
+    ' 歩行 自立度タブ（距離・屋外・安定性・速度）
     BuildWalkIndep_DistanceOutdoor
     
-    ' 縲檎焚蟶ｸ豁ｩ陦後阪ち繝厄ｼ倶ｸｭ霄ｫ・・蛻・｡槭ヵ繝ｬ繝ｼ繝・九メ繧ｧ繝・け鄒､・・
+    ' 「異常歩行」タブ＋中身（4分類フレーム＋チェック群）
     BuildWalk_AbnormalTab
     BuildWalkAbnormal_Frames
     BuildWalkAbnormal_Checks
@@ -5411,19 +5411,19 @@ Public Sub BuildCogMentalUI_Simple()
     Dim f As MSForms.Frame
     Dim c As MSForms.Control
     Dim mp As MSForms.MultiPage
-    Dim fw As MSForms.Frame   '笘・豁ｩ陦後ち繝悶・繝輔Ξ繝ｼ繝
+    Dim fw As MSForms.Frame   '★ 歩行タブのフレーム
 
-    ' 隕ｪ繝輔Ξ繝ｼ繝・郁ｪ咲衍讖溯・繝ｻ邊ｾ逾樣擇・・
+    ' 親フレーム（認知機能・精神面）
     On Error Resume Next
     Set f = GetCogRootFrame()
     On Error GoTo 0
 
     If f Is Nothing Then
-        MsgBox "隱咲衍讖溯・繝輔Ξ繝ｼ繝・・age7 > Frame7 > Frame30・峨′隕九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "認知機能フレーム（Page7 > Frame7 > Frame30）が見つかりません。", vbExclamation
         Exit Sub
     End If
 
-    ' 笘・ｭｩ陦後ち繝・Frame6)縺ｨ蜷後§菴咲ｽｮ繝ｻ繧ｵ繧､繧ｺ縺ｫ蜷医ｏ縺帙ｋ
+    ' ★歩行タブ(Frame6)と同じ位置・サイズに合わせる
     On Error Resume Next
     Set fw = SafeGetControl(Me, "Frame6")
     On Error GoTo 0
@@ -5435,16 +5435,16 @@ Public Sub BuildCogMentalUI_Simple()
         f.Height = fw.Height
     End If
 
-    ' 縺・▲縺溘ｓ荳ｭ霄ｫ繧貞・驛ｨ繧ｯ繝ｪ繧｢・亥・縺ｮ繝ｩ繝吶Ν・上さ繝ｳ繝懶ｼ乗里蟄倥・繝ｫ繝√・繝ｼ繧ｸ繧ょ性繧√※・・
+    ' いったん中身を全部クリア（元のラベル／コンボ／既存マルチページも含めて）
     Do While f.controls.count > 0
         f.controls.Remove f.controls(0).name
     Loop
 
-    ' 蟄信ultiPage繧定ｿｽ蜉・郁ｪ咲衍讖溯・ / 邊ｾ逾樣擇 縺ｮ2繧ｿ繝悶・縺ｿ・・
+    ' 子MultiPageを追加（認知機能 / 精神面 の2タブのみ）
     Set mp = f.controls.Add("Forms.MultiPage.1", "mpCogMental", True)
            With mp
         .Left = 6
-        .Top = 0          ' 竊・縺薙％繧・6 竊・0 縺ｫ
+        .Top = 0          ' ← ここを 6 → 0 に
         .Width = f.Width - 12
         .Height = f.Height - 12
         .Style = fmTabStyleTabs
@@ -5453,7 +5453,7 @@ Public Sub BuildCogMentalUI_Simple()
 
 
 
-    ' 譌｢蟄倥・繝ｼ繧ｸ繧貞・驛ｨ豸医＠縺ｦ縺九ｉ2繝壹・繧ｸ菴懈・
+    ' 既存ページを全部消してから2ページ作成
     Do While mp.Pages.count > 0
         mp.Pages.Remove 0
     Loop
@@ -5461,10 +5461,10 @@ Public Sub BuildCogMentalUI_Simple()
     mp.Pages.Add
     mp.Pages.Add
 
-    mp.Pages(0).caption = "隱咲衍讖溯・"
+    mp.Pages(0).caption = "認知機能"
     mp.Pages(0).name = "pgCognition"
 
-    mp.Pages(1).caption = "邊ｾ逾樣擇"
+    mp.Pages(1).caption = "精神面"
     mp.Pages(1).name = "pgMental"
 End Sub
 
@@ -5479,35 +5479,35 @@ Public Sub BuildCog_CognitionCore()
     Dim lbl As MSForms.label
     Dim cmb As MSForms.ComboBox
     
-    ' 隕ｪ繝輔Ξ繝ｼ繝・郁ｪ咲衍・・
+    ' 親フレーム（認知）
     On Error Resume Next
     Set f = GetCogRootFrame()
     On Error GoTo 0
     If f Is Nothing Then
-        MsgBox "繝輔か繝ｼ繝縺後≠繧翫∪縺帙ｓ", vbExclamation
+        MsgBox "フォームがありません", vbExclamation
         Exit Sub
     End If
     
-    ' 蟄舌・繝ｫ繝√・繝ｼ繧ｸ
+    ' 子マルチページ
     Set mp = SafeGetControl(f, "mpCogMental")
     If mp Is Nothing Then
-        MsgBox "mpCogMental 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "mpCogMental が見つかりません。", vbExclamation
         Exit Sub
     End If
     
-    ' 隱咲衍讖溯・繝壹・繧ｸ
+    ' 認知機能ページ
     Set pg = SafeGetPage(mp, "pgCognition")
     If pg Is Nothing Then
-        MsgBox "pgCognition 繝壹・繧ｸ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "pgCognition ページが見つかりません。", vbExclamation
         Exit Sub
     End If
     
-    ' 譌｢蟄倥さ繝ｳ繝医Ο繝ｼ繝ｫ繧偵け繝ｪ繧｢・医ｄ繧顔峩縺礼畑・・
+    ' 既存コントロールをクリア（やり直し用）
     Do While pg.controls.count > 0
         pg.controls.Remove pg.controls(0).name
     Loop
     
-    ' 繝ｬ繧､繧｢繧ｦ繝亥渕貅・
+    ' レイアウト基準
     Dim rowTop As Single, rowGap As Single
     Dim col1Left As Single, col2Left As Single
     Dim lblW As Single, cmbW As Single
@@ -5519,17 +5519,17 @@ Public Sub BuildCog_CognitionCore()
     lblW = 60
     cmbW = 140
     
-    ' 蜈ｱ騾壹〒菴ｿ縺・ｩ穂ｾ｡繝ｪ繧ｹ繝・
+    ' 共通で使う評価リスト
     Dim i As Long
     Dim arr4()
     
-    arr4 = Array("豁｣蟶ｸ", "繧・ｄ菴惹ｸ・, "菴惹ｸ・, "闡玲・縺ｫ菴惹ｸ・)
+    arr4 = Array("正常", "やや低下", "低下", "著明に低下")
     
-    '窶補・1陦檎岼・夊ｨ俶・・乗ｳｨ諢・窶補・
-    ' 險俶・
+    '―― 1行目：記憶／注意 ――
+    ' 記憶
     Set lbl = pg.controls.Add("Forms.Label.1", "lblCogMemory", True)
     With lbl
-        .caption = "險俶・"
+        .caption = "記憶"
         .Left = col1Left
         .Top = rowTop
         .Width = lblW
@@ -5548,10 +5548,10 @@ Public Sub BuildCog_CognitionCore()
         Next i
     End With
     
-    ' 豕ｨ諢・
+    ' 注意
     Set lbl = pg.controls.Add("Forms.Label.1", "lblCogAttention", True)
     With lbl
-        .caption = "豕ｨ諢・
+        .caption = "注意"
         .Left = col2Left
         .Top = rowTop
         .Width = lblW
@@ -5570,13 +5570,13 @@ Public Sub BuildCog_CognitionCore()
         Next i
     End With
     
-    '窶補・2陦檎岼・夊ｦ句ｽ楢ｭ假ｼ丞愛譁ｭ 窶補・
+    '―― 2行目：見当識／判断 ――
     rowTop = rowTop + rowGap
     
-    ' 隕句ｽ楢ｭ・
+    ' 見当識
     Set lbl = pg.controls.Add("Forms.Label.1", "lblCogOrientation", True)
     With lbl
-        .caption = "隕句ｽ楢ｭ・
+        .caption = "見当識"
         .Left = col1Left
         .Top = rowTop
         .Width = lblW
@@ -5595,10 +5595,10 @@ Public Sub BuildCog_CognitionCore()
         Next i
     End With
     
-    ' 蛻､譁ｭ
+    ' 判断
     Set lbl = pg.controls.Add("Forms.Label.1", "lblCogJudgement", True)
     With lbl
-        .caption = "蛻､譁ｭ"
+        .caption = "判断"
         .Left = col2Left
         .Top = rowTop
         .Width = lblW
@@ -5612,18 +5612,18 @@ Public Sub BuildCog_CognitionCore()
         .Width = cmbW
         .Height = 18
         .Style = fmStyleDropDownList
-        .AddItem "濶ｯ螂ｽ"
-        .AddItem "繧・ｄ荳榊ｮ牙ｮ・
-        .AddItem "荳榊ｮ牙ｮ・
+        .AddItem "良好"
+        .AddItem "やや不安定"
+        .AddItem "不安定"
     End With
     
-    '窶補・3陦檎岼・夐≠陦鯉ｼ剰ｨ隱・窶補・
+    '―― 3行目：遂行／言語 ――
     rowTop = rowTop + rowGap
     
-    ' 驕り｡・
+    ' 遂行
     Set lbl = pg.controls.Add("Forms.Label.1", "lblCogExecutive", True)
     With lbl
-        .caption = "驕り｡・
+        .caption = "遂行"
         .Left = col1Left
         .Top = rowTop
         .Width = lblW
@@ -5637,15 +5637,15 @@ Public Sub BuildCog_CognitionCore()
         .Width = cmbW
         .Height = 18
         .Style = fmStyleDropDownList
-        .AddItem "濶ｯ螂ｽ"
-        .AddItem "繧・ｄ荳榊ｮ牙ｮ・
-        .AddItem "荳榊ｮ牙ｮ・
+        .AddItem "良好"
+        .AddItem "やや不安定"
+        .AddItem "不安定"
     End With
     
-    ' 險隱・
+    ' 言語
     Set lbl = pg.controls.Add("Forms.Label.1", "lblCogLanguage", True)
     With lbl
-        .caption = "險隱・
+        .caption = "言語"
         .Left = col2Left
         .Top = rowTop
         .Width = lblW
@@ -5659,9 +5659,9 @@ Public Sub BuildCog_CognitionCore()
         .Width = cmbW
         .Height = 18
         .Style = fmStyleDropDownList
-        .AddItem "蝠城｡後↑縺・
-        .AddItem "繧・ｄ髫懷ｮｳ"
-        .AddItem "髫懷ｮｳ鬘戊送"
+        .AddItem "問題なし"
+        .AddItem "やや障害"
+        .AddItem "障害顕著"
     End With
 End Sub
 
@@ -5676,30 +5676,30 @@ Public Sub BuildCog_DementiaBlock()
     Dim cmb As MSForms.ComboBox
     Dim txt As MSForms.TextBox
     
-    ' 隕ｪ繝輔Ξ繝ｼ繝
+    ' 親フレーム
     On Error Resume Next
     Set f = GetCogRootFrame()
     On Error GoTo 0
     If f Is Nothing Then
-        MsgBox "繝輔か繝ｼ繝縺後≠繧翫∪縺帙ｓ", vbExclamation
+        MsgBox "フォームがありません", vbExclamation
         Exit Sub
     End If
     
-    ' 蟄舌・繝ｫ繝√・繝ｼ繧ｸ
+    ' 子マルチページ
     Set mp = SafeGetControl(f, "mpCogMental")
     If mp Is Nothing Then
-        MsgBox "mpCogMental 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "mpCogMental が見つかりません。", vbExclamation
         Exit Sub
     End If
     
-    ' 隱咲衍讖溯・繝壹・繧ｸ
+    ' 認知機能ページ
     Set pg = SafeGetPage(mp, "pgCognition")
     If pg Is Nothing Then
-        MsgBox "pgCognition 繝壹・繧ｸ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "pgCognition ページが見つかりません。", vbExclamation
         Exit Sub
     End If
     
-       ' 縺・▲縺溘ｓ縲∵里蟄倥・隱咲衍逞・ヶ繝ｭ繝・け繧呈ｶ医☆・医ｄ繧顔峩縺礼畑・・
+       ' いったん、既存の認知症ブロックを消す（やり直し用）
     Dim i As Long
     For i = pg.controls.count - 1 To 0 Step -1
         With pg.controls(i)
@@ -5713,20 +5713,20 @@ Public Sub BuildCog_DementiaBlock()
     Next i
 
     
-    ' 荳翫・隱咲衍6鬆・岼繝悶Ο繝・け縺ｮ縺吶＄荳九↓驟咲ｽｮ・医□縺・◆縺・陦鯉ｼ倶ｽ咏區縺ｶ繧謎ｸ九￡繧具ｼ・
-    fraTop = 18 + 3 * 24 + 18   ' 18(譛蛻・ + 3陦・24 + 菴咏區
+    ' 上の認知6項目ブロックのすぐ下に配置（だいたい3行＋余白ぶん下げる）
+    fraTop = 18 + 3 * 24 + 18   ' 18(最初) + 3行*24 + 余白
     
-    ' 隕句・縺励Λ繝吶Ν縲瑚ｪ咲衍逞・・遞ｮ鬘槭・
+    ' 見出しラベル「認知症の種類」
     Set lbl = pg.controls.Add("Forms.Label.1", "lblDementiaType", True)
     With lbl
-        .caption = "隱咲衍逞・・遞ｮ鬘・
+        .caption = "認知症の種類"
         .Left = 12
         .Top = fraTop
         .Width = 90
         .Height = 18
     End With
     
-    ' 險ｺ譁ｭ蜷阪さ繝ｳ繝・
+    ' 診断名コンボ
     Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbDementiaType", True)
     With cmb
         .Left = lbl.Left + lbl.Width + 6
@@ -5734,26 +5734,26 @@ Public Sub BuildCog_DementiaBlock()
         .Width = 160
         .Height = 18
         .Style = fmStyleDropDownList
-        .AddItem "縺ｪ縺・/ 荳肴・"
-        .AddItem "繧｢繝ｫ繝・ワ繧､繝槭・蝙・
-        .AddItem "陦邂｡諤ｧ"
-        .AddItem "繝ｬ繝薙・蟆丈ｽ灘梛"
-        .AddItem "蜑埼ｭ蛛ｴ鬆ｭ蝙・FTD)"
-        .AddItem "豺ｷ蜷亥梛"
-        .AddItem "縺昴・莉・
+        .AddItem "なし / 不明"
+        .AddItem "アルツハイマー型"
+        .AddItem "血管性"
+        .AddItem "レビー小体型"
+        .AddItem "前頭側頭型(FTD)"
+        .AddItem "混合型"
+        .AddItem "その他"
     End With
     
-    ' 蛯呵・Λ繝吶Ν
+    ' 備考ラベル
     Set lbl = pg.controls.Add("Forms.Label.1", "lblDementiaNote", True)
     With lbl
-        .caption = "蛯呵・
+        .caption = "備考"
         .Left = cmb.Left + cmb.Width + 12
         .Top = fraTop
         .Width = 40
         .Height = 18
     End With
     
-    ' 蛯呵・ユ繧ｭ繧ｹ繝・
+    ' 備考テキスト
     Set txt = pg.controls.Add("Forms.TextBox.1", "txtDementiaNote", True)
     With txt
         .Left = lbl.Left + lbl.Width + 6
@@ -5776,30 +5776,30 @@ Public Sub BuildCog_BPSD()
     Dim chk As MSForms.CheckBox
     Dim i As Long
     
-    ' 隕ｪ繝輔Ξ繝ｼ繝
+    ' 親フレーム
     On Error Resume Next
     Set f = GetCogRootFrame()
     On Error GoTo 0
     If f Is Nothing Then
-        MsgBox "繝輔か繝ｼ繝縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ", vbExclamation
+        MsgBox "フォームが見つかりません", vbExclamation
         Exit Sub
     End If
     
-    ' 蟄舌・繝ｫ繝√・繝ｼ繧ｸ
+    ' 子マルチページ
     Set mp = SafeGetControl(f, "mpCogMental")
     If mp Is Nothing Then
-        MsgBox "mpCogMental 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "mpCogMental が見つかりません。", vbExclamation
         Exit Sub
     End If
     
-    ' 隱咲衍讖溯・繝壹・繧ｸ
+    ' 認知機能ページ
     Set pg = SafeGetPage(mp, "pgCognition")
     If pg Is Nothing Then
-        MsgBox "pgCognition 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "pgCognition が見つかりません。", vbExclamation
         Exit Sub
     End If
     
-    ' --- 譌｢蟄錬PSD繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ蜑企勁 ---
+    ' --- 既存BPSDコントロール削除 ---
     Dim c As MSForms.Control
     For i = pg.controls.count - 1 To 0 Step -1
         If TypeName(pg.controls(i)) = "CheckBox" _
@@ -5808,14 +5808,14 @@ Public Sub BuildCog_BPSD()
         End If
     Next i
     
-    ' --- 霑ｽ蜉菴咲ｽｮ・郁ｪ咲衍逞・・遞ｮ鬘槭ヶ繝ｭ繝・け縺ｮ荳具ｼ・---
-    topY = 18 + 3 * 24 + 18 + 24   '6鬆・岼繝悶Ο繝・け + 菴咏區
-    topY = topY + 24               '隱咲衍逞・ｨｮ鬘槭・陦・
+    ' --- 追加位置（認知症の種類ブロックの下） ---
+    topY = 18 + 3 * 24 + 18 + 24   '6項目ブロック + 余白
+    topY = topY + 24               '認知症種類の行
     
-    ' 隕句・縺・
+    ' 見出し
     Set lbl = pg.controls.Add("Forms.Label.1", "lblBPSD_Title", True)
     With lbl
-        .caption = "隱咲衍逞・・蜻ｨ霎ｺ逞・憾・・PSD・・
+        .caption = "認知症の周辺症状（BPSD）"
         .Left = 12
         .Top = topY
         .Width = 180
@@ -5824,10 +5824,10 @@ Public Sub BuildCog_BPSD()
     
     topY = topY + 24
     
-    ' BPSD鬆・岼
+    ' BPSD項目
     Dim items
-    items = Array("謚代≧縺､", "荳榊ｮ・, "辟ｦ辯･", "蟷ｻ隕・, "螯・Φ", _
-                  "蠕伜ｾ・, "證ｴ險", "證ｴ蜉・, "荳咲ｩ・, "逹｡逵髫懷ｮｳ", "譏ｼ螟憺・ｻ｢")
+    items = Array("抑うつ", "不安", "焦燥", "幻覚", "妄想", _
+                  "徘徊", "暴言", "暴力", "不穏", "睡眠障害", "昼夜逆転")
     
     Dim col As Long, row As Long
     col = 0: row = 0
@@ -5861,36 +5861,36 @@ Public Sub BuildCog_MentalBlock()
     Dim txt As MSForms.TextBox
     Dim topY As Single
     
-    ' 隕ｪ繝輔Ξ繝ｼ繝・・rame31・・
+    ' 親フレーム（Frame31）
     On Error Resume Next
     Set f = GetCogRootFrame()
     On Error GoTo 0
     If f Is Nothing Then
-        MsgBox "繝輔か繝ｼ繝縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ", vbExclamation
+        MsgBox "フォームが見つかりません", vbExclamation
         Exit Sub
     End If
     
-    ' 蟄舌・繝ｫ繝√・繝ｼ繧ｸ mpCogMental
+    ' 子マルチページ mpCogMental
     Set mp = SafeGetControl(f, "mpCogMental")
     If mp Is Nothing Then
-        MsgBox "mpCogMental 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "mpCogMental が見つかりません。", vbExclamation
         Exit Sub
     End If
     
-    ' 邊ｾ逾樣擇繝壹・繧ｸ
+    ' 精神面ページ
     Set pg = SafeGetPage(mp, "pgMental")
     If pg Is Nothing Then
-        MsgBox "pgMental 縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "pgMental が見つかりません。", vbExclamation
         Exit Sub
     End If
     
-    ' 譌｢蟄倥け繝ｪ繧｢・医ｄ繧顔峩縺礼畑・・
+    ' 既存クリア（やり直し用）
     Dim i As Long
     For i = pg.controls.count - 1 To 0 Step -1
         pg.controls.Remove pg.controls(i).name
     Next i
     
-    ' 繝ｬ繧､繧｢繧ｦ繝・
+    ' レイアウト
     Dim rowGap As Single: rowGap = 26
     Dim lblW As Single: lblW = 90
     Dim cmbW As Single: cmbW = 150
@@ -5898,10 +5898,10 @@ Public Sub BuildCog_MentalBlock()
     Dim left2 As Single: left2 = 260
     topY = 18
     
-    ' --- 豌怜・ ---
+    ' --- 気分 ---
     Set lbl = pg.controls.Add("Forms.Label.1", "lblMood", True)
     With lbl
-        .caption = "豌怜・"
+        .caption = "気分"
         .Left = left1
         .Top = topY
         .Width = lblW
@@ -5913,15 +5913,15 @@ Public Sub BuildCog_MentalBlock()
         .Top = topY - 2
         .Width = cmbW
         .Style = fmStyleDropDownList
-        .AddItem "螳牙ｮ・
-        .AddItem "繧・ｄ荳榊ｮ牙ｮ・
-        .AddItem "荳榊ｮ牙ｮ・
+        .AddItem "安定"
+        .AddItem "やや不安定"
+        .AddItem "不安定"
     End With
     
-    ' --- 諢乗ｬｲ ---
+    ' --- 意欲 ---
     Set lbl = pg.controls.Add("Forms.Label.1", "lblMotivation", True)
     With lbl
-        .caption = "諢乗ｬｲ"
+        .caption = "意欲"
         .Left = left2
         .Top = topY
         .Width = lblW
@@ -5933,18 +5933,18 @@ Public Sub BuildCog_MentalBlock()
         .Top = topY - 2
         .Width = cmbW
         .Style = fmStyleDropDownList
-        .AddItem "鬮倥＞"
-        .AddItem "譎ｮ騾・
-        .AddItem "菴弱＞"
-        .AddItem "縺ｻ縺ｨ繧薙←縺ｪ縺・
+        .AddItem "高い"
+        .AddItem "普通"
+        .AddItem "低い"
+        .AddItem "ほとんどなし"
     End With
     
-    ' --- 荳榊ｮ・---
+    ' --- 不安 ---
     topY = topY + rowGap
     
     Set lbl = pg.controls.Add("Forms.Label.1", "lblAnxiety", True)
     With lbl
-        .caption = "荳榊ｮ・
+        .caption = "不安"
         .Left = left1
         .Top = topY
         .Width = lblW
@@ -5956,16 +5956,16 @@ Public Sub BuildCog_MentalBlock()
         .Top = topY - 2
         .Width = cmbW
         .Style = fmStyleDropDownList
-        .AddItem "縺ｪ縺・
-        .AddItem "霆ｽ蠎ｦ"
-        .AddItem "荳ｭ遲牙ｺｦ"
-        .AddItem "蠑ｷ縺・
+        .AddItem "なし"
+        .AddItem "軽度"
+        .AddItem "中等度"
+        .AddItem "強い"
     End With
     
-    ' --- 蟇ｾ莠ｺ ---
+    ' --- 対人 ---
     Set lbl = pg.controls.Add("Forms.Label.1", "lblRelation", True)
     With lbl
-        .caption = "蟇ｾ莠ｺ髢｢菫・
+        .caption = "対人関係"
         .Left = left2
         .Top = topY
         .Width = lblW
@@ -5977,18 +5977,18 @@ Public Sub BuildCog_MentalBlock()
         .Top = topY - 2
         .Width = cmbW
         .Style = fmStyleDropDownList
-        .AddItem "濶ｯ螂ｽ"
-        .AddItem "縺翫♀繧縺ｭ濶ｯ螂ｽ"
-        .AddItem "繧・ｄ蝠城｡・
-        .AddItem "蝠城｡後≠繧・
+        .AddItem "良好"
+        .AddItem "おおむね良好"
+        .AddItem "やや問題"
+        .AddItem "問題あり"
     End With
     
-    ' --- 逹｡逵 ---
+    ' --- 睡眠 ---
     topY = topY + rowGap
     
     Set lbl = pg.controls.Add("Forms.Label.1", "lblSleep", True)
     With lbl
-        .caption = "逹｡逵"
+        .caption = "睡眠"
         .Left = left1
         .Top = topY
         .Width = lblW
@@ -6000,19 +6000,19 @@ Public Sub BuildCog_MentalBlock()
         .Top = topY - 2
         .Width = cmbW
         .Style = fmStyleDropDownList
-        .AddItem "濶ｯ螂ｽ"
-        .AddItem "蜈･逵蝗ｰ髮｣"
-        .AddItem "荳ｭ騾碑ｦ夐・"
-        .AddItem "譌ｩ譛晁ｦ夐・"
-        .AddItem "譌･荳ｭ蛯ｾ逵"
+        .AddItem "良好"
+        .AddItem "入眠困難"
+        .AddItem "中途覚醒"
+        .AddItem "早朝覚醒"
+        .AddItem "日中傾眠"
     End With
     
-    ' --- 蛯呵・---
+    ' --- 備考 ---
     topY = topY + rowGap + 8
     
     Set lbl = pg.controls.Add("Forms.Label.1", "lblMentalNote", True)
     With lbl
-        .caption = "蛯呵・
+        .caption = "備考"
         .Left = left1
         .Top = topY
         .Width = lblW
@@ -6042,31 +6042,31 @@ Private Sub BuildDailyLogTab()
 
     On Error GoTo EH
 
-    '=== MultiPage1 繧貞叙蠕・===
+    '=== MultiPage1 を取得 ===
     Set mp = EvalCtl("MultiPage1")
 
-    '=== 縺吶〒縺ｫ縲梧律縲・・險倬鹸縲阪ち繝悶′縺ゅｋ縺狗｢ｺ隱搾ｼ亥・遲臥畑・・==
-    Set pg = SafeGetPage(mp, "譌･縲・・險倬鹸")
+    '=== すでに「日々の記録」タブがあるか確認（冪等用）===
+    Set pg = SafeGetPage(mp, "日々の記録")
     exists = Not (pg Is Nothing)
 
-    '=== 縺ｪ縺代ｌ縺ｰ譁ｰ縺励＞繝壹・繧ｸ繧定ｿｽ蜉 ===
+    '=== なければ新しいページを追加 ===
     If Not exists Then
         Set pg = mp.Pages.Add
-        pg.caption = "譌･縲・・險倬鹸"
+        pg.caption = "日々の記録"
     End If
 
-    '=== 繝輔Ξ繝ｼ繝縺檎┌縺代ｌ縺ｰ1蛟九□縺台ｽ懊ｋ ===
+    '=== フレームが無ければ1個だけ作る ===
     On Error Resume Next
     Set fra = SafeGetControl(pg, "fraDailyLog")
     On Error GoTo EH
 
     If fra Is Nothing Then
         Set fra = pg.controls.Add("Forms.Frame.1", "fraDailyLog")
-        fra.caption = "譌･縲・・險倬鹸"
+        fra.caption = "日々の記録"
         fra.Left = 6
     fra.Top = 6
-    fra.Width = mp.Width - 24      ' 竊・MultiPage 縺ｮ蟷・°繧牙ｷｦ蜿ｳ12pt縺壹▽菴咏區
-    fra.Height = mp.Height - 30    ' 竊・荳贋ｸ九・繧ｿ繝厄ｼ倶ｽ咏區縺ｶ繧薙ｒ蟾ｮ縺怜ｼ輔＞縺ｦ譫縺・▲縺ｱ縺・
+    fra.Width = mp.Width - 24      ' ← MultiPage の幅から左右12ptずつ余白
+    fra.Height = mp.Height - 30    ' ← 上下のタブ＋余白ぶんを差し引いて枠いっぱい
     End If
 
        BuildDailyLogLayout
@@ -6114,21 +6114,21 @@ Private Sub BuildDailyLogLayout()
     topLabelW = 42
     topInputW = 88
     
-    '=== 險倬鹸譌･繝ｩ繝吶Ν ===
+    '=== 記録日ラベル ===
     On Error Resume Next
     Set lbl = f.controls("lblDailyDate")
     On Error GoTo EH
 
     If lbl Is Nothing Then Set lbl = f.controls.Add("Forms.Label.1", "lblDailyDate")
     With lbl
-        .caption = "險倬鹸譌･"
+        .caption = "記録日"
         .Left = leftMargin
         .Top = 18
         .Width = topLabelW
         .Height = 18
     End With
 
-    '=== 險倬鹸譌･繝・く繧ｹ繝・===
+    '=== 記録日テキスト ===
     On Error Resume Next
     Set txt = SafeGetControl(f, "txtDailyDate")
     On Error GoTo EH
@@ -6140,21 +6140,21 @@ Private Sub BuildDailyLogLayout()
         .Height = 18
     End With
 
-    '=== 險倬鹸閠・Λ繝吶Ν ===
+    '=== 記録者ラベル ===
     On Error Resume Next
 
     Set lbl = f.controls("lblDailyStaff")
     On Error GoTo EH
     If lbl Is Nothing Then Set lbl = f.controls.Add("Forms.Label.1", "lblDailyStaff")
     With lbl
-        .caption = "險倬鹸閠・
+        .caption = "記録者"
         .Left = txt.Left + txt.Width + 24
         .Top = 18
         .Width = 40
         .Height = 18
     End With
 
-    '=== 險倬鹸閠・ユ繧ｭ繧ｹ繝・===
+    '=== 記録者テキスト ===
     On Error Resume Next
     Set txt = SafeGetControl(f, "txtDailyStaff")
     On Error GoTo EH
@@ -6169,13 +6169,13 @@ Private Sub BuildDailyLogLayout()
     boxH = 95
     secondRowTop = topStart + 18 + boxH + rowGap - 6
 
-    CreateDailyField f, "lblDailyTraining", "txtDailyTraining", "縲仙ｮ滓命蜀・ｮｹ縲・, leftMargin, topStart, colW, boxH
-    CreateDailyField f, "lblDailyReaction", "txtDailyReaction", "縲仙茜逕ｨ閠・・蜿榊ｿ懊・, rightLeft, topStart, colW, boxH
-    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "縲千焚蟶ｸ謇隕九・, leftMargin, secondRowTop, colW, boxH
-    CreateDailyField f, "lblDailyPlan", "txtDailyPlan", "縲蝉ｻ雁ｾ後・譁ｹ驥昴・, rightLeft, secondRowTop, colW, boxH
+    CreateDailyField f, "lblDailyTraining", "txtDailyTraining", "【実施内容】", leftMargin, topStart, colW, boxH
+    CreateDailyField f, "lblDailyReaction", "txtDailyReaction", "【利用者の反応】", rightLeft, topStart, colW, boxH
+    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "【異常所見】", leftMargin, secondRowTop, colW, boxH
+    CreateDailyField f, "lblDailyPlan", "txtDailyPlan", "【今後の方針】", rightLeft, secondRowTop, colW, boxH
 
 
-    '=== 險倬鹸蜀・ｮｹ繝・く繧ｹ繝茨ｼ医・繝ｫ繝√Λ繧､繝ｳ・・===
+    '=== 記録内容テキスト（マルチライン） ===
     On Error Resume Next
     f.controls.Remove "lblDailyNote"
     f.controls.Remove "txtDailyNote"
@@ -6264,13 +6264,13 @@ Public Sub BuildDailyLog_HistoryList(owner As Object)
     f.controls.Remove "lblDailyMonitoringCreate"
     On Error GoTo 0
 
-'--- 螻･豁ｴ繝ｩ繝吶Ν菴懈・ ---
+'--- 履歴ラベル作成 ---
 Dim lbl As MSForms.label
 Dim lblMonitoring As MSForms.label
 
 Set lblMonitoring = f.controls.Add("Forms.Label.1", "lblDailyMonitoringCreate", True)
 With lblMonitoring
-    .caption = "繝｢繝九ち繝ｪ繝ｳ繧ｰ譛ｬ譁・
+    .caption = "モニタリング本文"
     .Left = margin
     .Top = fieldsBottom - 4
     .Width = 200
@@ -6278,7 +6278,7 @@ With lblMonitoring
     .Font.Bold = True
 End With
 
-    ' ListBox 霑ｽ蜉
+    ' ListBox 追加
     Set lst = f.controls.Add("Forms.ListBox.1", "lstDailyLogList", True)
 
   
@@ -6287,7 +6287,7 @@ End With
         .Top = topPos
         .Width = f.Width - margin * 2
         .Height = f.Height - .Top - 8
-        .ColumnCount = 3          ' 險倬鹸蟷ｴ譛・/ 蜷榊燕 / 險倬鹸蜀・ｮｹ
+        .ColumnCount = 3          ' 記録年月 / 名前 / 記録内容
         .ColumnHeads = False
         .IntegralHeight = False
         .ColumnWidths = "70 pt;0 pt;9999 pt"
@@ -6313,7 +6313,7 @@ Public Sub BuildDailyLog_ExtractButton(owner As Object)
 
     margin = 12
 
-    ' fraDailyLog 縺ｨ 險倬鹸閠・ユ繧ｭ繧ｹ繝医ｒ蜿門ｾ・
+    ' fraDailyLog と 記録者テキストを取得
     Set f = GetDailyLogFrame()
     If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     If f Is Nothing Then Exit Sub
@@ -6323,18 +6323,18 @@ Public Sub BuildDailyLog_ExtractButton(owner As Object)
         Set txtStaff = SafeGetControl(f, "txtDailyStaff")
     End If
     If txtStaff Is Nothing Then Exit Sub
-    BuildDailyLog_HistoryList owner   ' 笘・％繧後ｒ霑ｽ蜉・・istBox繧貞ｿ・★菴懊ｋ・・
+    BuildDailyLog_HistoryList owner   ' ★これを追加（ListBoxを必ず作る）
 
-    ' 譌｢縺ｫ繝懊ち繝ｳ縺後≠繧後・蜑企勁縺励※菴懊ｊ逶ｴ縺暦ｼ亥・遲会ｼ・
+    ' 既にボタンがあれば削除して作り直し（冪等）
     On Error Resume Next
     f.controls.Remove "cmdDailyExtract"
     On Error GoTo 0
 
-    ' 謚ｽ蜃ｺ繝懊ち繝ｳ霑ｽ蜉
+    ' 抽出ボタン追加
     Set cmd = f.controls.Add("Forms.CommandButton.1", "cmdDailyExtract", True)
 
     With cmd
-        .caption = "繝｢繝九ち繝ｪ繝ｳ繧ｰ菴懈・"
+        .caption = "モニタリング作成"
         .Width = 120
         .Height = 24
         .Top = txtStaff.Top
@@ -6360,7 +6360,7 @@ Public Sub BuildDailyLog_SaveButton(owner As Object)
     rightGap = 8
     extractW = 120
 
-    ' fraDailyLog 縺ｨ 險倬鹸閠・ユ繧ｭ繧ｹ繝医ｒ蜿門ｾ・
+    ' fraDailyLog と 記録者テキストを取得
     Set f = GetDailyLogFrame()
     If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     If f Is Nothing Then Exit Sub
@@ -6371,16 +6371,16 @@ Public Sub BuildDailyLog_SaveButton(owner As Object)
     End If
     If txtStaff Is Nothing Then Exit Sub
 
-    ' 譌｢縺ｫ繝懊ち繝ｳ縺後≠繧後・蜑企勁縺励※菴懊ｊ逶ｴ縺暦ｼ亥・遲会ｼ・
+    ' 既にボタンがあれば削除して作り直し（冪等）
     On Error Resume Next
     f.controls.Remove "cmdDailySave"
     On Error GoTo 0
 
-    ' 菫晏ｭ倥・繧ｿ繝ｳ霑ｽ蜉
+    ' 保存ボタン追加
     Set cmd = f.controls.Add("Forms.CommandButton.1", "cmdDailySave", True)
 
     With cmd
-        .caption = "譌･縲・・險倬鹸繧剃ｿ晏ｭ・
+        .caption = "日々の記録を保存"
         .Width = 110
         .Height = 24
         .Top = txtStaff.Top
@@ -6400,7 +6400,7 @@ End Sub
 
 
 Private Sub mDailyExtract_Click()
-    ' 竭 譚先侭譁・ｒ菴懊ｋ
+    ' ① 材料文を作る
     Call Me.BuildMonthlyDraft_FromDailyLog
     
     
@@ -6409,19 +6409,19 @@ Private Sub mDailyExtract_Click()
     If box Is Nothing Then Exit Sub
 
 
-        If InStr(1, box.value, "・医％縺ｮ譛医・險倬鹸縺ｯ縺ゅｊ縺ｾ縺帙ｓ・・, vbTextCompare) > 0 Then
+        If InStr(1, box.value, "（この月の記録はありません）", vbTextCompare) > 0 Then
             
-            box.value = "縲先怦谺｡繝｢繝九ち繝ｪ繝ｳ繧ｰ荳区嶌縺阪・ & vbCrLf & _
-            "蟇ｾ雎｡・・ & Me.controls("frHeader").controls("txtHdrName").value & vbCrLf & _
-                 "譛滄俣・・ & Format$(DateSerial(Year(CDate(DailyLogCtl("txtDailyDate").value)), _
+            box.value = "【月次モニタリング下書き】" & vbCrLf & _
+            "対象：" & Me.controls("frHeader").controls("txtHdrName").value & vbCrLf & _
+                 "期間：" & Format$(DateSerial(Year(CDate(DailyLogCtl("txtDailyDate").value)), _
                                       Month(CDate(DailyLogCtl("txtDailyDate").value)), 1), "yyyy/mm/dd") & _
             " - " & _
             Format$(DateSerial(Year(CDate(DailyLogCtl("txtDailyDate").value)), _
                                 Month(CDate(DailyLogCtl("txtDailyDate").value)) + 1, 0), "yyyy/mm/dd") & vbCrLf & vbCrLf & _
-            "笆 縺薙・譛医↓險倬鹸縺輔ｌ縺溽音險倅ｺ矩・ & vbCrLf & _
-            "縺薙・譛医・迚ｹ險倅ｺ矩・→縺ｪ繧玖ｨ倬鹸縺ｯ縺ゅｊ縺ｾ縺帙ｓ縺ｧ縺励◆縲・ & vbCrLf & _
-            "菴楢ｪｿ髱｢縺ｫ螟ｧ縺阪↑螟牙虚縺ｯ縺ｪ縺上∵律縲・・繝ｪ繝上ン繝ｪ縺ｫ繧ょｮ牙ｮ壹＠縺ｦ蜿悶ｊ邨・∪繧後※縺・∪縺励◆縲・ & vbCrLf & _
-            "莉雁ｾ後ｂ迴ｾ蝨ｨ縺ｮ迥ｶ諷九ｒ邯ｭ謖√〒縺阪ｋ繧医≧縲∝ｼ輔″邯壹″邨碁℃繧定ｦｳ蟇溘＠縺ｦ縺・″縺ｾ縺吶・
+            "■ この月に記録された特記事項" & vbCrLf & _
+            "この月は特記事項となる記録はありませんでした。" & vbCrLf & _
+            "体調面に大きな変動はなく、日々のリハビリにも安定して取り組まれていました。" & vbCrLf & _
+            "今後も現在の状態を維持できるよう、引き続き経過を観察していきます。"
 
                       Call ExportMonitoring_ToMonthlyWorkbook( _
           CDate(DailyLogCtl("txtDailyDate").value), _
@@ -6435,10 +6435,10 @@ Private Sub mDailyExtract_Click()
     
     
 
-    ' 竭｡ AI縺ｧ荳区嶌縺阪↓螟画鋤
-' AI縺ｧ荳区嶌縺阪↓螟画鋤
+    ' ② AIで下書きに変換
+' AIで下書きに変換
 If Trim$(DailyLogCtl("txtMonthlyMonitoringDraft").value) = "" Then
-    MsgBox "繝｢繝九ち繝ｪ繝ｳ繧ｰ譛ｬ譁・′遨ｺ縺ｧ縺吶ょ・縺ｫ蜀・ｮｹ繧貞・蜉帙＠縺ｦ縺上□縺輔＞縲・, vbExclamation
+    MsgBox "モニタリング本文が空です。先に内容を入力してください。", vbExclamation
     Exit Sub
 End If
 
@@ -6446,13 +6446,13 @@ End If
 
 DailyLogCtl("txtMonthlyMonitoringDraft").value = _
     OpenAI_BuildDraft( _
-            "縲仙・蜉帙ヵ繧ｩ繝ｼ繝槭ャ繝亥宍螳医・ & vbCrLf & _
-"莉･荳九・隕句・縺励ｒ縲∬｡ｨ險倥・鬆・ｺ上・險伜捷・遺蔓・峨ｒ荳蛻・､峨∴縺壹↓蠢・★蜃ｺ蜉帙☆繧九％縺ｨ縲・ & vbCrLf & _
-"隕句・縺励・霑ｽ蜉繝ｻ蜑企勁繝ｻ險縺・鋤縺育ｦ∵ｭ｢縲り｣・｣ｾ・遺・/縲舌・逡ｪ蜿ｷ莉倥￠・臥ｦ∵ｭ｢縲・ & vbCrLf & _
-"蠢・★縺薙・鬆・ｺ擾ｼ・ & vbCrLf & _
-"笆 縺薙・譛医↓險倬鹸縺輔ｌ縺溽音險倅ｺ矩・ & vbCrLf & _
-"笆 繧ｳ繝｡繝ｳ繝医・閠・ｯ・ & vbCrLf & vbCrLf & _
-"繝ｻ譛ｬ譁・ｼ育ｵ碁℃繝ｻ譎らｳｻ蛻暦ｼ峨↓縺ｯ縲∽ｺ句ｮ溘・縺ｿ繧定ｨ倩ｼ峨☆繧九りｨ倬鹸縺ｫ譖ｸ縺九ｌ縺ｦ縺・↑縺・ｺ句ｮ溘ｄ謗ｨ貂ｬ縺ｯ縲∵悽譁・↓縺ｯ蜷ｫ繧√↑縺・ゅ後さ繝｡繝ｳ繝医・閠・ｯ溘肴ｬ・↓髯舌ｊ縲∬ｨ倬鹸蜀・ｮｹ繧定ｸ上∪縺医◆莉雁ｾ後・隕ｳ蟇溯ｦ也せ繧・蕗諢冗せ繧定ｨ倩ｼ峨＠縺ｦ繧医＞縲ゅ◎縺ｮ髫帙・縲∵妙螳壹ｒ驕ｿ縺代√娯雷笳九・蜿ｯ閭ｽ諤ｧ縺後≠繧九阪娯雷笳九↓逡呎э縺励※邨碁℃繧堤｢ｺ隱阪☆繧九阪↑縺ｩ縺ｮ陦ｨ迴ｾ縺ｫ髯仙ｮ壹☆繧九ょ現蟄ｦ逧・愛譁ｭ縲∵隼蝟・・謔ｪ蛹悶・譁ｭ螳壹∝屏譫憺未菫ゅ・譁ｭ螳壹・陦後ｏ縺ｪ縺・よ枚菴薙・縲後〒縺吶・縺ｾ縺呵ｪｿ縲阪→縺励∫樟蝣ｴ險倬鹸縺ｨ縺励※閾ｪ辟ｶ縺ｧ隱ｭ縺ｿ繧・☆縺・沐繧峨°縺輔ｒ謖√◆縺帙ｋ縲・, _
+            "【出力フォーマット厳守】" & vbCrLf & _
+"以下の見出しを、表記・順序・記号（■）を一切変えずに必ず出力すること。" & vbCrLf & _
+"見出しの追加・削除・言い換え禁止。装飾（★/【】/番号付け）禁止。" & vbCrLf & _
+"必ずこの順序：" & vbCrLf & _
+"■ この月に記録された特記事項" & vbCrLf & _
+"■ コメント・考察" & vbCrLf & vbCrLf & _
+"・本文（経過・時系列）には、事実のみを記載する。記録に書かれていない事実や推測は、本文には含めない。「コメント・考察」欄に限り、記録内容を踏まえた今後の観察視点や留意点を記載してよい。その際は、断定を避け、「○○の可能性がある」「○○に留意して経過を確認する」などの表現に限定する。医学的判断、改善・悪化の断定、因果関係の断定は行わない。文体は「です・ます調」とし、現場記録として自然で読みやすい柔らかさを持たせる。", _
             DailyLogCtl("txtMonthlyMonitoringDraft").value _
         )
 
@@ -6469,24 +6469,24 @@ Private Sub mDailySave_Click()
     mDailyLogManual = True
     Call SaveDailyLog_Append(Me)
     mDailyLogManual = False
-    MsgBox "譌･縲・・險倬鹸繧剃ｿ晏ｭ倥＠縺ｾ縺励◆縲・, vbInformation
+    MsgBox "日々の記録を保存しました。", vbInformation
 End Sub
 
 
 
 
 
-' 隧穂ｾ｡繝輔か繝ｼ繝荳矩Κ縺ｫ縲後す繝ｼ繝医∈菫晏ｭ倥阪・繧ｿ繝ｳ繧・縺､驟咲ｽｮ縺吶ｋ・・蝗槫ｮ溯｡檎畑・・
+' 評価フォーム下部に「シートへ保存」ボタンを1つ配置する（1回実行用）
 Public Sub PlaceGlobalSaveButton_Once()
 
     Dim btnClose As MSForms.CommandButton
     Dim btnSave As MSForms.CommandButton
     Dim c As MSForms.Control
 
-    ' 縲碁哩縺倥ｋ縲阪・繧ｿ繝ｳ繧偵く繝｣繝励す繝ｧ繝ｳ縺ｧ迚ｹ螳・
+    ' 「閉じる」ボタンをキャプションで特定
     For Each c In Me.controls
         If TypeOf c Is MSForms.CommandButton Then
-            If c.caption = "髢峨§繧・ Then
+            If c.caption = "閉じる" Then
                 Set btnClose = c
                 Exit For
             End If
@@ -6494,22 +6494,22 @@ Public Sub PlaceGlobalSaveButton_Once()
     Next c
 
     If btnClose Is Nothing Then
-        MsgBox "髢峨§繧九・繧ｿ繝ｳ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "閉じるボタンが見つかりません。", vbExclamation
         Exit Sub
     End If
 
-    ' 譌｢縺ｫ繧ｰ繝ｭ繝ｼ繝舌Ν菫晏ｭ倥・繧ｿ繝ｳ縺後≠繧九°遒ｺ隱・
+    ' 既にグローバル保存ボタンがあるか確認
     On Error Resume Next
     Set btnSave = Me.controls("cmdSaveGlobal")
     On Error GoTo 0
 
-    ' 縺ｪ縺代ｌ縺ｰ譁ｰ隕丈ｽ懈・
+    ' なければ新規作成
     If btnSave Is Nothing Then
         Set btnSave = Me.controls.Add("Forms.CommandButton.1", "cmdSaveGlobal")
-        btnSave.caption = "繧ｷ繝ｼ繝医∈菫晏ｭ・
+        btnSave.caption = "シートへ保存"
     End If
 
-    ' 髢峨§繧九・繧ｿ繝ｳ縺ｨ鬮倥＆繝ｻ邵ｦ菴咲ｽｮ繧偵◎繧阪∴縺ｦ縲∝ｷｦ髫｣縺ｫ驟咲ｽｮ
+    ' 閉じるボタンと高さ・縦位置をそろえて、左隣に配置
     With btnSave
         .Height = btnClose.Height
         .Top = btnClose.Top
@@ -6517,21 +6517,21 @@ Public Sub PlaceGlobalSaveButton_Once()
         .Left = btnClose.Left - .Width - 12
     End With
 
-    ' ---- 繧ｯ繝ｪ繧｢繝懊ち繝ｳ・・mdClearGlobal・峨ｒ驟咲ｽｮ ----
+    ' ---- クリアボタン（cmdClearGlobal）を配置 ----
 Dim btnClear As MSForms.CommandButton
 
-' 譌｢縺ｫ蟄伜惠縺吶ｋ縺狗｢ｺ隱・
+' 既に存在するか確認
 On Error Resume Next
 Set btnClear = Me.controls("cmdClearGlobal")
 On Error GoTo 0
 
-' 縺ｪ縺代ｌ縺ｰ譁ｰ隕丈ｽ懈・
+' なければ新規作成
 If btnClear Is Nothing Then
     Set btnClear = Me.controls.Add("Forms.CommandButton.1", "cmdClearGlobal")
-    btnClear.caption = "繧ｯ繝ｪ繧｢"
+    btnClear.caption = "クリア"
 End If
 
-' 菫晏ｭ倥・繧ｿ繝ｳ縺ｮ蜿ｳ髫｣縺ｫ驟咲ｽｮ
+' 保存ボタンの右隣に配置
 With btnClear
     .Height = btnSave.Height
     .Top = btnSave.Top
@@ -6548,15 +6548,15 @@ Set mGlobalClear.btn = btnClear
     
     
     
-    ' ---- 繝懊ち繝ｳ謨ｴ蛻暦ｼ井ｿ晏ｭ・竊・繧ｯ繝ｪ繧｢ 竊・髢峨§繧具ｼ・----
+    ' ---- ボタン整列（保存 → クリア → 閉じる） ----
 
-' 髢峨§繧九・繧ｿ繝ｳ繧貞渕貅悶→縺励※荳逡ｪ蜿ｳ遶ｯ縺ｫ蝗ｺ螳・
+' 閉じるボタンを基準として一番右端に固定
 btnClose.Left = btnClose.Left
 
-' 菫晏ｭ倥・繧ｿ繝ｳ繧帝哩縺倥ｋ縺ｮ蟾ｦ縺ｫ
+' 保存ボタンを閉じるの左に
 btnSave.Left = btnClose.Left - btnSave.Width - 12
 
-' 繧ｯ繝ｪ繧｢繝懊ち繝ｳ・・mdClearGlobal・峨ｒ菫晏ｭ倥・蟾ｦ縺ｫ
+' クリアボタン（cmdClearGlobal）を保存の左に
 btnClear.Left = btnSave.Left - btnClear.Width - 12
 
 
@@ -6584,25 +6584,25 @@ Private Sub mGlobalClear_Clicked()
     Dim c As MSForms.Control
 
     For Each c In Me.controls
-        ' 繝・く繧ｹ繝医・繝・け繧ｹ縺ｯ遨ｺ縺ｫ
+        ' テキストボックスは空に
         If TypeOf c Is MSForms.TextBox Then
-            ' 隧穂ｾ｡譌･(txtEDate)縺ｨ譌･縲・ｨ倬鹸縺ｮ譌･莉・txtDailyDate)縺ｯ繧ｯ繝ｪ繧｢縺励↑縺・
+            ' 評価日(txtEDate)と日々記録の日付(txtDailyDate)はクリアしない
             If c.name <> "txtEDate" And c.name <> "txtDailyDate" Then
                 c.value = ""
             End If
         End If
 
-        ' 繧ｳ繝ｳ繝懊・繝・け繧ｹ縺ｯ驕ｸ謚櫁ｧ｣髯､
+        ' コンボボックスは選択解除
         If TypeOf c Is MSForms.ComboBox Then
             c.value = ""
         End If
 
-        ' 繝√ぉ繝・け繝懊ャ繧ｯ繧ｹ縺ｯ繧ｪ繝・
+        ' チェックボックスはオフ
         If TypeOf c Is MSForms.CheckBox Then
             c.value = False
         End If
 
-        ' 繝ｪ繧ｹ繝医・繝・け繧ｹ縺ｯ驕ｸ謚槭□縺題ｧ｣髯､・磯・岼縺ｯ谿九☆・・
+        ' リストボックスは選択だけ解除（項目は残す）
         If TypeOf c Is MSForms.ListBox Then
             Dim lb As MSForms.ListBox
             Dim i As Long
@@ -6624,10 +6624,10 @@ Private Sub mDailyList_DblClicked()
     Dim r As Long, c As Long
     Dim buf As String
     
-    ' 蟇ｾ雎｡縺ｮ荳隕ｧListBox繧貞叙蠕・
+    ' 対象の一覧ListBoxを取得
     Set lb = Me.controls("lstDailyLogList")
     
-    ' 蜈ｨ陦後・蜈ｨ蛻励ｒ繧ｿ繝門玄蛻・ｊ・区隼陦後〒騾｣邨・
+    ' 全行・全列をタブ区切り＋改行で連結
     For r = 0 To lb.ListCount - 1
         For c = 0 To lb.ColumnCount - 1
             If c > 0 Then buf = buf & vbTab
@@ -6636,19 +6636,19 @@ Private Sub mDailyList_DblClicked()
         buf = buf & vbCrLf
     Next r
     
-    ' 繧ｯ繝ｪ繝・・繝懊・繝峨∈繧ｳ繝斐・
+    ' クリップボードへコピー
     Dim dobj As New MSForms.DataObject
     dobj.SetText buf
     dobj.PutInClipboard
     
-    MsgBox "縺薙・譛医・險倬鹸荳隕ｧ繧偵け繝ｪ繝・・繝懊・繝峨↓繧ｳ繝斐・縺励∪縺励◆縲・ & vbCrLf & _
-           "繝｡繝｢蟶ｳ繧Цord縺ｫ Ctrl+V 縺ｧ雋ｼ繧贋ｻ倥￠縺ｧ縺阪∪縺吶・, vbInformation
+    MsgBox "この月の記録一覧をクリップボードにコピーしました。" & vbCrLf & _
+           "メモ帳やWordに Ctrl+V で貼り付けできます。", vbInformation
 End Sub
 
 
 
 Public Sub HookDailyLogList(lb As MSForms.ListBox)
-    ' 譌･縲・・險倬鹸荳隕ｧ ListBox 逕ｨ縺ｮ繧､繝吶Φ繝医ヵ繝・け
+    ' 日々の記録一覧 ListBox 用のイベントフック
     If mDailyList Is Nothing Then
         Set mDailyList = New clsDailyLogList
     End If
@@ -6657,7 +6657,7 @@ End Sub
 
 
 
-'=== 譌･縲・・險倬鹸繝輔Ξ繝ｼ繝蜿門ｾ励・繝ｫ繝代・・亥・騾壼喧逕ｨ・・===
+'=== 日々の記録フレーム取得ヘルパー（共通化用） ===
 Private Function GetDailyLogFrame() As MSForms.Frame
     Dim mp As Object
     Dim pg As Object
@@ -6670,13 +6670,13 @@ Private Function GetDailyLogFrame() As MSForms.Frame
         Exit Function
     End If
 
-    ' 縲梧律縲・・險倬鹸縲阪・繝ｼ繧ｸ繧呈爾縺・
-    Set pg = SafeGetPage(mp, "譌･縲・・險倬鹸")
+    ' 「日々の記録」ページを探す
+    Set pg = SafeGetPage(mp, "日々の記録")
     If pg Is Nothing Then
         Exit Function
     End If
 
-    ' 繝輔Ξ繝ｼ繝 fraDailyLog 繧貞叙蠕・
+    ' フレーム fraDailyLog を取得
     Set f = SafeGetControl(pg, "fraDailyLog")
     If f Is Nothing Then
         Exit Function
@@ -6705,7 +6705,7 @@ End Function
 
 
 
-'=== 豁ｩ陦瑚ｩ穂ｾ｡繝輔Ξ繝ｼ繝蜿門ｾ励・繝ｫ繝代・・・rame6 蝗ｺ螳夲ｼ・===
+'=== 歩行評価フレーム取得ヘルパー（Frame6 固定） ===
 Private Function GetWalkFrame() As MSForms.Frame
     Set GetWalkFrame = GetWalkRootFrame()
 End Function
@@ -6809,14 +6809,14 @@ Private Sub FixWalkRootFrameHeight()
     Set f = GetWalkFrame()
     If f Is Nothing Then Exit Sub
 
-    ' 蟄舌さ繝ｳ繝医Ο繝ｼ繝ｫ縺ｮ荳逡ｪ荳九・菴咲ｽｮ繧定ｪｿ縺ｹ繧・
+    ' 子コントロールの一番下の位置を調べる
     For Each c In f.controls
         If c.Top + c.Height > maxBottom Then
             maxBottom = c.Top + c.Height
         End If
     Next c
 
-    ' 蠢・ｦ√↑繧蛾ｫ倥＆繧剃ｼｸ縺ｰ縺・
+    ' 必要なら高さを伸ばす
     If maxBottom + 6 > f.Height Then
 #If APP_DEBUG Then
         Debug.Print "[WALK-ROOT-RESIZE]", _
@@ -6841,18 +6841,18 @@ Debug.Print "[CALL] Debug_FixOverflowFrames @ " & Format$(Now, "yyyy-mm-dd hh:nn
 
     On Error Resume Next
 
-    ' 蟋ｿ蜍｢隧穂ｾ｡繧ｿ繝・
+    ' 姿勢評価タブ
     FitFrameHeightToChildren SafeGetControl(Me, "Frame2")
 
-    ' 霄ｫ菴捺ｩ溯・隧穂ｾ｡繧ｿ繝厄ｼ郁ｦｪ縺縺題ｪｿ謨ｴ縲ょｭ色rame12縺ｫ縺ｯ隗ｦ繧峨↑縺・ｼ・
+    ' 身体機能評価タブ（親だけ調整。子Frame12には触らない）
     FitFrameHeightToChildren SafeGetControl(Me, "Frame12")
     FitFrameHeightToChildren SafeGetControl(Me, "Frame3")
     ' FitFrameHeightToChildren Me.Controls("Frame14")
 
-    ' 豁ｩ陦瑚ｩ穂ｾ｡繧ｿ繝厄ｼ亥､ｧ譫・・
+    ' 歩行評価タブ（大枠）
     FitFrameHeightToChildren SafeGetControl(Me, "Frame6")
 
-    ' 隱咲衍繝ｻ邊ｾ逾槭ち繝厄ｼ郁ｦｪFrame7縺縺代ｒ隱ｿ謨ｴ・・
+    ' 認知・精神タブ（親Frame7だけを調整）
     FitFrameHeightToChildren SafeGetControl(Me, "Frame7")
     
     On Error GoTo 0
@@ -6876,7 +6876,7 @@ Private Sub GetPageUsableArea( _
 
     Dim mp As MSForms.MultiPage
 
-    x = 0: y = 0: w = 0: h = 0   ' 繝・ヵ繧ｩ繝ｫ繝医け繝ｪ繧｢
+    x = 0: y = 0: w = 0: h = 0   ' デフォルトクリア
 
     Set mp = GetMainMultiPage()
     If mp Is Nothing Then Exit Sub
@@ -6884,8 +6884,8 @@ Private Sub GetPageUsableArea( _
     If pageIndex < 0 Then Exit Sub
     If pageIndex > mp.Pages.count - 1 Then Exit Sub
 
-    ' 莉翫・ MultiPage 蜈ｨ菴薙ｒ縲後・繝ｼ繧ｸ縺ｮ蛻ｩ逕ｨ蜿ｯ閭ｽ鬆伜沺縲阪→縺励※霑斐☆
-    ' ・井ｽ咏區繧・ち繝門・縺ｮ繝槭う繝翫せ縺ｯ縲∝ｾ後〒 AlignRootFrame 蛛ｴ縺ｧ隱ｿ謨ｴ縺吶ｋ・・
+    ' 今は MultiPage 全体を「ページの利用可能領域」として返す
+    ' （余白やタブ分のマイナスは、後で AlignRootFrame 側で調整する）
     x = 0
     y = 0
     w = mp.Width
@@ -6907,15 +6907,15 @@ Private Sub AlignRootFrameToPage(ByVal pageIndex As Long, root As MSForms.Frame)
 
     Set pg = mp.Pages(pageIndex)
 
-    '=== 繝壹・繧ｸ縺ｮ繧ｯ繝ｩ繧､繧｢繝ｳ繝磯伜沺・医ち繝悶ｒ髯､縺・◆荳ｭ霄ｫ驛ｨ蛻・ｼ峨ｒ邂怜・ ===
-    ' 縺薙％縺ｯ PREVIEW 縺ｧ蜃ｺ縺ｦ縺・◆蛟､縺ｨ蜷後§繝ｭ繧ｸ繝・け縺ｫ謠・∴繧句燕謠舌〒縲・
-    ' 繧ｷ繝ｳ繝励Ν縺ｫ MultiPage 縺ｮ蜀・・繧剃ｽｿ縺・
+    '=== ページのクライアント領域（タブを除いた中身部分）を算出 ===
+    ' ここは PREVIEW で出ていた値と同じロジックに揃える前提で、
+    ' シンプルに MultiPage の内側を使う
     pageLeft = 0
     pageTop = 0
-    pageWidth = mp.Width          ' 繧ｿ繝門ｷｦ蜿ｳ縺ｮ菴咏區縺ｯ縺ｻ縺ｼ 0 謇ｱ縺・
-    pageHeight = mp.Height - 40   ' 荳句・繝懊ち繝ｳ縺ｶ繧灘ｰ代＠縺縺第而縺医ａ
+    pageWidth = mp.Width          ' タブ左右の余白はほぼ 0 扱い
+    pageHeight = mp.Height - 40   ' 下側ボタンぶん少しだけ控えめ
 
-    '=== 繝ｫ繝ｼ繝医ヵ繝ｬ繝ｼ繝繧偵・繝ｼ繧ｸ荳譚ｯ縺ｫ繝輔ぅ繝・ヨ ===
+    '=== ルートフレームをページ一杯にフィット ===
     With root
         .Left = pageLeft
         .Top = pageTop
@@ -6942,20 +6942,20 @@ Private Sub PreviewOnePage(ByVal idx As Long, ByVal mp As MSForms.MultiPage)
         Exit Sub
     End If
 
-    ' 迴ｾ蝨ｨ蛟､
+    ' 現在値
     Debug.Print "  Current:", _
                 "L=" & root.Left, _
                 "T=" & root.Top, _
                 "W=" & root.Width, _
                 "H=" & root.Height
 
-    ' AlignRootFrameToPage 縺御ｽｿ縺・・繝ｼ繧ｸ鬆伜沺
+    ' AlignRootFrameToPage が使うページ領域
     GetPageUsableArea idx, x, y, w, h
     Debug.Print "  PageArea:", _
                 "X=" & x, "Y=" & y, _
                 "W=" & w, "H=" & h
 
-    ' 繧ゅ＠ AlignRootFrameToPage 繧貞他繧薙□繧峨％縺・↑繧具ｼ遺ｻ螳滄圀縺ｫ縺ｯ譖ｸ縺肴鋤縺医↑縺・ｼ・
+    ' もし AlignRootFrameToPage を呼んだらこうなる（※実際には書き換えない）
     Debug.Print "  WouldAlignTo:", _
                 "L=" & (x), _
                 "T=" & (y), _
@@ -6984,7 +6984,7 @@ Private Function GetPageRootFrame(ByVal pageIndex As Long) As MSForms.Frame
         If Not GetPageRootFrame Is Nothing Then Exit Function
     End If
 
-    ' 縺昴・繝壹・繧ｸ蜀・・縲御ｸ逡ｪ螟ｧ縺阪↑ Frame = 繝ｫ繝ｼ繝医ヵ繝ｬ繝ｼ繝縲阪→縺ｿ縺ｪ縺・
+    ' そのページ内の「一番大きな Frame = ルートフレーム」とみなす
     For Each c In pg.controls
         If TypeName(c) = "Frame" And TypeName(c.parent) = "Page" Then
             Set f = c
@@ -7023,7 +7023,7 @@ Public Sub TidyBaseLayout_Once()
     If mBaseLayoutDone Then Exit Sub
     mBaseLayoutDone = True
 
-    '笘・蝓ｺ譛ｬ繝ｬ繧､繧｢繧ｦ繝茨ｼ医・繝ｼ繧ｸ蜈ｱ騾夲ｼ峨・縺薙％縺縺代〒繧・ｋ
+    '★ 基本レイアウト（ページ共通）はここだけでやる
     Apply_AlignRoot_All
 
 
@@ -7050,7 +7050,7 @@ Public Sub AdjustBottomButtons()
 
     Dim yBtn As Single
 
-    ' 繝懊ち繝ｳ縺後∪縺辟｡縺・ち繧､繝溘Φ繧ｰ縺ｧ縺ｯ菴輔ｂ縺励↑縺・
+    ' ボタンがまだ無いタイミングでは何もしない
     If Not ControlExists(Me, "btnCloseCtl") Then Exit Sub
     If Not ControlExists(Me, "cmdSaveGlobal") Then Exit Sub
     If Not ControlExists(Me, "cmdClearGlobal") Then Exit Sub
@@ -7062,7 +7062,7 @@ Public Sub AdjustBottomButtons()
     Me.controls("cmdClearGlobal").Top = yBtn
     
     
-     ' 笘・％縺難ｼ亥燕髱｢縺ｸ・・
+     ' ★ここ（前面へ）
     Me.controls("btnCloseCtl").ZOrder 0
     Me.controls("cmdSaveGlobal").ZOrder 0
     Me.controls("cmdClearGlobal").ZOrder 0
@@ -7089,12 +7089,12 @@ Dim minH As Single
 Dim maxH As Single
 
 
-minH = 620   ' 竊・隧穂ｾ｡繝輔か繝ｼ繝縺ｨ縺励※譛菴朱剞谺ｲ縺励＞鬮倥＆・郁ｪｿ謨ｴ蜿ｯ・・
+minH = 620   ' ← 評価フォームとして最低限欲しい高さ（調整可）
 
 maxH = Application.UsableHeight - (Me.Height - Me.InsideHeight) - 6
 
 If maxH < minH Then
-    ' 逕ｻ髱｢縺悟ｰ上＆縺吶℃繧句ｴ蜷医・縲∵怙菴弱し繧､繧ｺ繧貞━蜈・
+    ' 画面が小さすぎる場合は、最低サイズを優先
     Me.Height = minH
 Else
     Me.Height = maxH
@@ -7107,7 +7107,7 @@ End If
     Dim frViewport As MSForms.Frame
     Dim mp As MSForms.MultiPage
 
-    '--- Header・域桃菴懊ヰ繝ｼ・壼崋螳壹・髱槭せ繧ｯ繝ｭ繝ｼ繝ｫ・・--
+    '--- Header（操作バー：固定・非スクロール）---
     On Error Resume Next
     Set frHeader = Me.controls("frHeader")
     On Error GoTo 0
@@ -7126,7 +7126,7 @@ End If
         .Visible = True
     End With
 
-    '--- 譌｢蟄倥・繝｡繧､繝ｳ MultiPage・域爾縺吶□縺代ゆｽ懊ｉ縺ｪ縺・ｼ・--
+    '--- 既存のメイン MultiPage（探すだけ。作らない）---
     Set mp = FindMainMultiPage()
 
     If Not mp Is Nothing Then
@@ -7135,10 +7135,10 @@ End If
         mp.Width = Me.InsideWidth - PAD_SIDE * 2
        mp.Height = Application.Max(120, (maxH - (Me.Height - Me.InsideHeight)) - mp.Top - PAD_SIDE)
 
-        ' 鬮倥＆縺ｯ蠕梧ｮｵ縺ｮViewport縺ｧ豎ｺ繧√ｋ
+        ' 高さは後段のViewportで決める
     End If
 
-    '--- Viewport・郁ｩ穂ｾ｡繧ｳ繝ｳ繝・Φ繝・ｰら畑・壼ｿ・ｦ√↑繧峨せ繧ｯ繝ｭ繝ｼ繝ｫ・・--
+    '--- Viewport（評価コンテンツ専用：必要ならスクロール）---
     On Error Resume Next
     Set frViewport = Me.controls("frViewport")
     On Error GoTo 0
@@ -7233,18 +7233,18 @@ Public Sub CreateHeaderButtons_Once()
     Dim f As MSForms.Frame
     Set f = Me.controls("frHeader")
 
-    ' 譌｢蟄倥・繧ｿ繝ｳ・亥・逅・・譛ｬ菴難ｼ・
+    ' 既存ボタン（処理の本体）
     Dim bClear As MSForms.Control, bSave As MSForms.Control, bClose As MSForms.Control
     Set bClear = Me.controls("cmdClearGlobal")
     Set bSave = Me.controls("cmdSaveGlobal")
     Set bClose = Me.controls("btnCloseCtl")
 
-    ' 譌｢蟄倥・隕九∴縺ｪ縺上☆繧具ｼ井ｽ咲ｽｮ縺ｯ隗ｦ繧峨↑縺・ｼ・
+    ' 既存は見えなくする（位置は触らない）
     bClear.Visible = False
     bSave.Visible = False
     bClose.Visible = False
 
-    ' 繝倥ャ繝繝ｼ逕ｨ縺ｮ譁ｰ繝懊ち繝ｳ繧剃ｽ懊ｋ・亥錐蜑榊崋螳夲ｼ・
+    ' ヘッダー用の新ボタンを作る（名前固定）
     Dim hClear As MSForms.CommandButton
     Dim hSave  As MSForms.CommandButton
     Dim hClose As MSForms.CommandButton
@@ -7259,12 +7259,12 @@ Public Sub CreateHeaderButtons_Once()
     If hSave Is Nothing Then Set hSave = f.controls.Add("Forms.CommandButton.1", "cmdSaveHeader", True)
     If hClose Is Nothing Then Set hClose = f.controls.Add("Forms.CommandButton.1", "cmdCloseHeader", True)
 
-    ' 隕九◆逶ｮ縺ｯ譌｢蟄倥ｒ雕剰･ｲ
+    ' 見た目は既存を踏襲
     hClear.caption = bClear.caption: hClear.Width = bClear.Width: hClear.Height = bClear.Height
     hSave.caption = bSave.caption:   hSave.Width = bSave.Width:   hSave.Height = bSave.Height
     hClose.caption = bClose.caption: hClose.Width = bClose.Width: hClose.Height = bClose.Height
 
-    ' 蜿ｳ蟇・○驟咲ｽｮ
+    ' 右寄せ配置
     Const pad As Single = 8, gap As Single = 10
     Dim hdrBtnTop As Single
     hdrBtnTop = (44 - hClose.Height) / 2
@@ -7291,27 +7291,27 @@ mHdr3.tag = "Close"
 
 
 '==============================
-' LoadPrev・亥燕蝗槭・蛟､繧定ｪｭ縺ｿ霎ｼ繧・峨・繝・ム繝ｼ繝懊ち繝ｳ + Hook
+' LoadPrev（前回の値を読み込む）ヘッダーボタン + Hook
 '==============================
 Dim hLoadPrev As MSForms.CommandButton
 
 
-' 譌｢縺ｫ縺ゅｌ縺ｰ縺昴ｌ繧呈雫繧・茨ｼ昴う繝ｳ繧ｹ繧ｿ繝ｳ繧ｹ繧貞｢励ｄ縺輔↑縺・ｼ・
+' 既にあればそれを掴む（＝インスタンスを増やさない）
 On Error Resume Next
 Set hLoadPrev = f.controls("cmdHdrLoadPrev")
 On Error GoTo 0
 
-' 辟｡縺代ｌ縺ｰ菴懊ｋ
+' 無ければ作る
 If hLoadPrev Is Nothing Then
     Set hLoadPrev = f.controls.Add("Forms.CommandButton.1", "cmdHdrLoadPrev", True)
 End If
 
-hLoadPrev.caption = "蜑榊屓縺ｮ蛟､繧定ｪｭ縺ｿ霎ｼ繧"
+hLoadPrev.caption = "前回の値を読み込む"
 hLoadPrev.Width = 180
 hLoadPrev.Height = 24
 hLoadPrev.Top = hClose.Top
 
-' 菴咲ｽｮ・嗾xtHdrKana 縺ｮ蜿ｳ・・xtHdrKana 縺檎┌縺・ｴ蜷医・蜿ｳ遶ｯ縺ｮ蟾ｦ縺ｫ鄂ｮ縺擾ｼ・
+' 位置：txtHdrKana の右（txtHdrKana が無い場合は右端の左に置く）
 On Error Resume Next
 Dim tbKana As MSForms.Control
 Set tbKana = f.controls("txtHdrKana")
@@ -7323,14 +7323,14 @@ Else
     hLoadPrev.Left = hClear.Left - 12 - hLoadPrev.Width
 End If
 
-' Hook・医け繝ｪ繝・け縺ｧ譌｢蟄倥・ btnLoadPrevCtl_Click 縺ｸ豬√☆・・
+' Hook（クリックで既存の btnLoadPrevCtl_Click へ流す）
 Set mHdrLoadPrevHook = New clsHdrBtnHook
 Set mHdrLoadPrevHook.btn = hLoadPrev
 mHdrLoadPrevHook.tag = "LoadPrev"
 Set mHdrLoadPrevHook.owner = Me
 RearrangeHeaderTopAreaLayout
 
-' 譌ｧ繝懊ち繝ｳ縺ｯ髱櫁｡ｨ遉ｺ
+' 旧ボタンは非表示
 On Error Resume Next
 Set mp1 = Me.controls("MultiPage1")
 If Not mp1 Is Nothing Then
@@ -7535,14 +7535,14 @@ Private Sub ApplyScroll_MP1_Page3_7_Once()
     Dim f As Object
     Set mp = EvalCtl("MultiPage1")
 
-    'Page3: Frame3・・crollHeight = 578.35 + 24 = 602.35・・
+    'Page3: Frame3（ScrollHeight = 578.35 + 24 = 602.35）
     Set f = EvalCtl("Frame3")
     If Not f Is Nothing Then
         f.ScrollBars = fmScrollBarsVertical
         f.ScrollHeight = 900
     End If
 
-    'Page7: Frame7・亥ｿ・ｦ∵凾縺ｮ縺ｿ繝舌・陦ｨ遉ｺ・・
+    'Page7: Frame7（必要時のみバー表示）
 Set f = EvalCtl("Frame7")
 If Not f Is Nothing Then
     f.ScrollHeight = 584.35
@@ -7555,7 +7555,7 @@ End If
 
 
 
-'Page2: Frame2・亥ｧｿ蜍｢隧穂ｾ｡縺ｮ荳玖ｦ句・繧悟ｯｾ遲厄ｼ・
+'Page2: Frame2（姿勢評価の下見切れ対策）
 Set f = EvalCtl("Frame2")
 If Not f Is Nothing Then
     If Not mp Is Nothing Then f.Height = mp.Height
@@ -7566,7 +7566,7 @@ End If
 
 
 
-'Page1: Frame1・亥ｰ冗判髱｢縺ｧ荳九′隕句・繧後ｋ蟇ｾ遲厄ｼ・
+'Page1: Frame1（小画面で下が見切れる対策）
 Set f = EvalCtl("Frame1")
 If Not f Is Nothing Then
     If Not mp Is Nothing Then f.Height = mp.Height
@@ -7591,16 +7591,16 @@ Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
 
     
 
-    '蜿ｳ荳翫・蟆上＆縺・暦ｼ壹ヵ繧ｩ繝ｼ繝縺縺鷹哩縺倥ｋ・・xcel縺ｯ髢峨§縺ｪ縺・ｼ・
+    '右上の小さい×：フォームだけ閉じる（Excelは閉じない）
     If CloseMode = vbFormControlMenu Then
         mQuitMode = qmNone
         Exit Sub
     End If
 
-    '髢峨§繧九・繧ｿ繝ｳ邨檎罰縺ｮ縺ｿ・壻ｿ晏ｭ倡｢ｺ隱・竊・Excel邨ゆｺ・
+    '閉じるボタン経由のみ：保存確認 → Excel終了
     If mQuitMode = qmAsk Then
         Dim ans As VbMsgBoxResult
-        ans = MsgBox("菫晏ｭ倥＠縺ｾ縺吶°・・, vbYesNoCancel + vbQuestion, "邨ゆｺ・｢ｺ隱・)
+        ans = MsgBox("保存しますか？", vbYesNoCancel + vbQuestion, "終了確認")
 
         If ans = vbCancel Then
             Cancel = True
@@ -7614,7 +7614,7 @@ Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
         If ans = vbYes Then
             ThisWorkbook.Save
         Else
-            '菫晏ｭ倥○縺夂ｵゆｺ・ｼ哘xcel縺ｮ菫晏ｭ倡｢ｺ隱阪ｒ蜃ｺ縺輔↑縺・
+            '保存せず終了：Excelの保存確認を出さない
             ThisWorkbook.Saved = True
         End If
 
@@ -7651,7 +7651,7 @@ Public Sub AddPrintButton_TestEval()
     If btn Is Nothing Then
         Set btn = f.controls.Add("Forms.CommandButton.1", "cmdPrintTestEval", True)
         With btn
-       .caption = "繧ｰ繝ｩ繝募魂蛻ｷ"
+       .caption = "グラフ印刷"
         btn.Width = 120
         btn.Height = 28
         btn.Left = f.InsideWidth - btn.Width - 28.35
@@ -7662,7 +7662,7 @@ Public Sub AddPrintButton_TestEval()
     
 btn.Left = f.InsideWidth - btn.Width - 28.35
 
-    ' 竊・笘・％縺凪・・医％縺ｮ2陦後□縺題ｿｽ蜉・・
+    ' ← ★ここ★（この2行だけ追加）
     Set mPrintBtnHook = New clsPrintBtnHook
     Set mPrintBtnHook.btn = btn
     
@@ -7686,19 +7686,19 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
     Set txtDailyDate = DailyLogCtl("txtDailyDate")
     If txtDailyDate Is Nothing Then Exit Sub
 
-    ' 蟇ｾ雎｡譛茨ｼ晁ｨ倬鹸譌･・・xtDailyDate・峨・譛・
+    ' 対象月＝記録日（txtDailyDate）の月
     v = txtDailyDate.value
     If Not IsDate(v) Then
-        MsgBox "險倬鹸譌･縺ｮ谺・↓豁｣縺励＞譌･莉倥ｒ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・, vbExclamation
+        MsgBox "記録日の欄に正しい日付を入力してください。", vbExclamation
         Exit Sub
     End If
     dFrom = DateSerial(Year(CDate(v)), Month(CDate(v)), 1)
     dTo = DateSerial(Year(CDate(v)), Month(CDate(v)) + 1, 0)
 
-    ' 蟇ｾ雎｡閠・ｼ昴ヵ繧ｩ繝ｼ繝豌丞錐・・ailyLog縺ｮB蛻励→荳閾ｴ・・
+    ' 対象者＝フォーム氏名（DailyLogのB列と一致）
     nm = Trim$(Me.controls("frHeader").controls("txtHdrName").value)
     If nm = "" Then
-        MsgBox "豌丞錐繧貞・蜉帙＠縺ｦ縺上□縺輔＞縲・, vbExclamation
+        MsgBox "氏名を入力してください。", vbExclamation
         Exit Sub
     End If
     
@@ -7707,10 +7707,10 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
 
 Set ws = GetDailyLogSheetByDate(dFrom, False, wb, wbOpenedHere)
 If ws Is Nothing Then
-    s = "縲舌Δ繝九ち繝ｪ繝ｳ繧ｰ縲・ & vbCrLf _
-      & "蛻ｩ逕ｨ閠・錐・・ & nm & vbCrLf _
-      & "譛滄俣・・ & Format$(dFrom, "yyyy/mm/dd") & " ・・" & Format$(dTo, "yyyy/mm/dd") & vbCrLf & vbCrLf _
-      & "隧ｲ蠖捺悄髢薙・險倬鹸縺ｯ縺ゅｊ縺ｾ縺帙ｓ縲・ & vbCrLf
+    s = "【モニタリング】" & vbCrLf _
+      & "利用者名：" & nm & vbCrLf _
+      & "期間：" & Format$(dFrom, "yyyy/mm/dd") & " ～ " & Format$(dTo, "yyyy/mm/dd") & vbCrLf & vbCrLf _
+      & "該当期間の記録はありません。" & vbCrLf
     GoTo WriteOut
 End If
 
@@ -7719,10 +7719,10 @@ End If
     pid = Trim$(Me.controls("frHeader").controls("txtHdrPID").value)
     cntSameName = Application.WorksheetFunction.CountIf(ws.Range("C:C"), nm)
 
-    s = "縲舌Δ繝九ち繝ｪ繝ｳ繧ｰ縲・ & vbCrLf _
-      & "蟇ｾ雎｡・・ & nm & vbCrLf _
-      & "譛滄俣・・ & Format$(dFrom, "yyyy/mm/dd") & " - " & Format$(dTo, "yyyy/mm/dd") & vbCrLf & vbCrLf _
-      & "笆 縺薙・譛医↓險倬鹸縺輔ｌ縺溽音險倅ｺ矩・ｼ域凾邉ｻ蛻暦ｼ・ & vbCrLf
+    s = "【モニタリング】" & vbCrLf _
+      & "対象：" & nm & vbCrLf _
+      & "期間：" & Format$(dFrom, "yyyy/mm/dd") & " - " & Format$(dTo, "yyyy/mm/dd") & vbCrLf & vbCrLf _
+      & "■ この月に記録された特記事項（時系列）" & vbCrLf
 
     hit = 0
     For r = 2 To lastRow
@@ -7733,7 +7733,7 @@ End If
                     note = ExtractAbnormalFindingsFromNote(CStr(ws.Cells(r, 5).value))
                     If Len(Trim$(note)) > 0 Then
                         staff = CStr(ws.Cells(r, 6).value)
-                        s = s & "繝ｻ" & Format$(d, "m/d") & "・・ & staff & "・・" & note & vbCrLf
+                        s = s & "・" & Format$(d, "m/d") & "（" & staff & "） " & note & vbCrLf
                         hit = hit + 1
                     End If
                 End If
@@ -7742,11 +7742,11 @@ End If
     Next r
 
     If hit = 0 Then
-        s = s & "繝ｻ・医％縺ｮ譛医・險倬鹸縺ｯ縺ゅｊ縺ｾ縺帙ｓ・・ & vbCrLf
+        s = s & "・（この月の記録はありません）" & vbCrLf
     End If
 
     
-    ' 蜃ｺ蜉帛・・郁ｵｷ蜍墓凾縺ｫ遒ｺ菫晄ｸ医∩縺縺悟ｿｵ縺ｮ縺溘ａ・・
+    ' 出力先（起動時に確保済みだが念のため）
 WriteOut:
     Call Ensure_MonthlyDraftBox_UnderFraDailyLog
     DailyLogCtl("txtMonthlyMonitoringDraft").value = s
@@ -7766,20 +7766,20 @@ Private Function ExtractAbnormalFindingsFromNote(ByVal note As String) As String
     normalized = Replace(normalized, vbCr, vbLf)
 
 
-    startPos = InStr(1, normalized, "逡ｰ蟶ｸ謇隕・, vbTextCompare)
+    startPos = InStr(1, normalized, "異常所見", vbTextCompare)
     If startPos = 0 Then Exit Function
 
-    startPos = startPos + Len("逡ｰ蟶ｸ謇隕・)
+    startPos = startPos + Len("異常所見")
     Do While startPos <= Len(normalized)
       Select Case Mid$(normalized, startPos, 1)
-          Case "・・, ":", "縲・, "]", "・・, ")", " ", "縲", vbTab, vbLf
+          Case "：", ":", "】", "]", "）", ")", " ", "　", vbTab, vbLf
               startPos = startPos + 1
           Case Else
               Exit Do
        End Select
     Loop
 
-    endPos = InStr(startPos, normalized, "莉雁ｾ後・譁ｹ驥・, vbTextCompare)
+    endPos = InStr(startPos, normalized, "今後の方針", vbTextCompare)
     If endPos > 0 Then
         result = Mid$(normalized, startPos, endPos - startPos)
     Else
@@ -7815,8 +7815,8 @@ Public Sub EnsureNameSuggestList()
     With lb
         .Left = Me.controls("frHeader").Left + tb.Left
         .Top = Me.controls("frHeader").Top + tb.Top + tb.Height + 4
-        .Width = 200     ' 讓ｪ繧偵さ繝ｳ繝代け繝医↓
-        .Height = 60     ' 3莉ｶ縺上ｉ縺・ｦ九∴繧矩ｫ倥＆
+        .Width = 200     ' 横をコンパクトに
+        .Height = 60     ' 3件くらい見える高さ
 
         .Visible = False
     End With
@@ -7829,10 +7829,10 @@ End Sub
 
 
 Private Sub txtHdrName_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
-    ' 繝倥ャ繝蜈･蜉・竊・陬丞哨縺ｸ蜷梧悄・域里蟄倥Ο繧ｸ繝・け鬧・虚縺ｮ縺溘ａ・・
+    ' ヘッダ入力 → 裏口へ同期（既存ロジック駆動のため）
     Me.controls("txtName").text = Me.controls("frHeader").controls("txtHdrName").text
 
-    ' 蛟呵｣廝OX遒ｺ菫・竊・譖ｴ譁ｰ
+    ' 候補BOX確保 → 更新
     EnsureNameSuggestList
     Me.UpdateNameSuggest
 End Sub
@@ -7846,10 +7846,10 @@ Private Sub lstNameSuggest_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
 
     If lb.ListIndex < 0 Then Exit Sub
 
-    ' 繝倥ャ繝縺ｮ豌丞錐縺縺大渚譏
+    ' ヘッダの氏名だけ反映
     Me.controls("frHeader").controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
 
-    ' 陬丞哨蜷梧悄・域里蟄倥Ο繧ｸ繝・け逕ｨ・・
+    ' 裏口同期（既存ロジック用）
     Me.controls("txtName").text = Me.controls("frHeader").controls("txtHdrName").text
 
     lb.Visible = False
@@ -7858,7 +7858,7 @@ End Sub
 
 
 '====================================================
-' 蜑榊屓縺ｮ蛟､繧定ｪｭ縺ｿ霎ｼ繧繝懊ち繝ｳ・壻ｽ懈・・・・鄂ｮ・・n Error縺ｪ縺暦ｼ・
+' 前回の値を読み込むボタン：作成＆配置（On Errorなし）
 '====================================================
 Private Function TryGetCtl(ByVal container As Object, ByVal ctlName As String, ByRef outCtl As Object) As Boolean
     Dim c As Object
@@ -7889,15 +7889,15 @@ Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     If btn Is Nothing Then
     
     
-        ' 辟｡縺代ｌ縺ｰ菴懊ｋ・・rHeader驟堺ｸ具ｼ・
+        ' 無ければ作る（frHeader配下）
         Set btn = hdr.controls.Add("Forms.CommandButton.1", BTN_NAME, True)
-        btn.caption = "蜑榊屓縺ｮ蛟､繧定ｪｭ縺ｿ霎ｼ繧"
+        btn.caption = "前回の値を読み込む"
         btn.Accelerator = "L"
         btn.Width = 180
         btn.Height = 24
     End If
 
-    ' 隕九◆逶ｮ蜷医ｏ縺帷畑縺ｮ蜿ら・繝懊ち繝ｳ・医≠繧後・・・
+    ' 見た目合わせ用の参照ボタン（あれば）
     Set refBtn = SafeGetControl(hdr, "cmdSaveHeader")
     If refBtn Is Nothing Then Set refBtn = SafeGetControl(hdr, "cmdClearHeader")
     If refBtn Is Nothing Then Set refBtn = SafeGetControl(hdr, "cmdCloseHeader")
@@ -7917,10 +7917,10 @@ End Sub
 
 
 
-' ====== 繧ｬ繝ｼ繝会ｼ育┌髯舌Ν繝ｼ繝鈴亟豁｢・・=====
+' ====== ガード（無限ループ防止）======
 
 
-' ====== BasicInfo・・rame32・峨さ繝ｳ繝医Ο繝ｼ繝ｫ螳滉ｽ灘叙蠕・======
+' ====== BasicInfo（Frame32）コントロール実体取得 ======
 Private Function BIObj(ByVal ctrlName As String) As Object
 
     Set BIObj = SafeGetControl(Me, ctrlName)
@@ -8008,7 +8008,7 @@ Private Sub HandleBasicInfoEnterRoute(ByRef KeyCode As MSForms.ReturnInteger, Op
 End Sub
 
 Private Function ReadText(ByVal o As Object) As String
-    ' Value蜆ｪ蜈医√ム繝｡縺ｪ繧欝ext
+    ' Value優先、ダメならText
     On Error Resume Next
     ReadText = CStr(CallByName(o, "Value", VbGet))
     If Err.Number <> 0 Then
@@ -8020,7 +8020,7 @@ Private Function ReadText(ByVal o As Object) As String
 End Function
 
 Private Sub WriteText(ByVal o As Object, ByVal s As String)
-    ' Value蜆ｪ蜈医√ム繝｡縺ｪ繧欝ext
+    ' Value優先、ダメならText
     On Error Resume Next
     CallByName o, "Value", VbLet, s
     If Err.Number <> 0 Then
@@ -8031,7 +8031,7 @@ Private Sub WriteText(ByVal o As Object, ByVal s As String)
     On Error GoTo 0
 End Sub
 
-' ====== 蟷ｴ鮨｢譖ｴ譁ｰ譛ｬ菴・======
+' ====== 年齢更新本体 ======
 Private Sub UpdateAgeFromBirth()
     If mAgeBusy Then Exit Sub
     mAgeBusy = True
@@ -8048,7 +8048,7 @@ Private Sub UpdateAgeFromBirth()
     End If
 
     If Not TryParseBirthDate_ShowaOrAD(sBirth, dtBirth) Then
-        ' 蜈･蜉幃比ｸｭ/荳肴ｭ｣ 竊・蟷ｴ鮨｢縺ｯ遨ｺ谺・ｼ医お繝ｩ繝ｼ縺ｯ蜃ｺ縺輔↑縺・ｼ・
+        ' 入力途中/不正 → 年齢は空欄（エラーは出さない）
         WriteText BIObj("txtAge"), ""
         mAgeBusy = False
         Exit Sub
@@ -8074,7 +8074,7 @@ Private Function CalcAge(ByVal birth As Date, ByVal asOfDate As Date) As Long
     CalcAge = y
 End Function
 
-' 譏ｭ蜥後・隘ｿ證ｦ縺ｮ荳｡蟇ｾ蠢懶ｼ域亊蜥後□縺代〒OK縺ｪ繧峨％縺薙□縺代〒螳檎ｵ撰ｼ・
+' 昭和・西暦の両対応（昭和だけでOKならここだけで完結）
 Private Function TryParseBirthDate_ShowaOrAD(ByVal raw As String, ByRef outDate As Date) As Boolean
     Dim s As String, era As String
     Dim a As Variant
@@ -8084,16 +8084,16 @@ Private Function TryParseBirthDate_ShowaOrAD(ByVal raw As String, ByRef outDate 
     s = Trim$(raw)
     If Len(s) = 0 Then Exit Function
 
-    ' 縺悶▲縺上ｊ豁｣隕丞喧・域枚蟄怜喧縺代＠縺ｪ縺・ｈ縺・∫ｽｮ謠帛ｯｾ雎｡繧呈・遉ｺ・・
+    ' ざっくり正規化（文字化けしないよう、置換対象を明示）
     On Error Resume Next
     s = StrConv(s, vbNarrow)
     On Error GoTo 0
 
-    s = Replace$(s, "・・, "/")
-    s = Replace$(s, "譏ｭ蜥・, "S")
-    s = Replace$(s, "蟷ｴ", "/")
-    s = Replace$(s, "譛・, "/")
-    s = Replace$(s, "譌･", "")
+    s = Replace$(s, "／", "/")
+    s = Replace$(s, "昭和", "S")
+    s = Replace$(s, "年", "/")
+    s = Replace$(s, "月", "/")
+    s = Replace$(s, "日", "")
     s = Replace$(s, ".", "/")
     s = Replace$(s, "-", "/")
     s = UCase$(s)
@@ -8102,7 +8102,7 @@ Private Function TryParseBirthDate_ShowaOrAD(ByVal raw As String, ByRef outDate 
         s = Replace$(s, "//", "/")
     Loop
 
-    ' 蜈磯ｭ縺郡縺ｪ繧画亊蜥・
+    ' 先頭がSなら昭和
     If Left$(s, 1) = "S" Then
         era = "S"
         s = Trim$(Mid$(s, 2))
@@ -8110,7 +8110,7 @@ Private Function TryParseBirthDate_ShowaOrAD(ByVal raw As String, ByRef outDate 
         era = ""
     End If
 
-    ' 隘ｿ證ｦ縺ｨ縺励※隱ｭ繧√ｋ縺ｪ繧峨◎繧後〒OK・井ｺ呈鋤・・
+    ' 西暦として読めるならそれでOK（互換）
     If era = "" Then
         If IsDate(s) Then
             outDate = CDate(s)
@@ -8125,7 +8125,7 @@ Private Function TryParseBirthDate_ShowaOrAD(ByVal raw As String, ByRef outDate 
     y = val(a(0)): m = val(a(1)): d = val(a(2))
     If y <= 0 Or m <= 0 Or d <= 0 Then Exit Function
 
-    ' 譏ｭ蜥・=1926 竊・1925 + 譏ｭ蜥悟ｹｴ
+    ' 昭和1=1926 → 1925 + 昭和年
     adY = 1925 + y
 
     On Error GoTo EH
@@ -8135,9 +8135,9 @@ Private Function TryParseBirthDate_ShowaOrAD(ByVal raw As String, ByRef outDate 
 EH:
 End Function
 
-' ====== 逋ｺ轣ｫ縺梧ｪ縺励＞迺ｰ蠅・〒繧ょｿ・★譖ｴ譁ｰ縺輔ｌ繧九ヨ繝ｪ繧ｬ ======
+' ====== 発火が怪しい環境でも必ず更新されるトリガ ======
 Private Sub MultiPage1_Change()
-    ' 繧ｿ繝也ｧｻ蜍輔・繧ｿ繧､繝溘Φ繧ｰ縺ｧ蠢・★蜷梧悄
+    ' タブ移動のタイミングで必ず同期
     On Error Resume Next
     UpdateAgeFromBirth
     On Error GoTo 0

@@ -63,10 +63,10 @@ End If
     Exit Sub
 End If
         
-    ' 繝倥ャ繝 竊・陬丞哨蜷梧悄・域里蟄倥Ο繧ｸ繝・け鬧・虚・・
+    ' ヘッダ → 裏口同期（既存ロジック駆動）
     frmEval.controls("txtName").text = tb.text
 
-    ' 蛟呵｣廝OX繧堤｢ｺ螳溘↓蜃ｺ縺・
+    ' 候補BOXを確実に出す
     frmEval.EnsureNameSuggestList
     frmEval.UpdateNameSuggest
     

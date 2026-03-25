@@ -4,14 +4,14 @@ Public gArchiveDeleteBasicID As String
 
 
 
-'--- 繝倥ャ繝陦後°繧牙・逡ｪ蜿ｷ繧呈爾縺呻ｼ郁ｦ九▽縺九ｉ縺ｪ縺代ｌ縺ｰ 0・・
+'--- ヘッダ行から列番号を探す（見つからなければ 0）
 Private Function HeaderCol(ByVal hdrRow As Range, ByVal candidates As Variant) As Long
     Dim i As Long
     For i = LBound(candidates) To UBound(candidates)
         Dim c As Range
         For Each c In hdrRow.Cells
             If Trim$(CStr(c.value)) = CStr(candidates(i)) Then
-                HeaderCol = c.Column - hdrRow.Cells(1, 1).Column + 1 'CurrentRegion蜀・・逶ｸ蟇ｾ蛻・
+                HeaderCol = c.Column - hdrRow.Cells(1, 1).Column + 1 'CurrentRegion内の相対列
                 Exit Function
             End If
         Next c
@@ -19,7 +19,7 @@ Private Function HeaderCol(ByVal hdrRow As Range, ByVal candidates As Variant) A
     HeaderCol = 0
 End Function
 
-'--- 繧｢繝ｼ繧ｫ繧､繝悶ヶ繝・け縺ｫ蜷悟錐繧ｷ繝ｼ繝医′縺ｪ縺代ｌ縺ｰ菴懊ｋ
+'--- アーカイブブックに同名シートがなければ作る
 Private Function GetOrCreateSheet(ByVal wb As Workbook, ByVal sheetName As String) As Worksheet
     Dim ws As Worksheet
     On Error Resume Next
@@ -38,7 +38,7 @@ End Function
 
 Public Sub DeleteClientFrom_EvalData_ByName()
     Dim nm As String
-    nm = Trim$(InputBox("蜑企勁縺励◆縺・茜逕ｨ閠・・豌丞錐・亥ｮ悟・荳閾ｴ・・, "EvalData 蜑企勁", ""))
+    nm = Trim$(InputBox("削除したい利用者の氏名（完全一致）", "EvalData 削除", ""))
     If nm = "" Then Exit Sub
 
     Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("EvalData")
@@ -56,27 +56,27 @@ Public Sub DeleteClientFrom_EvalData_ByName()
         End If
     Next r
 
-    MsgBox "EvalData: " & cnt & " 陦後ｒ蜑企勁縺励∪縺励◆縲・, vbInformation
+    MsgBox "EvalData: " & cnt & " 行を削除しました。", vbInformation
 End Sub
 
 
 
-' 蜷悟ｧ灘酔蜷肴凾・壼炎髯､繝懊ち繝ｳ驕狗畑縺ｧ縺ｯ EvalData 縺九ｉ譛譁ｰ縺ｮID(遨ｺ縺ｧ縺ｪ縺・繧定・蜍戊｣懷勧蜿門ｾ励☆繧九◆繧√・壼ｸｸ縺ｯID蜈･蜉帙ｒ豎ゅａ縺ｪ縺・
+' 同姓同名時：削除ボタン運用では EvalData から最新のID(空でない)を自動補助取得するため、通常はID入力を求めない
 
-' EvalData 蟆ら畑・壽ｰ丞錐・・K=89蛻暦ｼ我ｸ閾ｴ縺ｮ陦後ｒ縲悟挨繝悶ャ繧ｯ縺ｸ騾驕ｿ縲坂・縲悟・縺九ｉ蜑企勁縲・
+' EvalData 専用：氏名（CK=89列）一致の行を「別ブックへ退避」→「元から削除」
 Public Sub ArchiveAndDelete_EvalData_ByName()
 
     Dim nm As String
-    nm = Trim$(InputBox("EvalData・夐驕ｿ竊貞炎髯､縺励◆縺・ｰ丞錐・亥ｮ悟・荳閾ｴ・・ & vbCrLf & "窶ｻ蜷悟ｧ灘酔蜷阪′縺・ｋ蝣ｴ蜷医・谺｡縺ｫID繧定◇縺阪∪縺・, "EvalData 蛻ｩ逕ｨ邨ゆｺ・・い繝ｼ繧ｫ繧､繝・, ""))
+    nm = Trim$(InputBox("EvalData：退避→削除したい氏名（完全一致）" & vbCrLf & "※同姓同名がいる場合は次にIDを聞きます", "EvalData 利用終了者アーカイブ", ""))
     If nm = "" Then Exit Sub
 
     Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("EvalData")
-    Const NAME_COL As Long = 89 'CK・域ｰ丞錐・・
+    Const NAME_COL As Long = 89 'CK（氏名）
 
     Dim lastRow As Long
     lastRow = ws.Cells(ws.rows.count, NAME_COL).End(xlUp).row
     If lastRow < 2 Then
-        MsgBox "EvalData 縺ｫ繝・・繧ｿ陦後′縺ゅｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "EvalData にデータ行がありません。", vbExclamation
         Exit Sub
     End If
     
@@ -84,7 +84,7 @@ Public Sub ArchiveAndDelete_EvalData_ByName()
     Const ID_COL As Long = 82 'Basic.ID
 
 
-'--- 蜷悟ｧ灘酔蜷阪メ繧ｧ繝・け・夊､・焚繝偵ャ繝医↑繧迂D繧定ｿｽ蜉縺ｧ閨槭￥ ---
+'--- 同姓同名チェック：複数ヒットならIDを追加で聞く ---
 Dim hitCount As Long: hitCount = 0
 Dim r2 As Long
 For r2 = lastRow To 2 Step -1
@@ -100,9 +100,9 @@ If hitCount >= 2 Then
     
     
     If pid = "" Then
-        pid = Trim$(InputBox("蜷悟ｧ灘酔蜷阪′隕九▽縺九ｊ縺ｾ縺励◆縲ょ炎髯､・磯驕ｿ・峨＠縺溘＞ID繧貞・蜉帙＠縺ｦ縺上□縺輔＞縲・, "ID縺ｧ迚ｹ螳・, ""))
+        pid = Trim$(InputBox("同姓同名が見つかりました。削除（退避）したいIDを入力してください。", "IDで特定", ""))
         If pid = "" Then
-            MsgBox "ID譛ｪ蜈･蜉帙・縺溘ａ荳ｭ豁｢縺励∪縺励◆縲・, vbExclamation
+            MsgBox "ID未入力のため中止しました。", vbExclamation
             Exit Sub
         End If
     End If
@@ -112,8 +112,8 @@ End If
     
 
     Dim ans As VbMsgBoxResult
-    ans = MsgBox("EvalData 縺ｮ豌丞錐=" & nm & " 繧偵い繝ｼ繧ｫ繧､繝悶∈騾驕ｿ縺励∝・繝・・繧ｿ縺九ｉ蜑企勁縺励∪縺吶ょｮ溯｡後＠縺ｾ縺吶°・・, _
-                 vbYesNo + vbQuestion, "譛邨ら｢ｺ隱・)
+    ans = MsgBox("EvalData の氏名=" & nm & " をアーカイブへ退避し、元データから削除します。実行しますか？", _
+                 vbYesNo + vbQuestion, "最終確認")
     If ans <> vbYes Then Exit Sub
 
     Application.ScreenUpdating = False
@@ -124,7 +124,7 @@ End If
     Dim wsA As Worksheet: Set wsA = wbArc.Worksheets(1)
     wsA.name = "EvalData"
 
-    ' 繝倥ャ繝騾驕ｿ・・1:FW1 繧偵◎縺ｮ縺ｾ縺ｾ・・
+    ' ヘッダ退避（A1:FW1 をそのまま）
     ws.Range("A1:FW1").Copy Destination:=wsA.Range("A1")
 
     Dim moved As Long: moved = 0
@@ -132,18 +132,18 @@ End If
 
     For r = lastRow To 2 Step -1
         If CStr(ws.Cells(r, NAME_COL).value) = nm And (pid = "" Or CStr(ws.Cells(r, ID_COL).value) = pid) Then
-            ' 陦碁驕ｿ・・:FW 縺ｮ陦鯉ｼ・
+            ' 行退避（A:FW の行）
             Dim nextA As Long
             nextA = wsA.Cells(wsA.rows.count, 1).End(xlUp).row + 1
             ws.Range("A" & r & ":FW" & r).Copy Destination:=wsA.Range("A" & nextA)
 
-            ' 蜈・°繧牙炎髯､
+            ' 元から削除
             ws.rows(r).Delete
             moved = moved + 1
         End If
     Next r
 
-    ' 繧｢繝ｼ繧ｫ繧､繝紋ｿ晏ｭ・
+    ' アーカイブ保存
     Dim arcPath As String, arcFile As String
     arcPath = ThisWorkbook.path
     If arcPath = "" Then arcPath = Environ$("TEMP")
@@ -155,8 +155,8 @@ End If
     Application.EnableEvents = True
     Application.ScreenUpdating = True
 
-    MsgBox "螳御ｺ・ｼ哘valData 縺九ｉ " & moved & " 陦後ｒ騾驕ｿ竊貞炎髯､縺励∪縺励◆縲・ & vbCrLf & _
-           "繧｢繝ｼ繧ｫ繧､繝厄ｼ・ & arcFile, vbInformation
+    MsgBox "完了：EvalData から " & moved & " 行を退避→削除しました。" & vbCrLf & _
+           "アーカイブ：" & arcFile, vbInformation
            
            
            gArchiveDeleteBasicID = ""
@@ -178,7 +178,7 @@ Public Sub AddHeaderArchiveDeleteButton()
 
     If btn Is Nothing Then
         Set btn = hdr.controls.Add("Forms.CommandButton.1", "cmdArchiveDelete", True)
-        btn.caption = "邨ゆｺ・・炎髯､"
+        btn.caption = "終了者削除"
         btn.Width = 90
         btn.Height = hdr.controls("txtHdrPID").Height
         btn.Top = hdr.controls("txtHdrPID").Top

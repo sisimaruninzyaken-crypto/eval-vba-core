@@ -1,13 +1,13 @@
 Attribute VB_Name = "modToneReflexIO"
 Option Explicit
 
-' 繝ｭ繝ｼ繧ｫ繝ｫ螳夂ｾｩ・井ｻ悶→遶ｶ蜷医＠縺ｪ縺・ｈ縺・Private・・
+' ローカル定義（他と競合しないよう Private）
 Private Const SEP_REC As String = "|"
 Private Const SEP_KV  As String = ":"
 Private Const SEP_RL  As String = ","
 
 '========================================================
-' 遲狗ｷ雁ｼｵ繝ｻ蜿榊ｰ・ｼ育吏邵ｮ蜷ｫ繧・・菫晏ｭ假ｼ啜ONE_IO / TONE_NOTE
+' 筋緊張・反射（痙縮含む） 保存：TONE_IO / TONE_NOTE
 '========================================================
 Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     If owner Is Nothing Then If VBA.UserForms.count > 0 Then Set owner = VBA.UserForms(0)
@@ -16,13 +16,13 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal o
     Dim q As New Collection, node As Object, ch As Object, tmp As Object
     Dim combos As New Collection
 
-    ' 1) 縲檎ｭ狗ｷ雁ｼｵ縲・or 縲悟渚蟆・阪ｒ蜷ｫ繧繝壹・繧ｸ繧堤音螳・
+    ' 1) 「筋緊張」 or 「反射」を含むページを特定
     On Error Resume Next
     For Each ctl In owner.controls
         If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
-                If InStr(pg.caption, "遲狗ｷ雁ｼｵ") > 0 Or InStr(pg.caption, "蜿榊ｰ・) > 0 Then
+                If InStr(pg.caption, "筋緊張") > 0 Or InStr(pg.caption, "反射") > 0 Then
                     Set target = pg: Exit For
                 End If
             Next pg
@@ -33,14 +33,14 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal o
     On Error GoTo 0
     If target Is Nothing Then Set target = owner
 
-    ' 2) 蟇ｾ雎｡繝壹・繧ｸ蜀・・ ComboBox 繧貞庶髮・ｼ・rame蜀・ｂ謗倥ｋ・・
+    ' 2) 対象ページ内の ComboBox を収集（Frame内も掘る）
     q.Add target
     Do While q.count > 0
         Set node = q(1): q.Remove 1
         On Error Resume Next
         For Each ch In node.controls
             Set tmp = ch.controls
-            If Err.Number = 0 Then q.Add ch     ' 蟄舌≠繧・
+            If Err.Number = 0 Then q.Add ch     ' 子あり
             Err.Clear
             If TypeName(ch) = "ComboBox" Then combos.Add ch
         Next ch
@@ -48,7 +48,7 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal o
     Loop
     If combos.count = 0 Then Exit Sub
 
-    ' 3) 驥崎､・勁蜴ｻ 竊・Top/Left 縺ｧ螳牙ｮ壹た繝ｼ繝・
+    ' 3) 重複除去 → Top/Left で安定ソート
     Dim seen As Object: Set seen = CreateObject("Scripting.Dictionary"): seen.CompareMode = 1
     Dim uniq As New Collection, i As Long, j As Long
     For i = 1 To combos.count
@@ -67,11 +67,11 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal o
         Next j
     Next i
 
-    ' 4) R竊鱈 繝壹い縺ｧ繧ｷ繝ｪ繧｢繝ｩ繧､繧ｺ・・鬆・岼・・
+    ' 4) R→L ペアでシリアライズ（8項目）
     Dim keys As Variant
     keys = Array( _
-        "MAS_荳願い螻育ｭ狗ｾ､", "MAS_荳願い莨ｸ遲狗ｾ､", "MAS_荳玖い螻育ｭ狗ｾ､", "MAS_荳玖い莨ｸ遲狗ｾ､", _
-        "蜿榊ｰЮ荳願・莠碁ｭ遲・, "蜿榊ｰЮ荳願・荳蛾ｭ遲・, "蜿榊ｰЮ閹晁搭閻ｱ", "蜿榊ｰЮ繧｢繧ｭ繝ｬ繧ｹ閻ｱ")
+        "MAS_上肢屈筋群", "MAS_上肢伸筋群", "MAS_下肢屈筋群", "MAS_下肢伸筋群", _
+        "反射_上腕二頭筋", "反射_上腕三頭筋", "反射_膝蓋腱", "反射_アキレス腱")
 
     Dim pos As Long: pos = 1
     Dim k As Long, vR As String, vL As String, s As String
@@ -79,10 +79,10 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal o
     For k = LBound(keys) To UBound(keys)
         If pos + 1 > UBound(arr) Then Exit For
 
-        ' 蜿ｳ・・・峨％縺ｮ1陦後ｒ蟾ｮ縺玲崛縺・
+        ' 右（R）この1行を差し替え
 vR = CStr(arr(pos).value): If Len(vR) = 0 Then vR = CStr(arr(pos).text)
 
-' 蟾ｦ・・・峨％縺ｮ1陦後ｒ蟾ｮ縺玲崛縺・
+' 左（L）この1行を差し替え
 vL = CStr(arr(pos + 1).value): If Len(vL) = 0 Then vL = CStr(arr(pos + 1).text)
 
 
@@ -95,12 +95,12 @@ vL = CStr(arr(pos + 1).value): If Len(vL) = 0 Then vL = CStr(arr(pos + 1).text)
         pos = pos + 2
     Next k
 
-    ' 5) 譖ｸ縺榊・縺暦ｼ・ONE_IO・・
+    ' 5) 書き出し（TONE_IO）
     Dim c As Long: c = EnsureHeaderCol(ws, "TONE_IO")
     ws.Cells(r, c).value = s
     Debug.Print "[TONE][SAVE] row=" & r & " col=" & c & " len=" & Len(s)
 
-    ' 6) 蛯呵・ｼ域怙繧ょ､ｧ縺阪＞ or MultiLine TextBox・俄・ TONE_NOTE
+    ' 6) 備考（最も大きい or MultiLine TextBox）→ TONE_NOTE
     Dim noteCtl As Object, box As Object, subCtl As Object, bestH As Single: bestH = 0
     Dim note As String, cNote As Long
 
@@ -126,19 +126,19 @@ End Sub
 
 
 '========================================================
-' 遲狗ｷ雁ｼｵ繝ｻ蜿榊ｰ・ｼ育吏邵ｮ蜷ｫ繧・・隱ｭ縺ｿ霎ｼ縺ｿ・啜ONE_IO / TONE_NOTE
+' 筋緊張・反射（痙縮含む） 読み込み：TONE_IO / TONE_NOTE
 '========================================================
 Public Sub LoadToneReflexFromSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     If owner Is Nothing Then If VBA.UserForms.count > 0 Then Set owner = VBA.UserForms(0)
 
     Dim ctl As Object, mp As Object, pg As Object, target As Object
-    ' 1) 縲檎ｭ狗ｷ雁ｼｵ縲腔r縲悟渚蟆・阪ｒ蜷ｫ繧繝壹・繧ｸ繧堤音螳・
+    ' 1) 「筋緊張」or「反射」を含むページを特定
     On Error Resume Next
     For Each ctl In owner.controls
         If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
-                If InStr(pg.caption, "遲狗ｷ雁ｼｵ") > 0 Or InStr(pg.caption, "蜿榊ｰ・) > 0 Then
+                If InStr(pg.caption, "筋緊張") > 0 Or InStr(pg.caption, "反射") > 0 Then
                     Set target = pg: Exit For
                 End If
             Next pg
@@ -148,7 +148,7 @@ Public Sub LoadToneReflexFromSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal
     On Error GoTo 0
     If target Is Nothing Then Set target = owner
 
-    ' 2) TONE_IO 繧定ｾ樊嶌縺ｫ繝代・繧ｹ・・ey 竊・Array(R, L)・・
+    ' 2) TONE_IO を辞書にパース（key → Array(R, L)）
     Dim c As Long, s As String, recs As Variant, rec As Variant
     Dim kv As Variant, rl As Variant
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary"): d.CompareMode = 1
@@ -172,7 +172,7 @@ cont:
         Next rec
     End If
 
-    ' 3) 蟇ｾ雎｡繝壹・繧ｸ蜀・・ ComboBox 繧貞庶髮・ｼ・rame繧よ侍繧具ｼ俄・ Top/Left 繧ｽ繝ｼ繝・
+    ' 3) 対象ページ内の ComboBox を収集（Frameも掘る）→ Top/Left ソート
     Dim q As New Collection, node As Object, ch As Object, tmp As Object
     Dim combos As New Collection
     q.Add target
@@ -207,11 +207,11 @@ cont:
         Next j
     Next i
 
-    ' 4) 菫晏ｭ倥→蜷後§繧ｭ繝ｼ鬆・〒蜿肴丐・・竊鱈・・
+    ' 4) 保存と同じキー順で反映（R→L）
     Dim keys As Variant
     keys = Array( _
-        "MAS_荳願い螻育ｭ狗ｾ､", "MAS_荳願い莨ｸ遲狗ｾ､", "MAS_荳玖い螻育ｭ狗ｾ､", "MAS_荳玖い莨ｸ遲狗ｾ､", _
-        "蜿榊ｰЮ荳願・莠碁ｭ遲・, "蜿榊ｰЮ荳願・荳蛾ｭ遲・, "蜿榊ｰЮ閹晁搭閻ｱ", "蜿榊ｰЮ繧｢繧ｭ繝ｬ繧ｹ閻ｱ")
+        "MAS_上肢屈筋群", "MAS_上肢伸筋群", "MAS_下肢屈筋群", "MAS_下肢伸筋群", _
+        "反射_上腕二頭筋", "反射_上腕三頭筋", "反射_膝蓋腱", "反射_アキレス腱")
     Dim pos As Long: pos = 1
     Dim k As Long, pair As Variant
     Dim tR As String, tL As String
@@ -222,7 +222,7 @@ cont:
         If d.exists(keys(k)) Then
             pair = d(keys(k))              ' pair(0)=R, pair(1)=L
 
-            ' --- R蛛ｴ・・alue蜆ｪ蜈医∝粋繧上↑縺代ｌ縺ｰ繝ｪ繧ｹ繝郁ｵｰ譟ｻ竊貞ｿ・ｦ√↑繧陰ddItem・・---
+            ' --- R側（Value優先、合わなければリスト走査→必要ならAddItem） ---
             tR = CStr(pair(0))
             On Error Resume Next
             arr(pos).value = tR
@@ -242,7 +242,7 @@ cont:
  
  
 
-          ' --- L蛛ｴ・医Μ繧ｹ繝医°繧臥峩謗･驕ｸ謚槭ゅ↑縺代ｌ縺ｰ霑ｽ蜉縺励※驕ｸ謚橸ｼ・---
+          ' --- L側（リストから直接選択。なければ追加して選択） ---
 tL = CStr(pair(1))
  j = -1
 On Error Resume Next
@@ -253,7 +253,7 @@ For ii = 0 To arr(pos + 1).ListCount - 1
 Next ii
 If j >= 0 Then
     arr(pos + 1).ListIndex = j
-    ' Value縺檎ｩｺ縺ｮ繧ｱ繝ｼ繧ｹ蟇ｾ遲厄ｼ夐∈謚樊枚蟄励ｒValue縺ｫ繧ょ・繧後ｋ
+    ' Valueが空のケース対策：選択文字をValueにも入れる
     If Len(CStr(arr(pos + 1).value)) = 0 Then arr(pos + 1).value = CStr(arr(pos + 1).List(j, 0))
 ElseIf Len(tL) > 0 Then
     arr(pos + 1).AddItem tL
@@ -265,12 +265,12 @@ On Error GoTo 0
            
 
         Else
-            Debug.Print "[TONE][MISS]"; keys(k); "・医ョ繝ｼ繧ｿ縺ｪ縺暦ｼ・
+            Debug.Print "[TONE][MISS]"; keys(k); "（データなし）"
         End If
         pos = pos + 2
     Next k
 
-    ' 5) 蛯呵・ｪｭ縺ｿ霎ｼ縺ｿ・・ONE_NOTE・・
+    ' 5) 備考読み込み（TONE_NOTE）
     Dim cNote As Long, note As String
     Dim noteCtl As Object, box As Object, subCtl As Object, bestH As Single: bestH = 0
 
@@ -320,21 +320,21 @@ End Sub
 Public Sub PlacePainFactorsBesideSite()
     Dim z As MSForms.Frame, pf As MSForms.Frame, ps As MSForms.Frame, lb As MSForms.label
     Set z = frmEval.controls("Frame12")
-    Set pf = z.controls("fraPainFactors")    ' 隱伜屏繝ｻ霆ｽ貂帛屏蟄撰ｼ域棧・・
-    Set ps = z.controls("fraPainSite")       ' 逍ｼ逞幃Κ菴搾ｼ域棧・・
-    Set lb = z.controls("lblPainFactors")    ' 繝ｩ繝吶Ν
+    Set pf = z.controls("fraPainFactors")    ' 誘因・軽減因子（枠）
+    Set ps = z.controls("fraPainSite")       ' 疼痛部位（枠）
+    Set lb = z.controls("lblPainFactors")    ' ラベル
 
     Dim m As Single, avail As Single
-    m = 12                                   ' 菴咏區
-    ' 菴咲ｽｮ縺縺題ｪｿ謨ｴ・夂名逞幃Κ菴阪→蜷後§Top縲∝承髫｣縺ｸ
+    m = 12                                   ' 余白
+    ' 位置だけ調整：疼痛部位と同じTop、右隣へ
     pf.Top = ps.Top
     pf.Left = ps.Left + ps.Width + m
 
-    ' 縺ｯ縺ｿ蜃ｺ縺鈴亟豁｢・亥ｿ・ｦ√↑繧牙ｹ・□縺題ｩｰ繧√ｋ・・
+    ' はみ出し防止（必要なら幅だけ詰める）
     avail = z.Width - m - pf.Left
     If avail < pf.Width Then pf.Width = avail
 
-    ' 繝ｩ繝吶Ν縺ｯ譫縺ｮ逶ｴ荳翫↓謠・∴繧・
+    ' ラベルは枠の直上に揃える
     lb.Left = pf.Left
     lb.Top = pf.Top - lb.Height - 4
 

@@ -19,7 +19,7 @@ End Sub
 Private Sub lb_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
     If lb.ListIndex < 0 Then Exit Sub
 
-    ' 豌丞錐縺縺大渚譏・医・繝・ム・玖｣丞哨・・
+    ' 氏名だけ反映（ヘッダ＋裏口）
     frmEval.controls("frHeader").controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
     frmEval.controls("txtName").text = frmEval.controls("frHeader").controls("txtHdrName").text
 

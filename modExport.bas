@@ -36,7 +36,7 @@ Public Sub ExportVbaProjectToDesktop()
         End Select
     Next comp
 
-    MsgBox "繧ｨ繧ｯ繧ｹ繝昴・繝域・蜉滉ｻｶ謨ｰ: " & successCount, vbInformation
+    MsgBox "エクスポート成功件数: " & successCount, vbInformation
 End Sub
 
 Private Sub EnsureDirectoryExists(ByVal folderPath As String)

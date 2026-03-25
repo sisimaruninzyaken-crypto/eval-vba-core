@@ -1,12 +1,12 @@
 Attribute VB_Name = "modROMIO"
 Option Explicit
 
-' ===== 蜈･蜿｣・啌OM繧剃ｿ晏ｭ假ｼ郁ｦ句・縺励・辟｡縺代ｌ縺ｰ菴懊ｋ・・=====
+' ===== 入口：ROMを保存（見出しは無ければ作る） =====
 Public Sub SaveROMToSheet(ws As Worksheet, rowNum As Long, owner As frmEval)
     Dim look As Object
 Set look = BuildHeaderLookup(ws)
 
-    ' 荳願い
+    ' 上肢
     SaveROMblock ws, rowNum, owner, look, "Upper", "Shoulder", Array("Flex", "Ext", "Abd", "Add", "ER", "IR")
     SaveROMblock ws, rowNum, owner, look, "Upper", "Elbow", Array("Flex", "Ext")
     SaveROMblock ws, rowNum, owner, look, "Upper", "Forearm", Array("Sup", "Pro")
@@ -15,7 +15,7 @@ Set look = BuildHeaderLookup(ws)
     
     
 
-    ' 荳玖い
+    ' 下肢
     SaveROMblock ws, rowNum, owner, look, "Lower", "Hip", Array("Flex", "Ext", "Abd", "Add", "ER", "IR")
     SaveROMblock ws, rowNum, owner, look, "Lower", "Knee", Array("Flex", "Ext")
     SaveROMblock ws, rowNum, owner, look, "Lower", "Ankle", Array("Dorsi", "Plantar", "Inv", "Ev")
@@ -23,7 +23,7 @@ Set look = BuildHeaderLookup(ws)
     SaveROMTrunk ws, rowNum, owner, look
 End Sub
 
-' ===== 蜈･蜿｣・啌OM繧定ｪｭ霎ｼ・郁ｦ句・縺励′縺ゅｋ蛻励□縺題ｪｭ繧・・=====
+' ===== 入口：ROMを読込（見出しがある列だけ読む） =====
 Public Sub LoadROMFromSheet(ws As Worksheet, rowNum As Long, owner As frmEval)
     Dim look As Object: Set look = BuildHeaderLookup(ws)
 
@@ -37,14 +37,14 @@ Public Sub LoadROMFromSheet(ws As Worksheet, rowNum As Long, owner As frmEval)
 
 
 
-    ' 荳願い
+    ' 上肢
     LoadROMblock ws, rowNum, owner, look, "Upper", "Shoulder", Array("Flex", "Ext", "Abd", "Add", "ER", "IR")
     LoadROMblock ws, rowNum, owner, look, "Upper", "Elbow", Array("Flex", "Ext")
     LoadROMblock ws, rowNum, owner, look, "Upper", "Forearm", Array("Sup", "Pro")
     LoadROMblock ws, rowNum, owner, look, "Upper", "Wrist", Array("Dorsi", "Palmar", "Radial", "Ulnar")
     LoadROMMemo ws, rowNum, owner, look, "Upper"
 
-    ' 荳玖い
+    ' 下肢
     LoadROMblock ws, rowNum, owner, look, "Lower", "Hip", Array("Flex", "Ext", "Abd", "Add", "ER", "IR")
     LoadROMblock ws, rowNum, owner, look, "Lower", "Knee", Array("Flex", "Ext")
     LoadROMblock ws, rowNum, owner, look, "Lower", "Ankle", Array("Dorsi", "Plantar", "Inv", "Ev")
@@ -53,7 +53,7 @@ Public Sub LoadROMFromSheet(ws As Worksheet, rowNum As Long, owner As frmEval)
 End Sub
 
 
-' ==== 蜀・Κ・・繝悶Ο繝・け菫晏ｭ・隱ｭ霎ｼ繝ｻ蛯呵・・菫晏ｭ・隱ｭ霎ｼ ====
+' ==== 内部：1ブロック保存/読込・備考の保存/読込 ====
 
 Private Sub SaveROMblock(ws As Worksheet, rowNum As Long, owner As Object, look As Object, _
                          layer As String, joint As String, motions As Variant)
@@ -64,7 +64,7 @@ Private Sub SaveROMblock(ws As Worksheet, rowNum As Long, owner As Object, look 
             hdr = "ROM_" & layer & "_" & joint & "_" & CStr(m) & "_" & CStr(side)
             ctl = "txtROM_" & layer & "_" & joint & "_" & CStr(m) & "_" & CStr(side)
             v = GetCtlText(owner, ctl)                              ' ModUtil
-            col = ResolveColOrCreate(ws, look, hdr)                 ' 笘・┌縺代ｌ縺ｰ隕句・縺嶺ｽ懈・
+            col = ResolveColOrCreate(ws, look, hdr)                 ' ★無ければ見出し作成
             ws.Cells(rowNum, col).value = v
         Next side
     Next m
@@ -85,7 +85,7 @@ Private Sub LoadROMblock(ws As Worksheet, rowNum As Long, owner As Object, look 
             Dim hdr$, ctl$, col&
             hdr = "ROM_" & layer & "_" & joint & "_" & CStr(m) & "_" & CStr(side)
             ctl = "txtROM_" & layer & "_" & joint & "_" & CStr(m) & "_" & CStr(side)
-            col = ResolveColumn(look, hdr)                          ' 辟｡縺代ｌ縺ｰ繧ｹ繧ｭ繝・・
+            col = ResolveColumn(look, hdr)                          ' 無ければスキップ
             Dim v As String: v = ReadStr_Compat(hdr, rowNum, ws)
 If Len(v) > 0 Then FindCtlDeep(owner, ctl).text = v
 
@@ -200,16 +200,16 @@ End Function
 
 
 
-'=== 蝓ｺ譛ｬ諠・ｱ縺ｮ蛟呵｣懷錐繧剃ｸ隕ｧ陦ｨ遉ｺ・医う繝溘ョ繧｣繧ｨ繧､繝医↓蜃ｺ蜉幢ｼ・===
+'=== 基本情報の候補名を一覧表示（イミディエイトに出力） ===
 Public Sub FindNamesForBasics()
     On Error Resume Next
     'Load frmEval: frmEval.Show vbModeless
     
     Dim keys, k, c As Object
-    ' 竊・谺ｲ縺励＞鬆・岼縺ｮ繧ｭ繝ｼ繝ｯ繝ｼ繝峨ょｿ・ｦ√↑繧牙｢玲ｸ帙＠縺ｦOK
+    ' ← 欲しい項目のキーワード。必要なら増減してOK
     keys = Array("Date", "Age", "Sex", "Eval", "Evaluator", "Name", _
                  "Onset", "CareLevel", "Dementia", "ADL", "Needs", "NeedsPt", "NeedsFam", _
-                 "Diagnosis", "Living", "逕滓ｴｻ", "荳ｻ險ｺ譁ｭ")
+                 "Diagnosis", "Living", "生活", "主診断")
     
     Debug.Print "----- candidates -----"
     For Each k In keys
@@ -225,7 +225,7 @@ End Sub
 
 
 
-'=== Local: 1陦檎岼縺ｫ隕句・縺励′辟｡縺代ｌ縺ｰ菴懊▲縺ｦ蛻礼分蜿ｷ繧定ｿ斐☆ ===
+'=== Local: 1行目に見出しが無ければ作って列番号を返す ===
 Private Function HeaderColEnsure(ws As Worksheet, ByVal header As String) As Long
     Dim m As Variant, lastCol As Long
     m = Application.Match(header, ws.rows(1), 0)

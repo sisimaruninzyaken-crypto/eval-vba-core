@@ -3,7 +3,7 @@ Attribute VB_Name = "modUiInspect"
 Option Explicit
 
 Public Sub DumpControlsTree(Optional ByVal uf As Object)
-    ' 菴ｿ縺・婿・咼umpControlsTree frmEval
+    ' 使い方：DumpControlsTree frmEval
     If uf Is Nothing Then
         
         Exit Sub
@@ -22,7 +22,7 @@ Private Sub DumpChildren(ByVal parent As Object, ByVal path As String)
             Dim tp$, nm$, cap$
             tp = TypeName(c): nm = GetSafeName(c): cap = GetSafeCaption(c)
             
-            ' 繝阪せ繝医ｒ謗倥ｋ・・rame / MultiPage / Page・・
+            ' ネストを掘る（Frame / MultiPage / Page）
             If tp = "Frame" Then
                 DumpChildren c, path & "." & nm
             ElseIf tp = "MultiPage" Then
@@ -53,7 +53,7 @@ Private Function GetSafeCaption(o As Object) As String
     Err.Clear
 End Function
 
-' 縺・∪陦ｨ遉ｺ荳ｭ縺ｮ繧ｿ繝厄ｼ・ultiPage縺ｮ迴ｾ蝨ｨ繝壹・繧ｸ・峨↓縺ゅｋ ComboBox 蜷阪ｒ蛻玲嫌
+' いま表示中のタブ（MultiPageの現在ページ）にある ComboBox 名を列挙
 Public Sub ListCombosOnActivePage_Safe()
     Dim mp As Object, pg As Object
     Set mp = GetActiveOrFirstMultiPage(frmEval)
@@ -89,7 +89,7 @@ End Sub
 
 
 
-' 蟋ｿ蜍｢隧穂ｾ｡・郁｡ｨ遉ｺ荳ｭ縺ｮ繝壹・繧ｸ・峨↓縺ゅｋ荳ｻ隕√さ繝ｳ繝医Ο繝ｼ繝ｫ繧剃ｸ隕ｧ陦ｨ遉ｺ
+' 姿勢評価（表示中のページ）にある主要コントロールを一覧表示
 Public Sub ListKeyCtrlsOnActivePage_Safe()
     Dim mp As Object, pg As Object
     Set mp = GetActiveOrFirstMultiPage(frmEval)
@@ -100,7 +100,7 @@ Public Sub ListKeyCtrlsOnActivePage_Safe()
     ListByTypeRecursive pg, Array("TextBox", "CheckBox", "OptionButton", "ComboBox")
 End Sub
 
-' ??? helpers・亥燕縺ｫ雋ｼ縺｣縺溘ｂ縺ｮ繧呈ｵ∫畑・・??
+' ??? helpers（前に貼ったものを流用）???
 Private Function GetActiveOrFirstMultiPage(uf As Object) As Object
     If TypeName(uf.ActiveControl) = "MultiPage" Then
         Set GetActiveOrFirstMultiPage = uf.ActiveControl

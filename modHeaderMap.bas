@@ -1,14 +1,14 @@
 Attribute VB_Name = "modHeaderMap"
 
-'=== Legacy/New Header Resolver (隱ｭ縺ｿ霎ｼ縺ｿ莠呈鋤繝槭ャ繝・ ===
+'=== Legacy/New Header Resolver (読み込み互換マップ) ===
 Public Function ResolveLegacyHeader(ByVal wantName As String) As String
-    ' 隱ｭ縺ｿ霎ｼ縺ｿ蛛ｴ縺梧爾縺呎眠蜷・竊・迴ｾ陦御ｿ晏ｭ倥・譌ｧ蜷・縺ｸ繝槭ャ繝・
-    ' 隕九▽縺九ｉ縺ｪ縺代ｌ縺ｰ縺昴・縺ｾ縺ｾ霑斐☆・亥酔蜷堺ｿ晏ｭ倥↓蟇ｾ蠢懶ｼ・
+    ' 読み込み側が探す新名 → 現行保存の旧名 へマップ
+    ' 見つからなければそのまま返す（同名保存に対応）
     Select Case LCase$(wantName)
         Case "io_sensory":   ResolveLegacyHeader = "IO_Sensory"
         Case "io_testeval": ResolveLegacyHeader = "IO_TestEval"
         Case "io_mmt":       ResolveLegacyHeader = "MMT_IO"
-        Case "io_rom":       ResolveLegacyHeader = "ROM_*"      '窶ｻ隍・焚蛻励ょｾ檎ｶ壹〒繝ｯ繧､繝ｫ繝峨き繝ｼ繝牙ｱ暮幕
+        Case "io_rom":       ResolveLegacyHeader = "ROM_*"      '※複数列。後続でワイルドカード展開
         Case "io_adl":       ResolveLegacyHeader = "IO_ADL"
         Case "io_tone":      ResolveLegacyHeader = "TONE_IO"
         Case Else:           ResolveLegacyHeader = wantName
@@ -18,7 +18,7 @@ End Function
 
 
 
-'=== Header Column Resolver (譁ｰ譌ｧ繝倥ャ繝蜷阪ｒ蜷ｸ蜿弱＠縺ｦ蛻礼分蜿ｷ繧定ｿ斐☆) ===
+'=== Header Column Resolver (新旧ヘッダ名を吸収して列番号を返す) ===
 Public Function HeaderCol(ByVal wantName As String, Optional ByVal ws As Worksheet) As Long
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim h As String: h = ResolveLegacyHeader(wantName)
@@ -29,7 +29,7 @@ End Function
 
 
 
-'=== Read String by Header (譁ｰ譌ｧ繝倥ャ繝蟇ｾ蠢懊〒繧ｻ繝ｫ譁・ｭ怜・蜿門ｾ・ ===
+'=== Read String by Header (新旧ヘッダ対応でセル文字列取得) ===
 Public Function ReadStr(ByVal wantName As String, ByVal r As Long, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim c As Long: c = HeaderCol(wantName, ws)
@@ -38,7 +38,7 @@ End Function
 
 
 
-'=== Sensory IO accessor (菫晏ｭ伜､縺ｮ蜿門ｾ暦ｼ壽眠譌ｧ繝倥ャ繝蜷ｸ蜿取ｸ・ ===
+'=== Sensory IO accessor (保存値の取得：新旧ヘッダ吸収済) ===
 Public Function GetSavedSensoryIO(ByVal r As Long, Optional ByVal ws As Worksheet) As String
     GetSavedSensoryIO = ReadStr("IO_Sensory", r, ws)
 End Function
@@ -46,7 +46,7 @@ End Function
 
 
 
-'=== ROM IO accessor (菫晏ｭ伜､縺ｮ蜿門ｾ暦ｼ夊ｦ句・縺・"ROM_*" 繧呈ｨｪ譁ｭ) ===
+'=== ROM IO accessor (保存値の取得：見出し "ROM_*" を横断) ===
 Public Function GetSavedROMIO(ByVal r As Long, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
 
@@ -55,7 +55,7 @@ Public Function GetSavedROMIO(ByVal r As Long, Optional ByVal ws As Worksheet) A
     Dim c As Long
     Dim h As String, v As String
 
-    ' 1) IO_ROM 蛻励′縺ゅｌ縺ｰ縲√◎繧後ｒ譛蜆ｪ蜈医〒菴ｿ縺・
+    ' 1) IO_ROM 列があれば、それを最優先で使う
     m = Application.Match("IO_ROM", ws.rows(1), 0)
     If Not IsError(m) Then
         buf = CStr(ws.Cells(r, CLng(m)).value)
@@ -65,8 +65,8 @@ Public Function GetSavedROMIO(ByVal r As Long, Optional ByVal ws As Worksheet) A
         End If
     End If
 
-    ' 2) 繝ｬ繧ｬ繧ｷ繝ｼ莠呈鋤・啌OM_* 蛻励°繧臥ｵ・∩遶九※・育ｯ・峇繧・160?213 縺ｫ髯仙ｮ夲ｼ・
-    '    窶ｻ 214莉･髯阪・驥崎､⑲OM蛻励・辟｡隕悶＠縺ｦ證ｴ襍ｰ騾｣邨舌ｒ髦ｲ縺・
+    ' 2) レガシー互換：ROM_* 列から組み立て（範囲を 160?213 に限定）
+    '    ※ 214以降の重複ROM列は無視して暴走連結を防ぐ
     For c = 160 To 213
         h = CStr(ws.Cells(1, c).value)
         If LCase$(Left$(h, 4)) = "rom_" Then
@@ -78,20 +78,20 @@ Public Function GetSavedROMIO(ByVal r As Long, Optional ByVal ws As Worksheet) A
         End If
     Next c
 
-    GetSavedROMIO = buf   ' 蟇ｾ雎｡縺檎┌縺代ｌ縺ｰ遨ｺ譁・ｭ・
+    GetSavedROMIO = buf   ' 対象が無ければ空文字
 End Function
 
 
 
 
-'=== ADL IO accessor (菫晏ｭ伜､縺ｮ蜿門ｾ暦ｼ壽眠譌ｧ繝倥ャ繝蜷ｸ蜿取ｸ・ ===
+'=== ADL IO accessor (保存値の取得：新旧ヘッダ吸収済) ===
 Public Function GetSavedADLIO(ByVal r As Long, Optional ByVal ws As Worksheet) As String
     GetSavedADLIO = ReadStr("IO_ADL", r, ws)
 End Function
 
 
 
-'=== Latest row resolver (謖・ｮ壹・繝・ム縺ｮ譛邨り｡後ｒ霑斐☆) ===
+'=== Latest row resolver (指定ヘッダの最終行を返す) ===
 Public Function LatestRowByHeader(ByVal wantName As String, Optional ByVal ws As Worksheet) As Long
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim c As Long: c = HeaderCol(wantName, ws)
@@ -101,7 +101,7 @@ End Function
 
 
 
-'=== ADL loader (Raw)・壽怙譁ｰ陦後・IO_ADL譁・ｭ怜・繧定ｿ斐☆ ===
+'=== ADL loader (Raw)：最新行のIO_ADL文字列を返す ===
 Public Function LoadLatestADLNow_Raw(Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim r As Long: r = LatestRowByHeader("IO_ADL", ws)
@@ -110,24 +110,24 @@ Public Function LoadLatestADLNow_Raw(Optional ByVal ws As Worksheet) As String
 End Function
 
 
-'=== ADL loader (Get by Key)・壽怙譁ｰIO_ADL縺九ｉ key 縺ｮ蛟､繧定ｿ斐☆ ===
+'=== ADL loader (Get by Key)：最新IO_ADLから key の値を返す ===
 Public Function ADL_Get(ByVal key As String, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim raw As String: raw = LoadLatestADLNow_Raw(ws)
     If Len(raw) = 0 Then Exit Function
     Dim parts() As String, i As Long, klen As Long
     parts = Split(raw, "|")
-    klen = Len(key) + 1 ' "key=" 縺ｮ髟ｷ縺・
+    klen = Len(key) + 1 ' "key=" の長さ
     For i = LBound(parts) To UBound(parts)
         If Left$(parts(i), klen) = key & "=" Then
-            ADL_Get = Mid$(parts(i), klen + 1) ' "="縺ｮ谺｡縺ｮ譁・ｭ励°繧画忰蟆ｾ
+            ADL_Get = Mid$(parts(i), klen + 1) ' "="の次の文字から末尾
             Exit Function
         End If
     Next i
 End Function
 
 
-'=== Sensory loader (Raw)・壽怙譁ｰ陦後・SENSE_IO譁・ｭ怜・繧定ｿ斐☆ ===
+'=== Sensory loader (Raw)：最新行のSENSE_IO文字列を返す ===
 Public Function LoadLatestSensoryNow_Raw(Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim r As Long: r = LatestRowByHeader("IO_Sensory", ws)
@@ -137,7 +137,7 @@ End Function
 
 
 
-'=== Sensory loader (Get by Key)・售ENSE_IO縺九ｉ key 縺ｫ荳閾ｴ縺吶ｋ驛ｨ蛻・ｒ霑斐☆ ===
+'=== Sensory loader (Get by Key)：SENSE_IOから key に一致する部分を返す ===
 Public Function Sensory_Get(ByVal key As String, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim raw As String: raw = LoadLatestSensoryNow_Raw(ws)
@@ -154,7 +154,7 @@ End Function
 
 
 
-'=== ROM loader (Raw)・壽怙譁ｰ陦後・ROM_*鄒､繧偵∪縺ｨ繧√※霑斐☆ ===
+'=== ROM loader (Raw)：最新行のROM_*群をまとめて返す ===
 Public Function LoadLatestROMNow_Raw(Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim r As Long: r = LatestRowByHeader("ROM_Upper_Shoulder_Flex_R", ws)
@@ -164,7 +164,7 @@ End Function
 
 
 
-'=== ROM loader (Get by Key)・啌OM_*鄒､縺九ｉ key 縺ｮ蛟､繧定ｿ斐☆ ===
+'=== ROM loader (Get by Key)：ROM_*群から key の値を返す ===
 Public Function ROM_Get(ByVal key As String, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim raw As String: raw = LoadLatestROMNow_Raw(ws)
@@ -182,7 +182,7 @@ End Function
 
 
 
-'=== MMT loader (Raw)・壽怙譁ｰ陦後・MMT_IO繧定ｿ斐☆ ===
+'=== MMT loader (Raw)：最新行のMMT_IOを返す ===
 Public Function LoadLatestMMTNow_Raw(Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim r As Long: r = LatestRowByHeader("IO_MMT", ws)
@@ -190,7 +190,7 @@ Public Function LoadLatestMMTNow_Raw(Optional ByVal ws As Worksheet) As String
     LoadLatestMMTNow_Raw = ReadStr("IO_MMT", r, ws)
 End Function
 
-'=== MMT loader (Get by Key)・唔O_MMT譁・ｭ怜・縺九ｉ key 縺ｮ蛟､繧定ｿ斐☆ ===
+'=== MMT loader (Get by Key)：IO_MMT文字列から key の値を返す ===
 Public Function MMT_Get(ByVal key As String, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim raw As String: raw = LoadLatestMMTNow_Raw(ws)
@@ -206,7 +206,7 @@ Public Function MMT_Get(ByVal key As String, Optional ByVal ws As Worksheet) As 
     Next i
 End Function
 
-'=== Tone loader (Raw)・壽怙譁ｰ陦後・TONE_IO繧定ｿ斐☆ ===
+'=== Tone loader (Raw)：最新行のTONE_IOを返す ===
 Public Function LoadLatestToneNow_Raw(Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim r As Long: r = LatestRowByHeader("IO_Tone", ws)
@@ -214,7 +214,7 @@ Public Function LoadLatestToneNow_Raw(Optional ByVal ws As Worksheet) As String
     LoadLatestToneNow_Raw = ReadStr("IO_Tone", r, ws)
 End Function
 
-'=== Tone loader (Get by Key)・唔O_Tone譁・ｭ怜・縺九ｉ key 縺ｮ蛟､繧定ｿ斐☆ ===
+'=== Tone loader (Get by Key)：IO_Tone文字列から key の値を返す ===
 Public Function Tone_Get(ByVal key As String, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim raw As String: raw = LoadLatestToneNow_Raw(ws)
@@ -235,7 +235,7 @@ End Function
 
 
 
-'=== Recent rows by ID・壽欠螳唔D縺ｮ逶ｴ霑鮮莉ｶ縺ｮ陦檎分蜿ｷ繧呈眠竊呈立縺ｮ鬆・〒霑斐☆ ===
+'=== Recent rows by ID：指定IDの直近N件の行番号を新→旧の順で返す ===
 Public Function RecentRowsByID(ByVal targetID As Variant, Optional ByVal n As Long = 5, Optional ByVal ws As Worksheet) As Variant
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim cID As Long: cID = HeaderCol("ID", ws)
@@ -259,13 +259,13 @@ End Function
 
 
 
-'=== Preview: 謖・ｮ唔D縺ｮ逶ｴ霑鮮莉ｶ繧貞ｮ牙・縺ｫ荳隕ｧ蜃ｺ蜉幢ｼ・I蜑阪・譛邨ら｢ｺ隱搾ｼ・===
+'=== Preview: 指定IDの直近N件を安全に一覧出力（UI前の最終確認） ===
 Public Sub Preview_RecentEvalRows(ByVal targetID As Variant, ByVal n As Long, Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim arr As Variant, i As Long, r As Long
     arr = RecentRowsByID(targetID, n, ws)
 
-    ' 遨ｺ驟榊・縺ｫ螳牙・蟇ｾ蠢・
+    ' 空配列に安全対応
     On Error Resume Next
     i = UBound(arr)
     If Err.Number <> 0 Then
@@ -291,7 +291,7 @@ End Sub
 
 
 
-'=== Unified dispatcher: 驕ｸ謚櫁｡後・隧穂ｾ｡繝・・繧ｿ繧剃ｸ諡ｬ隱ｭ霎ｼ ===
+'=== Unified dispatcher: 選択行の評価データを一括読込 ===
 Public Sub LoadSelectedEvalRow(ByVal r As Long, Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
 
@@ -299,11 +299,11 @@ End Sub
 
 
 
-'=== Latest row by ID・壽欠螳唔D縺ｮ譛譁ｰ陦・1莉ｶ)繧定ｿ斐☆縲ら┌縺代ｌ縺ｰ0 ===
+'=== Latest row by ID：指定IDの最新行(1件)を返す。無ければ0 ===
 Public Function LatestRowByID(ByVal targetID As Variant, Optional ByVal ws As Worksheet) As Long
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim arr As Variant, ub As Long
-    arr = RecentRowsByID(targetID, 1, ws)  ' 譁ｰ竊呈立縺ｮ鬆・〒譛螟ｧ1莉ｶ
+    arr = RecentRowsByID(targetID, 1, ws)  ' 新→旧の順で最大1件
     On Error Resume Next
     ub = UBound(arr)
     If Err.Number <> 0 Then
@@ -316,13 +316,13 @@ Public Function LatestRowByID(ByVal targetID As Variant, Optional ByVal ws As Wo
 End Function
 
 
-'=== Select & Load Recent by ID・・I蜑阪・螳牙・繧ｻ繝ｬ繧ｯ繧ｿ・・==
+'=== Select & Load Recent by ID（UI前の安全セレクタ）===
 Public Sub SelectAndLoadRecentByID(ByVal targetID As Variant, Optional ByVal n As Long = 5, Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim rowsArr As Variant, i As Long, ub As Long, pick As Variant, idx As Long
     rowsArr = RecentRowsByID(targetID, n, ws)
 
-    ' 遨ｺ驟榊・蟇ｾ蠢・
+    ' 空配列対応
     On Error Resume Next
     ub = UBound(rowsArr)
     If Err.Number <> 0 Then
@@ -332,7 +332,7 @@ Public Sub SelectAndLoadRecentByID(ByVal targetID As Variant, Optional ByVal n A
     End If
     On Error GoTo 0
 
-    ' 逡ｪ蜿ｷ莉倥″縺ｧ荳隕ｧ陦ｨ遉ｺ・・mmediate・・
+    ' 番号付きで一覧表示（Immediate）
     Debug.Print "=== [Recent5] ID=" & targetID & " ==="
     For i = LBound(rowsArr) To UBound(rowsArr)
         Debug.Print (i - LBound(rowsArr) + 1) & ":" & rowsArr(i) & _
@@ -345,25 +345,25 @@ Public Sub SelectAndLoadRecentByID(ByVal targetID As Variant, Optional ByVal n A
     Next i
     Debug.Print "=== /Recent5 ==="
 
-    ' 逡ｪ蜿ｷ蜈･蜉幢ｼ・?莉ｶ謨ｰ・・
-    'pick = Application.InputBox(Prompt:="隱ｭ縺ｿ霎ｼ繧逡ｪ蜿ｷ繧貞・蜉幢ｼ・・・ & (UBound(rowsArr) - LBound(rowsArr) + 1) & "・・, Type:=1)
+    ' 番号入力（1?件数）
+    'pick = Application.InputBox(Prompt:="読み込む番号を入力（1～" & (UBound(rowsArr) - LBound(rowsArr) + 1) & "）", Type:=1)
     If VarType(pick) = vbBoolean And pick = False Then Exit Sub 'Cancel
     idx = CLng(pick)
 
-    ' 遽・峇繝√ぉ繝・け
+    ' 範囲チェック
     If idx < 1 Or idx > (UBound(rowsArr) - LBound(rowsArr) + 1) Then
-        Debug.Print "[SelectRecent] 遽・峇螟・ " & idx
+        Debug.Print "[SelectRecent] 範囲外: " & idx
         Exit Sub
     End If
 
-    ' 螳溯｡・
+    ' 実行
     LoadSelectedEvalRow rowsArr(UBound(rowsArr)), ws
 
 End Sub
 
 
 
-'=== UI hook・壹い繧ｯ繝・ぅ繝冶｡後・ID縺ｧ逶ｴ霑鮮莉ｶ繧ｻ繝ｬ繧ｯ繝遺・荳諡ｬ隱ｭ霎ｼ ===
+'=== UI hook：アクティブ行のIDで直近N件セレクト→一括読込 ===
 Public Sub Run_LoadRecentForActiveID(Optional ByVal n As Long = 5, Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim cID As Long: cID = HeaderCol("ID", ws)
@@ -376,8 +376,8 @@ Public Sub Run_LoadRecentForActiveID(Optional ByVal n As Long = 5, Optional ByVa
 End Sub
 
 
-' LEGACY: 譛ｬ逡ｪ遖∵ｭ｢
-'=== Pick only: 逶ｴ霑鮮莉ｶ縺九ｉ逡ｪ蜿ｷ驕ｸ謚樞・陦檎分蜿ｷ繧定ｿ斐☆・・I縺ｯ隗ｦ繧峨↑縺・ｼ・===
+' LEGACY: 本番禁止
+'=== Pick only: 直近N件から番号選択→行番号を返す（UIは触らない） ===
 Public Function PickRecentRowByID(ByVal targetID As Variant, Optional ByVal n As Long = 5, Optional ByVal ws As Worksheet) As Long
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim rowsArr As Variant, i As Long, ub As Long, pick As Variant, idx As Long
@@ -392,14 +392,14 @@ Public Function PickRecentRowByID(ByVal targetID As Variant, Optional ByVal n As
     End If
     On Error GoTo 0
     
-    ' 荳隕ｧ・・mmediate・・
+    ' 一覧（Immediate）
     Debug.Print "=== [Recent5] ID=" & targetID & " ==="
     For i = LBound(rowsArr) To UBound(rowsArr)
         Debug.Print (i - LBound(rowsArr) + 1) & ":" & rowsArr(i)
     Next i
     Debug.Print "=== /Recent5 ==="
     
-    'pick = Application.InputBox(Prompt:="隱ｭ縺ｿ霎ｼ繧逡ｪ蜿ｷ繧貞・蜉幢ｼ・・・ & (UBound(rowsArr) - LBound(rowsArr) + 1) & "・・, Type:=1)
+    'pick = Application.InputBox(Prompt:="読み込む番号を入力（1～" & (UBound(rowsArr) - LBound(rowsArr) + 1) & "）", Type:=1)
     If VarType(pick) = vbBoolean And pick = False Then Exit Function 'Cancel
     idx = CLng(pick)
     If idx < 1 Or idx > (UBound(rowsArr) - LBound(rowsArr) + 1) Then Exit Function
@@ -414,7 +414,7 @@ End Function
 
 
 
-'=== ResolveLegacyCol・啌esolveLegacyHeader繧剃ｽｿ縺｣縺ｦ蛻礼分蜿ｷ繧定ｿ斐☆ ===
+'=== ResolveLegacyCol：ResolveLegacyHeaderを使って列番号を返す ===
 Public Function ResolveLegacyCol(ByVal wantName As String, Optional ByVal ws As Worksheet) As Long
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim colName As String
@@ -435,7 +435,7 @@ Public Function CompatHeaderNames(ByVal wantName As String) As Variant
 End Function
 
 
-'=== HeaderCol_Compat・壽眠譌ｧ繝倥ャ繝蜷阪ｒ蜷ｸ蜿弱＠縺ｦ蛻礼分蜿ｷ繧定ｿ斐☆ ===
+'=== HeaderCol_Compat：新旧ヘッダ名を吸収して列番号を返す ===
 Public Function HeaderCol_Compat(ByVal wantName As String, Optional ByVal ws As Worksheet) As Long
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim headers As Variant
@@ -449,23 +449,23 @@ Public Function HeaderCol_Compat(ByVal wantName As String, Optional ByVal ws As 
 End Function
 
 
-'=== ReadStr_Compat・壽眠譌ｧ繝倥ャ繝蜷阪ｒ蜷ｸ蜿弱＠縺ｦ r 陦後・蛟､繧定ｿ斐☆・・OM縺ｯ迚ｹ蛻･謇ｱ縺・ｼ・===
+'=== ReadStr_Compat：新旧ヘッダ名を吸収して r 行の値を返す（ROMは特別扱い） ===
 Public Function ReadStr_Compat(ByVal wantName As String, ByVal r As Long, Optional ByVal ws As Worksheet) As String
     If ws Is Nothing Then Set ws = ActiveSheet
 
-    ' 陦檎分蜿ｷ縺御ｸ肴ｭ｣縺ｪ繧牙叉遨ｺ霑斐＠・・ickRecentRowByID 縺・0 縺ｮ蝣ｴ蜷医↑縺ｩ・・
+    ' 行番号が不正なら即空返し（PickRecentRowByID が 0 の場合など）
     If r <= 0 Then
         ReadStr_Compat = vbNullString
         Exit Function
     End If
 
-    ' ROM 縺ｯ隍・焚蛻暦ｼ・OM_*・峨↑縺ｮ縺ｧ迚ｹ蛻･繝ｫ繝ｼ繝医〒騾｣邨仙叙蠕・
+    ' ROM は複数列（ROM_*）なので特別ルートで連結取得
     If StrComp(wantName, "IO_ROM", vbTextCompare) = 0 Then
         ReadStr_Compat = GetSavedROMIO(r, ws)
         Exit Function
     End If
 
-    ' 縺昴ｌ莉･螟悶・繝倥ャ繝莠呈鋤縺ｧ蜊倅ｸ繧ｻ繝ｫ隱ｭ蜿・
+    ' それ以外はヘッダ互換で単一セル読取
     Dim c As Long: c = HeaderCol_Compat(wantName, ws)
     If c > 0 Then
         ReadStr_Compat = CStr(ws.Cells(r, c).value)

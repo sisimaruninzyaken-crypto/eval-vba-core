@@ -1,7 +1,7 @@
 Attribute VB_Name = "modImmediate"
 
 
-'--- 陬懷勧・医％縺ｮ繝｢繧ｸ繝･繝ｼ繝ｫ蜀・□縺代〒螳檎ｵ撰ｼ・---
+'--- 補助（このモジュール内だけで完結） ---
 Private Function NzLng(v As Variant) As Long
     If IsNumeric(v) Then NzLng = CLng(v) Else NzLng = 0
 End Function
@@ -9,9 +9,9 @@ End Function
 Private Function NormName(ByVal s As String) As String
     s = Replace(s, vbCrLf, "")
     s = Replace(s, " ", "")
-    s = Replace(s, "縲", "")
+    s = Replace(s, "　", "")
     On Error Resume Next
-    s = StrConv(s, vbNarrow) ' 蜈ｨ隗停・蜊願ｧ抵ｼ亥庄閭ｽ縺ｪ繧会ｼ・
+    s = StrConv(s, vbNarrow) ' 全角→半角（可能なら）
     On Error GoTo 0
     NormName = LCase$(s)
 End Function
@@ -40,7 +40,7 @@ Private Sub DumpCandidate_Simple(ByVal ws As Worksheet, ByVal look As Object, By
     If NzLng(look("Basic.EvalDate")) > 0 Then dt = CStr(ws.Cells(rowNum, look("Basic.EvalDate")).value)
     Debug.Print "  [" & idx & "] row=" & rowNum & "  name=""" & nm & """  ID=" & pid & "  age=" & age & "  date=" & dt
 End Sub
-'=== 縺薙％縺ｾ縺ｧ ===
+'=== ここまで ===
 
 
 
@@ -54,14 +54,14 @@ Public Sub Test_HeaderCheck()
     Set ws = modSchema.GetEvalDataSheet()
     Set look = BuildHeaderLookup(ws)
 
-   Debug.Print "陬懷勧蜈ｷ:", modEvalIOEntry.FindColByHeaderExact(ws, "陬懷勧蜈ｷ")
-Debug.Print "繝ｪ繧ｹ繧ｯ:", modEvalIOEntry.FindColByHeaderExact(ws, "繝ｪ繧ｹ繧ｯ")
+   Debug.Print "補助具:", modEvalIOEntry.FindColByHeaderExact(ws, "補助具")
+Debug.Print "リスク:", modEvalIOEntry.FindColByHeaderExact(ws, "リスク")
 
 
 End Sub
 
 
-  ' ROM繝壹・繧ｸ・壽焚蛟､谺・Label+22px縲∝ｙ閠・Label+28px 繧停懃ｵｶ蟇ｾ蠎ｧ讓吮昴〒謠・∴繧具ｼ郁ｦｪ驕輔＞OK・・
+  ' ROMページ：数値欄=Label+22px、備考=Label+28px を“絶対座標”で揃える（親違いOK）
 Public Sub ROM_AlignFix_Set20()
     Const targetSmall As Long = 24
     Const targetNote  As Long = 28
@@ -69,12 +69,12 @@ Public Sub ROM_AlignFix_Set20()
     Dim c As Object, mp As Object, pg As Object, i As Long
     Dim bestGap As Double
 
-    ' --- ROM繝壹・繧ｸ迚ｹ螳・---
+    ' --- ROMページ特定 ---
     For Each c In frmEval.controls
         If TypeName(c) = "MultiPage" Then
             For i = 0 To c.Pages.count - 1
                 If InStr(1, CStr(c.Pages(i).caption), "ROM", vbTextCompare) > 0 _
-                Or InStr(1, CStr(c.Pages(i).caption), "荳ｻ隕・未遽", vbTextCompare) > 0 Then
+                Or InStr(1, CStr(c.Pages(i).caption), "主要関節", vbTextCompare) > 0 Then
                     Set mp = c: Set pg = c.Pages(i): Exit For
                 End If
             Next
@@ -92,40 +92,40 @@ Public Sub ROM_AlignFix_Set20()
         If TypeName(ctrl) = "TextBox" Then
             Set txt = ctrl
 
-            ' --- 蛯呵・呵｣懊・蛻､螳・---
+            ' --- 備考候補の判定 ---
             ml = False: On Error Resume Next: ml = txt.multiline: On Error GoTo 0
             isBig = (ml Or txt.Height >= 80 Or txt.Width >= 400 _
                     Or InStr(1, UCase$(txt.name), "NOTE") > 0 _
                     Or InStr(1, UCase$(txt.tag & ""), "NOTE") > 0)
 
-            ' --- 繝ｩ繝吶Ν迚ｹ螳・---
+            ' --- ラベル特定 ---
             Set lbl = Nothing
             If isBig Then
-                ' 竭 隕ｪ蜀・・縲悟ｙ閠・阪Λ繝吶Ν
+                ' ① 親内の「備考」ラベル
                 For Each tmp In txt.parent.controls
                     If TypeName(tmp) = "Label" Then
-                        If InStr(1, CStr(tmp.caption), "蛯呵・, vbTextCompare) > 0 Then Set lbl = tmp: Exit For
+                        If InStr(1, CStr(tmp.caption), "備考", vbTextCompare) > 0 Then Set lbl = tmp: Exit For
                     End If
                 Next tmp
-                ' 竭｡ 隕九▽縺九ｉ縺ｪ縺代ｌ縺ｰ繝壹・繧ｸ蜈ｨ菴薙・縲悟ｙ閠・阪Λ繝吶Ν
+                ' ② 見つからなければページ全体の「備考」ラベル
                 If lbl Is Nothing Then
                     For Each tmpZ In pg.controls
                         If TypeName(tmpZ) = "Label" Then
-                            If InStr(1, CStr(tmpZ.caption), "蛯呵・, vbTextCompare) > 0 Then Set lbl = tmpZ: Exit For
+                            If InStr(1, CStr(tmpZ.caption), "備考", vbTextCompare) > 0 Then Set lbl = tmpZ: Exit For
                         End If
                     Next tmpZ
                 End If
             End If
-            ' 竭｢-陬懶ｼ夊ｦｪ蜀・〒隕九▽縺九ｉ縺ｪ縺代ｌ縺ｰ縲√・繝ｼ繧ｸ蜈ｨ菴薙〒譛霑大ｷｦ・・=・峨Λ繝吶Ν繧呈爾縺・
+            ' ③-補：親内で見つからなければ、ページ全体で最近左（<=）ラベルを探す
 If lbl Is Nothing Then
     bestGap = 1E+20
-    Dim d As Double   ' 竊・竭｡縺ｧ隱ｬ譏弱☆繧・d 縺ｮ螳｣險縲よ里縺ｫ荳翫〒螳｣險縺励※縺・ｌ縺ｰ荳崎ｦ・
+    Dim d As Double   ' ← ②で説明する d の宣言。既に上で宣言していれば不要
     For Each tmp In txt.parent.controls
         If TypeName(tmp) = "Label" Then
             If tmp.Left <= txt.Left And tmp.Width <= 120 _
                And (LenB(CStr(tmp.caption)) >= 2 Or tmp.Width >= 12) Then
 
-                d = AbsTop(txt) - AbsTop(tmp)  ' 荳翫↓縺ゅｋ霍晞屬縺縺第治逕ｨ
+                d = AbsTop(txt) - AbsTop(tmp)  ' 上にある距離だけ採用
                 If d >= 0 And d <= 120 Then
                     If d < bestGap Then Set lbl = tmp: bestGap = d
                 End If
@@ -136,7 +136,7 @@ End If
 
 
 
-            ' --- 謠・∴ ---
+            ' --- 揃え ---
             If Not lbl Is Nothing Then
               desired = AbsTop(lbl) + IIf(isBig, targetNote, targetSmall)
 
@@ -164,20 +164,20 @@ End Sub
 
 
 
-' 蛯呵・□縺代ｒ遒ｺ螳溘↓謨ｴ蛻暦ｼ哭abel(縲悟ｙ閠・・縺ｮ24px荳九∈
+' 備考だけを確実に整列：Label(「備考」)の24px下へ
 Public Sub ROM_NoteFix_Once()
     Const target As Long = 24
     Dim c As Object, mp As Object, pg As Object, i As Long
     Dim ctrl As Object, lbl As Object, tb As Object
     Dim ml As Boolean, oldTop As Single
 
-    ' ROM繝壹・繧ｸ迚ｹ螳・
+    ' ROMページ特定
     For Each c In frmEval.controls
         If TypeName(c) = "MultiPage" Then
             Set mp = c
             For i = 0 To mp.Pages.count - 1
                 If InStr(1, CStr(mp.Pages(i).caption), "ROM", vbTextCompare) > 0 _
-                Or InStr(1, CStr(mp.Pages(i).caption), "荳ｻ隕・未遽", vbTextCompare) > 0 Then
+                Or InStr(1, CStr(mp.Pages(i).caption), "主要関節", vbTextCompare) > 0 Then
                     Set pg = mp.Pages(i): Exit For
                 End If
             Next
@@ -186,15 +186,15 @@ Public Sub ROM_NoteFix_Once()
     Next
     If pg Is Nothing Then Debug.Print "[NoteFix] ROM page not found": Exit Sub
 
-    ' 縲悟ｙ閠・阪Λ繝吶Ν
+    ' 「備考」ラベル
     For Each ctrl In pg.controls
         If TypeName(ctrl) = "Label" Then
-            If InStr(1, CStr(ctrl.caption), "蛯呵・, vbTextCompare) > 0 Then Set lbl = ctrl: Exit For
+            If InStr(1, CStr(ctrl.caption), "備考", vbTextCompare) > 0 Then Set lbl = ctrl: Exit For
         End If
     Next
-    If lbl Is Nothing Then Debug.Print "[NoteFix] 蛯呵・Λ繝吶Ν縺ｪ縺・: Exit Sub
+    If lbl Is Nothing Then Debug.Print "[NoteFix] 備考ラベルなし": Exit Sub
 
-    ' 譛螟ｧ繧ｵ繧､繧ｺ縺ｮMultiLine繝・く繧ｹ繝茨ｼ亥ｙ閠・悽菴難ｼ・
+    ' 最大サイズのMultiLineテキスト（備考本体）
     For Each ctrl In pg.controls
         If TypeName(ctrl) = "TextBox" Then
             ml = False: On Error Resume Next: ml = ctrl.multiline: On Error GoTo 0
@@ -207,16 +207,16 @@ Public Sub ROM_NoteFix_Once()
             End If
         End If
     Next
-    If tb Is Nothing Then Debug.Print "[NoteFix] 蛯呵・ユ繧ｭ繧ｹ繝医↑縺・: Exit Sub
+    If tb Is Nothing Then Debug.Print "[NoteFix] 備考テキストなし": Exit Sub
 
     oldTop = tb.Top
     tb.Top = lbl.Top + target
-    Debug.Print "[NoteFix] Top: " & oldTop & " -> " & tb.Top & "  (Label.Top=" & lbl.Top & ", ﾎ・" & (tb.Top - lbl.Top) & ")"
+    Debug.Print "[NoteFix] Top: " & oldTop & " -> " & tb.Top & "  (Label.Top=" & lbl.Top & ", Δ=" & (tb.Top - lbl.Top) & ")"
 End Sub
 
 
 
-' 隕ｪ繝√ぉ繝ｼ繝ｳ繧呈怙螟ｧ20谿ｵ縺ｾ縺ｧ縺ｧ謇薙■蛻・ｋ螳牙・迚・
+' 親チェーンを最大20段までで打ち切る安全版
 Private Function AbsTop(ByVal o As Object) As Single
     On Error Resume Next
     Dim t As Single: t = NzTop(o)
@@ -266,31 +266,31 @@ End Function
 
 
 
-' ROM繝壹・繧ｸ蜀・・蜈ｨCheckBox繧偵悟・菴咲ｽｮ縺九ｉ髱樒ｴｯ遨阪〒12px荳翫阪↓驟咲ｽｮ・磯ｫ倥＆/繝輔か繝ｳ繝医・隗ｦ繧峨↑縺・ｼ・
+' ROMページ内の全CheckBoxを「元位置から非累積で12px上」に配置（高さ/フォントは触らない）
 Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
     Dim mp As Object, pg As Object, i As Long, found As Boolean
     Dim stk As Collection, cont As Object, c As Object
     Dim j As Long, baseTop As Double, pos As Long
     Dim tagKey As String: tagKey = "CBBase="
 
-    ' ?? ROM繝壹・繧ｸ繧堤音螳夲ｼ・aption縺ｫ ROM / ・ｲ・ｯ・ｭ / 荳ｻ隕・未遽 / 髢｢遽蜿ｯ蜍募沺 繧貞性繧・・?
+    ' ?? ROMページを特定（Captionに ROM / ＲＯＭ / 主要関節 / 関節可動域 を含む）??
     For Each mp In frmEval.controls
         If TypeName(mp) = "MultiPage" Then
             For i = 0 To mp.Pages.count - 1
                 Set pg = mp.Pages(i)
                 If (InStr(1, CStr(pg.caption), "ROM", vbTextCompare) > 0) _
-                   Or (InStr(1, CStr(pg.caption), "・ｲ・ｯ・ｭ", vbTextCompare) > 0) _
-                   Or (InStr(1, CStr(pg.caption), "荳ｻ隕・未遽", vbTextCompare) > 0) _
-                   Or (InStr(1, CStr(pg.caption), "髢｢遽蜿ｯ蜍募沺", vbTextCompare) > 0) Then
+                   Or (InStr(1, CStr(pg.caption), "ＲＯＭ", vbTextCompare) > 0) _
+                   Or (InStr(1, CStr(pg.caption), "主要関節", vbTextCompare) > 0) _
+                   Or (InStr(1, CStr(pg.caption), "関節可動域", vbTextCompare) > 0) Then
                     found = True: Exit For
                 End If
             Next
             If found Then Exit For
         End If
     Next
-    If Not found Then MsgBox "ROM繝壹・繧ｸ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation: Exit Sub
+    If Not found Then MsgBox "ROMページが見つかりません。", vbExclamation: Exit Sub
 
-    ' ?? 蜈･繧悟ｭ・Frame, Page, MultiPage蜀・・Page)繧ょ性繧√※襍ｰ譟ｻ・・BA Collection 繧ｹ繧ｿ繝・け・・?
+    ' ?? 入れ子(Frame, Page, MultiPage内のPage)も含めて走査（VBA Collection スタック）??
     Set stk = New Collection
     stk.Add pg
 
@@ -299,7 +299,7 @@ Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
 
         On Error Resume Next
         For Each c In cont.controls
-            ' 蟄舌さ繝ｳ繝・リ縺ｯ繧ｹ繧ｿ繝・け縺ｫ遨阪・
+            ' 子コンテナはスタックに積む
             Select Case TypeName(c)
                 Case "Frame", "Page"
                     stk.Add c
@@ -309,7 +309,7 @@ Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
                     Next
             End Select
 
-            ' CheckBox縺縺・Top 繧偵悟・Top?12縲阪↓・磯撼邏ｯ遨搾ｼ城ｫ倥＆縺ｯ隗ｦ繧峨↑縺・ｼ・
+            ' CheckBoxだけ Top を「元Top?12」に（非累積／高さは触らない）
             If TypeName(c) = "CheckBox" Then
                 With c
                     pos = InStr(1, .tag, tagKey, vbTextCompare)
@@ -337,20 +337,20 @@ End Sub
 
 
 
-' ROM繧ｿ繝悶・譛邨よ､懆ｨｼ・啜extBox鬮倥＆竕20 縺ｨ縲，heckBox縺後悟・Top?12縲阪°繧峨ぜ繝ｬ縺ｦ縺・ｋ莉ｶ謨ｰ繧定｡ｨ遉ｺ
+' ROMタブの最終検証：TextBox高さ≠20 と、CheckBoxが「元Top?12」からズレている件数を表示
 Public Sub ROM_VerifyOnce()
     Dim mp As Object, pg As Object, c As Object, i As Long, found As Boolean
     Dim ngTB As Long, ngCB As Long, base As Double, pos As Long, cap As String
 
-    ' ROM繝壹・繧ｸ迚ｹ螳・
+    ' ROMページ特定
     For Each mp In frmEval.controls
         If TypeName(mp) = "MultiPage" Then
             For i = 0 To mp.Pages.count - 1
                 cap = CStr(mp.Pages(i).caption)
                 If InStr(1, cap, "ROM", vbTextCompare) > 0 Or _
-                   InStr(1, cap, "・ｲ・ｯ・ｭ", vbTextCompare) > 0 Or _
-                   InStr(1, cap, "荳ｻ隕・未遽", vbTextCompare) > 0 Or _
-                   InStr(1, cap, "髢｢遽蜿ｯ蜍募沺", vbTextCompare) > 0 Then
+                   InStr(1, cap, "ＲＯＭ", vbTextCompare) > 0 Or _
+                   InStr(1, cap, "主要関節", vbTextCompare) > 0 Or _
+                   InStr(1, cap, "関節可動域", vbTextCompare) > 0 Then
                     Set pg = mp.Pages(i): found = True: Exit For
                 End If
             Next
@@ -359,7 +359,7 @@ Public Sub ROM_VerifyOnce()
     Next
     If Not found Then Debug.Print "[VERIFY] ROM page not found": Exit Sub
 
-    ' 讀懆ｨｼ
+    ' 検証
     For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
             If c.multiline = False And c.Height <> 15 Then ngTB = ngTB + 1
@@ -369,7 +369,7 @@ Public Sub ROM_VerifyOnce()
                 base = val(Mid$(c.tag, pos + 7))
                 If Abs((base - 12) - c.Top) > 0.5 Then ngCB = ngCB + 1
             Else
-                ngCB = ngCB + 1  ' 蝓ｺ貅匁悴險倬鹸繧ゅぜ繝ｬ謇ｱ縺・
+                ngCB = ngCB + 1  ' 基準未記録もズレ扱い
             End If
         End If
     Next
@@ -380,29 +380,29 @@ End Sub
 
 
 
-' ROM繝壹・繧ｸ蜀・・蜈ｨ縺ｦ縺ｮ蜊倩｡卦extBox繧帝ｫ倥＆20縺ｫ蝗ｺ螳夲ｼ・rame繧・・繧悟ｭ舌ｂ蜷ｫ繧√※蜀榊ｸｰ・・
+' ROMページ内の全ての単行TextBoxを高さ20に固定（Frameや入れ子も含めて再帰）
 Public Sub ROM_Fix_TextBoxHeight_Recursive_OnROM_Once()
     Const h As Single = 15
     Dim mp As Object, pg As Object, i As Long, found As Boolean
 
-    ' ROM繝壹・繧ｸ繧堤音螳・
+    ' ROMページを特定
     For Each mp In frmEval.controls
         If TypeName(mp) = "MultiPage" Then
             For i = 0 To mp.Pages.count - 1
                 Set pg = mp.Pages(i)
                 If InStr(1, CStr(pg.caption), "ROM", vbTextCompare) > 0 _
-                   Or InStr(1, CStr(pg.caption), "・ｲ・ｯ・ｭ", vbTextCompare) > 0 _
-                   Or InStr(1, CStr(pg.caption), "荳ｻ隕・未遽", vbTextCompare) > 0 _
-                   Or InStr(1, CStr(pg.caption), "髢｢遽蜿ｯ蜍募沺", vbTextCompare) > 0 Then
+                   Or InStr(1, CStr(pg.caption), "ＲＯＭ", vbTextCompare) > 0 _
+                   Or InStr(1, CStr(pg.caption), "主要関節", vbTextCompare) > 0 _
+                   Or InStr(1, CStr(pg.caption), "関節可動域", vbTextCompare) > 0 Then
                     found = True: Exit For
                 End If
             Next
             If found Then Exit For
         End If
     Next
-    If Not found Then MsgBox "ROM繝壹・繧ｸ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・: Exit Sub
+    If Not found Then MsgBox "ROMページが見つかりません。": Exit Sub
 
-    ' 蜀榊ｸｰ蜃ｦ逅・幕蟋・
+    ' 再帰処理開始
     Call FixTextBoxHeightRecursive(pg, h)
 End Sub
 
@@ -427,7 +427,7 @@ End Sub
 
 
 
-'--- 蟇ｾ雎｡繝壹・繧ｸ・育ｭ句鴨/MMT・峨・迚ｹ螳・---
+'--- 対象ページ（筋力/MMT）の特定 ---
 Private Function GetMMTPage() As Object
     Dim c As Object, mp As Object, i As Long
     For Each c In frmEval.controls
@@ -436,7 +436,7 @@ Private Function GetMMTPage() As Object
             For i = 0 To mp.Pages.count - 1
                 Dim cap As String
                 cap = mp.Pages(i).caption
-                If InStr(cap, "MMT") > 0 Or InStr(cap, "遲句鴨") > 0 Then
+                If InStr(cap, "MMT") > 0 Or InStr(cap, "筋力") > 0 Then
                     Set GetMMTPage = mp.Pages(i)
                     Exit Function
                 End If
@@ -446,7 +446,7 @@ Private Function GetMMTPage() As Object
     Set GetMMTPage = Nothing
 End Function
 
-'--- 閾ｪ蜍慕函謌舌ち繧ｰ縺ｮ繧ゅ・縺縺大炎髯､ ---
+'--- 自動生成タグのものだけ削除 ---
 Private Sub MMT_ClearGen(pg As Object)
     Dim idx As Long
     For idx = pg.controls.count - 1 To 0 Step -1
@@ -456,7 +456,7 @@ Private Sub MMT_ClearGen(pg As Object)
     Next
 End Sub
 
-'--- 1繝壹・繧ｸ縺ｶ繧薙・繝ｬ繧､繧｢繧ｦ繝育函謌・---
+'--- 1ページぶんのレイアウト生成 ---
 Private Sub BuildPage(pg As Object, items As Variant)
     Const ROW_H As Single = 24
     Const LBL_W As Single = 130
@@ -466,10 +466,10 @@ Private Sub BuildPage(pg As Object, items As Variant)
     Dim x0 As Single, y0 As Single
     x0 = 20: y0 = 28
 
-    ' 隕句・縺・
-    MakeLabel pg, "lblHdr_Muscle", "遲狗ｾ､", x0, y0 - 20, 60, 18
-    MakeLabel pg, "lblHdr_R", "蜿ｳ", x0 + LBL_W + gap, y0 - 20, 30, 18
-    MakeLabel pg, "lblHdr_L", "蟾ｦ", x0 + LBL_W + gap + COL_W + gap, y0 - 20, 30, 18
+    ' 見出し
+    MakeLabel pg, "lblHdr_Muscle", "筋群", x0, y0 - 20, 60, 18
+    MakeLabel pg, "lblHdr_R", "右", x0 + LBL_W + gap, y0 - 20, 30, 18
+    MakeLabel pg, "lblHdr_L", "左", x0 + LBL_W + gap + COL_W + gap, y0 - 20, 30, 18
 
     Dim i As Long, y As Single
     y = y0
@@ -484,7 +484,7 @@ Private Sub BuildPage(pg As Object, items As Variant)
     Next i
 End Sub
 
-'--- Label 逕滓・ ---
+'--- Label 生成 ---
 Private Sub MakeLabel(pg As Object, nm As String, cap As String, L As Single, t As Single, w As Single, h As Single)
     Dim o As MSForms.label
     Set o = pg.controls.Add("Forms.Label.1", nm, True)
@@ -495,7 +495,7 @@ Private Sub MakeLabel(pg As Object, nm As String, cap As String, L As Single, t 
     End With
 End Sub
 
-'--- ComboBox 逕滓・・・MT 0・・・・---
+'--- ComboBox 生成（MMT 0～5） ---
 Private Sub MakeCombo(pg As Object, nm As String, L As Single, t As Single, w As Single, h As Single)
     Dim o As MSForms.ComboBox
     Set o = pg.controls.Add("Forms.ComboBox.1", nm, True)
@@ -510,36 +510,36 @@ End Sub
 
 
 
-'=== MMT 蜈・ｼ溘・繝ｼ繧ｸ譁ｹ蠑擾ｼ哺MT_荳願い / MMT_荳玖い 繧定ｿｽ蜉縺励※鬆・岼逕滓・ ===
+'=== MMT 兄弟ページ方式：MMT_上肢 / MMT_下肢 を追加して項目生成 ===
 Public Sub MMT_BuildSiblingTabs()
     Dim mp As Object, iMMT As Long
     If Not FindMMT_MultiPage(mp, iMMT) Then
-        MsgBox "MMT/遲句鴨 繝壹・繧ｸ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation: Exit Sub
+        MsgBox "MMT/筋力 ページが見つかりません。", vbExclamation: Exit Sub
     End If
 
     Dim pgUpper As Object, pgLower As Object
-    Set pgUpper = EnsurePage(mp, "MMT_荳願い", iMMT + 1)
-    Set pgLower = EnsurePage(mp, "MMT_荳玖い", iMMT + 2)
+    Set pgUpper = EnsurePage(mp, "MMT_上肢", iMMT + 1)
+    Set pgLower = EnsurePage(mp, "MMT_下肢", iMMT + 2)
 
     Dim upperItems, lowerItems
-    upperItems = Array("閧ｩ螻域峇", "閧ｩ莨ｸ螻・, "閧ｩ螟冶ｻ｢", "閧ｩ蜀・雷", "閧ｩ螟匁雷", "閧伜ｱ域峇", "閧倅ｼｸ螻・, "蜑崎・蝗槫・", "蜑崎・蝗槫､・, "謇矩未遽謗悟ｱ・, "謇矩未遽閭悟ｱ・, "謖・ｱ域峇", "謖・ｼｸ螻・, "豈肴欠蟇ｾ遶・)
-    lowerItems = Array("閧｡螻域峇", "閧｡莨ｸ螻・, "閧｡螟冶ｻ｢", "閧｡蜀・ｻ｢", "閹晏ｱ域峇", "閹昜ｼｸ螻・, "雜ｳ髢｢遽閭悟ｱ・, "雜ｳ髢｢遽蠎募ｱ・, "豈崎ｶｾ莨ｸ螻・)
+    upperItems = Array("肩屈曲", "肩伸展", "肩外転", "肩内旋", "肩外旋", "肘屈曲", "肘伸展", "前腕回内", "前腕回外", "手関節掌屈", "手関節背屈", "指屈曲", "指伸展", "母指対立")
+    lowerItems = Array("股屈曲", "股伸展", "股外転", "股内転", "膝屈曲", "膝伸展", "足関節背屈", "足関節底屈", "母趾伸展")
 
     ClearGenerated pgUpper: ClearGenerated pgLower
     BuildMMTPage pgUpper, upperItems
     BuildMMTPage pgLower, lowerItems
 
-    MsgBox "MMT_荳願い・舟MT_荳玖い 繧剃ｽ懈・縺励∪縺励◆縲・, vbInformation
+    MsgBox "MMT_上肢／MMT_下肢 を作成しました。", vbInformation
 End Sub
 
-'--- MMT繝壹・繧ｸ繧貞性繧 MultiPage 縺ｨ縺昴・繧､繝ｳ繝・ャ繧ｯ繧ｹ繧貞叙蠕・---
+'--- MMTページを含む MultiPage とそのインデックスを取得 ---
 Private Function FindMMT_MultiPage(ByRef mp As Object, ByRef idx As Long) As Boolean
     Dim c As Object, i As Long
     For Each c In frmEval.controls
         If TypeName(c) = "MultiPage" Then
             For i = 0 To c.Pages.count - 1
                 Dim cap$: cap = c.Pages(i).caption
-                If InStr(cap, "MMT") > 0 Or InStr(cap, "遲句鴨") > 0 Then
+                If InStr(cap, "MMT") > 0 Or InStr(cap, "筋力") > 0 Then
                     Set mp = c: idx = i: FindMMT_MultiPage = True: Exit Function
                 End If
             Next
@@ -547,7 +547,7 @@ Private Function FindMMT_MultiPage(ByRef mp As Object, ByRef idx As Long) As Boo
     Next
 End Function
 
-'--- 謖・ｮ壻ｽ咲ｽｮ縺ｫ繝壹・繧ｸ繧堤畑諢擾ｼ医≠繧後・蜀榊茜逕ｨ・・---
+'--- 指定位置にページを用意（あれば再利用） ---
 Private Function EnsurePage(mp As Object, title As String, atIndex As Long) As Object
     Dim i As Long
     For i = 0 To mp.Pages.count - 1
@@ -560,7 +560,7 @@ Private Function EnsurePage(mp As Object, title As String, atIndex As Long) As O
     Set EnsurePage = pg
 End Function
 
-'--- 閾ｪ蜍慕函謌舌・謗・勁 ---
+'--- 自動生成の掃除 ---
 Private Sub ClearGenerated(pg As Object)
     Dim j As Long
     For j = pg.controls.count - 1 To 0 Step -1
@@ -568,14 +568,14 @@ Private Sub ClearGenerated(pg As Object)
     Next
 End Sub
 
-'--- MMT 1繝壹・繧ｸ蛻・・UI逕滓・ ---
+'--- MMT 1ページ分のUI生成 ---
 Private Sub BuildMMTPage(pg As Object, items As Variant)
     Const ROW_H As Single = 24, LBL_W As Single = 130, COL_W As Single = 90, gap As Single = 12
     Dim x0 As Single, y0 As Single: x0 = 20: y0 = 28
 
-    MakeLbl pg, "lblHdrMus", "遲狗ｾ､", x0, y0 - 20, 60, 18
-    MakeLbl pg, "lblHdrR", "蜿ｳ", x0 + LBL_W + gap, y0 - 20, 30, 18
-    MakeLbl pg, "lblHdrL", "蟾ｦ", x0 + LBL_W + gap + COL_W + gap, y0 - 20, 30, 18
+    MakeLbl pg, "lblHdrMus", "筋群", x0, y0 - 20, 60, 18
+    MakeLbl pg, "lblHdrR", "右", x0 + LBL_W + gap, y0 - 20, 30, 18
+    MakeLbl pg, "lblHdrL", "左", x0 + LBL_W + gap + COL_W + gap, y0 - 20, 30, 18
 
     Dim i As Long, y As Single: y = y0
     For i = LBound(items) To UBound(items)
@@ -610,18 +610,18 @@ End Sub
 
 
 
-'=== MMT縺ｮ蟄舌ち繝厄ｼ井ｸ願い・丈ｸ玖い・峨ｒ縲｀MT繝壹・繧ｸ蜀・・Frame縺ｫ蜿主ｮｹ縺励※菴懈・ ===
+'=== MMTの子タブ（上肢／下肢）を、MMTページ内のFrameに収容して作成 ===
 Public Sub MMT_BuildChildTabs_Frame()
     Dim pg As Object
     Set pg = GetMMTPage()
-    If pg Is Nothing Then MsgBox "MMT繝壹・繧ｸ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation: Exit Sub
+    If pg Is Nothing Then MsgBox "MMTページが見つかりません。", vbExclamation: Exit Sub
 
     Dim fra As MSForms.Frame, mp As MSForms.MultiPage
     On Error Resume Next
     Set fra = pg.controls("fraMMTWrap")
     On Error GoTo 0
     If fra Is Nothing Then
-        ' Frame繧偵ヵ繧ｩ繝ｼ繝縺ｫ霑ｽ蜉縺励※縺九ｉ隕ｪ繧樽MT繝壹・繧ｸ縺ｸ
+        ' Frameをフォームに追加してから親をMMTページへ
         Set fra = frmEval.controls.Add("Forms.Frame.1", "fraMMTWrap", True)
         Set fra.parent = pg
         With fra
@@ -644,18 +644,18 @@ Public Sub MMT_BuildChildTabs_Frame()
             .Style = 0
             .TabsPerRow = 4
             .Pages.Clear
-            .Pages.Add.caption = "荳願い"
-            .Pages.Add.caption = "荳玖い"
+            .Pages.Add.caption = "上肢"
+            .Pages.Add.caption = "下肢"
         End With
     End If
 
-    ' 荳ｭ霄ｫ繧呈ｧ狗ｯ・
+    ' 中身を構築
     MMT_ClearGen mp.Pages(0)
     MMT_ClearGen mp.Pages(1)
-    BuildPage mp.Pages(0), Array("閧ｩ螻域峇", "閧ｩ莨ｸ螻・, "閧ｩ螟冶ｻ｢", "閧ｩ蜀・雷", "閧ｩ螟匁雷", "閧伜ｱ域峇", "閧倅ｼｸ螻・, "蜑崎・蝗槫・", "蜑崎・蝗槫､・, "謇矩未遽謗悟ｱ・, "謇矩未遽閭悟ｱ・, "謖・ｱ域峇", "謖・ｼｸ螻・, "豈肴欠蟇ｾ遶・)
-    BuildPage mp.Pages(1), Array("閧｡螻域峇", "閧｡莨ｸ螻・, "閧｡螟冶ｻ｢", "閧｡蜀・ｻ｢", "閹晏ｱ域峇", "閹昜ｼｸ螻・, "雜ｳ髢｢遽閭悟ｱ・, "雜ｳ髢｢遽蠎募ｱ・, "豈崎ｶｾ莨ｸ螻・)
+    BuildPage mp.Pages(0), Array("肩屈曲", "肩伸展", "肩外転", "肩内旋", "肩外旋", "肘屈曲", "肘伸展", "前腕回内", "前腕回外", "手関節掌屈", "手関節背屈", "指屈曲", "指伸展", "母指対立")
+    BuildPage mp.Pages(1), Array("股屈曲", "股伸展", "股外転", "股内転", "膝屈曲", "膝伸展", "足関節背屈", "足関節底屈", "母趾伸展")
 
-    MsgBox "MMT繝壹・繧ｸ蜀・↓蟄舌ち繝厄ｼ井ｸ願い・丈ｸ玖い・峨ｒ菴懈・縺励∪縺励◆縲・, vbInformation
+    MsgBox "MMTページ内に子タブ（上肢／下肢）を作成しました。", vbInformation
 End Sub
 
 
@@ -670,13 +670,13 @@ Public Sub Swap_DailyLogList_ToMonthlyDraftBox()
     Dim host As Object          ' fraDailyLog
     Dim tb As MSForms.Control   ' TextBox
 
-    ' 驥崎ｦ・ｼ哢ew 縺ｯ菴ｿ繧上↑縺・ｼ・nitialize縺ｧ關ｽ縺｡繧狗腸蠅・′縺ゅｋ縺溘ａ・・
-    Set uf = frmEval            ' 襍ｷ蜍穂ｸｭ縺ｮ繧､繝ｳ繧ｹ繧ｿ繝ｳ繧ｹ繧貞盾辣ｧ
+    ' 重要：New は使わない（Initializeで落ちる環境があるため）
+    Set uf = frmEval            ' 起動中のインスタンスを参照
 
     Set lb = uf.controls("lstDailyLogList")
-    Set host = lb.parent        ' fraDailyLog 縺ｮ縺ｯ縺・
+    Set host = lb.parent        ' fraDailyLog のはず
 
-    ' 譌｢縺ｫ菴懊▲縺ｦ縺ゅｌ縺ｰ縺昴ｌ繧剃ｽｿ縺・
+    ' 既に作ってあればそれを使う
     On Error Resume Next
     Set tb = host.controls("txtMonthlyMonitoringDraft")
     On Error GoTo EH
@@ -685,18 +685,18 @@ Public Sub Swap_DailyLogList_ToMonthlyDraftBox()
         Set tb = host.controls.Add("Forms.TextBox.1", "txtMonthlyMonitoringDraft", True)
     End If
 
-    ' 菴咲ｽｮ縺ｨ繧ｵ繧､繧ｺ繧・lstDailyLogList 縺ｫ蜷医ｏ縺帙ｋ
+    ' 位置とサイズを lstDailyLogList に合わせる
     tb.Left = lb.Left
     tb.Top = lb.Top
     tb.Width = lb.Width
     tb.Height = lb.Height
 
-    ' 菴ｿ縺・享謇九・譛蟆城剞・・ordWrap遲峨・隗ｦ繧峨↑縺・ｼ・
+    ' 使い勝手の最小限（WordWrap等は触らない）
     tb.multiline = True
     tb.EnterKeyBehavior = True
     tb.ScrollBars = fmScrollBarsVertical
 
-    ' ListBox 縺ｯ髫縺呻ｼ域綾縺励◆縺・凾縺ｫ謌ｻ縺帙ｋ・・
+    ' ListBox は隠す（戻したい時に戻せる）
     lb.Visible = False
     tb.Visible = True
 
@@ -727,7 +727,7 @@ Public Sub Ensure_MonthlyDraftBox_UnderFraDailyLog()
     Set f = uf.controls("fraDailyLog")
     Set lb = f.controls("lstDailyLogList")
 
-    ' 譌｢蟄倥′縺ゅｌ縺ｰ蜿門ｾ励√↑縺代ｌ縺ｰ菴懈・・・raDailyLog 逶ｴ荳具ｼ・
+    ' 既存があれば取得、なければ作成（fraDailyLog 直下）
     On Error Resume Next
     Set tb = f.controls("txtMonthlyMonitoringDraft")
     On Error GoTo EH
@@ -736,7 +736,7 @@ Public Sub Ensure_MonthlyDraftBox_UnderFraDailyLog()
         Set tb = f.controls.Add("Forms.TextBox.1", "txtMonthlyMonitoringDraft", True)
     End If
 
-    ' ListBox縺ｨ蜷後§遏ｩ蠖｢縺ｫ蜷医ｏ縺帙ｋ・育｢ｺ螳壼､・・
+    ' ListBoxと同じ矩形に合わせる（確定値）
     tb.Left = 12
     tb.Top = 294
     tb.Width = 987.3
@@ -779,7 +779,7 @@ End Sub
 Public Sub Verify_MonthlyExport_OpensWorkbook()
     Debug.Print "Before: ActiveWB=" & ActiveWorkbook.name & "  Count=" & Workbooks.count
 
-    ' 縺・∪菴ｿ縺｣縺ｦ繧句他縺ｳ蜃ｺ縺励→蜷後§
+    ' いま使ってる呼び出しと同じ
     Call ExportMonitoring_ToMonthlyWorkbook( _
         CDate(frmEval.controls("txtDailyDate").text), _
         frmEval.controls("frHeader").controls("txtHdrName").text, _
@@ -787,7 +787,7 @@ Public Sub Verify_MonthlyExport_OpensWorkbook()
 
     Debug.Print "After:  ActiveWB=" & ActiveWorkbook.name & "  Count=" & Workbooks.count
 
-    ' 髢九＞縺ｦ縺・ｋ繝悶ャ繧ｯ蜷阪ｒ蛻玲嫌
+    ' 開いているブック名を列挙
     ListOpenWorkbooks
 End Sub
 

@@ -2,7 +2,7 @@ Attribute VB_Name = "modParalysisUI"
 
 Option Explicit
 
-' ===== UI逕ｨ縺ｮ繝ｭ繝ｼ繧ｫ繝ｫ螳壽焚・医％縺ｮ繝｢繧ｸ繝･繝ｼ繝ｫ縺縺代〒譛牙柑・・====
+' ===== UI用のローカル定数（このモジュールだけで有効）=====
 Private Const PAD_X As Single = 12
 Private Const PAD_Y As Single = 8
 Private Const COL1_W As Single = 110
@@ -17,32 +17,32 @@ Public Sub BuildParalysisTabUI(host As MSForms.Frame)
     w = host.Width: h = host.Height
     y = PAD_Y
 
-    ' 隕句・縺・蝓ｺ譛ｬ諠・ｱ
-    y = AddSectionTitle_(host, "蝓ｺ譛ｬ諠・ｱ", y)
-    y = AddComboRow_(host, "鮗ｻ逞ｺ蛛ｴ", "cboParalysisSide", Array("蜿ｳ", "蟾ｦ", "荳｡蛛ｴ"), y)
-    y = AddComboRow_(host, "鮗ｻ逞ｺ縺ｮ遞ｮ鬘・, "cboParalysisType", Array("迚・ｺｻ逞ｺ", "蝗幄い鮗ｻ逞ｺ", "蜊倬ｺｻ逞ｺ"), y)
+    ' 見出し:基本情報
+    y = AddSectionTitle_(host, "基本情報", y)
+    y = AddComboRow_(host, "麻痺側", "cboParalysisSide", Array("右", "左", "両側"), y)
+    y = AddComboRow_(host, "麻痺の種類", "cboParalysisType", Array("片麻痺", "四肢麻痺", "単麻痺"), y)
 
-    ' 隕句・縺・BRS
+    ' 見出し:BRS
     y = y + ROM_HDR_GAP
 y = AddSectionTitle_(host, "Brunnstrom Recovery Stage(BRS)", y)
 
-Dim brsValues As Variant          ' 竊・縺薙％繧剃ｿｮ豁｣(Dim 縺ｮ蠕後↓繧ｹ繝壹・繧ｹ)
-brsValues = Array("竇", "竇｡", "竇｢", "竇｣", "竇､", "竇･")
+Dim brsValues As Variant          ' ← ここを修正(Dim の後にスペース)
+brsValues = Array("Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ")
 
-y = AddComboRow_(host, "荳願い", "cboBRS_Upper", brsValues, y)
-y = AddComboRow_(host, "謇区欠", "cboBRS_Hand", brsValues, y)
-y = AddComboRow_(host, "荳玖い", "cboBRS_Lower", brsValues, y)
-    ' 隕句・縺・髫丈ｼｴ迴ｾ雎｡
+y = AddComboRow_(host, "上肢", "cboBRS_Upper", brsValues, y)
+y = AddComboRow_(host, "手指", "cboBRS_Hand", brsValues, y)
+y = AddComboRow_(host, "下肢", "cboBRS_Lower", brsValues, y)
+    ' 見出し:随伴現象
     y = y + ROM_HDR_GAP
-    y = AddSectionTitle_(host, "髫丈ｼｴ迴ｾ雎｡", y)
-    y = AddCheckRow_(host, "蜈ｱ蜷碁°蜍・, "chkSynergy", y)
-    y = AddCheckRow_(host, "騾｣蜷亥渚蠢・, "chkAssociatedRxn", y)
+    y = AddSectionTitle_(host, "随伴現象", y)
+    y = AddCheckRow_(host, "共同運動", "chkSynergy", y)
+    y = AddCheckRow_(host, "連合反応", "chkAssociatedRxn", y)
 
-    ' 蛯呵・ｬ・
+    ' 備考欄
     PlaceMemoBelow host, w, h, y, "txtParalysisMemo"
 End Sub
 
-' ---- 陦後ン繝ｫ繝(Private) ----
+' ---- 行ビルダ(Private) ----
 Private Function AddSectionTitle_(host As MSForms.Frame, ttl As String, y As Single) As Single
     Dim lbl As MSForms.label
     Set lbl = host.controls.Add("Forms.Label.1")
@@ -100,7 +100,7 @@ Private Function AddCheckRow_(host As MSForms.Frame, cap As String, ctlName As S
     Dim chk As MSForms.CheckBox
     Set chk = host.controls.Add("Forms.CheckBox.1", ctlName, True)
     With chk
-        .caption = "譛・
+        .caption = "有"
         .Left = xChk: .Top = PX(y)
         .Width = PX(60): .Height = ROW_H
     End With

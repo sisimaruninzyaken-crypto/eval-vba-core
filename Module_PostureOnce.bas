@@ -1,5 +1,5 @@
 Attribute VB_Name = "Module_PostureOnce"
-' ==== 荳蝗槭″繧奇ｼ壼ｧｿ蜍｢繧ｿ繝悶・荳ｻ隕√さ繝ｳ繝医Ο繝ｼ繝ｫ蛻玲嫌 ====
+' ==== 一回きり：姿勢タブの主要コントロール列挙 ====
 Public Sub Posture_ListOnce()
     Dim uf As Object: Set uf = frmEval
     Dim mp As Object, pg As Object
@@ -7,7 +7,7 @@ Public Sub Posture_ListOnce()
 
     On Error Resume Next
 
-    ' 縺ｩ繧後°縺ｮMultiPage繧定ｦ九▽縺代ｋ・亥錐蜑阪↓萓晏ｭ倥＠縺ｪ縺・ｼ・
+    ' どれかのMultiPageを見つける（名前に依存しない）
     For Each c In uf.controls
         If TypeName(c) = "MultiPage" Then Set mp = c: Exit For
         If c.controls.count >= 0 Then
@@ -22,7 +22,7 @@ Public Sub Posture_ListOnce()
     Set pg = mp.Pages(mp.value)
     Debug.Print "=== Controls on current page (type | name | caption) ==="
 
-    ' 繝壹・繧ｸ逶ｴ荳九→1髫主ｱ､蜀・・・・rame縺ｪ縺ｩ・峨ｒ蛻玲嫌
+    ' ページ直下と1階層内側（Frameなど）を列挙
     For Each c In pg.controls
         Debug.Print TypeName(c), "|", SafeName1(c), "|", SafeCap1(c)
         If c.controls.count >= 0 Then

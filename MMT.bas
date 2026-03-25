@@ -2,7 +2,7 @@ Attribute VB_Name = "MMT"
 
 Option Explicit
 
-' === 逕滓・邉ｻ・・irect・・===
+' === 生成系（Direct） ===
 
 
 Public Sub MMT_BuildChildTabs_Direct()
@@ -10,7 +10,7 @@ Public Sub MMT_BuildChildTabs_Direct()
     Dim pg As Object
     Set pg = GetMMTPage(frmEval)
     If pg Is Nothing Then
-        MsgBox "MMT繝壹・繧ｸ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "MMTページが見つかりません。", vbExclamation
         Exit Sub
     End If
 
@@ -21,50 +21,50 @@ Public Sub MMT_BuildChildTabs_Direct()
     
 
 
-    '--- host遒ｺ菫晢ｼ育┌縺代ｌ縺ｰ菴懊ｋ・・---
+    '--- host確保（無ければ作る） ---
     Set host = GetMMTHost(pg)
     
     If host Is Nothing Then
-        MsgBox "MMT繝帙せ繝医′隕九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "MMTホストが見つかりません。", vbExclamation
         Exit Sub
     End If
 
-    ' host繧ｵ繧､繧ｺ縺ｯ豈主屓霑ｽ蠕難ｼ・g縺悟ｰ上＆縺上※繧らｴ邯ｻ縺励↑縺・ｼ・
+    ' hostサイズは毎回追従（pgが小さくても破綻しない）
     host.Width = pg.InsideWidth - 12
     host.Height = pg.InsideHeight - 12
     
-    '--- mp遒ｺ菫晢ｼ・ost驟堺ｸ具ｼ・---
+    '--- mp確保（host配下） ---
     Set mpMMTChildGen = GetMMTChildTabs(pg, host)
     
     If mpMMTChildGen Is Nothing Then
 
-        MsgBox "蟄舌ち繝・mpMMTChild)縺御ｽ懈・縺ｧ縺阪∪縺帙ｓ縲・, vbExclamation
+        MsgBox "子タブ(mpMMTChild)が作成できません。", vbExclamation
         Exit Sub
     End If
 
-    ' mp繧ｵ繧､繧ｺ繧よｯ主屓霑ｽ蠕・
+    ' mpサイズも毎回追従
     mpMMTChildGen.Width = host.InsideWidth
     mpMMTChildGen.Height = host.InsideHeight
     
     ' legacy stray cleanup
     PurgeStrayMMTControls pg, host
 
-    '--- 蟄舌ち繝悶・荳ｭ霄ｫ繧剃ｽ懊ｊ逶ｴ縺呻ｼ・MTGEN縺縺第ｶ医☆・・---
+    '--- 子タブの中身を作り直す（MMTGENだけ消す） ---
     Set pgUpper = mpMMTChildGen.Pages(0)
     Set pgLower = mpMMTChildGen.Pages(1)
 MMT_ClearGen pgUpper
 MMT_ClearGen pgLower
 
-BuildMMTPage pgUpper, Array("閧ｩ螻域峇", "閧ｩ莨ｸ螻・, "閧ｩ螟冶ｻ｢", "閧ｩ蜀・雷", _
-                            "閧ｩ螟匁雷", "閧伜ｱ域峇", "閧倅ｼｸ螻・, _
-                            "蜑崎・蝗槫・", "蜑崎・蝗槫､・, _
-                            "謇矩未遽謗悟ｱ・, "謇矩未遽閭悟ｱ・, _
-                            "謖・ｱ域峇", "謖・ｼｸ螻・, "豈肴欠蟇ｾ遶・)
+BuildMMTPage pgUpper, Array("肩屈曲", "肩伸展", "肩外転", "肩内旋", _
+                            "肩外旋", "肘屈曲", "肘伸展", _
+                            "前腕回内", "前腕回外", _
+                            "手関節掌屈", "手関節背屈", _
+                            "指屈曲", "指伸展", "母指対立")
 
-BuildMMTPage pgLower, Array("閧｡螻域峇", "閧｡莨ｸ螻・, "閧｡螟冶ｻ｢", "閧｡蜀・ｻ｢", _
-                            "閹晏ｱ域峇", "閹昜ｼｸ螻・, _
-                            "雜ｳ髢｢遽閭悟ｱ・, "雜ｳ髢｢遽蠎募ｱ・, _
-                            "豈崎ｶｾ莨ｸ螻・)
+BuildMMTPage pgLower, Array("股屈曲", "股伸展", "股外転", "股内転", _
+                            "膝屈曲", "膝伸展", _
+                            "足関節背屈", "足関節底屈", _
+                            "母趾伸展")
     DoEvents
     Resize_MMTChildHost_ToPage
     
@@ -205,11 +205,11 @@ Private Function GetLegacyMMTKeyByControlName(ByVal nm As String) As String
 End Function
 
 Private Function LegacyMMTKeys() As Variant
-    LegacyMMTKeys = Array("閧ｩ螻域峇", "閧ｩ莨ｸ螻・, "閧ｩ螟冶ｻ｢", "閧ｩ蜀・雷", "閧ｩ螟匁雷", _
-                      "閧伜ｱ域峇", "閧倅ｼｸ螻・, "蜑崎・蝗槫・", "蜑崎・蝗槫､・, _
-                      "謇矩未遽謗悟ｱ・, "謇矩未遽閭悟ｱ・, "謖・ｱ域峇", "謖・ｼｸ螻・, "豈肴欠蟇ｾ遶・, _
-                      "閧｡螻域峇", "閧｡莨ｸ螻・, "閧｡螟冶ｻ｢", "閧｡蜀・ｻ｢", _
-                      "閹晏ｱ域峇", "閹昜ｼｸ螻・, "雜ｳ髢｢遽閭悟ｱ・, "雜ｳ髢｢遽蠎募ｱ・, "豈崎ｶｾ莨ｸ螻・)
+    LegacyMMTKeys = Array("肩屈曲", "肩伸展", "肩外転", "肩内旋", "肩外旋", _
+                      "肘屈曲", "肘伸展", "前腕回内", "前腕回外", _
+                      "手関節掌屈", "手関節背屈", "指屈曲", "指伸展", "母指対立", _
+                      "股屈曲", "股伸展", "股外転", "股内転", _
+                      "膝屈曲", "膝伸展", "足関節背屈", "足関節底屈", "母趾伸展")
 End Function
 
 
@@ -269,7 +269,7 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
     Next i
     
     
-    ' 1) 蛟呵｣懷錐繧貞━蜈・
+    ' 1) 候補名を優先
     For Each cand In Array("Frame9", "fraMMTWrap")
         On Error Resume Next
         Set host = SafeGetControl(pg, CStr(cand))
@@ -354,7 +354,7 @@ Public Function GetMMTPage(ByVal frm As Object) As Object
 
     If frm Is Nothing Then Exit Function
 
-    ' 繝輔か繝ｼ繝逶ｴ荳九・ MultiPage 繧堤ｷ上↑繧・
+    ' フォーム直下の MultiPage を総なめ
     ' strict route first
     Set pg = GetMMTPage_FromPhys(frm)
     If Not pg Is Nothing Then
@@ -410,7 +410,7 @@ Private Function PageHasMMTSignature(ByVal pg As Object) As Boolean
 
     If pg Is Nothing Then Exit Function
 
-    ' 縲稽pMMTChild縲阪ｄ縲熊rame9縲阪↑縺ｩ縲｀MT繝壹・繧ｸ蝗ｺ譛峨・逞戊ｷ｡縺ｧ蛻､螳・
+    ' 「mpMMTChild」や「Frame9」など、MMTページ固有の痕跡で判定
     For Each c In pg.controls
         If LCase$(c.name) = "mpmmtchild" Then
             PageHasMMTSignature = True
@@ -447,14 +447,14 @@ End Sub
 
 
 
-'--- 1繝壹・繧ｸ蛻・・UI逕滓・ ---
+'--- 1ページ分のUI生成 ---
 Private Sub BuildMMTPage(ByVal pg As Object, ByVal items As Variant)
     Const ROW_H As Single = 24, LBL_W As Single = 130, COL_W As Single = 90, gap As Single = 12
     Dim x0 As Single, y0 As Single: x0 = 20: y0 = 28
 
-    MakeLbl pg, "lblHdrMus", "遲狗ｾ､", x0, y0 - 20, 60, 18
-    MakeLbl pg, "lblHdrR", "蜿ｳ", x0 + LBL_W + gap, y0 - 20, 30, 18
-    MakeLbl pg, "lblHdrL", "蟾ｦ", x0 + LBL_W + gap + COL_W + gap, y0 - 20, 30, 18
+    MakeLbl pg, "lblHdrMus", "筋群", x0, y0 - 20, 60, 18
+    MakeLbl pg, "lblHdrR", "右", x0 + LBL_W + gap, y0 - 20, 30, 18
+    MakeLbl pg, "lblHdrL", "左", x0 + LBL_W + gap + COL_W + gap, y0 - 20, 30, 18
 
     Dim i As Long, y As Single: y = y0
     For i = LBound(items) To UBound(items)
@@ -499,17 +499,17 @@ Private Sub MMT_ClearGen(ByVal pg As Object)
     Next
 End Sub
 
-'--- 蟄舌ち繝門・縺ｮ蜈ｨ ComboBox 繧偵＞縺｣縺溘ｓ繧ｯ繝ｪ繧｢ ---
+'--- 子タブ内の全 ComboBox をいったんクリア ---
 Private Sub MMT_ClearMMTCombos(ByVal mp As MSForms.MultiPage)
     Dim pg As MSForms.page
-    Dim c As Object  '・・ontrol縺ｧ繧０K・・
+    Dim c As Object  '（ControlでもOK）
 
     For Each pg In mp.Pages
         For Each c In pg.controls
             If TypeName(c) = "ComboBox" Then
                 On Error Resume Next
-                c.ListIndex = -1   '驕ｸ謚櫁ｧ｣髯､・・ropDownList縺ｧ繧よ怏蜉ｹ・・
-                c.value = ""       '蠢ｵ縺ｮ縺溘ａ遨ｺ譁・ｭ・
+                c.ListIndex = -1   '選択解除（DropDownListでも有効）
+                c.value = ""       '念のため空文字
                 On Error GoTo 0
             End If
         Next
@@ -517,27 +517,27 @@ Private Sub MMT_ClearMMTCombos(ByVal mp As MSForms.MultiPage)
 End Sub
 
 
-' === 菫晏ｭ假ｼ郁｡後・繝ｼ繧ｹ・・===
+' === 保存（行ベース） ===
 Public Sub SaveMMTToSheet(ws As Worksheet, r As Long, owner As Object)
     Dim c As Long
     Dim s As String
 
-    ' 1) 繝倥ャ繝繝ｼ蛻暦ｼ・MT_IO・峨ｒ逕ｨ諢・
+    ' 1) ヘッダー列（MMT_IO）を用意
     c = FindColByHeaderExact(ws, "MMT_IO")
     If c = 0 Then
         c = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1
         ws.Cells(1, c).value = "MMT_IO"
     End If
 
-    ' 2) MMT繧呈枚蟄怜・蛹悶＠縺ｦ菫晏ｭ・
-    s = MMT_SaveToString()              ' 竊先里縺ｫ縺ゅｋ髢｢謨ｰ・育峩荳九↓隕九∴縺ｦ縺・ｋ繧ゅ・・峨ｒ菴ｿ縺・
+    ' 2) MMTを文字列化して保存
+    s = MMT_SaveToString()              ' ←既にある関数（直下に見えているもの）を使う
     ws.Cells(r, c).value = s
 
-    ' 3) 繝ｭ繧ｰ
+    ' 3) ログ
     Debug.Print "[MMT][SAVE] row=" & r & " col=" & c & " len=" & Len(s)
 End Sub
 
-'=== 蟄舌ち繝・MMT) 竊・譁・ｭ怜・・井ｿ晏ｭ倡畑繝・せ繝茨ｼ・===
+'=== 子タブ(MMT) → 文字列（保存用テスト） ===
 Private Function MMT_SaveToString() As String
     Dim pg As Object, mp As Object, p As Long, c As Object
     Dim parts() As String, n As Long
@@ -582,7 +582,7 @@ Private Function MMT_SaveToString() As String
 End Function
 
 
-' === 隱ｭ霎ｼ・郁｡後・繝ｼ繧ｹ・・===
+' === 読込（行ベース） ===
 Public Sub LoadMMTFromSheet(ws As Worksheet, r As Long, owner As Object)
 
     
@@ -590,7 +590,7 @@ Public Sub LoadMMTFromSheet(ws As Worksheet, r As Long, owner As Object)
     Dim c As Long, s As String
     Dim pg As Object, mp As Object
 
-    ' MMT_IO 蛻・
+    ' MMT_IO 列
     c = FindColByHeaderExact(ws, "MMT_IO")
     Debug.Print "[MMT] col=" & c
     If c = 0 Then Exit Sub
@@ -599,14 +599,14 @@ Public Sub LoadMMTFromSheet(ws As Worksheet, r As Long, owner As Object)
     Debug.Print "[MMT] s.len=" & Len(s)
     If Len(s) = 0 Then Exit Sub
 
-    ' MMT繝壹・繧ｸ
+    ' MMTページ
     Debug.Print "[MMT] before GetMMTPage"
     Set pg = GetMMTPage(owner)
     Debug.Print "[MMT] after GetMMTPage", TypeName(pg)
 
     If pg Is Nothing Then Exit Sub
 
-    ' 蟄舌ち繝悶・蟄伜惠遒ｺ隱・
+    ' 子タブの存在確認
     Debug.Print "[MMT] before GetMMTChildTabs"
     Set mp = GetMMTChildTabs(pg)
     Debug.Print "[MMT] after GetMMTChildTabs", TypeName(mp)
@@ -619,10 +619,10 @@ Public Sub LoadMMTFromSheet(ws As Worksheet, r As Long, owner As Object)
 
 End Sub
 '========================
-' 逶ｴ蛻怜喧譁・ｭ怜・ 竊・蟄舌ち繝悶∈蠕ｩ蜈・
-' 蠖｢蠑擾ｼ・ side|鬆・岼蜷鋼蜿ｳ蛟､|蟾ｦ蛟､ ; side|鬆・岼蜷鋼蜿ｳ蛟､|蟾ｦ蛟､ ; ...
-'   side: 0=荳願い, 1=荳玖い
-' 蜿ｳ蛟､/蟾ｦ蛟､縺ｯ遨ｺ譁・ｭ励ｂ縺ゅｊ蠕励ｋ
+' 直列化文字列 → 子タブへ復元
+' 形式：  side|項目名|右値|左値 ; side|項目名|右値|左値 ; ...
+'   side: 0=上肢, 1=下肢
+' 右値/左値は空文字もあり得る
 '========================
 Private Sub MMT_LoadFromString_Core(ByVal s As String)
     Dim pg As Object, mp As MSForms.MultiPage
@@ -634,7 +634,7 @@ Private Sub MMT_LoadFromString_Core(ByVal s As String)
 
     Set pg = GetMMTPage(frmEval)
     If pg Is Nothing Then
-        MsgBox "MMT繝壹・繧ｸ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "MMTページが見つかりません。", vbExclamation
         Exit Sub
     End If
 
@@ -642,11 +642,11 @@ Private Sub MMT_LoadFromString_Core(ByVal s As String)
     Set mp = GetMMTChildTabs(pg)
     On Error GoTo 0
     If mp Is Nothing Then
-        MsgBox "蟄舌ち繝・mpMMTChild)縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation
+        MsgBox "子タブ(mpMMTChild)が見つかりません。", vbExclamation
         Exit Sub
     End If
 
-    ' 蛟､縺縺代け繝ｪ繧｢
+    ' 値だけクリア
     Call MMT_ClearMMTCombos(mp)
 
     parts = Split(s, ";")
@@ -664,13 +664,13 @@ Private Sub MMT_LoadFromString_Core(ByVal s As String)
         vL = IIf(UBound(f) >= 3, CStr(f(3)), "")
 
         If side < 0 Or side > mp.Pages.count - 1 Then
-            Debug.Print "[LOAD][MMT] side荳肴ｭ｣: "; side; " / key="; key
+            Debug.Print "[LOAD][MMT] side不正: "; side; " / key="; key
             GoTo cont
         End If
 
         Set p = mp.Pages(side)
 
-        ' 蜷榊燕隕丞援・喞boR_ / cboL_ ・・鬆・岼蜷・
+        ' 名前規則：cboR_ / cboL_ ＋ 項目名
         Set cboR = Nothing: Set cboL = Nothing
         On Error Resume Next
         Set cboR = p.controls("cboR_" & key)
@@ -680,7 +680,7 @@ Private Sub MMT_LoadFromString_Core(ByVal s As String)
         foundR = Not cboR Is Nothing
 foundL = Not cboL Is Nothing
 
-' 遨ｺ・・蛟､縺ｪ縺暦ｼ峨・縲御ｽ輔ｂ縺励↑縺・ｼ抂K縲阪→縺ｿ縺ｪ縺・
+' 空（=値なし）は「何もしない＝OK」とみなす
 okR = (Len(vR) = 0)
 okL = (Len(vL) = 0)
 
@@ -696,9 +696,9 @@ cont:
 End Sub
 
 
-' === 蜈ｱ譛峨Θ繝ｼ繝・ぅ繝ｪ繝・ぅ ===
+' === 共有ユーティリティ ===
 
-'=== 1) 隕句・縺励ｒ螳悟・荳閾ｴ縺ｧ讀懃ｴ｢縺励※蛻礼分蜿ｷ繧定ｿ斐☆・育┌縺代ｌ縺ｰ0・・===
+'=== 1) 見出しを完全一致で検索して列番号を返す（無ければ0） ===
 Public Function FindColByHeaderExact(ws As Worksheet, header As String) As Long
     Dim f As Range
     Set f = ws.rows(1).Find(What:=header, LookIn:=xlValues, LookAt:=xlWhole)
@@ -711,7 +711,7 @@ End Function
 
 
 
-'=== 2) 隕句・縺怜・繧剃ｿ晁ｨｼ縺励※蛻礼分蜿ｷ繧定ｿ斐☆・育┌縺代ｌ縺ｰ菴懊ｋ・・===
+'=== 2) 見出し列を保証して列番号を返す（無ければ作る） ===
 Public Function EnsureHeaderCol(ws As Worksheet, header As String) As Long
     Dim c As Long
     c = FindColByHeaderExact(ws, header)
@@ -726,7 +726,7 @@ End Function
 
 
 
-'=== 隕句・縺怜・縲勲MT_IO縲阪ｒ謗｢縺呻ｼ育┌縺代ｌ縺ｰ菴懊ｋ・・===
+'=== 見出し列「MMT_IO」を探す（無ければ作る） ===
 Private Function FindOrCreateHeader(ByVal ws As Worksheet, ByVal header As String) As Long
     Dim lastCol As Long, c As Long
     lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
@@ -736,13 +736,13 @@ Private Function FindOrCreateHeader(ByVal ws As Worksheet, ByVal header As Strin
             Exit Function
         End If
     Next
-    '辟｡縺代ｌ縺ｰ譛ｫ蟆ｾ+1縺ｫ菴懈・
+    '無ければ末尾+1に作成
     FindOrCreateHeader = lastCol + 1
     ws.Cells(1, FindOrCreateHeader).value = header
 End Function
 
 
-'=== 蛹ｺ蛻・ｊ譁・ｭ・| 縺ｮ n 逡ｪ逶ｮ(1蟋九∪繧・繧定ｿ斐☆ ===
+'=== 区切り文字 | の n 番目(1始まり)を返す ===
 Private Function ParseField(ByVal rec As String, ByVal idx As Long) As String
     Dim a As Variant: a = Split(rec, "|")
     If idx >= 1 And idx - 1 <= UBound(a) Then
