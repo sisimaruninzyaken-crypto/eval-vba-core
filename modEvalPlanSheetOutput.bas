@@ -392,8 +392,9 @@ Private Function ParseWarekiInput(ByVal src As String, ByRef era As String, ByRe
 
     Dim nums As Variant
     nums = ExtractNumbers(s)
+    If Not ArrayHasAtLeastCount(nums, 3) Then Exit Function
     On Error GoTo EH
-    If UBound(nums) < 2 Then Exit Function
+  
 
     y = CLng(nums(0))
     m = CLng(nums(1))
@@ -403,6 +404,25 @@ Private Function ParseWarekiInput(ByVal src As String, ByRef era As String, ByRe
 EH:
     Err.Clear
 End Function
+
+Private Function ArrayHasAtLeastCount(ByVal arr As Variant, ByVal requiredCount As Long) As Boolean
+    If requiredCount <= 0 Then
+        ArrayHasAtLeastCount = True
+        Exit Function
+    End If
+    If Not IsArray(arr) Then Exit Function
+
+    Dim n As Long
+    Dim item As Variant
+    For Each item In arr
+        n = n + 1
+        If n >= requiredCount Then
+            ArrayHasAtLeastCount = True
+            Exit Function
+        End If
+    Next item
+End Function
+
 
 Private Function ExtractNumbers(ByVal s As String) As Variant
     Dim values() As Long
