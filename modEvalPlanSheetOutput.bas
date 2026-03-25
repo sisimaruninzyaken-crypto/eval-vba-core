@@ -23,8 +23,12 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     WriteMerged ws, "V3:AK3", eraName
     WriteMerged ws, "E4:Q4", GetCtrlTextSafe(owner, "txtName")
     WriteMerged ws, "V4:AK4", birthBody
+    WriteMerged ws, "R4:U4", GetCtrlTextSafe(owner, "cboSex")
+    WriteMerged ws, "AL4:AP4", GetCtrlTextSafe(owner, "cboCare")
     WriteMerged ws, "AQ3:BJ3", "計画作成者：" & GetCtrlTextSafe(owner, "txtEvaluator")
     WriteMerged ws, "AQ4:BJ4", "職種：" & GetCtrlTextSafe(owner, "txtEvaluatorJob")
+    WriteMerged ws, "O5:AE5", GetCtrlTextSafe(owner, "cboElder")
+    WriteMerged ws, "AS5:BJ5", GetCtrlTextSafe(owner, "cboDementia")
 
     WriteMerged ws, "A8:AE9", GetCtrlTextSafe(owner, "txtNeedsPt")
     WriteMerged ws, "AF8:BJ9", GetCtrlTextSafe(owner, "txtNeedsFam")
