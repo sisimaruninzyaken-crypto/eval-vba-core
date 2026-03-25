@@ -26,9 +26,9 @@ Public Sub Preview_NameToHeader()
     On Error GoTo 0
     If lbl Is Nothing Then
     Set lbl = hdr.controls.Add("Forms.Label.1", "lblHdrName", True)
-    lbl.caption = "éÅñº"
+    lbl.caption = "Ë±å‰∏ûÈåê"
     lbl.AutoSize = True
-    lbl.Width = lbl.Width + 8   ' Å© Ç±Ç±
+    lbl.Width = lbl.Width + 8   ' Á´ä„ÉªÁ∏∫ËñôÔºÖ
 End If
 
 
@@ -54,7 +54,7 @@ End If
     On Error GoTo 0
     If lblKana Is Nothing Then
         Set lblKana = hdr.controls.Add("Forms.Label.1", "lblHdrKana", True)
-        lblKana.caption = "Ç”ÇËÇ™Ç»"
+        lblKana.caption = "Á∏∫ÔΩµÁπßÁø´‚Ä≤Á∏∫ÔΩ™"
         lblKana.AutoSize = True
         lblKana.Width = lblKana.Width + 8
     End If
@@ -77,7 +77,7 @@ End If
     '--- value sync (one-way preview) ---
     txt.text = f.controls("txtName").text
 
-    '--- position: [éÅñº][txt] [cmdClearHeader][cmdSaveHeader][cmdCloseHeader] ---
+    '--- position: [Ë±å‰∏ûÈåê][txt] [cmdClearHeader][cmdSaveHeader][cmdCloseHeader] ---
     txt.Top = btn.Top + (btn.Height - txt.Height) / 2
     lbl.Top = btn.Top + (btn.Height - lbl.Height) / 2
 
@@ -118,7 +118,7 @@ End If
     '--- value sync (one-way preview) ---
     txtID.text = f.controls("txtPID").text
 
-    '--- position: [ID][txt] [éÅñº][txt] [buttons...] ---
+    '--- position: [ID][txt] [Ë±å‰∏ûÈåê][txt] [buttons...] ---
     txtID.Top = btn.Top + (btn.Height - txtID.Height) / 2
     lblID.Top = btn.Top + (btn.Height - lblID.Height) / 2
 

@@ -25,13 +25,13 @@ Public Function FindCtlDeep(ByVal container As Object, ByVal ctlName As String) 
         End If
 
         If TypeOf c Is MSForms.Frame Or TypeOf c Is MSForms.page Then
-            Set FindCtlDeep = FindCtlDeep(c, ctlName)   ' © ctlName ‚É“ˆê
+            Set FindCtlDeep = FindCtlDeep(c, ctlName)   ' ç«Šãƒ»ctlName ç¸ºï½«é‚¨ï½±è³Â€
             If Not FindCtlDeep Is Nothing Then Exit Function
         End If
 
         If TypeOf c Is MSForms.MultiPage Then
             For Each pg In c.Pages
-                Set FindCtlDeep = FindCtlDeep(pg, ctlName)  ' © ctlName ‚É“ˆê
+                Set FindCtlDeep = FindCtlDeep(pg, ctlName)  ' ç«Šãƒ»ctlName ç¸ºï½«é‚¨ï½±è³Â€
                 If Not FindCtlDeep Is Nothing Then Exit Function
             Next
         End If
@@ -47,5 +47,5 @@ End Function
 Public Function GetCtlCheck(ByVal owner As Object, ByVal ctlName As String) As String
     Dim ctl As MSForms.Control
     Set ctl = FindCtlDeep(owner, ctlName)
-    If Not ctl Is Nothing Then On Error Resume Next: GetCtlCheck = IIf(ctl.value = True, "—L", "–³")  ' © ”¼Špƒ_ƒuƒ‹ƒNƒH[ƒe[ƒVƒ‡ƒ“
+    If Not ctl Is Nothing Then On Error Resume Next: GetCtlCheck = IIf(ctl.value = True, "è­›ãƒ», "è¾Ÿï½¡")  ' ç«Šãƒ»èœŠé¡˜ï½§åµãƒ ç¹æ‚¶Îç¹§ï½¯ç¹§ï½©ç¹ï½¼ç¹ãƒ»ãƒ»ç¹§ï½·ç¹ï½§ç¹ï½³
 End Function
