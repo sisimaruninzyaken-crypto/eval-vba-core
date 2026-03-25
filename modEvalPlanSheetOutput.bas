@@ -639,13 +639,25 @@ Private Function JoinCollection(ByVal col As Collection, ByVal delimiter As Stri
 End Function
 
 Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVal text As String)
+    ' 指定範囲の先頭行以降に先頭セルがある結合セルを探して書き込む
+    ' （例: A15:A16 が結合済みの場合、A16 から始まる範囲では B16 以降に書く）
     On Error Resume Next
+    Dim rng As Range
+    Set rng = ws.Range(addressText)
+    If rng Is Nothing Then GoTo Done
+
+    Dim baseRow As Long: baseRow = rng.Cells(1, 1).Row
     Dim cell As Range
-    Set cell = ws.Range(addressText).Cells(1, 1)
-    If Not cell Is Nothing Then
-        If cell.MergeCells Then Set cell = cell.MergeArea.Cells(1, 1)
-        cell.value = NzTextSafe(text)
-    End If
+    For Each cell In rng.Cells
+        Dim top As Range
+        Set top = cell
+        If cell.MergeCells Then Set top = cell.MergeArea.Cells(1, 1)
+        If top.Row >= baseRow Then
+            top.value = NzTextSafe(text)
+            GoTo Done
+        End If
+    Next cell
+Done:
     Err.Clear
     On Error GoTo 0
 End Sub
