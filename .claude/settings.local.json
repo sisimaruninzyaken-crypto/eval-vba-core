@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -lh /c/Users/jimu/Desktop/_vba_export/*.bas /c/Users/jimu/Desktop/_vba_export/*.cls /c/Users/jimu/Desktop/_vba_export/*.frm)",
+      "Bash(grep -E \"\\\\.\\(bas|cls|frm\\)$\")"
+    ]
+  }
+}

@@ -10,7 +10,7 @@ Public Sub DumpUFTree(ByVal uf As Object)
 
 #If APP_DEBUG Then
     Debug.Print String(90, "=")
-    Debug.Print "[UF TREE]"; TypeName(uf); " Name="; uf.name
+    Debug.Print "[UF TREE]"; typeName(uf); " Name="; uf.name
     Debug.Print "  UF: W=" & f2(uf.Width) & " H=" & f2(uf.Height) & _
                 " InW=" & f2(uf.InsideWidth) & " InH=" & f2(uf.InsideHeight) & _
                 " ScrollH=" & f2(NZ(uf.ScrollHeight)) & " ScrollW=" & f2(NZ(uf.ScrollWidth)) & _
@@ -31,7 +31,7 @@ Private Sub DumpControlsRecursive(ByVal parent As Object, ByVal depth As Long)
     For Each c In parent.controls
         DumpOne c, depth
 
-        ' Â≠ê„ÇíÊåÅ„Å§ÂèØËÉΩÊÄß„Åå„ÅÇ„Çã„ÇÇ„ÅÆ„Å†„ÅëÊΩú„ÇãÔºàFrame / MultiPage / PageÔºâ
+        ' éqÇéùÇ¬â¬î\ê´Ç™Ç†ÇÈÇ‡ÇÃÇæÇØêˆÇÈÅiFrame / MultiPage / PageÅj
         If HasControls(c) Then
             DumpControlsRecursive c, depth + 1
         End If
@@ -39,26 +39,26 @@ Private Sub DumpControlsRecursive(ByVal parent As Object, ByVal depth As Long)
     Exit Sub
 
 EH:
-    Debug.Print Ind(depth) & "[RECURSE ERR] " & TypeName(parent) & " " & Err.Number & " " & Err.Description
+    Debug.Print Ind(depth) & "[RECURSE ERR] " & typeName(parent) & " " & Err.Number & " " & Err.Description
 End Sub
 
 Private Sub DumpOne(ByVal c As Object, ByVal depth As Long)
     On Error GoTo EH
 
     Dim line As String
-    line = Ind(depth) & "- " & TypeName(c) & "  Name=" & SafeName(c)
+    line = Ind(depth) & "- " & typeName(c) & "  Name=" & SafeName(c)
 
     line = line & "  L=" & f2(SafeProp(c, "Left")) & _
                   " T=" & f2(SafeProp(c, "Top")) & _
                   " W=" & f2(SafeProp(c, "Width")) & _
                   " H=" & f2(SafeProp(c, "Height"))
 
-    ' „Çà„Åè‰∫ãÊïÖ„ÇãÁ≥ª„ÇÇÊéß„Åà„ÇÅ„Å´Êãæ„ÅÜÔºàÂèñ„Çå„Å™„ÅÑ„Éó„É≠„Éë„ÉÜ„Ç£„ÅØÁÑ°Ë¶ñÔºâ
+    ' ÇÊÇ≠éñåÃÇÈånÇ‡çTÇ¶ÇﬂÇ…èEÇ§ÅiéÊÇÍÇ»Ç¢ÉvÉçÉpÉeÉBÇÕñ≥éãÅj
     line = line & "  Vis=" & SafeProp(c, "Visible")
     line = line & "  En=" & SafeProp(c, "Enabled")
 
-    ' MultiPage / Page / Frame„ÅØInside/Scroll„ÇÇÂá∫„Åô
-    If TypeName(c) = "MultiPage" Or TypeName(c) = "Page" Or TypeName(c) = "Frame" Then
+    ' MultiPage / Page / FrameÇÕInside/ScrollÇ‡èoÇ∑
+    If typeName(c) = "MultiPage" Or typeName(c) = "Page" Or typeName(c) = "Frame" Then
         line = line & "  InH=" & f2(SafeProp(c, "InsideHeight")) & " InW=" & f2(SafeProp(c, "InsideWidth"))
         line = line & "  ScrH=" & f2(SafeProp(c, "ScrollHeight")) & " ScrW=" & f2(SafeProp(c, "ScrollWidth"))
         line = line & "  ScrBars=" & SafeProp(c, "ScrollBars")
@@ -68,8 +68,8 @@ Private Sub DumpOne(ByVal c As Object, ByVal depth As Long)
     Debug.Print line
 #End If
 
-    ' MultiPage „ÅÆ Pages „ÇíÊòéÁ§∫ÁöÑ„Å´ÂàóÊåô
-    If TypeName(c) = "MultiPage" Then
+    ' MultiPage ÇÃ Pages Çñæé¶ìIÇ…óÒãì
+    If typeName(c) = "MultiPage" Then
         DumpMultiPagePages c, depth + 1
     End If
 
@@ -77,7 +77,7 @@ Private Sub DumpOne(ByVal c As Object, ByVal depth As Long)
 
 EH:
 #If APP_DEBUG Then
-    Debug.Print Ind(depth) & "[DUMP ERR] " & TypeName(c) & " " & Err.Number & " " & Err.Description
+    Debug.Print Ind(depth) & "[DUMP ERR] " & typeName(c) & " " & Err.Number & " " & Err.Description
 #End If
 End Sub
 
@@ -89,7 +89,7 @@ Private Sub DumpMultiPagePages(ByVal mp As Object, ByVal depth As Long)
         Set pg = mp.Pages(i)
 #If APP_DEBUG Then
         Debug.Print Ind(depth) & "* Page(" & i & ") Name=" & pg.name & _
-                    "  L=" & f2(pg.Left) & " T=" & f2(pg.Top) & _
+                    "  L=" & f2(pg.Left) & " T=" & f2(pg.top) & _
                     " W=" & f2(pg.Width) & " H=" & f2(pg.Height) & _
                     "  Vis=" & pg.Visible
 #End If
@@ -155,7 +155,7 @@ End Function
 
 Public Sub DumpUFTree_ToFile(ByVal uf As Object)
 
-MsgBox "„Åì„ÅÆDump„ÅØÂç±Èô∫Áâà„Åß„Åô„ÄÇmodUFDumpSafe „ÅÆ DumpFrmEvalTree_ToFile_Safe „Çí‰Ωø„Å£„Å¶„Åè„Å†„Åï„ÅÑ„ÄÇ", vbExclamation
+MsgBox "Ç±ÇÃDumpÇÕäÎåØî≈Ç≈Ç∑ÅBmodUFDumpSafe ÇÃ DumpFrmEvalTree_ToFile_Safe ÇégÇ¡ÇƒÇ≠ÇæÇ≥Ç¢ÅB", vbExclamation
 Exit Sub
 
 
@@ -168,7 +168,7 @@ Exit Sub
     Open p For Output As #ff
 
     Print #ff, String(90, "=")
-    Print #ff, "[UF TREE] " & TypeName(uf) & " Name=" & uf.name
+    Print #ff, "[UF TREE] " & typeName(uf) & " Name=" & uf.name
     Print #ff, "  UF: W=" & f2(uf.Width) & " H=" & f2(uf.Height) & _
                " InW=" & f2(uf.InsideWidth) & " InH=" & f2(uf.InsideHeight)
 
@@ -192,7 +192,7 @@ Private Sub DumpControlsRecursive_ToFile(ByVal parent As Object, ByVal depth As 
 
         Print #ff, OneLine(c, depth)
 
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             DumpPages_ToFile c, depth + 1, ff
         ElseIf HasControls(c) Then
             DumpControlsRecursive_ToFile c, depth + 1, ff
@@ -201,7 +201,7 @@ Private Sub DumpControlsRecursive_ToFile(ByVal parent As Object, ByVal depth As 
     Exit Sub
 
 EH:
-    Print #ff, Ind(depth) & "[RECURSE ERR] " & TypeName(parent) & " " & Err.Number & " " & Err.Description
+    Print #ff, Ind(depth) & "[RECURSE ERR] " & typeName(parent) & " " & Err.Number & " " & Err.Description
 End Sub
 
 
@@ -215,7 +215,7 @@ Private Sub DumpPages_ToFile(ByVal mp As Object, ByVal depth As Long, ByVal ff A
         Print #ff, Ind(depth) & "* Page(" & i & ") Name=" & pg.name & _
                    " Caption=" & pg.caption
 
-        ' ‚òÖ „Åì„Åì„ÅåÈáçË¶ÅÔºöPage „ÇíËµ∑ÁÇπ„Å´ÂÜçÂ∏∞
+        ' Åö Ç±Ç±Ç™èdóvÅFPage ÇãNì_Ç…çƒãA
         DumpControlsRecursive_ToFile pg, depth + 1, ff
     Next
     Exit Sub
@@ -229,13 +229,13 @@ Private Function OneLine(ByVal c As Object, ByVal depth As Long) As String
     On Error GoTo EH
 
     Dim s As String
-    s = Ind(depth) & "- " & TypeName(c) & " Name=" & SafeName(c) & _
+    s = Ind(depth) & "- " & typeName(c) & " Name=" & SafeName(c) & _
         " L=" & f2(SafeProp(c, "Left")) & _
         " T=" & f2(SafeProp(c, "Top")) & _
         " W=" & f2(SafeProp(c, "Width")) & _
         " H=" & f2(SafeProp(c, "Height"))
 
-    If TypeName(c) = "MultiPage" Or TypeName(c) = "Page" Or TypeName(c) = "Frame" Then
+    If typeName(c) = "MultiPage" Or typeName(c) = "Page" Or typeName(c) = "Frame" Then
         s = s & " InH=" & f2(SafeProp(c, "InsideHeight")) & " InW=" & f2(SafeProp(c, "InsideWidth"))
     End If
 
@@ -243,7 +243,7 @@ Private Function OneLine(ByVal c As Object, ByVal depth As Long) As String
     Exit Function
 
 EH:
-    OneLine = Ind(depth) & "- " & TypeName(c) & " (line err " & Err.Number & ")"
+    OneLine = Ind(depth) & "- " & typeName(c) & " (line err " & Err.Number & ")"
 End Function
 
 
@@ -293,14 +293,14 @@ Public Sub Diag_MultiPagePages(ByVal uf As Object, ByVal mpName As String)
     Dim mp As Object
     Set mp = uf.controls(mpName)
 
-    Debug.Print "[MP]"; mpName; " Type=" & TypeName(mp); " PagesCount=" & mp.Pages.count
+    Debug.Print "[MP]"; mpName; " Type=" & typeName(mp); " PagesCount=" & mp.Pages.count
     
     
     
     Dim pg As Object
 Dim i As Long: i = 0
 For Each pg In mp.Pages
-    Debug.Print "  Page(" & i & ") Type=" & TypeName(pg) & _
+    Debug.Print "  Page(" & i & ") Type=" & typeName(pg) & _
                 " Name=" & SafeProp(pg, "Name") & _
                 " Width=" & SafeProp(pg, "Width") & _
                 " Height=" & SafeProp(pg, "Height")
@@ -335,7 +335,7 @@ Public Sub DumpMP_PageTopControls(ByVal uf As Object, ByVal mpName As String)
 
         Dim c As Object
         For Each c In pg.controls
-            Debug.Print "   - " & TypeName(c) & " " & SafeName(c)
+            Debug.Print "   - " & typeName(c) & " " & SafeName(c)
         Next
 
         i = i + 1
@@ -476,7 +476,7 @@ End Sub
 Public Sub FindControlParents(ByVal uf As Object, ByVal targetName As String)
     On Error GoTo EH
     Debug.Print "[FIND PARENTS] " & targetName
-    FindParentsRecursive uf, targetName, TypeName(uf) & ":" & uf.name
+    FindParentsRecursive uf, targetName, typeName(uf) & ":" & uf.name
     Exit Sub
 EH:
     Debug.Print "[FindControlParents][ERR] " & Err.Number & " " & Err.Description
@@ -488,16 +488,16 @@ Private Sub FindParentsRecursive(ByVal parent As Object, ByVal targetName As Str
     Dim c As Object
     For Each c In parent.controls
         If StrComp(SafeName(c), targetName, vbTextCompare) = 0 Then
-            Debug.Print " HIT path=" & path & " -> " & TypeName(c) & ":" & SafeName(c)
+            Debug.Print " HIT path=" & path & " -> " & typeName(c) & ":" & SafeName(c)
         End If
 
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             Dim pg As Object
             For Each pg In c.Pages
                 FindParentsRecursive pg, targetName, path & " -> MultiPage:" & SafeName(c) & " -> Page:" & SafeProp(pg, "Name")
             Next
         ElseIf HasControls(c) Then
-            FindParentsRecursive c, targetName, path & " -> " & TypeName(c) & ":" & SafeName(c)
+            FindParentsRecursive c, targetName, path & " -> " & typeName(c) & ":" & SafeName(c)
         End If
     Next
     Exit Sub
@@ -528,7 +528,7 @@ Public Sub DumpMP_OnePage_TreeByParent_ToFile(ByVal uf As Object, ByVal mpName A
     Print #ff, String(90, "=")
     Print #ff, "[TREE BY PARENT] " & mpName & " / " & pageName
 
-    ' Áõ¥‰∏ãÔºàParent„Ååpg„ÅÆ„ÇÇ„ÅÆÔºâ„Å†„Åë„ÇíÂàóÊåô„Åó„Å¶„ÄÅ„Åù„Åì„Åã„ÇâÂÜçÂ∏∞
+    ' íºâ∫ÅiParentÇ™pgÇÃÇ‡ÇÃÅjÇæÇØÇóÒãìÇµÇƒÅAÇªÇ±Ç©ÇÁçƒãA
     DumpChildrenByParent_ToFile pg, pg, 0, ff
 
     Close #ff
@@ -548,12 +548,12 @@ Private Sub DumpChildrenByParent_ToFile(ByVal root As Object, ByVal parent As Ob
     For Each c In root.controls
         If HasParent(c) Then
             If c.parent Is parent Then
-                Print #ff, Ind(depth) & "- " & TypeName(c) & " " & SafeName(c) & _
+                Print #ff, Ind(depth) & "- " & typeName(c) & " " & SafeName(c) & _
                            " L=" & f2(SafeProp(c, "Left")) & _
                            " T=" & f2(SafeProp(c, "Top")) & _
                            " W=" & f2(SafeProp(c, "Width")) & _
                            " H=" & f2(SafeProp(c, "Height"))
-                ' Ê¨°„ÅÆÈöéÂ±§„Å∏
+                ' éüÇÃäKëwÇ÷
                 If CanHaveChildren(c) Then
                     DumpChildrenByParent_ToFile root, c, depth + 1, ff
                 End If
@@ -577,7 +577,7 @@ EH:
 End Function
 
 Private Function CanHaveChildren(ByVal o As Object) As Boolean
-    Dim t As String: t = TypeName(o)
+    Dim t As String: t = typeName(o)
     CanHaveChildren = (t = "Frame" Or t = "MultiPage" Or t = "Page")
 End Function
 
@@ -633,8 +633,8 @@ Public Sub Diag_frKyo_ComboIndex()
 
     For i = 0 To f.controls.count - 1
         Set c = f.controls(i)
-        If TypeName(c) = "ComboBox" Then
-            Debug.Print i, "[" & c.name & "]", c.Left, c.Top
+        If typeName(c) = "ComboBox" Then
+            Debug.Print i, "[" & c.name & "]", c.Left, c.top
         End If
     Next i
 End Sub
@@ -661,7 +661,7 @@ End Sub
 
 
 Public Sub DumpTreeByParent_ToFile(ByVal root As Object)
-Debug.Print "[DUMP START] root=" & TypeName(root)
+Debug.Print "[DUMP START] root=" & typeName(root)
 
 
     On Error GoTo EH
@@ -671,15 +671,15 @@ Debug.Print "[DUMP START] root=" & TypeName(root)
 
 
     Dim p As String
-    p = Environ$("TEMP") & "\treeByParent_" & TypeName(root) & "_" & GetNameSafe(root) & "_" & GetCaptionSafe(root) & "_" & Format$(Now, "yyyymmdd_hhnnss") & ".txt"
+    p = Environ$("TEMP") & "\treeByParent_" & typeName(root) & "_" & GetNameSafe(root) & "_" & GetCaptionSafe(root) & "_" & Format$(Now, "yyyymmdd_hhnnss") & ".txt"
 
     Dim ff As Integer: ff = FreeFile
     Open p For Output As #ff
 
     Print #ff, String(90, "=")
-    Print #ff, "[TREE BY PARENT] " & TypeName(root) & " Name=" & GetNameSafe(root)
+    Print #ff, "[TREE BY PARENT] " & typeName(root) & " Name=" & GetNameSafe(root)
 
-    If TypeName(root) = "MultiPage" Then
+    If typeName(root) = "MultiPage" Then
     DumpPages_ToFile root, 0, ff
 Else
     DumpControlsRecursive_ToFile root, 0, ff
@@ -709,7 +709,7 @@ Public Sub Test_TypeName_mpPhys_Page8()
     Dim o As Object
     Set o = frmEval.controls("MultiPage1").Pages(2).controls("Frame3").controls("mpPhys").Pages(0)
 
-    Debug.Print "TypeName(o)=", TypeName(o)
+    Debug.Print "TypeName(o)=", typeName(o)
     Debug.Print "o.Name=", o.name
 
     DumpTreeByParent_ToFile o
@@ -718,7 +718,7 @@ End Sub
 
 
 
-'=== ÂÖ®„É¨„Ç§„Ç¢„Ç¶„ÉàÊßãÈÄ†„Çí‰∏ÄÊã¨„ÉÄ„É≥„ÉóÔºàImmediate„ÅØ„Åì„Çå„ÇíÂëº„Å∂„Å†„ÅëÔºâ===
+'=== ëSÉåÉCÉAÉEÉgç\ë¢ÇàÍäáÉ_ÉìÉvÅiImmediateÇÕÇ±ÇÍÇåƒÇ‘ÇæÇØÅj===
 Public Sub Dump_AllLayout_Snapshot()
     On Error GoTo EH
 
@@ -726,7 +726,7 @@ Public Sub Dump_AllLayout_Snapshot()
     Dim mpPhys As Object, mpADL As Object
     Dim mp2 As Object, mp3 As Object
 
-    '--- 1) „É´„Éº„Éà MultiPage1 (8„Éö„Éº„Ç∏) ---
+    '--- 1) ÉãÅ[Ég MultiPage1 (8ÉyÅ[ÉW) ---
     Set mp1 = frmEval.controls("MultiPage1")
 
     Dim i As Long
@@ -735,25 +735,25 @@ Public Sub Dump_AllLayout_Snapshot()
         DumpTreeByParent_ToFile pg
     Next i
 
-    '--- 2) Page3 -> Frame3 -> mpPhys (6„Éö„Éº„Ç∏) ---
+    '--- 2) Page3 -> Frame3 -> mpPhys (6ÉyÅ[ÉW) ---
     Set mpPhys = mp1.Pages(2).controls("Frame3").controls("mpPhys")
     For i = 0 To mpPhys.Pages.count - 1
         DumpTreeByParent_ToFile mpPhys.Pages(i)
     Next i
 
-    '--- 3) Page4 -> Frame4 -> mpADL (3„Éö„Éº„Ç∏) ---
+    '--- 3) Page4 -> Frame4 -> mpADL (3ÉyÅ[ÉW) ---
     Set mpADL = mp1.Pages(3).controls("Frame4").controls("mpADL")
     For i = 0 To mpADL.Pages.count - 1
         DumpTreeByParent_ToFile mpADL.Pages(i)
     Next i
 
-    '--- 4) Page6 -> Frame6 -> MultiPage2 (3„Éö„Éº„Ç∏) ---
+    '--- 4) Page6 -> Frame6 -> MultiPage2 (3ÉyÅ[ÉW) ---
     Set mp2 = mp1.Pages(5).controls("Frame6").controls("MultiPage2")
     For i = 0 To mp2.Pages.count - 1
         DumpTreeByParent_ToFile mp2.Pages(i)
     Next i
 
-    '--- 5) MultiPage2 „ÅÆ Page9 -> Frame26 -> MultiPage3 (2„Éö„Éº„Ç∏) ---
+    '--- 5) MultiPage2 ÇÃ Page9 -> Frame26 -> MultiPage3 (2ÉyÅ[ÉW) ---
     Set mp3 = mp2.Pages(1).controls("Frame26").controls("MultiPage3")
     For i = 0 To mp3.Pages.count - 1
         DumpTreeByParent_ToFile mp3.Pages(i)
@@ -772,15 +772,15 @@ Private Function GetCaptionSafe(ByVal o As Object) As String
     On Error GoTo EH
     Dim s As String
     s = CStr(CallByName(o, "Caption", VbGet))
-    s = Replace(s, "\", "Ôºº")
-    s = Replace(s, "/", "Ôºè")
-    s = Replace(s, ":", "Ôºö")
-    s = Replace(s, "*", "Ôºä")
-    s = Replace(s, "?", "Ôºü")
+    s = Replace(s, "\", "Å_")
+    s = Replace(s, "/", "Å^")
+    s = Replace(s, ":", "ÅF")
+    s = Replace(s, "*", "Åñ")
+    s = Replace(s, "?", "ÅH")
    s = Replace(s, Chr(34), ChrW(&H201D))
-    s = Replace(s, "<", "Ôºú")
-    s = Replace(s, ">", "Ôºû")
-    s = Replace(s, "|", "ÔΩú")
+    s = Replace(s, "<", "ÅÉ")
+    s = Replace(s, ">", "ÅÑ")
+    s = Replace(s, "|", "Åb")
     GetCaptionSafe = s
     Exit Function
 EH:

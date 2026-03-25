@@ -31,9 +31,9 @@ Public Sub Align_LoadPrevButton_NextToHdrKana(ByVal f As Object)
 
     If btn.parent Is hdr Then
         btn.Left = kana.Left + kana.Width + 12
-        btn.Top = kana.Top + 2
+        btn.top = kana.top + 2
     Else
         btn.Left = hdr.Left + kana.Left + kana.Width + 12
-        btn.Top = hdr.Top + kana.Top + 2
+        btn.top = hdr.top + kana.top + 2
     End If
 End Sub

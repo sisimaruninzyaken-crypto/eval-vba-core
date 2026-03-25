@@ -14,7 +14,7 @@ Public Sub Resize_MMTChildHost_ToPage()
     host.Height = pg.InsideHeight - 12
 
     child.Left = 0
-    child.Top = 0
+    child.top = 0
     child.Width = host.InsideWidth
     child.Height = host.InsideHeight
 End Sub

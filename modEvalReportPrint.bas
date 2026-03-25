@@ -4,8 +4,8 @@ Option Explicit
 
 Private Sub WalkContainer(ByVal cont As Object, ByRef maxBottom As Double)
     
-   '--- MultiPage ã¯ Controls ã‚’æŒãŸãªã„ï¼ˆPages ã‚’æ˜ã‚‹ï¼‰
-If TypeName(cont) = "MultiPage" Then
+   '--- MultiPage ‚Í Controls ‚ğ‚½‚È‚¢iPages ‚ğŒ@‚éj
+If typeName(cont) = "MultiPage" Then
     Dim p As MSForms.page
     For Each p In cont.Pages
         WalkContainer p, maxBottom
@@ -28,16 +28,16 @@ End If
                   Or (TypeOf c Is MSForms.MultiPage) _
                   Or (TypeOf c Is MSForms.page)
 
-    ' è‘‰ï¼ˆå…¥åŠ›éƒ¨å“ãªã©ï¼‰ã ã‘ã§ maxBottom ã‚’æ›´æ–°ã™ã‚‹
+    ' —ti“ü—Í•”•i‚È‚Çj‚¾‚¯‚Å maxBottom ‚ğXV‚·‚é
     If c.Visible Then
         If Not isContainer Then
-            If c.Top + c.Height > maxBottom Then maxBottom = c.Top + c.Height: lastMaxInfo = TypeName(c) & "  " & c.name & "  Bottom=" & (c.Top + c.Height)
-            If c.Top + c.Height > maxBottom Then lastMaxInfo = TypeName(c) & "  " & c.name & "  Bottom=" & (c.Top + c.Height)
+            If c.top + c.Height > maxBottom Then maxBottom = c.top + c.Height: lastMaxInfo = typeName(c) & "  " & c.name & "  Bottom=" & (c.top + c.Height)
+            If c.top + c.Height > maxBottom Then lastMaxInfo = typeName(c) & "  " & c.name & "  Bottom=" & (c.top + c.Height)
 
         End If
     End If
 
-    ' ã‚³ãƒ³ãƒ†ãƒŠã¯æ˜ã‚‹ï¼ˆä¸­èº«ã‚’è¦‹ã‚‹ï¼‰
+    ' ƒRƒ“ƒeƒi‚ÍŒ@‚éi’†g‚ğŒ©‚éj
     If isContainer Then
         WalkContainer c, maxBottom
     End If
@@ -83,7 +83,7 @@ Public Sub Fix_Page8_DailyLog_Once()
         pg.controls("lstDailyLogList").Height = 140
     End If
 
-    'æ¤œè¨¼ãƒ­ã‚°ï¼ˆçµæœã ã‘ï¼‰
+    'ŒŸØƒƒOiŒ‹‰Ê‚¾‚¯j
     maxBottom = 0#
     WalkContainer pg, maxBottom
     Static callN As Long: callN = callN + 1: Debug.Print "[Fix_Page8] call#" & callN & " needShrink=" & needShrink & "  NewBottom=" & maxBottom & "  Overflow=" & (maxBottom - mp.Height)
@@ -97,16 +97,16 @@ Public Sub Fix_Page6_Walk_FrameScroll_Once()
     Dim f As Object
     Set f = frmEval.controls("MultiPage1").Pages("Page6").controls("Frame6")
 
-    'è¡¨ç¤ºæ ã‚’MP1ã«åˆã‚ã›ã‚‹
+    '•\¦˜g‚ğMP1‚É‡‚í‚¹‚é
     f.Height = frmEval.controls("MultiPage1").Height
     f.ScrollBars = fmScrollBarsVertical
     f.ScrollTop = 0
 
-    'ä¸­èº«ã®æœ€å¤§Bottom â†’ ScrollHeight
+    '’†g‚ÌÅ‘åBottom ¨ ScrollHeight
     Dim maxBottom As Double: maxBottom = 0#
     Dim c As Object
     For Each c In f.controls
-        If c.Top + c.Height > maxBottom Then maxBottom = c.Top + c.Height
+        If c.top + c.Height > maxBottom Then maxBottom = c.top + c.Height
     Next c
     f.ScrollHeight = maxBottom + 12
 
@@ -151,9 +151,9 @@ Public Sub Temp_SetScroll_Frame1_PostureTab()
     Dim pg As Object: Set pg = mp.Pages(mp.value)
 
     With pg.controls("Frame1")
-        .Height = mp.Height                'â†è¡¨ç¤ºæ ã«åã‚ã‚‹ï¼ˆã“ã“ãŒæœ¬ä¸¸ï¼‰
+        .Height = mp.Height                '©•\¦˜g‚Éû‚ß‚éi‚±‚±‚ª–{ŠÛj
         .ScrollBars = fmScrollBarsVertical
-        .ScrollHeight = 396 + 24           'â†ä¸­èº«Bottom(396) + ä½™ç™½
+        .ScrollHeight = 396 + 24           '©’†gBottom(396) + —]”’
     End With
 End Sub
 
