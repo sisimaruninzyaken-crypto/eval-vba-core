@@ -33,8 +33,16 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
 
     WriteMerged ws, "D14:T14", GetCtrlTextSafe(owner, "txtDx")
     WriteMerged ws, "U14:BJ14", BuildMedicalDatesText(owner)
-    WriteMerged ws, "A16:BJ16", GetCtrlTextSafe(owner, "txtTxCourse")
-    WriteMerged ws, "A18:BJ18", GetCtrlTextSafe(owner, "txtComplications")
+
+    Dim dbgTx As String: dbgTx = GetCtrlTextSafe(owner, "txtTxCourse")
+    Dim dbgCp As String: dbgCp = GetCtrlTextSafe(owner, "txtComplications")
+    Dim dbgLv As String: dbgLv = GetCtrlTextSafe(owner, "txtLiving")
+    Debug.Print "[WriteEvalPlanSheet] owner=" & TypeName(owner) & _
+        " | txtLiving=[" & dbgLv & "]" & _
+        " | txtTxCourse=[" & dbgTx & "]" & _
+        " | txtComplications=[" & dbgCp & "]"
+    WriteMerged ws, "A16:BJ16", dbgTx
+    WriteMerged ws, "A18:BJ18", dbgCp
     WriteMerged ws, "A20:BJ20", GetPlanTextWithFallback(planData, owner, Array("TrainingPrecaution", "Medical.TrainingPrecaution", "機能訓練実施上の留意事項"), Array("txtTrainingNote", "txtRehabNote", "txtPrecaution"))
 
     WriteProgramBlocks ws, planData
