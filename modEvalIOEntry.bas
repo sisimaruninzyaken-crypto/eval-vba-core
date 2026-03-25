@@ -19,22 +19,22 @@ Private Const HDR_BIRTH_DATE As String = "BirthDate"
 Private Const HDR_GENDER As String = "Gender"
 Private Const HDR_CARE_LEVEL As String = "CareLevel"
 Private Const HDR_CREATED_DATE As String = "CreatedDate"
-Public mDailyLogManual As Boolean    ' 譌･縲・・險倬鹸縺ｮ謇句虚菫晏ｭ倥ヵ繝ｩ繧ｰ
+Public mDailyLogManual As Boolean    ' 日々の記録の手動保存フラグ
 
 
 
-' === 陬懷勧蜈ｷ/繝ｪ繧ｹ繧ｯ 繝輔Ξ繝ｼ繝蜷搾ｼ亥崋螳夂畑・・===
+' === 補助具/リスク フレーム名（固定用） ===
 Private Const FRM_AIDS As String = "Frame33"
 Private Const FRM_RISK As String = "Frame34"
 Private Const IO_TRACE As Boolean = False
 Private Const MAIN_SAVE_MIN_FILLED_FIELDS As Long = 10
-Private Const MAIN_SAVE_FEW_INPUT_MESSAGE As String = "蜈･蜉幃・岼縺悟ｰ代↑縺・憾諷九〒縺吶・ & vbCrLf & _
-    "譌｢蟄倥ョ繝ｼ繧ｿ繧剃ｸ頑嶌縺阪☆繧九→蜈・↓謌ｻ縺帙↑縺・庄閭ｽ諤ｧ縺後≠繧翫∪縺吶・ & vbCrLf & _
-    "譛ｬ蠖薙↓菫晏ｭ倥＠縺ｾ縺吶°・・
+Private Const MAIN_SAVE_FEW_INPUT_MESSAGE As String = "入力項目が少ない状態です。" & vbCrLf & _
+    "既存データを上書きすると元に戻せない可能性があります。" & vbCrLf & _
+    "本当に保存しますか？"
 Private Const MAIN_SAVE_MIN_CHANGE_COUNT As Long = 3
-Private Const MAIN_SAVE_FEW_CHANGE_MESSAGE As String = "螟画峩鬆・岼縺後⊇縺ｨ繧薙←縺ゅｊ縺ｾ縺帙ｓ縲・ & vbCrLf & _
-    "隱､縺｣縺ｦ菫晏ｭ倥＠繧医≧縺ｨ縺励※縺・↑縺・°遒ｺ隱阪＠縺ｦ縺上□縺輔＞縲・ & vbCrLf & _
-    "譛ｬ蠖薙↓菫晏ｭ倥＠縺ｾ縺吶°・・
+Private Const MAIN_SAVE_FEW_CHANGE_MESSAGE As String = "変更項目がほとんどありません。" & vbCrLf & _
+    "誤って保存しようとしていないか確認してください。" & vbCrLf & _
+    "本当に保存しますか？"
 Private Const HDR_HOMEENV_CHECKS As String = "Basic.HomeEnv.Checks"
 Private Const HDR_HOMEENV_NOTE As String = "Basic.HomeEnv.Note"
 Private Const HDR_RISK_CHECKS As String = "Basic.Risk.Checks"
@@ -43,10 +43,10 @@ Private Const HISTORY_LOAD_DEBUG As Boolean = True
 
 
 Public Sub LoadEvaluation_CurrentRow()
-    MsgBox "縺薙・蜈･蜿｣縺ｯ蟒・ｭ｢縺励∪縺励◆縲りｪｭ縺ｿ霎ｼ縺ｿ縺ｯ縲悟錐蜑坂・逶ｴ霑大呵｣懊°繧蛾∈謚槭阪↓邨ｱ荳縺励※縺・∪縺吶・, vbInformation
+    MsgBox "この入口は廃止しました。読み込みは「名前→直近候補から選択」に統一しています。", vbInformation
 End Sub
 
-' 笘・％縺薙ｒ騾驕ｿ蜷阪↓縺励※蠢・★髢峨§繧・
+' ★ここを退避名にして必ず閉じる
 Private Sub LoadEvaluation_fromLastRow_OBSOLETE()
 End Sub
 
@@ -97,24 +97,24 @@ End Sub
 
 
 
-' 笘・ompat・壽立蜈･蜿｣縲ょ・驛ｨ逧・↓縺ｯ SaveEvaluation_Append_From 縺ｫ蟋碑ｭｲ縺吶ｋ縲・
-' 縲縺ｩ縺薙°縺ｮ繝懊ち繝ｳ繧・商縺・・繧ｯ繝ｭ縺後∪縺 SaveEvaluation_Append 繧呈欠縺励※縺・※繧ゅ・
-' 縲譛邨ら噪縺ｪ菫晏ｭ倥Ν繝ｼ繝医・ SaveEvaluation_Append_From 縺ｫ荳譛ｬ蛹悶＆繧後ｋ縲・
+' ★Compat：旧入口。内部的には SaveEvaluation_Append_From に委譲する。
+' 　どこかのボタンや古いマクロがまだ SaveEvaluation_Append を指していても、
+' 　最終的な保存ルートは SaveEvaluation_Append_From に一本化される。
 Public Sub SaveEvaluation_Append()
-    EnsureFormLoaded                ' frmEval 縺後Ο繝ｼ繝峨＆繧後※縺・↑縺代ｌ縺ｰ繝ｭ繝ｼ繝・
+    EnsureFormLoaded                ' frmEval がロードされていなければロード
     SaveEvaluation_Append_From frmEval
 End Sub
 
 
-' 笘・OBSOLETE] 逶ｴ謗･蜻ｼ縺ｰ縺ｪ縺・りｪｭ縺ｿ霎ｼ縺ｿ縺ｯ LoadEvaluation_ByName_From 縺ｫ荳譛ｬ蛹悶・
+' ★[OBSOLETE] 直接呼ばない。読み込みは LoadEvaluation_ByName_From に一本化。
 Private Sub LoadEvaluation_LastRow_OBSOLETE(owner As Object)
 
-    MsgBox "縺薙・蜈･蜿｣縺ｯ蟒・ｭ｢縺励∪縺励◆縲りｪｭ縺ｿ霎ｼ縺ｿ縺ｯ縲主錐蜑坂・逶ｴ霑大呵｣懊°繧蛾∈謚槭上↓邨ｱ荳縺励※縺・∪縺吶・, vbInformation
+    MsgBox "この入口は廃止しました。読み込みは『名前→直近候補から選択』に統一しています。", vbInformation
 End Sub
 
 
 Private Sub SaveEvaluation_CurrentRow_OBSOLETE()
-    MsgBox "縺薙・蜈･蜿｣縺ｯ蟒・ｭ｢縺励∪縺励◆縲ゆｿ晏ｭ倥・縲手ｿｽ蜉菫晏ｭ假ｼ・ppend・峨上↓邨ｱ荳縺励※縺・∪縺吶・, vbInformation
+    MsgBox "この入口は廃止しました。保存は『追加保存（Append）』に統一しています。", vbInformation
 End Sub
 Private Sub LoadEvaluation_CurrentRow_OBSOLETE()
     ' OBSOLETE: this procedure must not be used.
@@ -122,49 +122,49 @@ Private Sub LoadEvaluation_CurrentRow_OBSOLETE()
     Exit Sub
 End Sub
 
-'======================== 螳滉ｽ難ｼ壼・驛ｨ縺ｾ縺ｨ繧√※蜻ｼ縺ｶ ========================
+'======================== 実体：全部まとめて呼ぶ ========================
 
-' ===== 縺吶∋縺ｦ菫晏ｭ・=====
+' ===== すべて保存 =====
 Public Sub SaveAllSectionsToSheet(ws As Worksheet, r As Long, owner As Object)
 
 
-   ' 菫晏ｭ倥ワ繝厄ｼ哘valData 1 陦悟・縺ｫ縺ｾ縺ｨ繧√※譖ｸ縺崎ｾｼ繧
-' 菫晏ｭ倬・・繧､繝｡繝ｼ繧ｸ・・
-'   1) 蝓ｺ譛ｬ諠・ｱ・・asic・・
-'   2) 鮗ｻ逞ｺ / ROM / 蟋ｿ蜍｢
-'   3) MMT / 諢溯ｦ・/ 繝医・繝ｳ繝ｻ蜿榊ｰ・
-'   4) 逍ｼ逞幢ｼ・ain IO・・
-'   5) 繝・せ繝医・隧穂ｾ｡・・0m / TUG / 謠｡蜉・/ 5蝗樒ｫ九■ / 繧ｻ繝溘ち繝ｳ繝・Β・・
-'   6) 陬懷勧蜈ｷ / 繝ｪ繧ｹ繧ｯ・医メ繧ｧ繝・け鄒､・・
-'   7) ADL・・O_ADL・・
+   ' 保存ハブ：EvalData 1 行分にまとめて書き込む
+' 保存順のイメージ：
+'   1) 基本情報（Basic）
+'   2) 麻痺 / ROM / 姿勢
+'   3) MMT / 感覚 / トーン・反射
+'   4) 疼痛（Pain IO）
+'   5) テスト・評価（10m / TUG / 握力 / 5回立ち / セミタンデム）
+'   6) 補助具 / リスク（チェック群）
+'   7) ADL（IO_ADL）
 
    
    
 
-    ' 蝓ｺ譛ｬ諠・ｱ・医％縺ｮ繝｢繧ｸ繝･繝ｼ繝ｫ蜀・・螳溯｣・ｼ・
+    ' 基本情報（このモジュール内の実装）
     Call SaveBasicInfoToSheet_FromMe(ws, r, owner)
 
 
 
-    ' 鮗ｻ逞ｺ / ROM・域里縺ｫOK・・
+    ' 麻痺 / ROM（既にOK）
     IO_SafeRunSave "SaveParalysisToSheet", ws, r, owner
     IO_SafeRunSave "SaveROMToSheet", ws, r, owner
     IO_SafeRunSave "SavePostureToSheet", ws, r, owner
     
 
 
-    ' 蠢・ｦ√↓縺ｪ縺｣縺溘ｉ鬆・ｬ｡ON
+    ' 必要になったら順次ON
     IO_SafeRunSave "SaveMMTToSheet", ws, r, owner
     IO_SafeRunSave "SaveSensoryToSheet", ws, r, owner
-     'Call Mirror_SensoryIO(ws, r)    'Legacy莠呈鋤・夂樟陦御ｻ墓ｧ倥〒縺ｯ譛ｪ菴ｿ逕ｨ縺ｮ縺溘ａ蛛懈ｭ｢
+     'Call Mirror_SensoryIO(ws, r)    'Legacy互換：現行仕様では未使用のため停止
     IO_SafeRunSave "modToneReflexIO.SaveToneReflexToSheet", ws, r, owner
   
 
     Call SavePainToSheet(ws, r, owner)
      Call Save_TestEvalToSheet(ws, r, owner)
-     Call Save_WalkIndepToSheet(ws, r, owner)  '笘・ｭｩ陦瑚・遶句ｺｦ IO_WalkIndep 菫晏ｭ・
-     Call Save_WalkAbnToSheet(ws, r, owner)    '笘・焚蟶ｸ豁ｩ陦・IO_WalkAbn 菫晏ｭ・
-     Call Save_WalkRLAToSheet(ws, r, owner)    '笘・LA IO_WalkRLA 菫晏ｭ・
+     Call Save_WalkIndepToSheet(ws, r, owner)  '★歩行自立度 IO_WalkIndep 保存
+     Call Save_WalkAbnToSheet(ws, r, owner)    '★異常歩行 IO_WalkAbn 保存
+     Call Save_WalkRLAToSheet(ws, r, owner)    '★RLA IO_WalkRLA 保存
 
 
 
@@ -175,35 +175,35 @@ Call Save_ADL_AtRow(ws, r)
 
 End Sub
 
-' ===== 縺吶∋縺ｦ隱ｭ霎ｼ =====
+' ===== すべて読込 =====
 '====================================================================
-' [HUB] 隧穂ｾ｡隱ｭ縺ｿ霎ｼ縺ｿ繝上ヶ
-'  - 蜻ｼ縺ｳ蜃ｺ縺怜・・哭oadEvaluation_ByName_From・域ｭ｣隕丞・蜿｣・峨↑縺ｩ
-'  - 蠖ｹ蜑ｲ・・
-'       1) 蜷榊燕縺九ｉ縲梧怙譁ｰ陦後阪↓ r 繧貞ｷｮ縺玲崛縺医ｋ・・indLatestRowByName・・
-'       2) BasicInfo / ROM / 蟋ｿ蜍｢ / MMT / 諢溯ｦ壹・繝医・繝ｳ / 逍ｼ逞・/
-'          繝・せ繝郁ｩ穂ｾ｡ / 豁ｩ陦・/ 隱咲衍繝ｻ邊ｾ逾・縺ｪ縺ｩ蜷・そ繧ｯ繧ｷ繝ｧ繝ｳ縺ｮ
-'          Load*FromSheet 繧偵∪縺ｨ繧√※蜻ｼ縺ｳ蜃ｺ縺・
-'  - 豕ｨ諢擾ｼ・
-'       * 莉悶Δ繧ｸ繝･繝ｼ繝ｫ縺九ｉ縺薙％繧堤峩謗･蜻ｼ縺ｶ縺ｮ縺ｯ讌ｵ蜉幃∩縺代ｋ
-'         ・郁ｪｭ縺ｿ霎ｼ縺ｿ莉墓ｧ倥・荳蜈・ｮ｡逅・・縺溘ａ・・
-'       * 蜷・そ繧ｯ繧ｷ繝ｧ繝ｳ縺ｮ UI 繝ｬ繧､繧｢繧ｦ繝郁ｪｿ謨ｴ縺ｯ縺薙％縺ｧ縺ｯ陦後ｏ縺ｪ縺・
+' [HUB] 評価読み込みハブ
+'  - 呼び出し元：LoadEvaluation_ByName_From（正規入口）など
+'  - 役割：
+'       1) 名前から「最新行」に r を差し替える（FindLatestRowByName）
+'       2) BasicInfo / ROM / 姿勢 / MMT / 感覚・トーン / 疼痛 /
+'          テスト評価 / 歩行 / 認知・精神 など各セクションの
+'          Load*FromSheet をまとめて呼び出す
+'  - 注意：
+'       * 他モジュールからここを直接呼ぶのは極力避ける
+'         （読み込み仕様の一元管理のため）
+'       * 各セクションの UI レイアウト調整はここでは行わない
 '====================================================================
 Public Sub LoadAllSectionsFromSheet(ws As Worksheet, r As Long, owner As Object)
 
     Dim nm As String
     Dim rLatest As Long
 
-    ' 笘・酔縺伜錐蜑阪↑繧峨√◎縺ｮ莠ｺ縺ｮ縲梧怙譁ｰ陦後阪↓隱ｭ縺ｿ霎ｼ縺ｿ陦後ｒ蟾ｮ縺玲崛縺医ｋ
+    ' ★同じ名前なら、その人の「最新行」に読み込み行を差し替える
          nm = Trim$(owner.txtName.text)
 
-    ' 笘・ヵ繧ｩ繝ｼ繝蛛ｴ縺檎ｩｺ縺ｪ繧峨√す繝ｼ繝医・豌丞錐繧ｻ繝ｫ縺九ｉ諡ｾ縺・
+    ' ★フォーム側が空なら、シートの氏名セルから拾う
     If Len(nm) = 0 Then
         Dim cName As Long
         cName = FindHeaderCol(ws, "Basic.Name")
-        If cName = 0 Then cName = FindHeaderCol(ws, "豌丞錐")
-        If cName = 0 Then cName = FindHeaderCol(ws, "蛻ｩ逕ｨ閠・錐")
-        If cName = 0 Then cName = FindHeaderCol(ws, "蜷榊燕")
+        If cName = 0 Then cName = FindHeaderCol(ws, "氏名")
+        If cName = 0 Then cName = FindHeaderCol(ws, "利用者名")
+        If cName = 0 Then cName = FindHeaderCol(ws, "名前")
 
 
         If cName > 0 Then
@@ -213,7 +213,7 @@ Public Sub LoadAllSectionsFromSheet(ws As Worksheet, r As Long, owner As Object)
     
     
 
-    ' 笘・・蜿｣縺ｧ r 縺梧欠螳壹＆繧後※縺・ｋ蝣ｴ蜷医・蟆企㍾縺吶ｋ・医％縺薙〒荳頑嶌縺阪＠縺ｪ縺・ｼ・
+    ' ★入口で r が指定されている場合は尊重する（ここで上書きしない）
 If r < 2 And Len(nm) > 0 Then
     rLatest = FindLatestRowByName(ws, nm)
     If rLatest > 0 Then r = rLatest
@@ -222,8 +222,8 @@ End If
 
 
 
-   ' 鮗ｻ逞ｺ / ROM / 蟋ｿ蜍｢縺ｮ隱ｭ霎ｼ縺ｯ LoadBasicInfoFromSheet_FromMe 蜀・〒
-    ' chkLoadParalysis / chkLoadROM / chkLoadPosture 縺ｫ蠢懊§縺ｦ螳滓命
+   ' 麻痺 / ROM / 姿勢の読込は LoadBasicInfoFromSheet_FromMe 内で
+    ' chkLoadParalysis / chkLoadROM / chkLoadPosture に応じて実施
     
     Call LoadBasicInfoFromSheet_FromMe(ws, r, owner)
     IO_SafeRunLoad "Load_ADL_FromRow", ws, r, owner
@@ -240,7 +240,7 @@ End If
     Call Load_TestEvalFromSheet(ws, r, owner)
     Call Load_WalkIndepFromSheet(ws, r, owner)
     Call Load_WalkAbnFromSheet(ws, r, owner)
-    Call Load_WalkRLAFromSheet(ws, r, owner)   '笘・LA隱ｭ縺ｿ霎ｼ縺ｿ
+    Call Load_WalkRLAFromSheet(ws, r, owner)   '★RLA読み込み
 
     'Call MMT.LoadMMTFromSheet(ws, r, owner)
     Call modToneReflexIO.LoadToneReflexFromSheet(ws, r, owner)
@@ -250,18 +250,18 @@ End If
 
     IO_SafeRunLoad "LoadPainFromSheet", ws, r, owner
     
-    ' 陬懷勧蜈ｷ
+    ' 補助具
 Dim cA As Long
-cA = FindHeaderCol(ws, "陬懷勧蜈ｷ")
+cA = FindHeaderCol(ws, "補助具")
 If cA > 0 Then
-    DeserializeChecks owner, "Frame33", CStr(ws.Cells(r, cA).value), True   ' 陬懷勧蜈ｷ
+    DeserializeChecks owner, "Frame33", CStr(ws.Cells(r, cA).value), True   ' 補助具
 End If
 
-' 繝ｪ繧ｹ繧ｯ
+' リスク
 Dim cR As Long
-cR = FindHeaderCol(ws, "繝ｪ繧ｹ繧ｯ")
+cR = FindHeaderCol(ws, "リスク")
 If cR > 0 Then
-    DeserializeChecks owner, "Frame34", CStr(ws.Cells(r, cR).value), False  ' 繝ｪ繧ｹ繧ｯ
+    DeserializeChecks owner, "Frame34", CStr(ws.Cells(r, cR).value), False  ' リスク
 End If
     
         Call Load_CognitionMental_FromRow(ws, r, owner)
@@ -271,12 +271,12 @@ End Sub
 
 
 '====================================================================
-' [ENTRY] 隧穂ｾ｡隱ｭ縺ｿ霎ｼ縺ｿ縺ｮ豁｣隕丞・蜿｣
-'  - UI 蛛ｴ・・rmEval 繧・ｻ悶ヵ繧ｩ繝ｼ繝・峨・蜴溷援縺薙％縺縺代ｒ蜻ｼ縺ｳ蜃ｺ縺・
-'  - 蜷榊燕・・xtName・峨°繧・EvalData 荳翫・譛譁ｰ陦後ｒ迚ｹ螳壹＠縲・
-'    LoadAllSectionsFromSheet 縺ｫ蟋碑ｭｲ縺吶ｋ
-'  - LoadAllSectionsFromSheet / 蜷・そ繧ｯ繧ｷ繝ｧ繝ｳ縺ｮ Load*FromSheet 縺ｯ
-'    莉悶Δ繧ｸ繝･繝ｼ繝ｫ縺九ｉ逶ｴ謗･蜻ｼ縺ｰ縺ｪ縺・％縺ｨ・郁ｪｭ縺ｿ霎ｼ縺ｿ莉墓ｧ倥・蛻・｣る亟豁｢・・
+' [ENTRY] 評価読み込みの正規入口
+'  - UI 側（frmEval や他フォーム）は原則ここだけを呼び出す
+'  - 名前（txtName）から EvalData 上の最新行を特定し、
+'    LoadAllSectionsFromSheet に委譲する
+'  - LoadAllSectionsFromSheet / 各セクションの Load*FromSheet は
+'    他モジュールから直接呼ばないこと（読み込み仕様の分裂防止）
 '====================================================================
 Public Sub LoadEvaluation_ByName_From(owner As Object)
 
@@ -315,7 +315,7 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
         
         If validRow = 0 Then
              HistoryLoadDebug_ScanWorkbookForName nameVal, wsTarget
-            MsgBox "蟇ｾ雎｡縺ｮ隧穂ｾ｡螻･豁ｴ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbInformation
+            MsgBox "対象の評価履歴が見つかりません。", vbInformation
             Exit Sub
         End If
         LoadAllSectionsFromSheet wsTarget, validRow, owner
@@ -326,19 +326,19 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
     If Len(resolveMessage) > 0 Then
         MsgBox resolveMessage, vbExclamation
     End If
-    ' 笘・％縺薙∪縺ｧ
+    ' ★ここまで
 
 End Sub
 
 
-' 荳九°繧蛾■縺｣縺ｦ豌丞錐荳閾ｴ縺ｮ譛譁ｰ陦後ｒ霑斐☆・郁ｦ句・縺励・縲梧ｰ丞錐縲阪悟茜逕ｨ閠・錐縲阪悟錐蜑阪阪ｒ鬆・↓謗｢縺呻ｼ・
+' 下から遡って氏名一致の最新行を返す（見出しは「氏名」「利用者名」「名前」を順に探す）
 Public Function FindLatestRowByName(ws As Worksheet, nameText As String) As Long
 
     Dim c As Long
     c = FindHeaderCol(ws, "Basic.Name")
-    If c = 0 Then c = FindHeaderCol(ws, "豌丞錐")
-    If c = 0 Then c = FindHeaderCol(ws, "蛻ｩ逕ｨ閠・錐")
-    If c = 0 Then c = FindHeaderCol(ws, "蜷榊燕")
+    If c = 0 Then c = FindHeaderCol(ws, "氏名")
+    If c = 0 Then c = FindHeaderCol(ws, "利用者名")
+    If c = 0 Then c = FindHeaderCol(ws, "名前")
     If c = 0 Then c = FindHeaderCol(ws, "Name")
     If c = 0 Then
         HistoryLoadDebug_Print "[FindLatestRowByName]", _
@@ -362,7 +362,7 @@ Public Function FindLatestRowByName(ws As Worksheet, nameText As String) As Long
 
     normalizedTarget = NormalizeName(nameText)
     HistoryLoadDebug_Print "[FindLatestRowByName]", "lastRow=" & CStr(lastRow)
-    For r = lastRow To 2 Step -1      ' 1陦檎岼縺ｯ隕句・縺玲Φ螳・
+    For r = lastRow To 2 Step -1      ' 1行目は見出し想定
         rowName = CStr(ws.Cells(r, c).value)
         normalizedRow = NormalizeName(rowName)
         HistoryLoadDebug_Print "[FindLatestRowByName][SCAN]", _
@@ -385,9 +385,9 @@ End Function
 
 Public Function CountRowsByName(ws As Worksheet, nameText As String) As Long
     Dim c As Long
-    c = FindHeaderCol(ws, "豌丞錐")
-    If c = 0 Then c = FindHeaderCol(ws, "蛻ｩ逕ｨ閠・錐")
-    If c = 0 Then c = FindHeaderCol(ws, "蜷榊燕")
+    c = FindHeaderCol(ws, "氏名")
+    If c = 0 Then c = FindHeaderCol(ws, "利用者名")
+    If c = 0 Then c = FindHeaderCol(ws, "名前")
     If c = 0 Then Exit Function
 
     Dim lastRow As Long, r As Long
@@ -408,9 +408,9 @@ Public Function FindLatestRowByNameAndID( _
         idVal As String) As Long
 
     Dim cName As Long, cID As Long
-    cName = FindHeaderCol(ws, "豌丞錐")
-    If cName = 0 Then cName = FindHeaderCol(ws, "蛻ｩ逕ｨ閠・錐")
-    If cName = 0 Then cName = FindHeaderCol(ws, "蜷榊燕")
+    cName = FindHeaderCol(ws, "氏名")
+    If cName = 0 Then cName = FindHeaderCol(ws, "利用者名")
+    If cName = 0 Then cName = FindHeaderCol(ws, "名前")
     If cName = 0 Then Exit Function
 
     cID = FindColByHeaderExact(ws, "Basic.ID")
@@ -420,7 +420,7 @@ Public Function FindLatestRowByNameAndID( _
     Dim lastRow As Long, r As Long
     lastRow = ws.Cells(ws.rows.count, cName).End(xlUp).row
 
-    ' 荳九°繧画爾縺呻ｼ晄怙譁ｰ蜆ｪ蜈・
+    ' 下から探す＝最新優先
     For r = lastRow To 2 Step -1
         If StrComp(CStr(ws.Cells(r, cName).value), nameText, vbTextCompare) = 0 Then
             If StrComp(CStr(ws.Cells(r, cID).value), idVal, vbTextCompare) = 0 Then
@@ -458,7 +458,7 @@ Private Function BuildDuplicateUserIDMessage(ByVal indexWs As Worksheet, ByVal u
     Next i
 
     BuildDuplicateUserIDMessage = _
-       "EvalIndex蜀・〒蜷御ｸID縺瑚､・焚蟄伜惠縺励※縺・∪縺吶・ & vbCrLf & _
+       "EvalIndex内で同一IDが複数存在しています。" & vbCrLf & _
        "ID: " & userID & vbCrLf & vbCrLf & lines
 End Function
 
@@ -469,13 +469,13 @@ Private Function BuildUserIdentityMismatchMessage(ByVal userID As String, _
                                                   ByVal indexKana As String) As String
     Dim lines As String
 
-    lines = lines & "ID荳堺ｸ閾ｴ繧ｨ繝ｩ繝ｼ" & vbCrLf
+    lines = lines & "ID不一致エラー" & vbCrLf
     lines = lines & "ID: " & userID & vbCrLf
-    lines = lines & "蜈･蜉帶ｰ丞錐: " & inputName & vbCrLf
-    lines = lines & "逋ｻ骭ｲ豌丞錐: " & indexName
+    lines = lines & "入力氏名: " & inputName & vbCrLf
+    lines = lines & "登録氏名: " & indexName
 
     If Len(Trim$(inputKana)) > 0 Or Len(Trim$(indexKana)) > 0 Then
-        lines = lines & vbCrLf & "蜈･蜉帙き繝・ " & inputKana & vbCrLf & "逋ｻ骭ｲ繧ｫ繝・ " & indexKana
+        lines = lines & vbCrLf & "入力カナ: " & inputKana & vbCrLf & "登録カナ: " & indexKana
     End If
 
     BuildUserIdentityMismatchMessage = lines
@@ -514,8 +514,8 @@ Private Function FindLatestValidEvalRowByIdentity(ByVal ws As Worksheet, _
     If cID = 0 Then Exit Function
 
     cName = FindColByHeaderExact(ws, "Basic.Name")
-      If cName = 0 Then cName = FindHeaderCol(ws, "豌丞錐")
-      If cName = 0 Then cName = FindHeaderCol(ws, "蛻ｩ逕ｨ閠・錐")
+      If cName = 0 Then cName = FindHeaderCol(ws, "氏名")
+      If cName = 0 Then cName = FindHeaderCol(ws, "利用者名")
       If cName = 0 Then cName = FindHeaderCol(ws, "Name")
     If cName = 0 Then Exit Function
 
@@ -552,14 +552,14 @@ NextRow:
 End Function
 
 
-'======================== 陬懷勧・壹ヵ繧ｩ繝ｼ繝・上す繝ｼ繝茨ｼ剰｡・========================
+'======================== 補助：フォーム／シート／行 ========================
 
 Private Sub EnsureFormLoaded()
     On Error Resume Next
-    Dim t$: t = frmEval.caption            ' 蜿ら・縺ｧ縺阪ｌ縺ｰ繝ｭ繝ｼ繝画ｸ医∩
+    Dim t$: t = frmEval.caption            ' 参照できればロード済み
     If Err.Number <> 0 Then Load frmEval
     On Error GoTo 0
-    If frmEval.Visible = False Then frmEval.Show vbModeless   ' 繝｢繝・Ν繝ｬ繧ｹ縺ｧ謫堺ｽ懷庄
+    If frmEval.Visible = False Then frmEval.Show vbModeless   ' モデルレスで操作可
 End Sub
 
 Private Function EnsureEvalSheet(sheetName As String) As Worksheet
@@ -569,7 +569,7 @@ Private Function EnsureEvalSheet(sheetName As String) As Worksheet
     If EnsureEvalSheet Is Nothing Then
         Set EnsureEvalSheet = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
         On Error Resume Next
-        EnsureEvalSheet.name = sheetName   ' 譌｢蟄伜錐縺ｪ繧右xcel縺瑚・蜍輔Μ繝阪・繝
+        EnsureEvalSheet.name = sheetName   ' 既存名ならExcelが自動リネーム
         On Error GoTo 0
     End If
 End Function
@@ -590,11 +590,11 @@ Private Function NextAppendRow(ws As Worksheet) As Long
 End Function
 
 '====================================================================
-' [ENTRY] 隧穂ｾ｡菫晏ｭ倥・豁｣隕丞・蜿｣
-'  - UI 蛛ｴ・・rmEval 繧・ｻ悶ヵ繧ｩ繝ｼ繝・峨・蜴溷援縺薙％縺縺代ｒ蜻ｼ縺ｳ蜃ｺ縺・
-'  - 陦後・豎ｺ螳夲ｼ・ppend 陦鯉ｼ峨・縺薙・荳ｭ縺ｧ NextAppendRow 縺ｫ繧医ｊ荳蜈・ｮ｡逅・
-'  - SaveAllSectionsToSheet / SaveBasicInfoToSheet_FromMe 遲峨・荳倶ｽ埼未謨ｰ繧・
-'    逶ｴ謗･莉悶Δ繧ｸ繝･繝ｼ繝ｫ縺九ｉ蜻ｼ縺ｰ縺ｪ縺・％縺ｨ・医せ繧ｭ繝ｼ繝槫､画峩譎ゅ・貍上ｌ髦ｲ豁｢・・
+' [ENTRY] 評価保存の正規入口
+'  - UI 側（frmEval や他フォーム）は原則ここだけを呼び出す
+'  - 行の決定（Append 行）はこの中で NextAppendRow により一元管理
+'  - SaveAllSectionsToSheet / SaveBasicInfoToSheet_FromMe 等の下位関数を
+'    直接他モジュールから呼ばないこと（スキーマ変更時の漏れ防止）
 '====================================================================
 
 
@@ -611,7 +611,7 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
         Dim patientName As String
         patientName = Trim$(GetCtlTextGeneric(owner, "txtName"))
         If Len(patientName) = 0 Then
-              MsgBox "謔｣閠・錐繧貞・蜉帙＠縺ｦ縺九ｉ菫晏ｭ倥＠縺ｦ縺上□縺輔＞縲・, vbExclamation
+              MsgBox "患者名を入力してから保存してください。", vbExclamation
               Exit Sub
         End If
         
@@ -644,7 +644,7 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
     If Len(resolveMessage) > 0 Then
         MsgBox resolveMessage, vbExclamation
     Else
-        MsgBox "菫晏ｭ伜・繧ｷ繝ｼ繝医′隕九▽縺九ｉ縺ｪ縺・◆繧√∽ｿ晏ｭ倥ｒ荳ｭ譁ｭ縺励∪縺吶・, vbExclamation
+        MsgBox "保存先シートが見つからないため、保存を中断します。", vbExclamation
     End If
     
 End Sub
@@ -1090,22 +1090,22 @@ End Function
 
 Private Function MainSaveTextboxHeaderMap() As Variant
     MainSaveTextboxHeaderMap = Array( _
-        Array("隧穂ｾ｡譌･", "txtEDate"), _
-        Array("蟷ｴ鮨｢", "txtAge"), _
-        Array("逕溷ｹｴ譛域律", "txtBirth"), _
+        Array("評価日", "txtEDate"), _
+        Array("年齢", "txtAge"), _
+        Array("生年月日", "txtBirth"), _
         Array("Basic.Name", "txtName"), _
-        Array("隧穂ｾ｡閠・, "txtEvaluator"), _
-        Array("隧穂ｾ｡閠・・遞ｮ", "txtEvaluatorJob"), _
-        Array("逋ｺ逞・律", "txtOnset"), _
-        Array("謔｣閠・eeds", "txtNeedsPt"), _
-        Array("螳ｶ譌蒐eeds", "txtNeedsFam"), _
+        Array("評価者", "txtEvaluator"), _
+        Array("評価者職種", "txtEvaluatorJob"), _
+        Array("発症日", "txtOnset"), _
+        Array("患者Needs", "txtNeedsPt"), _
+        Array("家族Needs", "txtNeedsFam"), _
         Array("BI.SocialParticipation", "txtLiving"), _
-        Array("菴丞ｮ・ｙ閠・, "txtBIHomeEnvNote"), _
-        Array("荳ｻ險ｺ譁ｭ", "txtDx"), _
-        Array("逶ｴ霑大・髯｢譌･", "txtAdmDate"), _
-        Array("逶ｴ霑鷹髯｢譌･", "txtDisDate"), _
-        Array("豐ｻ逋らｵ碁℃", "txtTxCourse"), _
-        Array("蜷井ｽｵ逍ｾ謔｣", "txtComplications"), _
+        Array("住宅備考", "txtBIHomeEnvNote"), _
+        Array("主診断", "txtDx"), _
+        Array("直近入院日", "txtAdmDate"), _
+        Array("直近退院日", "txtDisDate"), _
+        Array("治療経過", "txtTxCourse"), _
+        Array("合併疾患", "txtComplications"), _
         Array("IO_Cog_DementiaNote", "txtDementiaNote"), _
         Array("IO_Mental_Note", "txtMentalNote") _
     )
@@ -1191,15 +1191,15 @@ End Function
 
 
 Private Sub LoadEvaluation_LastRow_From_OBSOLETE(owner As Object)
-    MsgBox "縺薙・蜈･蜿｣縺ｯ蟒・ｭ｢縺励∪縺励◆縲りｪｭ縺ｿ霎ｼ縺ｿ縺ｯ縲主錐蜑坂・逶ｴ霑大呵｣懊°繧蛾∈謚槭上↓邨ｱ荳縺励※縺・∪縺吶・, vbInformation
+    MsgBox "この入口は廃止しました。読み込みは『名前→直近候補から選択』に統一しています。", vbInformation
 End Sub
 
 
 
 
-' ====== 蝓ｺ譛ｬ諠・ｱ縺ｮ菫晏ｭ・隱ｭ霎ｼ・医％縺ｮ繝｢繧ｸ繝･繝ｼ繝ｫ蜀・ｼ・======
+' ====== 基本情報の保存/読込（このモジュール内） ======
 
-' 隕句・縺励・蛻励ｒ蜿門ｾ暦ｼ育┌縺代ｌ縺ｰ譁ｰ隕丈ｽ懈・・・
+' 見出しの列を取得（無ければ新規作成）
 Private Function EnsureHeaderCol(ws As Worksheet, header As String) As Long
     Dim f As Range
     Set f = ws.rows(1).Find(What:=header, LookAt:=xlWhole)
@@ -1212,7 +1212,7 @@ Private Function EnsureHeaderCol(ws As Worksheet, header As String) As Long
     End If
 End Function
 
-' 隕句・縺励・蛻励ｒ謗｢縺呻ｼ育┌縺代ｌ縺ｰ 0・・
+' 見出しの列を探す（無ければ 0）
 Private Function FindHeaderCol(ws As Worksheet, header As String) As Long
     Dim f As Range
     Set f = ws.rows(1).Find(What:=header, LookAt:=xlWhole)
@@ -1285,7 +1285,7 @@ Private Sub DeserializeNamedChecks(owner As Object, checkNames As Variant, ByVal
 End Sub
 
 
-' 豎守畑・壹ユ繧ｭ繧ｹ繝亥､繧貞叙蠕暦ｼ・extBox/ComboBox/Label縺ｪ縺ｩ縺ｫ蟇ｾ蠢懶ｼ・
+' 汎用：テキスト値を取得（TextBox/ComboBox/Labelなどに対応）
 Private Function GetCtlTextGeneric(owner As Object, ctlName As String) As String
     Dim c As Object
     Set c = FindCtlDeep(owner, ctlName)
@@ -1337,7 +1337,7 @@ Private Sub SetHdrKanaText(owner As Object, ByVal v As Variant)
     On Error GoTo 0
 End Sub
 
-' 豎守畑・壹さ繝ｳ繝懊ｒ螳牙・縺ｫ繧ｻ繝・ヨ・医Μ繧ｹ繝医↓縺ゅｋ譎ゅ□縺鷹∈謚橸ｼ・
+' 汎用：コンボを安全にセット（リストにある時だけ選択）
 Private Sub SetComboSafe_Basic(owner As Object, ctlName As String, ByVal v As Variant)
     Dim cb As MSForms.ComboBox
     Dim s As String, i As Long, hit As Long
@@ -1354,7 +1354,7 @@ End Sub
 Private Sub SyncAgeBeforeBasicSave(ByVal owner As Object)
     On Error GoTo EH
 
-    ' frmEval ?J??N贒ｯ\bh??pAXR[vOQ?
+    ' frmEval ?J??N\bh??pAXR[vOQ?
     CallByName owner, "SyncAgeFromBirth", VbMethod
     Exit Sub
 EH:
@@ -1378,18 +1378,18 @@ Private Function ReadBirthTextCell(ByVal target As Range) As String
 End Function
 
 '====================================================================
-' BasicInfo IO 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ・郁ｩ穂ｾ｡譌･繝ｻ豌丞錐繝ｻ蟷ｴ鮨｢繝ｻNeeds 遲会ｼ・
-'  - EvalData 荳翫・ Basic.* 邉ｻ繝倥ャ繝縺ｨ縺ｮ蟇ｾ蠢懊ｒ荳蜈・ｮ｡逅・☆繧狗ｪ灘哨
-'  - 譁ｰ縺励＞ Basic 鬆・岼繧定ｿｽ蜉縺吶ｋ蝣ｴ蜷医・縲∝次蜑・％縺薙↓繝槭ャ繝斐Φ繧ｰ繧定ｶｳ縺・
-'  - 蛻励・蛻･蜷咲ｵｱ蜷医ｄ繧ｹ繧ｭ繝ｼ繝樒ｵｱ荳縺ｯ EnsureHeaderCol_BasicInfo 蛛ｴ縺ｧ陦後≧
-'  - 莉悶・繝｢繧ｸ繝･繝ｼ繝ｫ縺九ｉ縺ｯ縲。asic.* 縺ｮ迚ｩ逅・・繧堤峩謗･隗ｦ繧峨★縲・
-'    蠢・ｦ√↑繧・GetID_FromBasicInfo / GetBasicInfoFrame 縺ｪ縺ｩ縺ｮ繝倥Ν繝代ｒ邨檎罰縺吶ｋ
+' BasicInfo IO セクション（評価日・氏名・年齢・Needs 等）
+'  - EvalData 上の Basic.* 系ヘッダとの対応を一元管理する窓口
+'  - 新しい Basic 項目を追加する場合は、原則ここにマッピングを足す
+'  - 列の別名統合やスキーマ統一は EnsureHeaderCol_BasicInfo 側で行う
+'  - 他のモジュールからは、Basic.* の物理列を直接触らず、
+'    必要なら GetID_FromBasicInfo / GetBasicInfoFrame などのヘルパを経由する
 '====================================================================
 
 
 
 
-' --- 菫晏ｭ・---
+' --- 保存 ---
 Public Sub SaveBasicInfoToSheet_FromMe(ws As Worksheet, r As Long, owner As Object)
     
     Debug.Print "[Basic] Enter_SaveBasicInfo | ws=" & ws.name & " | r=" & r
@@ -1397,34 +1397,34 @@ Public Sub SaveBasicInfoToSheet_FromMe(ws As Worksheet, r As Long, owner As Obje
     SyncAgeBeforeBasicSave owner
     
     
-    '--- 蜊倅ｸ蛟､縺ｮ繝槭ャ繝斐Φ繧ｰ・域怙蠕後・隕∫ｴ縺ｫ _ 繧剃ｻ倥￠縺ｪ縺・ｼ・---
+    '--- 単一値のマッピング（最後の要素に _ を付けない） ---
     Dim map As Variant
 map = Array( _
-    Array("隧穂ｾ｡譌･", "txtEDate"), _
-    Array("蟷ｴ鮨｢", "txtAge"), _
-    Array("逕溷ｹｴ譛域律", "txtBirth"), _
-    Array("諤ｧ蛻･", "cboSex"), _
+    Array("評価日", "txtEDate"), _
+    Array("年齢", "txtAge"), _
+    Array("生年月日", "txtBirth"), _
+    Array("性別", "cboSex"), _
     Array("Basic.Name", "txtName"), _
-    Array("隧穂ｾ｡閠・, "txtEvaluator"), _
-    Array("隧穂ｾ｡閠・・遞ｮ", "txtEvaluatorJob"), _
-    Array("逋ｺ逞・律", "txtOnset"), _
-    Array("謔｣閠・eeds", "txtNeedsPt"), _
-    Array("螳ｶ譌蒐eeds", "txtNeedsFam"), _
-    Array("逕滓ｴｻ迥ｶ豕・, "txtLiving"), _
-    Array("菴丞ｮ・ｙ閠・, "txtBIHomeEnvNote"), _
-    Array("荳ｻ險ｺ譁ｭ", "txtDx"), _
-    Array("隕∽ｻ玖ｭｷ蠎ｦ", "cboCare"), _
-    Array("髫懷ｮｳ鬮倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ", "cboElder"), _
-    Array("隱咲衍逞・ｫ倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ", "cboDementia"), _
-    Array("逶ｴ霑大・髯｢譌･", "txtAdmDate"), _
-    Array("逶ｴ霑鷹髯｢譌･", "txtDisDate"), _
-    Array("豐ｻ逋らｵ碁℃", "txtTxCourse"), _
-    Array("蜷井ｽｵ逍ｾ謔｣", "txtComplications") _
+    Array("評価者", "txtEvaluator"), _
+    Array("評価者職種", "txtEvaluatorJob"), _
+    Array("発症日", "txtOnset"), _
+    Array("患者Needs", "txtNeedsPt"), _
+    Array("家族Needs", "txtNeedsFam"), _
+    Array("生活状況", "txtLiving"), _
+    Array("住宅備考", "txtBIHomeEnvNote"), _
+    Array("主診断", "txtDx"), _
+    Array("要介護度", "cboCare"), _
+    Array("障害高齢者の日常生活自立度", "cboElder"), _
+    Array("認知症高齢者の日常生活自立度", "cboDementia"), _
+    Array("直近入院日", "txtAdmDate"), _
+    Array("直近退院日", "txtDisDate"), _
+    Array("治療経過", "txtTxCourse"), _
+    Array("合併疾患", "txtComplications") _
 )
 
     Call EnsureHeaderCol(ws, "N")
 
-    '--- 譌｢蟄倥・繝ｫ繝ｼ繝暦ｼ壼腰荳蛟､繧呈嶌縺崎ｾｼ縺ｿ ---
+    '--- 既存のループ：単一値を書き込み ---
     Dim i As Long, head As String, ctl As String, c As Long, v As String
     For i = LBound(map) To UBound(map)
         head = CStr(map(i)(0)):  ctl = CStr(map(i)(1))
@@ -1440,7 +1440,7 @@ map = Array( _
         End If
     Next i
     
-    c = EnsureHeader(ws, "菴丞ｮ・憾豕・)
+    c = EnsureHeader(ws, "住宅状況")
     ws.Cells(r, c).value = SerializeNamedChecks(owner, HomeEnvControlNames())
 
 
@@ -1453,18 +1453,18 @@ map = Array( _
     ws.Cells(r, EnsureHeader(ws, "Basic.EvalDate")).value = GetCtlTextGeneric(owner, "txtEDate")
     
 
-    '--- 縺薙％縺九ｉ霑ｽ險假ｼ壹メ繧ｧ繝・け鄒､縺ｮCSV菫晏ｭ假ｼ郁｣懷勧蜈ｷ・上Μ繧ｹ繧ｯ・俄ｻ繝ｫ繝ｼ繝励・窶懷ｾ後ｍ窶・---
+    '--- ここから追記：チェック群のCSV保存（補助具／リスク）※ループの“後ろ” ---
     Dim s As String
-    c = EnsureHeader(ws, "陬懷勧蜈ｷ")
+    c = EnsureHeader(ws, "補助具")
 s = SerializeChecks(owner, "Frame33", True)
-Debug.Print "[BASIC][SAVE] 陬懷勧蜈ｷ ->", s, " @col=", c
+Debug.Print "[BASIC][SAVE] 補助具 ->", s, " @col=", c
 ws.Cells(r, c).value = s
 c = EnsureHeader(ws, HDR_AIDS_CHECKS)
 ws.Cells(r, c).value = s
 
-   c = EnsureHeader(ws, "繝ｪ繧ｹ繧ｯ")
+   c = EnsureHeader(ws, "リスク")
 s = SerializeChecks(owner, "Frame34", False)
-Debug.Print "[BASIC][SAVE] 繝ｪ繧ｹ繧ｯ ->", s, " @col=", c
+Debug.Print "[BASIC][SAVE] リスク ->", s, " @col=", c
 ws.Cells(r, c).value = s
 
 c = EnsureHeader(ws, HDR_RISK_CHECKS)
@@ -1485,40 +1485,40 @@ End Sub
 
 
 
-' --- 隱ｭ霎ｼ ---
+' --- 読込 ---
 Public Sub LoadBasicInfoFromSheet_FromMe(ws As Worksheet, ByVal r As Long, owner As Object)
 
     On Error GoTo EH
     Debug.Print "[TRACE] Enter LoadBasicInfoFromSheet_FromMe r=" & r
 
-    '--- 蜊倅ｸ蛟､縺ｮ繝槭ャ繝斐Φ繧ｰ ---
+    '--- 単一値のマッピング ---
     Dim map As Variant
 map = Array( _
-    Array("隧穂ｾ｡譌･", "txtEDate"), _
-    Array("蟷ｴ鮨｢", "txtAge"), _
-    Array("逕溷ｹｴ譛域律", "txtBirth"), _
-    Array("諤ｧ蛻･", "cboSex"), _
+    Array("評価日", "txtEDate"), _
+    Array("年齢", "txtAge"), _
+    Array("生年月日", "txtBirth"), _
+    Array("性別", "cboSex"), _
     Array("Basic.Name", "txtName"), _
-    Array("隧穂ｾ｡閠・, "txtEvaluator"), _
-    Array("隧穂ｾ｡閠・・遞ｮ", "txtEvaluatorJob"), _
-    Array("逋ｺ逞・律", "txtOnset"), _
-    Array("謔｣閠・eeds", "txtNeedsPt"), _
-    Array("螳ｶ譌蒐eeds", "txtNeedsFam"), _
-    Array("菴丞ｮ・ｙ閠・, "txtBIHomeEnvNote"), _
-    Array("逕滓ｴｻ迥ｶ豕・, "txtLiving"), _
-    Array("荳ｻ險ｺ譁ｭ", "txtDx"), _
-    Array("隕∽ｻ玖ｭｷ蠎ｦ", "cboCare"), _
-    Array("髫懷ｮｳ鬮倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ", "cboElder"), _
-    Array("隱咲衍逞・ｫ倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ", "cboDementia"), _
-    Array("逶ｴ霑大・髯｢譌･", "txtAdmDate"), _
-    Array("逶ｴ霑鷹髯｢譌･", "txtDisDate"), _
-    Array("豐ｻ逋らｵ碁℃", "txtTxCourse"), _
-    Array("蜷井ｽｵ逍ｾ謔｣", "txtComplications") _
+    Array("評価者", "txtEvaluator"), _
+    Array("評価者職種", "txtEvaluatorJob"), _
+    Array("発症日", "txtOnset"), _
+    Array("患者Needs", "txtNeedsPt"), _
+    Array("家族Needs", "txtNeedsFam"), _
+    Array("住宅備考", "txtBIHomeEnvNote"), _
+    Array("BI.SocialParticipation", "txtLiving"), _
+    Array("主診断", "txtDx"), _
+    Array("要介護度", "cboCare"), _
+    Array("障害高齢者の日常生活自立度", "cboElder"), _
+    Array("認知症高齢者の日常生活自立度", "cboDementia"), _
+    Array("直近入院日", "txtAdmDate"), _
+    Array("直近退院日", "txtDisDate"), _
+    Array("治療経過", "txtTxCourse"), _
+    Array("合併疾患", "txtComplications") _
 )
 
 
 
-    '--- 蜊倅ｸ蛟､繧偵ヵ繧ｩ繝ｼ繝縺ｸ隱ｭ霎ｼ ---
+    '--- 単一値をフォームへ読込 ---
     Dim i As Long, head As String, ctl As String, c As Long, v As Variant
     For i = LBound(map) To UBound(map)
         head = CStr(map(i)(0))
@@ -1541,7 +1541,7 @@ map = Array( _
         End If
         Next i
 
-    c = FindHeaderCol(ws, "菴丞ｮ・憾豕・)
+    c = FindHeaderCol(ws, "住宅状況")
     If c > 0 Then DeserializeNamedChecks owner, HomeEnvControlNames(), CStr(ws.Cells(r, c).value)
 
     c = FindHeaderCol(ws, "Basic.NameKana")
@@ -1550,18 +1550,18 @@ map = Array( _
     c = FindHeaderCol(ws, "Basic.NameKana")
     If c > 0 Then SetHdrKanaText owner, ws.Cells(r, c).value
 
-    '--- 繝√ぉ繝・け鄒､縺ｮ蠕ｩ蜈・ｼ郁｣懷勧蜈ｷ・上Μ繧ｹ繧ｯ・・---
+    '--- チェック群の復元（補助具／リスク） ---
     Dim csv As String
 
-    ' 陬懷勧蜈ｷ
-c = FindHeaderCol(ws, "陬懷勧蜈ｷ")
+    ' 補助具
+c = FindHeaderCol(ws, "補助具")
 If c > 0 Then
     csv = CStr(ws.Cells(r, c).value)
     DeserializeChecks owner, "Frame33", csv, True
 End If
 
-' 繝ｪ繧ｹ繧ｯ
-c = FindHeaderCol(ws, "繝ｪ繧ｹ繧ｯ")
+' リスク
+c = FindHeaderCol(ws, "リスク")
 If c > 0 Then
     csv = CStr(ws.Cells(r, c).value)
     DeserializeChecks owner, "Frame34", csv, False
@@ -1606,17 +1606,17 @@ EH:
 End Sub
 
 
-' EvalData繧ｷ繝ｼ繝亥叙蠕・
+' EvalDataシート取得
 Public Function GetEvalDataSheet() As Worksheet
     Dim ws As Worksheet
     On Error Resume Next
     Set ws = ThisWorkbook.Worksheets("EvalData")
     On Error GoTo 0
-    If ws Is Nothing Then Err.Raise 5, , "EvalData 繧ｷ繝ｼ繝医′縺ゅｊ縺ｾ縺帙ｓ縲・
+    If ws Is Nothing Then Err.Raise 5, , "EvalData シートがありません。"
     Set GetEvalDataSheet = ws
 End Function
 
-' 隕句・縺励°繧牙・逡ｪ蜿ｷ・亥ｮ悟・荳閾ｴ・・
+' 見出しから列番号（完全一致）
 Public Function FindColByHeaderExact(ByVal ws As Worksheet, ByVal headerName As String) As Long
     Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim c As Long
@@ -1628,15 +1628,15 @@ Public Function FindColByHeaderExact(ByVal ws As Worksheet, ByVal headerName As 
     Next c
 End Function
 
-' ID陦後ｒ讀懃ｴ｢・育┌縺代ｌ縺ｰ譛ｫ蟆ｾ縺ｫ菴懈・縺励※ID繧貞・繧後ｋ・・
+' ID行を検索（無ければ末尾に作成してIDを入れる）
 Public Function GetOrCreateRowByID(ByVal ws As Worksheet, ByVal idVal As String) As Long
     Dim idCol As Long: idCol = FindColByHeaderExact(ws, "Basic.ID")
     If idCol = 0 Then
-        ' 譌ｧ譚･縺ｮ蜻ｽ蜷阪↑繧峨％縺薙〒菴懊ｋ
+        ' 旧来の命名ならここで作る
         idCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1
         ws.Cells(1, idCol).value = "Basic.ID"
     End If
-    If Len(idVal) = 0 Then Err.Raise 5, , "ID縺檎ｩｺ縺ｧ縺吶・
+    If Len(idVal) = 0 Then Err.Raise 5, , "IDが空です。"
 
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, idCol).End(xlUp).row
     Dim r As Long
@@ -1646,7 +1646,7 @@ Public Function GetOrCreateRowByID(ByVal ws As Worksheet, ByVal idVal As String)
             Exit Function
         End If
     Next r
-    ' 辟｡縺代ｌ縺ｰ譁ｰ隕剰｡・
+    ' 無ければ新規行
     r = lastRow + 1
     ws.Cells(r, idCol).value = idVal
     GetOrCreateRowByID = r
@@ -1656,7 +1656,7 @@ End Function
 
 
 
-' 繝ｩ繝吶Ν縲栗D縲阪・蜿ｳ縺ｫ縺ゅｋ TextBox 縺九ｉ蛟､繧貞叙蠕暦ｼ医さ繝ｳ繝医Ο繝ｼ繝ｫ蜷阪↓萓晏ｭ倥＠縺ｪ縺・ｼ・
+' ラベル「ID」の右にある TextBox から値を取得（コントロール名に依存しない）
 Public Function GetID_FromBasicInfo(ByVal owner As Object) As String
     On Error Resume Next
     GetID_FromBasicInfo = Trim$(CStr(owner.controls("frHeader").controls("txtHdrPID").value))
@@ -1664,20 +1664,20 @@ Public Function GetID_FromBasicInfo(ByVal owner As Object) As String
 End Function
 
 
-'================ Basic諠・ｱ縺ｮ蜈ｱ騾壹・繝ｫ繝・==================
+'================ Basic情報の共通ヘルパ ==================
 
 Public Function GetBasicInfoFrame(ByVal owner As Object) As Object
     Dim f As MSForms.Frame
-    Set f = FindFrameByCaptionDeep_(owner, "蝓ｺ譛ｬ諠・ｱ")
+    Set f = FindFrameByCaptionDeep_(owner, "基本情報")
     If Not f Is Nothing Then
         Set GetBasicInfoFrame = f
     Else
-        Set GetBasicInfoFrame = owner   ' 繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ・夂峩謗･繧ｪ繝ｼ繝翫・繧呈ｸ｡縺帙ｋ繧医≧縺ｫ
+        Set GetBasicInfoFrame = owner   ' フォールバック：直接オーナーを渡せるように
     End If
 End Function
 
 Public Function GetTextByLabelInFrame(ByVal frm As Object, ByVal labelCaption As String) As String
-    ' null / 髱曦rame 縺ｧ繧ょｮ牙・縺ｫ謚懊￠繧・
+    ' null / 非Frame でも安全に抜ける
     If frm Is Nothing Then Exit Function
     On Error Resume Next
     Dim HasControls As Boolean
@@ -1685,7 +1685,7 @@ Public Function GetTextByLabelInFrame(ByVal frm As Object, ByVal labelCaption As
     On Error GoTo 0
     If Not HasControls Then Exit Function
 
-    ' --- 莉･荳九・莉翫・繝ｭ繧ｸ繝・け縺昴・縺ｾ縺ｾ ---
+    ' --- 以下は今のロジックそのまま ---
     Dim lb As Object, ctl As Object
     For Each ctl In frm.controls
         If TypeName(ctl) = "Label" Then
@@ -1714,7 +1714,7 @@ Public Function GetTextByLabelInFrame(ByVal frm As Object, ByVal labelCaption As
 End Function
 
 
-' Frame 繧・Caption 驛ｨ蛻・ｸ閾ｴ縺ｧ豺ｱ縺募━蜈域爾邏｢・・serForm / Frame / MultiPage 蟇ｾ蠢懶ｼ・
+' Frame を Caption 部分一致で深さ優先探索（UserForm / Frame / MultiPage 対応）
 Public Function FindFrameByCaptionDeep_(ByVal owner As Object, ByVal captionLike As String) As MSForms.Frame
     Set FindFrameByCaptionDeep_ = FindFrameByCaptionDeep_Walk(owner, captionLike)
 End Function
@@ -1759,7 +1759,7 @@ Private Function FindFrameByCaptionDeep_Walk(ByVal container As Object, ByVal ca
         End Select
     Next ctl
 End Function
-'================ 縺薙％縺ｾ縺ｧ雋ｼ繧・==================
+'================ ここまで貼る ==================
 
 
 
@@ -1769,58 +1769,58 @@ End Function
 
 
 
-' ==== BasicInfo 縺ｮ蛻怜錐繧・Basic.* 縺ｫ邨ｱ荳縺励∽ｸ崎ｶｳ縺ｯ菴懊ｋ・亥ｮ牙・繝槭・繧ｸ莉倥″・・====
+' ==== BasicInfo の列名を Basic.* に統一し、不足は作る（安全マージ付き） ====
 Public Sub EnsureHeaderCol_BasicInfo(ByVal ws As Worksheet)
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary")
     d.CompareMode = 1 ' TextCompare
 
-    ' --- 蜊倬・岼・井ｸｻ縺ｫ繝・く繧ｹ繝・繧ｳ繝ｳ繝懶ｼ・---
+    ' --- 単項目（主にテキスト/コンボ） ---
     d("BasicInfo_ID") = "Basic.ID":                  d("ID") = "Basic.ID": d("Pid") = "Basic.ID"
-    d("BasicInfo_豌丞錐") = "Basic.Name":              d("豌丞錐") = "Basic.Name": d("Name") = "Basic.Name"
-    d("BasicInfo_隧穂ｾ｡譌･") = "Basic.EvalDate":        d("隧穂ｾ｡譌･") = "Basic.EvalDate": d("EvalDate") = "Basic.EvalDate"
-    d("BasicInfo_隧穂ｾ｡閠・) = "Basic.Evaluator":       d("隧穂ｾ｡閠・) = "Basic.Evaluator"
-    d("BasicInfo_蟷ｴ鮨｢") = "Basic.Age":               d("蟷ｴ鮨｢") = "Basic.Age": d("Age") = "Basic.Age"
-    d("BasicInfo_隧穂ｾ｡閠・・遞ｮ") = "Basic.EvaluatorJob": d("隧穂ｾ｡閠・・遞ｮ") = "Basic.EvaluatorJob": d("EvaluatorJob") = "Basic.EvaluatorJob"
-    d("BasicInfo_諤ｧ蛻･") = "Basic.Sex":               d("諤ｧ蛻･") = "Basic.Sex": d("Sex") = "Basic.Sex"
-    d("BasicInfo_荳ｻ險ｺ譁ｭ") = "Basic.PrimaryDx":       d("荳ｻ險ｺ譁ｭ") = "Basic.PrimaryDx": d("荳ｻ逞・錐") = "Basic.PrimaryDx"
-    d("BasicInfo_逋ｺ逞・律") = "Basic.OnsetDate":       d("逋ｺ逞・律") = "Basic.OnsetDate"
-    d("BasicInfo_隕∽ｻ玖ｭｷ蠎ｦ") = "Basic.CareLevel":     d("隕∽ｻ玖ｭｷ蠎ｦ") = "Basic.CareLevel"
-    d("BasicInfo_隱咲衍逞・・遶句ｺｦ") = "Basic.DementiaADL"
-    d("BasicInfo_隱咲衍逞・ｫ倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ") = "Basic.DementiaADL"
-    d("隱咲衍逞・ｫ倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ") = "Basic.DementiaADL"
-    d("BasicInfo_BI.SocialParticipation") = "BI.SocialParticipation":    d("BasicInfo_逕滓ｴｻ迥ｶ豕・) = "BI.SocialParticipation":    d("逕滓ｴｻ迥ｶ豕・) = "BI.SocialParticipation"
+    d("BasicInfo_氏名") = "Basic.Name":              d("氏名") = "Basic.Name": d("Name") = "Basic.Name"
+    d("BasicInfo_評価日") = "Basic.EvalDate":        d("評価日") = "Basic.EvalDate": d("EvalDate") = "Basic.EvalDate"
+    d("BasicInfo_評価者") = "Basic.Evaluator":       d("評価者") = "Basic.Evaluator"
+    d("BasicInfo_年齢") = "Basic.Age":               d("年齢") = "Basic.Age": d("Age") = "Basic.Age"
+    d("BasicInfo_評価者職種") = "Basic.EvaluatorJob": d("評価者職種") = "Basic.EvaluatorJob": d("EvaluatorJob") = "Basic.EvaluatorJob"
+    d("BasicInfo_性別") = "Basic.Sex":               d("性別") = "Basic.Sex": d("Sex") = "Basic.Sex"
+    d("BasicInfo_主診断") = "Basic.PrimaryDx":       d("主診断") = "Basic.PrimaryDx": d("主病名") = "Basic.PrimaryDx"
+    d("BasicInfo_発症日") = "Basic.OnsetDate":       d("発症日") = "Basic.OnsetDate"
+    d("BasicInfo_要介護度") = "Basic.CareLevel":     d("要介護度") = "Basic.CareLevel"
+    d("BasicInfo_認知症自立度") = "Basic.DementiaADL"
+    d("BasicInfo_認知症高齢者の日常生活自立度") = "Basic.DementiaADL"
+    d("認知症高齢者の日常生活自立度") = "Basic.DementiaADL"
+    d("BasicInfo_BI.SocialParticipation") = "BI.SocialParticipation": d("BasicInfo_生活状況") = "BI.SocialParticipation": d("生活状況") = "BI.SocialParticipation"
     AddAlias d, "Basic.LifeStatus", "BI.SocialParticipation"
-    d("BasicInfo_謔｣閠・eeds") = "Basic.Needs.Patient": d("謔｣閠・eeds") = "Basic.Needs.Patient"
-    d("BasicInfo_螳ｶ譌蒐eeds") = "Basic.Needs.Family":  d("螳ｶ譌蒐eeds") = "Basic.Needs.Family"
+    d("BasicInfo_患者Needs") = "Basic.Needs.Patient": d("患者Needs") = "Basic.Needs.Patient"
+    d("BasicInfo_家族Needs") = "Basic.Needs.Family":  d("家族Needs") = "Basic.Needs.Family"
 
-    ' --- 陬懷勧蜈ｷ・医メ繧ｧ繝・け・俄・ Basic.Aids.* 縺ｸ ---
-    AddAlias d, "BasicInfo_陬懷勧蜈ｷ_譚・, "Basic.Aids.譚・
-    AddAlias d, "BasicInfo_陬懷勧蜈ｷ_豁ｩ陦悟勣", "Basic.Aids.豁ｩ陦悟勣"
-    AddAlias d, "BasicInfo_陬懷勧蜈ｷ_遏ｭ荳玖い陬・・", "Basic.Aids.遏ｭ荳玖い陬・・"
-    AddAlias d, "BasicInfo_陬懷勧蜈ｷ_謇九☆繧・, "Basic.Aids.謇九☆繧・
-    AddAlias d, "BasicInfo_陬懷勧蜈ｷ_繧ｷ繝ｫ繝舌・繧ｫ繝ｼ", "Basic.Aids.繧ｷ繝ｫ繝舌・繧ｫ繝ｼ"
-    AddAlias d, "BasicInfo_陬懷勧蜈ｷ_霆翫＞縺・, "Basic.Aids.霆翫＞縺・: AddAlias d, "BasicInfo_陬懷勧蜈ｷ_霆頑､・ｭ・, "Basic.Aids.霆翫＞縺・
-    AddAlias d, "BasicInfo_陬懷勧蜈ｷ_莉句勧繝吶Ν繝・, "Basic.Aids.莉句勧繝吶Ν繝・
-    AddAlias d, "BasicInfo_陬懷勧蜈ｷ_繧ｹ繝ｭ繝ｼ繝・, "Basic.Aids.繧ｹ繝ｭ繝ｼ繝・
+    ' --- 補助具（チェック）→ Basic.Aids.* へ ---
+    AddAlias d, "BasicInfo_補助具_杖", "Basic.Aids.杖"
+    AddAlias d, "BasicInfo_補助具_歩行器", "Basic.Aids.歩行器"
+    AddAlias d, "BasicInfo_補助具_短下肢装具", "Basic.Aids.短下肢装具"
+    AddAlias d, "BasicInfo_補助具_手すり", "Basic.Aids.手すり"
+    AddAlias d, "BasicInfo_補助具_シルバーカー", "Basic.Aids.シルバーカー"
+    AddAlias d, "BasicInfo_補助具_車いす", "Basic.Aids.車いす": AddAlias d, "BasicInfo_補助具_車椅子", "Basic.Aids.車いす"
+    AddAlias d, "BasicInfo_補助具_介助ベルト", "Basic.Aids.介助ベルト"
+    AddAlias d, "BasicInfo_補助具_スロープ", "Basic.Aids.スロープ"
 
-    ' --- 繝ｪ繧ｹ繧ｯ・医メ繧ｧ繝・け・俄・ Basic.Risk.* 縺ｸ ---
-    AddAlias d, "BasicInfo_繝ｪ繧ｹ繧ｯ_霆｢蛟・, "Basic.Risk.霆｢蛟・
-    AddAlias d, "BasicInfo_繝ｪ繧ｹ繧ｯ_遯呈・", "Basic.Risk.遯呈・"
-    AddAlias d, "BasicInfo_繝ｪ繧ｹ繧ｯ_菴取・､・, "Basic.Risk.菴取・､・
-    AddAlias d, "BasicInfo_繝ｪ繧ｹ繧ｯ_縺帙ｓ螯・, "Basic.Risk.縺帙ｓ螯・
-    AddAlias d, "BasicInfo_繝ｪ繧ｹ繧ｯ_隱､蝴･", "Basic.Risk.隱､蝴･"
-    AddAlias d, "BasicInfo_繝ｪ繧ｹ繧ｯ_隍･逖｡", "Basic.Risk.隍･逖｡"
-    AddAlias d, "BasicInfo_繝ｪ繧ｹ繧ｯ_ADL菴惹ｸ・, "Basic.Risk.ADL菴惹ｸ・
+    ' --- リスク（チェック）→ Basic.Risk.* へ ---
+    AddAlias d, "BasicInfo_リスク_転倒", "Basic.Risk.転倒"
+    AddAlias d, "BasicInfo_リスク_窒息", "Basic.Risk.窒息"
+    AddAlias d, "BasicInfo_リスク_低栄養", "Basic.Risk.低栄養"
+    AddAlias d, "BasicInfo_リスク_せん妄", "Basic.Risk.せん妄"
+    AddAlias d, "BasicInfo_リスク_誤嚥", "Basic.Risk.誤嚥"
+    AddAlias d, "BasicInfo_リスク_褥瘡", "Basic.Risk.褥瘡"
+    AddAlias d, "BasicInfo_リスク_ADL低下", "Basic.Risk.ADL低下"
     AddAlias d, "Basic.Aids.Checks", "Basic.Aids.Checks"
     AddAlias d, "Basic.Risk.Checks", "Basic.Risk.Checks"
     AddAlias d, "BasicInfo_BI.HomeEnv.Note", "Basic.HomeEnv.Note"
     
     
 
-    ' 1) 譌｢蟄倥・繝・ム繧偵・繝ｼ繧ｸ謾ｹ蜷・
+    ' 1) 既存ヘッダをマージ改名
     ApplyAliasesMerge_Basic ws, d
 
-    ' 2) 譛菴朱剞蠢・ｦ√↑蛻励′縺ｪ縺代ｌ縺ｰ霑ｽ蜉・・ave/Load縺ｮ蟇ｾ雎｡繧呈ｼ上ｌ縺ｪ縺擾ｼ・
+    ' 2) 最低限必要な列がなければ追加（Save/Loadの対象を漏れなく）
     Dim need As Variant, mustHave As Variant
     mustHave = Array( _
         "Basic.ID", "Basic.Name", "Basic.EvalDate", "Basic.Evaluator", _
@@ -1838,12 +1838,12 @@ Public Sub EnsureHeaderCol_BasicInfo(ByVal ws As Worksheet)
     Next need
 End Sub
 
-' === 繝倥Ν繝代・ ===
+' === ヘルパー ===
 Private Sub AddAlias(ByVal d As Object, ByVal src As String, ByVal dst As String)
     d(src) = dst
 End Sub
 
-' 繧ｨ繧､繝ｪ繧｢繧ｹ謾ｹ蜷搾ｼ郁｡晉ｪ∵凾縺ｯ繝槭・繧ｸ縺励※譌ｧ蛻励ｒ蜑企勁・・
+' エイリアス改名（衝突時はマージして旧列を削除）
 Private Sub ApplyAliasesMerge_Basic(ByVal ws As Worksheet, ByVal d As Object)
     Dim lastCol As Long: lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
     Dim j As Long
@@ -1854,7 +1854,7 @@ Private Sub ApplyAliasesMerge_Basic(ByVal ws As Worksheet, ByVal d As Object)
             Dim dst As String: dst = CStr(d(h))
             Dim dstCol As Long: dstCol = modSchema.FindColByHeaderExact(ws, dst)
             If dstCol > 0 And dstCol <> j Then
-                ' 繝槭・繧ｸ・育ｩｺ谺・□縺大沂繧√ｋ・・
+                ' マージ（空欄だけ埋める）
                 Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, j).End(xlUp).row
                 Dim r As Long
                 For r = 2 To lastRow
@@ -1887,16 +1887,16 @@ End Sub
 
 
 
-' EvalData縺ｮID陦後ｒ隕九▽縺代ｋ・育┌縺代ｌ縺ｰ菴懊ｋ・・
-' 譌｢蟄倥せ繧ｭ繝ｼ繝槭・縺ｩ縺｡繧峨↓繧ょｯｾ蠢懶ｼ咤asic.ID / BasicInfo_ID
+' EvalDataのID行を見つける（無ければ作る）
+' 既存スキーマのどちらにも対応：Basic.ID / BasicInfo_ID
 Public Function GetOrCreateRowByID_Basic(ByVal ws As Worksheet, ByVal idVal As String) As Long
-    If Len(idVal) = 0 Then Err.Raise 5, , "ID縺檎ｩｺ縺ｧ縺吶・
+    If Len(idVal) = 0 Then Err.Raise 5, , "IDが空です。"
 
     Dim idCol As Long
     idCol = FindColByHeaderExact(ws, "Basic.ID")
     If idCol = 0 Then idCol = FindColByHeaderExact(ws, "BasicInfo_ID")
     If idCol = 0 Then
-        ' 辟｡縺代ｌ縺ｰ Basic.ID 繧剃ｽ懊ｋ・域里蟄倥↓蜷医ｏ縺帙※OK繝ｻ蠕後〒繧ｹ繧ｭ繝ｼ繝樒ｵｱ荳蜿ｯ・・
+        ' 無ければ Basic.ID を作る（既存に合わせてOK・後でスキーマ統一可）
         idCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1
         ws.Cells(1, idCol).value = "Basic.ID"
     End If
@@ -1922,9 +1922,9 @@ End Function
 
 
 
-'--- 繧ｳ繝ｳ繝懊・繝・け繧ｹ縺ｫ螳牙・縺ｫ蛟､繧貞渚譏・井ｸ隕ｧ縺ｫ辟｡縺・､縺ｪ繧画悴驕ｸ謚槭↓縺吶ｋ・・---
+'--- コンボボックスに安全に値を反映（一覧に無い値なら未選択にする） ---
 Private Sub SetComboSafely(owner As Object, ctlName As String, ByVal v As Variant)
-    Dim cb As Object  ' MSForms.ComboBox 繧・late binding 縺ｧ謇ｱ縺・
+    Dim cb As Object  ' MSForms.ComboBox を late binding で扱う
     Dim i As Long, hit As Long
     Dim s As String
 
@@ -1943,10 +1943,10 @@ Private Sub SetComboSafely(owner As Object, ctlName As String, ByVal v As Varian
     Next
 
     If hit >= 0 Then
-        cb.ListIndex = hit               ' 荳閾ｴ縺瑚ｦ九▽縺九▲縺溘ｉ驕ｸ謚・
+        cb.ListIndex = hit               ' 一致が見つかったら選択
     Else
-        cb.ListIndex = -1                ' 隕九▽縺九ｉ縺ｪ縺代ｌ縺ｰ譛ｪ驕ｸ謚槭↓・・ropDownList縺ｧ繧ょｮ牙・・・
-        ' 窶ｻDropDownList縺ｮ蝣ｴ蜷医…b.Text 縺ｫ縺ｯ蜈･繧後∪縺帙ｓ
+        cb.ListIndex = -1                ' 見つからなければ未選択に（DropDownListでも安全）
+        ' ※DropDownListの場合、cb.Text には入れません
     End If
 End Sub
 
@@ -1963,14 +1963,14 @@ End Sub
 Private Function FindControlDeep(ByVal parent As Object, ByVal targetName As String) As Object
     Dim c As Object, hit As Object
 
-    ' 1) 閾ｪ蛻・・霄ｫ縺御ｸ閾ｴ縺ｪ繧牙叉霑斐☆
+    ' 1) 自分自身が一致なら即返す
     On Error Resume Next
     If Not parent Is Nothing Then
         If parent.name = targetName Then Set FindControlDeep = parent: Exit Function
     End If
     On Error GoTo 0
 
-    ' 2) MultiPage 縺ｯ Pages 繧定ｵｰ譟ｻ
+    ' 2) MultiPage は Pages を走査
     If TypeName(parent) = "MultiPage" Then
         Dim pg As Object
         For Each pg In parent.Pages
@@ -1980,13 +1980,13 @@ Private Function FindControlDeep(ByVal parent As Object, ByVal targetName As Str
         Exit Function
     End If
 
-    ' 3) 逶ｴ荳九↓蜷悟錐縺後≠繧後・蜿門ｾ暦ｼ亥ｭ伜惠縺励↑縺・梛縺ｧ繧ゆｾ句､悶↓縺励↑縺・ｼ・
+    ' 3) 直下に同名があれば取得（存在しない型でも例外にしない）
     On Error Resume Next
     Set hit = parent.controls(targetName)
     On Error GoTo 0
     If Not hit Is Nothing Then Set FindControlDeep = hit: Exit Function
 
-    ' 4) 蟄舌さ繝ｳ繝医Ο繝ｼ繝ｫ繧貞・蟶ｰ襍ｰ譟ｻ・・ontrols 繧呈戟縺溘↑縺・梛縺ｯ繧ｹ繧ｭ繝・・・・
+    ' 4) 子コントロールを再帰走査（Controls を持たない型はスキップ）
     On Error Resume Next
     For Each c In parent.controls
         Err.Clear
@@ -1997,12 +1997,12 @@ Private Function FindControlDeep(ByVal parent As Object, ByVal targetName As Str
 End Function
 
 
-' 莉｣陦ｨ繧ｭ繝｣繝励す繝ｧ繝ｳ縺九ｉ隕ｪ繝輔Ξ繝ｼ繝繧呈耳螳・
+' 代表キャプションから親フレームを推定
 Private Function FindGroupByAnyCaption(frm As Object, captions As Variant) As Object
     Dim cont As Object, c As Object, cap As Variant
     For Each cont In frm.controls
         On Error Resume Next
-        ' 繧ｳ繝ｳ繝・リ・・rame/Page縺ｪ縺ｩ・峨□縺題ｪｿ縺ｹ繧・
+        ' コンテナ（Frame/Pageなど）だけ調べる
         If Not cont.controls Is Nothing Then
             For Each c In cont.controls
                 If TypeName(c) = "CheckBox" Then
@@ -2018,23 +2018,23 @@ Private Function FindGroupByAnyCaption(frm As Object, captions As Variant) As Ob
     Next
 End Function
 
-' 蜷榊燕竊堤┌縺代ｌ縺ｰ莉｣陦ｨ繧ｭ繝｣繝励す繝ｧ繝ｳ縺ｧ陬懷勧蜈ｷ/繝ｪ繧ｹ繧ｯ縺ｮ繝輔Ξ繝ｼ繝繧貞叙蠕・
+' 名前→無ければ代表キャプションで補助具/リスクのフレームを取得
 Private Function ResolveGroup(frm As Object, targetName As String, isAids As Boolean) As Object
-    ' 1) 蜷榊燕縺ｧ謗｢縺呻ｼ郁・蜑阪・FindControlDeep繧剃ｽｿ縺・ｼ・
+    ' 1) 名前で探す（自前のFindControlDeepを使う）
     Set ResolveGroup = frm.controls(targetName)
     If Not ResolveGroup Is Nothing Then Exit Function
 
-    ' 2) 繧ｭ繝｣繝励す繝ｧ繝ｳ縺九ｉ謗ｨ螳・
+    ' 2) キャプションから推定
     Dim seeds As Variant
     If isAids Then
-        seeds = Array("譚・, "豁ｩ陦悟勣", "繧ｷ繝ｫ繝舌・繧ｫ繝ｼ", "霆翫＞縺・, "莉句勧繝吶Ν繝・, "繧ｹ繝ｭ繝ｼ繝・, "邨御ｸ玖い陬・・", "謇九☆繧・)
+        seeds = Array("杖", "歩行器", "シルバーカー", "車いす", "介助ベルト", "スロープ", "経下肢装具", "手すり")
     Else
-        seeds = Array("霆｢蛟・, "隱､蝴･", "隍･逖｡", "螟ｱ遖・, "菴取・､・, "縺帙ｓ螯・, "蠕伜ｾ・, "ADL菴惹ｸ・)
+        seeds = Array("転倒", "誤嚥", "褥瘡", "失禁", "低栄養", "せん妄", "徘徊", "ADL低下")
     End If
     Set ResolveGroup = FindGroupByAnyCaption(frm, seeds)
 End Function
 
-' CSV蛹厄ｼ・aption繧偵く繝ｼ・会ｼ嗾argetName縺檎┌縺上※繧ゆｻ｣陦ｨ繧ｭ繝｣繝励す繝ｧ繝ｳ縺ｧ讀懷・
+' CSV化（Captionをキー）：targetNameが無くても代表キャプションで検出
 Public Function SerializeChecks(frm As Object, targetName As String, Optional isAids As Boolean = True) As String
     Dim grp As Object: Set grp = ResolveGroup(frm, targetName, isAids)
     If grp Is Nothing Then Exit Function
@@ -2051,7 +2051,7 @@ Public Function SerializeChecks(frm As Object, targetName As String, Optional is
     SerializeChecks = s
 End Function
 
-' CSV 竊・繝√ぉ繝・け蠕ｩ蜈・
+' CSV → チェック復元
 Public Sub DeserializeChecks(frm As Object, targetName As String, ByVal csv As String, Optional isAids As Boolean = True)
     Dim grp As Object: Set grp = ResolveGroup(frm, targetName, isAids)
     If grp Is Nothing Then Exit Sub
@@ -2072,7 +2072,7 @@ Public Sub DeserializeChecks(frm As Object, targetName As String, ByVal csv As S
     Next
 End Sub
 
-' ID縺ｮ譛螟ｧ蛟､+1
+' IDの最大値+1
 Public Function NextID(ws As Worksheet, ByVal cID As Long) As Long
     Dim last As Long: last = ws.Cells(ws.rows.count, cID).End(xlUp).row
     If last < 2 Then NextID = 1: Exit Function
@@ -2093,13 +2093,13 @@ End Function
 
 
 
-'=== Compat: SENSE_IO 繧・IO_Sensory 縺ｫ繝溘Λ繝ｼ・郁｡・r 縺ｮ縺ｿ・・===
+'=== Compat: SENSE_IO を IO_Sensory にミラー（行 r のみ） ===
 Private Sub Mirror_SensoryIO(ws As Worksheet, ByVal r As Long)
     Dim cSrc As Variant, cDst As Long
     cSrc = Application.Match("SENSE_IO", ws.rows(1), 0)
     If IsError(cSrc) Then Exit Sub
 
-    ' 螳帛・繝倥ャ繝 IO_Sensory 繧堤｢ｺ菫・
+    ' 宛先ヘッダ IO_Sensory を確保
     Dim m As Variant, lastCol As Long
     m = Application.Match("IO_Sensory", ws.rows(1), 0)
     If IsError(m) Then
@@ -2116,10 +2116,10 @@ End Sub
 
 
 '====================================================================
-' Debug / Probe 繧ｻ繧ｯ繧ｷ繝ｧ繝ｳ・・valData 縺ｮ繧ｹ繝翫ャ繝励す繝ｧ繝・ヨ繝ｻROM繝倥ャ繝遲会ｼ・
-'  - 譛ｬ逡ｪ蜃ｦ逅・ｼ井ｿ晏ｭ倥・隱ｭ霎ｼ・峨°繧峨・逶ｴ謗･蜻ｼ縺ｰ縺ｪ縺・
-'  - 蠢・ｦ√↑縺ｨ縺阪□縺代！mmediate 繧・ｰら畑繝・せ繝医・繧ｯ繝ｭ縺九ｉ謇句虚縺ｧ蜻ｼ縺ｳ蜃ｺ縺・
-'  - 蟆・擂逧・↓縺ｯ modEvalIODebug 縺ｪ縺ｩ蛻･繝｢繧ｸ繝･繝ｼ繝ｫ縺ｸ蛻・ｊ蜃ｺ縺吝呵｣・
+' Debug / Probe セクション（EvalData のスナップショット・ROMヘッダ等）
+'  - 本番処理（保存・読込）からは直接呼ばない
+'  - 必要なときだけ、Immediate や専用テストマクロから手動で呼び出す
+'  - 将来的には modEvalIODebug など別モジュールへ切り出す候補
 '====================================================================
 
 
@@ -2172,9 +2172,9 @@ Public Sub Debug_Sensory_ADL_Raw(ByVal ws As Worksheet, ByVal r As Long)
         Debug.Print "IO_Sensory: <no header>"
     End If
 
-    ' 霑大ｍ遒ｺ隱搾ｼ域ｧ矩隕九ｋ逕ｨ・・
-    Debug.Print "SENSE霑大ｍ(146-155)=", Join(Application.Transpose(Application.Transpose(ws.Range(ws.Cells(r, 146), ws.Cells(r, 155)).value)), " | ")
-    Debug.Print "ADL霑大ｍ  (156-165)=", Join(Application.Transpose(Application.Transpose(ws.Range(ws.Cells(r, 156), ws.Cells(r, 165)).value)), " | ")
+    ' 近傍確認（構造見る用）
+    Debug.Print "SENSE近傍(146-155)=", Join(Application.Transpose(Application.Transpose(ws.Range(ws.Cells(r, 146), ws.Cells(r, 155)).value)), " | ")
+    Debug.Print "ADL近傍  (156-165)=", Join(Application.Transpose(Application.Transpose(ws.Range(ws.Cells(r, 156), ws.Cells(r, 165)).value)), " | ")
 
     Debug.Print "=== [/RAW SENSE/ADL] ==="
 End Sub
@@ -2230,7 +2230,7 @@ Public Sub Debug_ListROMHeaders()
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
 
-    ' ROM邉ｻ縺御ｸｦ繧薙〒縺・ｋ諠ｳ螳壹Ξ繝ｳ繧ｸ縺縺代ｒ隕九ｋ・亥ｿ・ｦ√↑繧牙ｾ後〒蠕ｮ隱ｿ謨ｴ・・
+    ' ROM系が並んでいる想定レンジだけを見る（必要なら後で微調整）
     firstCol = 150
     lastCol = 260
 
@@ -2263,7 +2263,7 @@ Public Sub Debug_ROMRow_Values(ByVal r As Long)
             If Len(v) > 0 Then
                 Debug.Print c, h, v
                 hit = hit + 1
-                If hit >= 40 Then Exit For   ' 繝ｭ繧ｰ證ｴ逋ｺ髦ｲ豁｢
+                If hit >= 40 Then Exit For   ' ログ暴発防止
             End If
         End If
     Next c
@@ -2335,7 +2335,7 @@ Public Sub Cleanup_ExtraROMColumns()
     Set ws = ThisWorkbook.Worksheets("EvalData")
     lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
 
-    ' 譛ｬ譚･菴ｿ縺・OM繝悶Ο繝・け繧医ｊ蜿ｳ蛛ｴ縺縺代ｒ繧ｴ繝溷呵｣懊→縺吶ｋ・医→繧翫≠縺医★300蛻嶺ｻ･髯搾ｼ・
+    ' 本来使うROMブロックより右側だけをゴミ候補とする（とりあえず300列以降）
     For c = lastCol To 261 Step -1
         h = CStr(ws.Cells(1, c).value)
         If LCase$(Left$(h, 4)) = "rom_" Then
@@ -2359,7 +2359,7 @@ Public Function Build_TestEval_IO(owner As Object) As String
     With owner
         v10 = Trim$(.txtTenMWalk.value)
         vTUG = Trim$(.txtTUG.value)
-        v5x = Trim$(.txtFiveSts.value)   ' 窶ｻ繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ蜷阪′驕輔≧蝣ｴ蜷医・縺薙％縺縺題ｪｿ謨ｴ
+        v5x = Trim$(.txtFiveSts.value)   ' ※コントロール名が違う場合はここだけ調整
         vSemi = Trim$(.txtSemi.value)
         vGripR = Trim$(.txtGripR.value)
         vGripL = Trim$(.txtGripL.value)
@@ -2386,13 +2386,13 @@ Public Sub Save_TestEvalToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal ow
     If ws Is Nothing Then Exit Sub
     If r < 2 Then r = 2
 
-    ' IO_TestEval 逕ｨ縺ｮ蛻励ｒ遒ｺ菫・
+    ' IO_TestEval 用の列を確保
     c = EnsureHeader(ws, "IO_TestEval")
 
-    ' 繝輔か繝ｼ繝荳翫・蛟､縺九ｉ IO 譁・ｭ怜・繧堤函謌撰ｼ井ｻ翫・遨ｺ縺ｮ縺ｾ縺ｾ縺ｧ繧０K・・
+    ' フォーム上の値から IO 文字列を生成（今は空のままでもOK）
     s = Build_TestEval_IO(owner)
 
-        ' 謖・ｮ夊｡後↓荳頑嶌縺堺ｿ晏ｭ・
+        ' 指定行に上書き保存
     ws.Cells(r, c).Value2 = CStr(s)
     SaveTestEvalMemoColumns ws, r, owner
     ws.Cells(r, 181).value = val(owner.txtTUG.value)
@@ -2418,10 +2418,10 @@ Public Sub Load_TestEvalFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner 
     owner.txtSemi.value = IO_GetVal(s, "Test_SemiTandem_sec")
     LoadTestEvalMemoColumns ws, r, owner
 
-    ' TODO: 縺薙％縺九ｉ荳九・蠕後〒螳溯｣・ｼ井ｻ翫・隗ｦ繧峨↑縺・ｼ・
-    ' IO_TestEval 繧貞・隗｣縺励※
-    ' owner・・rmEval・峨・ txtTenMWalk / txtTUG / txtFiveSts /
-    ' txtGripR / txtGripL / txtSemi 縺ｫ豬√＠霎ｼ繧
+    ' TODO: ここから下は後で実装（今は触らない）
+    ' IO_TestEval を分解して
+    ' owner（frmEval）の txtTenMWalk / txtTUG / txtFiveSts /
+    ' txtGripR / txtGripL / txtSemi に流し込む
     
     
     ws.Cells(r, 181).value = val(owner.txtTUG.value)
@@ -2470,22 +2470,22 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner
     Dim parts() As String
     Dim i As Long
     Dim nm As String
-    Dim vLevel As String       '笘・霑ｽ蜉・夊・遶句ｺｦ
-    Dim cLvl As Object         '笘・霑ｽ蜉・夊・遶句ｺｦ繧ｳ繝ｳ繝懃畑
+    Dim vLevel As String       '★ 追加：自立度
+    Dim cLvl As Object         '★ 追加：自立度コンボ用
 
 
-       ' IO_WalkIndep 縺ｮ譁・ｭ怜・繧貞叙蠕・
+       ' IO_WalkIndep の文字列を取得
     s = ReadStr_Compat("IO_WalkIndep", r, ws)
 
     If Len(s) = 0 Then Exit Sub
 
-    ' TestEval 縺ｨ蜷後§繝代ち繝ｼ繝ｳ縺ｫ蜷医ｏ縺帙※ "Key=Val" 竊・"Key: Val" 縺ｫ螟牙ｽ｢
+    ' TestEval と同じパターンに合わせて "Key=Val" → "Key: Val" に変形
     s = Replace(s, "=", ": ")
 
-    ' --- 閾ｪ遶句ｺｦ・・alk_IndepLevel・・---
+    ' --- 自立度（Walk_IndepLevel） ---
     vLevel = IO_GetVal(s, "Walk_IndepLevel")
     If Len(vLevel) > 0 Then
-        ' Tag="WalkIndepLevel" 縺ｮ繧ｳ繝ｳ繝懊ｒ謗｢縺励※蛟､繧呈綾縺・
+        ' Tag="WalkIndepLevel" のコンボを探して値を戻す
         Set cLvl = Nothing
         For Each c In owner.controls
             If TypeName(c) = "ComboBox" Then
@@ -2500,23 +2500,23 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner
         End If
     End If
 
-    ' --- 霍晞屬 ---
+    ' --- 距離 ---
     v = IO_GetVal(s, "Walk_Distance")
     Set cmb = FindControlRecursive(owner, "cmbWalkDistance")
     If Not cmb Is Nothing Then cmb.value = v
 
-    ' --- 螻句､・---
+    ' --- 屋外 ---
     v = IO_GetVal(s, "Walk_Outdoor")
     Set cmb = FindControlRecursive(owner, "cmbWalkOutdoor")
     If Not cmb Is Nothing Then cmb.value = v
 
-    ' --- 騾溷ｺｦ ---
+    ' --- 速度 ---
     v = IO_GetVal(s, "Walk_Speed")
     Set cmb = FindControlRecursive(owner, "cmbWalkSpeed")
     If cmb Is Nothing Then Set cmb = FindControlByTagRecursive(owner, "cmbGaitSpeedDetail")
     If Not cmb Is Nothing Then cmb.value = v
 
-    ' --- 螳牙ｮ壽ｧ繝√ぉ繝・け・・hkWalkStab_*・峨ｒ荳蠎ｦ蜈ｨ驛ｨOFF ---
+    ' --- 安定性チェック（chkWalkStab_*）を一度全部OFF ---
     For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
@@ -2526,8 +2526,8 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner
         End If
     Next c
 
-    ' --- 螳牙ｮ壽ｧ縺ｮ菫晏ｭ俶枚蟄怜・繧貞ｱ暮幕縺励※縲∬ｩｲ蠖薙メ繧ｧ繝・け繧丹N ---
-    v = IO_GetVal(s, "Walk_Stab")   ' 萓具ｼ・"chkWalkStab_Furatsuki/chkWalkStab_FallRisk"
+    ' --- 安定性の保存文字列を展開して、該当チェックをON ---
+    v = IO_GetVal(s, "Walk_Stab")   ' 例： "chkWalkStab_Furatsuki/chkWalkStab_FallRisk"
     If Len(v) > 0 Then
         parts = Split(v, "/")
         For i = LBound(parts) To UBound(parts)
@@ -2556,12 +2556,12 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
     Dim c As Object
     Dim nm As String
 
-    ' IO_WalkRLA 縺ｮ譁・ｭ怜・繧貞叙蠕・
+    ' IO_WalkRLA の文字列を取得
     s = ReadStr_Compat("IO_WalkRLA", r, ws)
 
     If Len(s) = 0 Then Exit Sub
 
-    ' 縺ｾ縺壹ヽLA 髢｢騾｣縺ｮ繝√ぉ繝・け繝ｻ繝ｬ繝吶Ν繧貞・驛ｨ繝ｪ繧ｻ繝・ヨ
+    ' まず、RLA 関連のチェック・レベルを全部リセット
     For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
@@ -2582,18 +2582,18 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
         End If
     Next c
 
-    ' TestEval 縺ｨ蜷後§繝代ち繝ｼ繝ｳ縺ｫ蜷医ｏ縺帙※ "Key=Val" 竊・"Key: Val"
+    ' TestEval と同じパターンに合わせて "Key=Val" → "Key: Val"
     s = Replace(s, "=", ": ")
 
-    ' 遶玖・譛滂ｼ矩♀閼壽悄縺ｮ繧ｭ繝ｼ
+    ' 立脚期＋遊脚期のキー
     phases = Array("IC", "LR", "MSt", "TSt", "PSw", "ISw", "MSw", "TSw")
 
     For Each phase In phases
-        ' Problems 縺ｨ Level 繧貞叙繧雁・縺・
+        ' Problems と Level を取り出し
         probs = IO_GetVal(s, "RLA_" & CStr(phase) & "_Problems")
         level = IO_GetVal(s, "RLA_" & CStr(phase) & "_Level")
 
-        ' --- 蝠城｡鯉ｼ・heckBox・咾aption荳閾ｴ縺ｧON・・---
+        ' --- 問題（CheckBox：Caption一致でON） ---
         If Len(probs) > 0 Then
             parts = Split(probs, "/")
             For i = LBound(parts) To UBound(parts)
@@ -2614,7 +2614,7 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
             Next i
         End If
 
-        ' --- 繝ｬ繝吶Ν・・ptionButton・哦roupName=phase & Caption荳閾ｴ縺ｧON・・---
+        ' --- レベル（OptionButton：GroupName=phase & Caption一致でON） ---
         If Len(level) > 0 Then
             For Each c In owner.controls
                 If TypeName(c) = "OptionButton" Then
@@ -2639,12 +2639,12 @@ Public Sub Load_WalkAbnFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
     Dim nm As String
     Dim c As Object
 
-    ' IO_WalkAbn 縺ｮ譁・ｭ怜・蜿門ｾ・
+    ' IO_WalkAbn の文字列取得
     s = ReadStr_Compat("IO_WalkAbn", r, ws)
 
     If Len(s) = 0 Then Exit Sub
 
-    ' 荳譌ｦ縲’raWalkAbn_* 縺ｮ蜈ｨ繝√ぉ繝・け繧丹FF縺ｫ縺吶ｋ
+    ' 一旦、fraWalkAbn_* の全チェックをOFFにする
     For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
@@ -2654,7 +2654,7 @@ Public Sub Load_WalkAbnFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
         End If
     Next c
 
-    ' s 縺ｮ荳ｭ霄ｫ・井ｾ具ｼ・"fraWalkAbn_A_chk0|fraWalkAbn_C_chk3"・峨ｒ螻暮幕
+    ' s の中身（例： "fraWalkAbn_A_chk0|fraWalkAbn_C_chk3"）を展開
     parts = Split(s, "|")
     For i = LBound(parts) To UBound(parts)
         nm = Trim$(parts(i))
@@ -2680,13 +2680,13 @@ Public Sub Save_WalkIndepToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal o
     If ws Is Nothing Then Exit Sub
     If r < 2 Then r = 2
 
-    ' IO_WalkIndep 逕ｨ縺ｮ蛻励ｒ遒ｺ菫・
+    ' IO_WalkIndep 用の列を確保
     c = EnsureHeader(ws, "IO_WalkIndep")
 
-    ' 繝輔か繝ｼ繝荳翫・蛟､縺九ｉ IO 譁・ｭ怜・繧堤函謌・
+    ' フォーム上の値から IO 文字列を生成
     s = Build_WalkIndep_IO(owner)
 
-    ' 謖・ｮ夊｡後↓荳頑嶌縺堺ｿ晏ｭ・
+    ' 指定行に上書き保存
     ws.Cells(r, c).Value2 = CStr(s)
 
 End Sub
@@ -2700,7 +2700,7 @@ Private Function FindControlRecursive(parent As Object, name As String) As Objec
             Set FindControlRecursive = ctl
             Exit Function
         End If
-        ' Frame 繧・MultiPage 縺ｮ蝣ｴ蜷医・蜀榊ｸｰ讀懃ｴ｢
+        ' Frame や MultiPage の場合は再帰検索
         On Error Resume Next
         If ctl.controls.count > 0 Then
             Dim subCtl As Object
@@ -2804,14 +2804,14 @@ Public Function Build_WalkIndep_IO(owner As Object) As String
     Dim nm As String
     Dim stab As String
     Dim i As Long
-    Dim vLevel As String   '笘・閾ｪ遶句ｺｦ
+    Dim vLevel As String   '★ 自立度
 
 
 
    Dim cLvl As Object
 Set cLvl = FindControlRecursive(owner, "cmbWalkIndep")
 If cLvl Is Nothing Then
-    ' 繧ｿ繧ｰ縺ｧ讀懃ｴ｢縺吶ｋ・井ｻ雁屓縺ｮ豁｣蠑上Ν繝ｼ繝茨ｼ・
+    ' タグで検索する（今回の正式ルート）
     For Each c In owner.controls
         If TypeName(c) = "ComboBox" Then
             If c.tag = "WalkIndepLevel" Then
@@ -2825,7 +2825,7 @@ If Not cLvl Is Nothing Then vLevel = Trim$(cLvl.value)
 
 
 
-    ' 霍晞屬繝ｻ螻句､悶・騾溷ｺｦ
+    ' 距離・屋外・速度
     Set c = FindControlRecursive(owner, "cmbWalkDistance")
     If Not c Is Nothing Then vDist = Trim$(c.value)
 
@@ -2837,27 +2837,27 @@ If Not cLvl Is Nothing Then vLevel = Trim$(cLvl.value)
     If Not c Is Nothing Then vSpeed = Trim$(c.value)
     
 
-    ' 螳牙ｮ壽ｧ繝√ぉ繝・け・・hkWalkStab_・・繧貞・驛ｨ諡ｾ縺・ｼ・
+    ' 安定性チェック（chkWalkStab_～ を全部拾う）
     Set hits = New Collection
     For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If StrComp(Left$(nm, 12), "chkWalkStab_", vbTextCompare) = 0 Then
                 If c.value = True Then
-                    ' 蜷榊燕縺昴・繧ゅ・縺九∵忰蟆ｾ縺縺代↓縺吶ｋ縺九・縺ゅ→縺ｧ隱ｿ謨ｴ蜿ｯ
+                    ' 名前そのものか、末尾だけにするかはあとで調整可
                     hits.Add nm
                 End If
             End If
         End If
     Next c
 
-    ' 螳牙ｮ壽ｧ縺ｮ繝√ぉ繝・け蜷阪ｒ縲・縲榊玄蛻・ｊ縺ｧ1譛ｬ縺ｮ譁・ｭ怜・縺ｫ縺ｾ縺ｨ繧√ｋ
+    ' 安定性のチェック名を「/」区切りで1本の文字列にまとめる
     For i = 1 To hits.count
         If i > 1 Then stab = stab & "/"
         stab = stab & hits(i)
     Next i
 
-        ' IO 譁・ｭ怜・邨・∩遶九※
+        ' IO 文字列組み立て
     s = "Walk_IndepLevel=" & vLevel
     s = s & "|Walk_Distance=" & vDist
     s = s & "|Walk_Outdoor=" & vOut
@@ -2881,7 +2881,7 @@ Public Function Build_WalkAbn_IO(owner As Object) As String
     Set hits = New Collection
     
     For Each c In owner.controls
-        ' fraWalkAbn_?_chk? 縺ｨ縺・≧蜷榊燕縺ｮ CheckBox 縺縺第鏡縺・
+        ' fraWalkAbn_?_chk? という名前の CheckBox だけ拾う
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If InStr(1, nm, "fraWalkAbn_", vbTextCompare) = 1 Then
@@ -2892,13 +2892,13 @@ Public Function Build_WalkAbn_IO(owner As Object) As String
         End If
     Next c
     
-    ' 1縺､繧ゅメ繧ｧ繝・け縺檎┌縺代ｌ縺ｰ遨ｺ譁・ｭ励ｒ霑斐☆
+    ' 1つもチェックが無ければ空文字を返す
     If hits.count = 0 Then
         Build_WalkAbn_IO = ""
         Exit Function
     End If
     
-    ' fraWalkAbn_A_chk0|fraWalkAbn_A_chk3|窶ｦ 縺ｨ縺・≧蠖｢縺ｧ騾｣邨・
+    ' fraWalkAbn_A_chk0|fraWalkAbn_A_chk3|… という形で連結
     Dim i As Long
     For i = 1 To hits.count
         If i > 1 Then s = s & "|"
@@ -2916,13 +2916,13 @@ Public Sub Save_WalkAbnToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal own
     If ws Is Nothing Then Exit Sub
     If r < 2 Then r = 2
 
-    ' IO_WalkAbn 逕ｨ縺ｮ蛻励ｒ遒ｺ菫・
+    ' IO_WalkAbn 用の列を確保
     c = EnsureHeader(ws, "IO_WalkAbn")
 
-    ' 繝輔か繝ｼ繝縺ｮ繝√ぉ繝・け迥ｶ諷九°繧・IO 譁・ｭ怜・繧堤函謌・
+    ' フォームのチェック状態から IO 文字列を生成
     s = Build_WalkAbn_IO(owner)
 
-    ' 謖・ｮ夊｡後↓荳頑嶌縺堺ｿ晏ｭ・
+    ' 指定行に上書き保存
     ws.Cells(r, c).Value2 = CStr(s)
 
 End Sub
@@ -2942,7 +2942,7 @@ Public Function Build_WalkRLA_IO(owner As Object) As String
     Dim i As Long
     Dim nm As String
 
-    ' 遶玖・譛滂ｼ矩♀閼壽悄縺ｮ繧ｭ繝ｼ・・uild_RLA_ChecksPart 縺ｨ蜷後§・・
+    ' 立脚期＋遊脚期のキー（Build_RLA_ChecksPart と同じ）
     phases = Array("IC", "LR", "MSt", "TSt", "PSw", "ISw", "MSw", "TSw")
     first = True
 
@@ -2951,19 +2951,19 @@ Public Function Build_WalkRLA_IO(owner As Object) As String
         probsStr = ""
         level = ""
 
-        ' --- 繝√ぉ繝・け・・LA_<phase>_・橸ｼ峨ｒ諡ｾ縺・---
+        ' --- チェック（RLA_<phase>_～）を拾う ---
         For Each c In owner.controls
             If TypeName(c) = "CheckBox" Then
                 nm = CStr(c.name)
                 If InStr(1, nm, "RLA_" & CStr(phase) & "_", vbTextCompare) = 1 Then
                     If c.value = True Then
-                        probs.Add c.caption   ' 萓具ｼ牙庄蜍募沺荳崎ｶｳ / 遲句鴨菴惹ｸ・縺ｪ縺ｩ
+                        probs.Add c.caption   ' 例）可動域不足 / 筋力低下 など
                     End If
                 End If
             End If
         Next c
 
-        ' 蝠城｡後Μ繧ｹ繝医ｒ "/" 蛹ｺ蛻・ｊ縺ｧ 1 譛ｬ縺ｫ縺吶ｋ
+        ' 問題リストを "/" 区切りで 1 本にする
         If probs.count > 0 Then
             For i = 1 To probs.count
                 If i > 1 Then probsStr = probsStr & "/"
@@ -2971,19 +2971,19 @@ Public Function Build_WalkRLA_IO(owner As Object) As String
             Next i
         End If
 
-        ' --- 繝ｬ繝吶Ν・・ptionButton, GroupName=phase・峨ｒ諡ｾ縺・---
+        ' --- レベル（OptionButton, GroupName=phase）を拾う ---
         For Each c In owner.controls
             If TypeName(c) = "OptionButton" Then
                 If StrComp(c.groupName, CStr(phase), vbTextCompare) = 0 Then
                     If c.value = True Then
-                        level = CStr(c.caption)   ' 霆ｽ蠎ｦ / 荳ｭ遲牙ｺｦ / 鬮伜ｺｦ
+                        level = CStr(c.caption)   ' 軽度 / 中等度 / 高度
                         Exit For
                     End If
                 End If
             End If
         Next c
 
-        ' --- IO 繧ｻ繧ｰ繝｡繝ｳ繝育ｵ・∩遶九※ ---
+        ' --- IO セグメント組み立て ---
         Dim seg As String
         seg = "RLA_" & CStr(phase) & "_Problems=" & probsStr & _
               "|RLA_" & CStr(phase) & "_Level=" & level
@@ -3008,13 +3008,13 @@ Public Sub Save_WalkRLAToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal own
     If ws Is Nothing Then Exit Sub
     If r < 2 Then r = 2
 
-    ' IO_WalkRLA 逕ｨ縺ｮ蛻励ｒ遒ｺ菫晢ｼ亥・4縺ｫ繝倥ャ繝 IO_WalkRLA 縺後≠繧句燕謠撰ｼ・
+    ' IO_WalkRLA 用の列を確保（列4にヘッダ IO_WalkRLA がある前提）
     c = EnsureHeader(ws, "IO_WalkRLA")
 
-    ' 繝輔か繝ｼ繝荳翫・RLA繝√ぉ繝・け繝ｻ繝ｬ繝吶Ν縺九ｉIO譁・ｭ怜・繧堤函謌・
+    ' フォーム上のRLAチェック・レベルからIO文字列を生成
     s = Build_WalkRLA_IO(owner)
 
-    ' 謖・ｮ夊｡後↓荳頑嶌縺堺ｿ晏ｭ・
+    ' 指定行に上書き保存
     ws.Cells(r, c).Value2 = CStr(s)
 
 End Sub
@@ -3043,16 +3043,16 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     Dim pgCog As Object
     Dim pgMental As Object
     
-    Set frm = owner   ' frmEval 繧貞女縺大叙繧区Φ螳・
+    Set frm = owner   ' frmEval を受け取る想定
     Set mpCog = GetCogTabsSafe(frm)
     If mpCog Is Nothing Then Exit Sub
     Set pgCog = mpCog.Pages("pgCognition")
     Set pgMental = mpCog.Pages("pgMental")
         
     
-    '=== 隱咲衍・壻ｸｭ譬ｸ6鬆・岼 =====================================
+    '=== 認知：中核6項目 =====================================
     
-    ' 險俶・
+    ' 記憶
     col = HeaderCol_Compat("IO_Cog_Memory", ws)
     If col > 0 Then
         v = pgCog.controls("cmbCogMemory").value
@@ -3062,7 +3062,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    ' 豕ｨ諢・
+    ' 注意
     col = HeaderCol_Compat("IO_Cog_Attention", ws)
     If col > 0 Then
         v = pgCog.controls("cmbCogAttention").value
@@ -3071,7 +3071,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    ' 隕句ｽ楢ｭ・
+    ' 見当識
     col = HeaderCol_Compat("IO_Cog_Orientation", ws)
     If col > 0 Then
             v = pgCog.controls("cmbCogOrientation").value
@@ -3080,7 +3080,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    ' 蛻､譁ｭ
+    ' 判断
     col = HeaderCol_Compat("IO_Cog_Judgment", ws)
     If col > 0 Then
             v = pgCog.controls("cmbCogJudgement").value
@@ -3089,7 +3089,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    ' 驕り｡梧ｩ溯・
+    ' 遂行機能
     col = HeaderCol_Compat("IO_Cog_Executive", ws)
     If col > 0 Then
              v = pgCog.controls("cmbCogExecutive").value
@@ -3098,7 +3098,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    ' 險隱・
+    ' 言語
     col = HeaderCol_Compat("IO_Cog_Language", ws)
     If col > 0 Then
              v = pgCog.controls("cmbCogLanguage").value
@@ -3107,7 +3107,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    '=== 隱咲衍・夊ｪ咲衍逞・・遞ｮ鬘橸ｼ句ｙ閠・==============================
+    '=== 認知：認知症の種類＋備考 ==============================
     
     col = HeaderCol_Compat("IO_Cog_DementiaType", ws)
     If col > 0 Then
@@ -3125,7 +3125,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-        '=== 隱咲衍・咤PSD・医メ繧ｧ繝・け縺悟・縺｣縺ｦ縺・ｋ鬆・岼繧・| 蛹ｺ蛻・ｊ縺ｧ菫晏ｭ假ｼ・===
+        '=== 認知：BPSD（チェックが入っている項目を | 区切りで保存） ===
     
     bpsd = ""
      With pgCog
@@ -3145,9 +3145,9 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     End If
 
     
-    '=== 邊ｾ逾樣擇繧ｿ繝・============================================
+    '=== 精神面タブ ============================================
     
-    ' 豌怜・
+    ' 気分
     col = HeaderCol_Compat("IO_Mental_Mood", ws)
     If col > 0 Then
              v = pgMental.controls("cmbMood").value
@@ -3156,7 +3156,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    ' 諢乗ｬｲ
+    ' 意欲
     col = HeaderCol_Compat("IO_Mental_Motivation", ws)
     If col > 0 Then
             v = pgMental.controls("cmbMotivation").value
@@ -3165,7 +3165,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    ' 荳榊ｮ・
+    ' 不安
     col = HeaderCol_Compat("IO_Mental_Anxiety", ws)
     If col > 0 Then
             v = pgMental.controls("cmbAnxiety").value
@@ -3174,7 +3174,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    ' 蟇ｾ莠ｺ髢｢菫・
+    ' 対人関係
     col = HeaderCol_Compat("IO_Mental_Relation", ws)
     If col > 0 Then
             v = pgMental.controls("cmbRelation").value
@@ -3183,7 +3183,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    ' 逹｡逵
+    ' 睡眠
     col = HeaderCol_Compat("IO_Mental_Sleep", ws)
     If col > 0 Then
             v = pgMental.controls("cmbSleep").value
@@ -3192,7 +3192,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
         ws.Cells(r, col).value = v
     End If
     
-    ' 邊ｾ逾樣擇繝ｻ蛯呵・
+    ' 精神面・備考
     col = HeaderCol_Compat("IO_Mental_Note", ws)
     If col > 0 Then
             v = pgMental.controls("txtMentalNote").text
@@ -3219,13 +3219,13 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     Dim i As Long, j As Long
     Dim chk As MSForms.CheckBox
 
-    '=== UI 繝ｫ繝ｼ繝亥叙蠕暦ｼ育ｵｶ蟇ｾ蜷阪ｒ蜑肴署・・==
+    '=== UI ルート取得（絶対名を前提）===
     Set mp = GetCogTabsSafe(owner)
     If mp Is Nothing Then Exit Sub
     Set pgCog = mp.Pages("pgCognition")
     Set pgMental = mp.Pages("pgMental")
 
-    '=== 隱咲衍蛛ｴ combobox 鄒､ ===
+    '=== 認知側 combobox 群 ===
     LoadComboValueByHeader ws, r, "IO_Cog_Memory", pgCog, "cmbCogMemory"
     LoadComboValueByHeader ws, r, "IO_Cog_Attention", pgCog, "cmbCogAttention"
     LoadComboValueByHeader ws, r, "IO_Cog_Orientation", pgCog, "cmbCogOrientation"
@@ -3237,14 +3237,14 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     v = ReadValueByCompatHeader(ws, r, "IO_Cog_DementiaNote")
     pgCog.controls("txtDementiaNote").text = CStr(v)
 
-    '=== BPSD・・hkBPSD0?10・・==
-    ' 1) 蜈ｨ驛ｨ荳蠎ｦ繧ｯ繝ｪ繧｢
+    '=== BPSD（chkBPSD0?10）===
+    ' 1) 全部一度クリア
     For i = 0 To 10
         Set chk = pgCog.controls("chkBPSD" & CStr(i))
         chk.value = False
     Next i
 
-    ' 2) 繧ｻ繝ｫ譁・ｭ怜・繧・| 縺ｧ蛻・ｧ｣縺励，aption 縺ｨ荳閾ｴ縺吶ｋ繝√ぉ繝・け繝懊ャ繧ｯ繧ｹ繧丹N
+    ' 2) セル文字列を | で分解し、Caption と一致するチェックボックスをON
     s = CStr(ReadValueByCompatHeader(ws, r, "IO_Cog_BPSD"))
     If Len(s) > 0 Then
         arr = Split(s, "|")
@@ -3259,7 +3259,7 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
         Next i
     End If
 
-    '=== 邊ｾ逾樣擇 combobox / note ===
+    '=== 精神面 combobox / note ===
     LoadComboValueByHeader ws, r, "IO_Mental_Mood", pgMental, "cmbMood"
     LoadComboValueByHeader ws, r, "IO_Mental_Motivation", pgMental, "cmbMotivation"
     LoadComboValueByHeader ws, r, "IO_Mental_Anxiety", pgMental, "cmbAnxiety"
@@ -3327,10 +3327,10 @@ End Function
 
 
 Private Function ComposeDailyLogBody(ByVal training As String, ByVal reaction As String, ByVal abnormal As String, ByVal plan As String) As String
-    ComposeDailyLogBody = "縲仙ｮ滓命蜀・ｮｹ縲・ & vbCrLf & training & vbCrLf & vbCrLf & _
-                          "縲仙茜逕ｨ閠・・蜿榊ｿ懊・ & vbCrLf & reaction & vbCrLf & vbCrLf & _
-                          "縲千焚蟶ｸ謇隕九・ & vbCrLf & abnormal & vbCrLf & vbCrLf & _
-                          "縲蝉ｻ雁ｾ後・譁ｹ驥昴・ & vbCrLf & plan
+    ComposeDailyLogBody = "【実施内容】" & vbCrLf & training & vbCrLf & vbCrLf & _
+                          "【利用者の反応】" & vbCrLf & reaction & vbCrLf & vbCrLf & _
+                          "【異常所見】" & vbCrLf & abnormal & vbCrLf & vbCrLf & _
+                          "【今後の方針】" & vbCrLf & plan
 End Function
 
 Private Sub FillDailyLogFieldsFromBody(ByVal body As String, ByRef training As String, ByRef reaction As String, ByRef abnormal As String, ByRef plan As String)
@@ -3341,16 +3341,16 @@ Private Sub FillDailyLogFieldsFromBody(ByVal body As String, ByRef training As S
     abnormal = ""
     plan = ""
 
-    p1 = InStr(body, "縲仙ｮ滓命蜀・ｮｹ縲・)
-    p2 = InStr(body, "縲仙茜逕ｨ閠・・蜿榊ｿ懊・)
-    p3 = InStr(body, "縲千焚蟶ｸ謇隕九・)
-    p4 = InStr(body, "縲蝉ｻ雁ｾ後・譁ｹ驥昴・)
+    p1 = InStr(body, "【実施内容】")
+    p2 = InStr(body, "【利用者の反応】")
+    p3 = InStr(body, "【異常所見】")
+    p4 = InStr(body, "【今後の方針】")
 
     If p1 > 0 And p2 > p1 And p3 > p2 And p4 > p3 Then
-        training = Trim$(Mid$(body, p1 + Len("縲仙ｮ滓命蜀・ｮｹ縲・), p2 - (p1 + Len("縲仙ｮ滓命蜀・ｮｹ縲・))))
-        reaction = Trim$(Mid$(body, p2 + Len("縲仙茜逕ｨ閠・・蜿榊ｿ懊・), p3 - (p2 + Len("縲仙茜逕ｨ閠・・蜿榊ｿ懊・))))
-        abnormal = Trim$(Mid$(body, p3 + Len("縲千焚蟶ｸ謇隕九・), p4 - (p3 + Len("縲千焚蟶ｸ謇隕九・))))
-        plan = Trim$(Mid$(body, p4 + Len("縲蝉ｻ雁ｾ後・譁ｹ驥昴・)))
+        training = Trim$(Mid$(body, p1 + Len("【実施内容】"), p2 - (p1 + Len("【実施内容】"))))
+        reaction = Trim$(Mid$(body, p2 + Len("【利用者の反応】"), p3 - (p2 + Len("【利用者の反応】"))))
+        abnormal = Trim$(Mid$(body, p3 + Len("【異常所見】"), p4 - (p3 + Len("【異常所見】"))))
+        plan = Trim$(Mid$(body, p4 + Len("【今後の方針】")))
     Else
         training = body
     End If
@@ -3395,12 +3395,12 @@ Private Function EnsureDailyLogSheet(ByVal wb As Workbook) As Worksheet
     End If
 
       If Trim$(CStr(ws.Cells(1, 1).value)) = "" Then ws.Cells(1, 1).value = "LogID"
-      If Trim$(CStr(ws.Cells(1, 2).value)) = "" Then ws.Cells(1, 2).value = "蛻ｩ逕ｨ閠・D"
-      If Trim$(CStr(ws.Cells(1, 3).value)) = "" Then ws.Cells(1, 3).value = "蛻ｩ逕ｨ閠・錐"
-      If Trim$(CStr(ws.Cells(1, 4).value)) = "" Then ws.Cells(1, 4).value = "蛻ｩ逕ｨ譌･"
-      If Trim$(CStr(ws.Cells(1, 5).value)) = "" Then ws.Cells(1, 5).value = "險倬鹸譛ｬ譁・
-      If Trim$(CStr(ws.Cells(1, 6).value)) = "" Then ws.Cells(1, 6).value = "險倬鹸閠・
-      If Trim$(CStr(ws.Cells(1, 7).value)) = "" Then ws.Cells(1, 7).value = "譖ｴ譁ｰ譌･譎・
+      If Trim$(CStr(ws.Cells(1, 2).value)) = "" Then ws.Cells(1, 2).value = "利用者ID"
+      If Trim$(CStr(ws.Cells(1, 3).value)) = "" Then ws.Cells(1, 3).value = "利用者名"
+      If Trim$(CStr(ws.Cells(1, 4).value)) = "" Then ws.Cells(1, 4).value = "利用日"
+      If Trim$(CStr(ws.Cells(1, 5).value)) = "" Then ws.Cells(1, 5).value = "記録本文"
+      If Trim$(CStr(ws.Cells(1, 6).value)) = "" Then ws.Cells(1, 6).value = "記録者"
+      If Trim$(CStr(ws.Cells(1, 7).value)) = "" Then ws.Cells(1, 7).value = "更新日時"
 
     Set EnsureDailyLogSheet = ws
 End Function
@@ -3471,7 +3471,7 @@ GenerateDailyLogID = y & "-" & Format$(maxSeq + 1, "000000")
 End Function
 
 Public Sub Save_DailyLog_FromForm(owner As Object)
-    ' 謇句虚菫晏ｭ俶凾縺ｯ SaveDailyLog_Append 繧剃ｽｿ逕ｨ
+    ' 手動保存時は SaveDailyLog_Append を使用
     mDailyLogManual = True
     SaveDailyLog_Append owner
     mDailyLogManual = False
@@ -3537,7 +3537,7 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Dim filePath As String
 
 
-    '--- 繝輔か繝ｼ繝荳翫・繧ｳ繝ｳ繝医Ο繝ｼ繝ｫ蜿門ｾ・---
+    '--- フォーム上のコントロール取得 ---
     Set txtName = SafeGetControl(owner, "txtName")
     Set f = ResolveDailyLogRoot(owner)
     If txtName Is Nothing Or f Is Nothing Then Exit Sub
@@ -3555,7 +3555,7 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
 
 
 
-    '--- 隧ｲ蠖灘茜逕ｨ閠・・縲梧怙譁ｰ・医＞縺｡縺ｰ繧謎ｸ具ｼ峨阪・陦後ｒ謗｢縺・---
+    '--- 該当利用者の「最新（いちばん下）」の行を探す ---
     targetName = Trim$(CStr(txtName.value))
     targetPid = Trim$(CStr(txtHdrPID.value))
     If targetPid = "" And targetName = "" Then GoTo FinallyExit
@@ -3632,7 +3632,7 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     
     
 
-    '--- 隕九▽縺九▲縺溯｡後ｒ繝輔か繝ｼ繝縺ｸ蜿肴丐 ---
+    '--- 見つかった行をフォームへ反映 ---
     body = CStr(ws.Cells(r, 5).value)
 
     txtDate.value = ws.Cells(r, 4).value
@@ -3649,7 +3649,7 @@ End Sub
 Public Sub SaveDailyLog_Append(owner As Object)
 
     
-    ' 蟆ら畑繝懊ち繝ｳ縺九ｉ縺ｮ蜻ｼ縺ｳ蜃ｺ縺嶺ｻ･螟悶〒縺ｯ菴輔ｂ縺励↑縺・
+    ' 専用ボタンからの呼び出し以外では何もしない
     If Not mDailyLogManual Then Exit Sub
 
 
@@ -3711,19 +3711,19 @@ Public Sub SaveDailyLog_Append(owner As Object)
     note = ComposeDailyLogBody(training, reaction, abnormal, plan)
 
 
-    '--- 蜈･蜉帙メ繧ｧ繝・け ---
+    '--- 入力チェック ---
     If nm = "" Then
-     MsgBox "蛻ｩ逕ｨ閠・錐繧貞・蜉帙＠縺ｦ縺上□縺輔＞縲・, vbExclamation
+     MsgBox "利用者名を入力してください。", vbExclamation
      Exit Sub
     End If
 
     If Not IsDate(dt) Then
-        MsgBox "險倬鹸譌･縺ｮ谺・↓豁｣縺励＞譌･莉倥ｒ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・, vbExclamation
+        MsgBox "記録日の欄に正しい日付を入力してください。", vbExclamation
         Exit Sub
     End If
 
     If Trim$(training & reaction & abnormal & plan) = "" Then
-        If MsgBox("險倬鹸蜀・ｮｹ縺檎ｩｺ縺ｧ縺吶′菫晏ｭ倥＠縺ｾ縺吶°・・, vbQuestion + vbOKCancel) = vbCancel Then Exit Sub
+        If MsgBox("記録内容が空ですが保存しますか？", vbQuestion + vbOKCancel) = vbCancel Then Exit Sub
     
  End If
 
@@ -3760,7 +3760,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
     
     
 
-    '--- 霑ｽ險倩｡後ｒ豎ｺ繧√ｋ・・陦檎岼縺ｫ隕句・縺励′縺ゅｋ蜑肴署・・--
+    '--- 追記行を決める（1行目に見出しがある前提）---
     ws.Cells(hitRow, 2).value = pid
     ws.Cells(hitRow, 3).value = nm
     ws.Cells(hitRow, 4).value = logDate
@@ -3776,7 +3776,7 @@ End Sub
 
 
 
-'=== Basic.* 縺ｨ譌･譛ｬ隱槭・繝・ム蛻励ｒ繝溘Λ繝ｼ縺吶ｋ豎守畑繝倥Ν繝代・ =====================
+'=== Basic.* と日本語ヘッダ列をミラーする汎用ヘルパー =====================
 
 Private Sub MirrorBasicPair( _
         ByVal ws As Worksheet, ByVal rowNum As Long, _
@@ -3789,7 +3789,7 @@ Private Sub MirrorBasicPair( _
     vBasic = ws.Cells(rowNum, colBasic).value
     vJp = ws.Cells(rowNum, colJp).value
 
-    ' 縺ｩ縺｡繧峨°迚・婿縺縺大・縺｣縺ｦ縺・ｋ蝣ｴ蜷医√ｂ縺・援譁ｹ縺ｸ繧ｳ繝斐・
+    ' どちらか片方だけ入っている場合、もう片方へコピー
     If Len(vBasic) = 0 And Len(vJp) > 0 Then
         ws.Cells(rowNum, colBasic).value = vJp
     ElseIf Len(vJp) = 0 And Len(vBasic) > 0 Then
@@ -3797,49 +3797,49 @@ Private Sub MirrorBasicPair( _
     End If
 End Sub
 
-'=== 蝓ｺ譛ｬ諠・ｱ縺ｮ譁ｰ譌ｧ蛻励ｒ繝溘Λ繝ｼ縺吶ｋ =====================================
-'  繝ｻBasic.* 縺ｨ 譌･譛ｬ隱槭・繝・ム 縺ｮ荳｡譁ｹ繧偵檎ｩｺ縺・※縺・ｋ譁ｹ縺ｸ縲阪さ繝斐・縺吶ｋ
-'  繝ｻ縺ｩ縺｡繧峨°迚・婿縺ｫ縺励°蛟､縺後↑縺代ｌ縺ｰ縲√◎縺ｮ蛟､繧偵ｂ縺・援譁ｹ縺ｸ蜀吶☆縺縺・
-'  繝ｻ荳｡譁ｹ縺ｫ蛟､縺後≠繧句ｴ蜷医・菴輔ｂ縺励↑縺・ｼ郁｡晉ｪ∝屓驕ｿ・・
+'=== 基本情報の新旧列をミラーする =====================================
+'  ・Basic.* と 日本語ヘッダ の両方を「空いている方へ」コピーする
+'  ・どちらか片方にしか値がなければ、その値をもう片方へ写すだけ
+'  ・両方に値がある場合は何もしない（衝突回避）
 Public Sub MirrorBasicRow(ByVal ws As Worksheet, ByVal rowNum As Long)
     On Error GoTo ErrHandler
 
     ' ID
     MirrorBasicPair ws, rowNum, "Basic.ID", "ID"
-    ' 豌丞錐
-    MirrorBasicPair ws, rowNum, "Basic.Name", "豌丞錐"
-    ' 隧穂ｾ｡譌･
-    MirrorBasicPair ws, rowNum, "Basic.EvalDate", "隧穂ｾ｡譌･"
-    ' 蟷ｴ鮨｢
-    MirrorBasicPair ws, rowNum, "Basic.Age", "蟷ｴ鮨｢"
-    ' 諤ｧ蛻･
-    MirrorBasicPair ws, rowNum, "Basic.Sex", "諤ｧ蛻･"
-    ' 隧穂ｾ｡閠・
-    MirrorBasicPair ws, rowNum, "Basic.Evaluator", "隧穂ｾ｡閠・
-    ' 隧穂ｾ｡閠・・遞ｮ
-    MirrorBasicPair ws, rowNum, "Basic.EvaluatorJob", "隧穂ｾ｡閠・・遞ｮ"
-    ' 逋ｺ逞・律
-    MirrorBasicPair ws, rowNum, "Basic.OnsetDate", "逋ｺ逞・律"
-    ' 謔｣閠・eeds
-    MirrorBasicPair ws, rowNum, "Basic.Needs.Patient", "謔｣閠・eeds"
-    ' 螳ｶ譌蒐eeds
-    MirrorBasicPair ws, rowNum, "Basic.Needs.Family", "螳ｶ譌蒐eeds"
-    ' 逕滓ｴｻ迥ｶ豕・
-    MirrorBasicPair ws, rowNum, "BI.SocialParticipation", "逕滓ｴｻ迥ｶ豕・
-    ' 荳ｻ險ｺ譁ｭ
-    MirrorBasicPair ws, rowNum, "Basic.PrimaryDx", "荳ｻ險ｺ譁ｭ"
-    ' 隕∽ｻ玖ｭｷ蠎ｦ
-    MirrorBasicPair ws, rowNum, "Basic.CareLevel", "隕∽ｻ玖ｭｷ蠎ｦ"
+    ' 氏名
+    MirrorBasicPair ws, rowNum, "Basic.Name", "氏名"
+    ' 評価日
+    MirrorBasicPair ws, rowNum, "Basic.EvalDate", "評価日"
+    ' 年齢
+    MirrorBasicPair ws, rowNum, "Basic.Age", "年齢"
+    ' 性別
+    MirrorBasicPair ws, rowNum, "Basic.Sex", "性別"
+    ' 評価者
+    MirrorBasicPair ws, rowNum, "Basic.Evaluator", "評価者"
+    ' 評価者職種
+    MirrorBasicPair ws, rowNum, "Basic.EvaluatorJob", "評価者職種"
+    ' 発症日
+    MirrorBasicPair ws, rowNum, "Basic.OnsetDate", "発症日"
+    ' 患者Needs
+    MirrorBasicPair ws, rowNum, "Basic.Needs.Patient", "患者Needs"
+    ' 家族Needs
+    MirrorBasicPair ws, rowNum, "Basic.Needs.Family", "家族Needs"
+    ' 生活状況
+    MirrorBasicPair ws, rowNum, "BI.SocialParticipation", "生活状況"
+    ' 主診断
+    MirrorBasicPair ws, rowNum, "Basic.PrimaryDx", "主診断"
+    ' 要介護度
+    MirrorBasicPair ws, rowNum, "Basic.CareLevel", "要介護度"
 
     Exit Sub
 
 ErrHandler:
     
 End Sub
-'=== 蝓ｺ譛ｬ諠・ｱ縺ｮ譁ｰ譌ｧ蛻励ｒ繝溘Λ繝ｼ縺吶ｋ =====================================
-'  繝ｻBasic.* 縺ｨ 譌･譛ｬ隱槭・繝・ム 縺ｮ荳｡譁ｹ繧偵檎ｩｺ縺・※縺・ｋ譁ｹ縺ｸ縲阪さ繝斐・縺吶ｋ
-'  繝ｻ縺ｩ縺｡繧峨°迚・婿縺ｫ縺励°蛟､縺後↑縺代ｌ縺ｰ縲√◎縺ｮ蛟､繧偵ｂ縺・援譁ｹ縺ｸ蜀吶☆縺縺・
-'  繝ｻ荳｡譁ｹ縺ｫ蛟､縺後≠繧句ｴ蜷医・菴輔ｂ縺励↑縺・ｼ郁｡晉ｪ∝屓驕ｿ・・
+'=== 基本情報の新旧列をミラーする =====================================
+'  ・Basic.* と 日本語ヘッダ の両方を「空いている方へ」コピーする
+'  ・どちらか片方にしか値がなければ、その値をもう片方へ写すだけ
+'  ・両方に値がある場合は何もしない（衝突回避）
 Public Sub MirrorBasicRow_Eval(ByVal ws As Worksheet, ByVal rowNum As Long)
     On Error GoTo ErrHandler
 
@@ -3850,28 +3850,28 @@ Public Sub MirrorBasicRow_Eval(ByVal ws As Worksheet, ByVal rowNum As Long)
     Dim vNew As Variant, vOld As Variant
     Dim sNew As String, sOld As String
 
-    ' 蟇ｾ雎｡繝壹い荳隕ｧ・亥ｷｦ縺・Basic.*縲∝承縺梧律譛ｬ隱槭・繝・ム・・
+    ' 対象ペア一覧（左が Basic.*、右が日本語ヘッダ）
     pairs = Array( _
         Array("Basic.ID", "ID"), _
-        Array("Basic.Name", "豌丞錐"), _
-        Array("Basic.EvalDate", "隧穂ｾ｡譌･"), _
-        Array("Basic.Age", "蟷ｴ鮨｢"), _
-        Array("Basic.Sex", "諤ｧ蛻･"), _
-        Array("Basic.Evaluator", "隧穂ｾ｡閠・), _
-        Array("隧穂ｾ｡閠・・遞ｮ", "txtEvaluatorJob"), _
-        Array("Basic.OnsetDate", "逋ｺ逞・律"), _
-        Array("Basic.Needs.Patient", "謔｣閠・eeds"), _
-        Array("Basic.Needs.Family", "螳ｶ譌蒐eeds"), _
-        Array("BI.SocialParticipation", "逕滓ｴｻ迥ｶ豕・), _
-        Array("Basic.PrimaryDx", "荳ｻ險ｺ譁ｭ"), _
-        Array("Basic.CareLevel", "隕∽ｻ玖ｭｷ蠎ｦ") _
+        Array("Basic.Name", "氏名"), _
+        Array("Basic.EvalDate", "評価日"), _
+        Array("Basic.Age", "年齢"), _
+        Array("Basic.Sex", "性別"), _
+        Array("Basic.Evaluator", "評価者"), _
+        Array("評価者職種", "txtEvaluatorJob"), _
+        Array("Basic.OnsetDate", "発症日"), _
+        Array("Basic.Needs.Patient", "患者Needs"), _
+        Array("Basic.Needs.Family", "家族Needs"), _
+        Array("BI.SocialParticipation", "生活状況"), _
+        Array("Basic.PrimaryDx", "主診断"), _
+        Array("Basic.CareLevel", "要介護度") _
     )
 
     For i = LBound(pairs) To UBound(pairs)
         headerNew = pairs(i)(0)
         headerOld = pairs(i)(1)
 
-        ' 隕句・縺怜・繧貞叙蠕暦ｼ医←縺｡繧峨°辟｡縺代ｌ縺ｰ繧ｹ繧ｭ繝・・・・
+        ' 見出し列を取得（どちらか無ければスキップ）
         cNew = FindColByHeaderExact(ws, headerNew)
         cOld = FindColByHeaderExact(ws, headerOld)
         If cNew = 0 Or cOld = 0 Then GoTo NextPair
@@ -3882,7 +3882,7 @@ Public Sub MirrorBasicRow_Eval(ByVal ws As Worksheet, ByVal rowNum As Long)
         sNew = Trim$(CStr(vNew))
         sOld = Trim$(CStr(vOld))
 
-        ' 縺ｩ縺｡繧峨°縺縺大沂縺ｾ縺｣縺ｦ縺・ｋ蝣ｴ蜷医∫ｩｺ縺・※縺・ｋ譁ｹ縺ｸ繧ｳ繝斐・
+        ' どちらかだけ埋まっている場合、空いている方へコピー
         If sNew = "" And sOld <> "" Then
             ws.Cells(rowNum, cNew).value = vOld
         ElseIf sOld = "" And sNew <> "" Then
@@ -3967,10 +3967,10 @@ Private Function EnsureEvalIndexSheet() As Worksheet
 End Function
 Private Function BasicInfoLegacyHeaders() As Variant
     BasicInfoLegacyHeaders = Array( _
-        "豌丞錐", "繝輔Μ繧ｬ繝・, "諤ｧ蛻･", "逕溷ｹｴ譛域律", "蟷ｴ鮨｢", "菴乗園", _
-        "髮ｻ隧ｱ逡ｪ蜿ｷ", "譛ｬ莠ｺNeeds", "螳ｶ譌蒐eeds", "荳ｻ逞・錐", "隕∽ｻ玖ｭｷ蠎ｦ", _
-        "逋ｺ逞・律", "譌｢蠕豁ｴ", "鬮倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ", "隱咲衍逞・ｫ倬ｽ｢閠・・譌･蟶ｸ逕滓ｴｻ閾ｪ遶句ｺｦ", _
-        "隧穂ｾ｡譌･", "蛻晏屓隧穂ｾ｡譌･", "邨碁℃", "蛯呵・, "隕∵髪謠ｴ", "陬懷勧蜈ｷ", "逕滓ｴｻ迥ｶ豕・)
+        "氏名", "フリガナ", "性別", "生年月日", "年齢", "住所", _
+        "電話番号", "本人Needs", "家族Needs", "主病名", "要介護度", _
+        "発症日", "既往歴", "高齢者の日常生活自立度", "認知症高齢者の日常生活自立度", _
+        "評価日", "初回評価日", "経過", "備考", "要支援", "補助具", "生活状況")
 End Function
 
 Private Function CommonHistoryHeaders() As Variant
@@ -4153,9 +4153,9 @@ Private Function BuildLegacyTransferCandidatesMessage(ByVal indexWs As Worksheet
     If Len(lines) = 0 Then Exit Function
 
     BuildLegacyTransferCandidatesMessage = _
-        "蜷悟ｧ灘酔蜷阪・蛻ｩ逕ｨ閠・′隍・焚蟄伜惠縺励∪縺吶・ & vbCrLf & _
-        "蟇ｾ雎｡閠・ｒ迚ｹ螳壹☆繧九◆繧√！D繧貞・蜉帙＠縺ｦ縺上□縺輔＞縲・ & vbCrLf & _
-        "・医∪縺溘・蛟呵｣懊°繧蛾∈謚槭＠縺ｦ縺上□縺輔＞・・ & vbCrLf & vbCrLf & _
+        "同姓同名の利用者が複数存在します。" & vbCrLf & _
+        "対象者を特定するため、IDを入力してください。" & vbCrLf & _
+        "（または候補から選択してください）" & vbCrLf & vbCrLf & _
         lines
 End Function
 
@@ -4182,15 +4182,15 @@ Private Function PickLegacyTransferIndexRow(ByVal indexWs As Worksheet, _
 
     prompt = BuildLegacyTransferCandidatesMessage(indexWs, rowsByName) & vbCrLf & vbCrLf
     If hasUnassigned Then
-        prompt = prompt & "ID譛ｪ險ｭ螳壹・譌ｧ險倬鹸縺瑚ｦ九▽縺九ｊ縺ｾ縺励◆縲・ & vbCrLf
+        prompt = prompt & "ID未設定の旧記録が見つかりました。" & vbCrLf
     Else
-        prompt = prompt & "蜷悟ｧ灘酔蜷阪・蛻ｩ逕ｨ閠・′隍・焚蟄伜惠縺励∪縺吶・ & vbCrLf
+        prompt = prompt & "同姓同名の利用者が複数存在します。" & vbCrLf
     End If
 
-    prompt = prompt & "蟇ｾ雎｡閠・ " & personName & " / ID: " & userID & vbCrLf & _
-         "蠑輔″邯吶＄險倬鹸縺ｮ逡ｪ蜿ｷ繧貞・蜉帙＠縺ｦ縺上□縺輔＞縲・
+    prompt = prompt & "対象者: " & personName & " / ID: " & userID & vbCrLf & _
+         "引き継ぐ記録の番号を入力してください。"
 
-    picked = Application.InputBox(prompt, "譌ｧ險倬鹸縺ｮ蠑輔″邯吶℃", Type:=1)
+    picked = Application.InputBox(prompt, "旧記録の引き継ぎ", Type:=1)
     If VarType(picked) = vbBoolean Then Exit Function
     If IsError(picked) Then Exit Function
     If Not IsNumeric(picked) Then Exit Function
@@ -4214,8 +4214,8 @@ Private Function WriteUserIDToLegacyHistory(ByVal wsTarget As Worksheet, _
     If cID = 0 Then cID = EnsureHeader(wsTarget, "Basic.ID")
 
     cName = FindColByHeaderExact(wsTarget, "Basic.Name")
-       If cName = 0 Then cName = FindHeaderCol(wsTarget, "豌丞錐")
-       If cName = 0 Then cName = FindHeaderCol(wsTarget, "蛻ｩ逕ｨ閠・錐")
+       If cName = 0 Then cName = FindHeaderCol(wsTarget, "氏名")
+       If cName = 0 Then cName = FindHeaderCol(wsTarget, "利用者名")
        If cName = 0 Then cName = FindHeaderCol(wsTarget, "Name")
 
     lastRow = LastDataRow(wsTarget)
@@ -4258,7 +4258,7 @@ End Function
 
 Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boolean, ByRef wsTarget As Worksheet, ByRef message As String) As Boolean
     Dim nm As String: nm = Trim$(owner.txtName.text)
-    If Len(nm) = 0 Then message = "豌丞錐縺梧悴蜈･蜉帙〒縺・: Exit Function
+    If Len(nm) = 0 Then message = "氏名が未入力です": Exit Function
 
     Dim indexWs As Worksheet: Set indexWs = EnsureEvalIndexSheet()
     Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
@@ -4304,7 +4304,7 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
             ElseIf TryGetWorksheetByName(storedSheetName, wsTarget) Then
                 EnsureHistorySheetInitialized wsTarget
             Else
-                message = "蟇ｾ雎｡縺ｮ隧穂ｾ｡螻･豁ｴ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・
+                message = "対象の評価履歴が見つかりません。"
                 Exit Function
             End If
         End If
@@ -4357,7 +4357,7 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     If rowsByName.count = 0 Then
         
         If Not forSave Then
-           message = "蟇ｾ雎｡縺ｮ隧穂ｾ｡螻･豁ｴ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・
+           message = "対象の評価履歴が見つかりません。"
             Exit Function
         End If
         
@@ -4395,8 +4395,8 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
             Exit Function
         End If
 
-        message = "蜷悟ｧ灘酔蜷阪・蛻ｩ逕ｨ閠・′隍・焚蟄伜惠縺励∪縺吶・ & vbCrLf & _
-          "隧ｲ蠖薙☆繧句ｱ･豁ｴ繧帝∈謚槭＠縺ｦ縺上□縺輔＞縲・
+        message = "同姓同名の利用者が複数存在します。" & vbCrLf & _
+          "該当する履歴を選択してください。"
         If Not rowsByNameWithoutID Is Nothing Then
             If rowsByNameWithoutID.count > 0 Then
                 message = message & vbCrLf & vbCrLf & BuildLegacyTransferCandidatesMessage(indexWs, rowsByNameWithoutID)
@@ -4412,13 +4412,13 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
                 ResolveUserHistorySheet = True
                 Exit Function
             End If
-            message = "蛟呵｣懊′縺ゅｊ縺ｾ縺帙ｓ縲・
+            message = "候補がありません。"
             Exit Function
         End If
         Exit Function
     End If
 
-    message = "蜷悟ｧ灘酔蜷阪・蛻ｩ逕ｨ閠・′隍・焚縺・ｋ縺溘ａ縲！D縺ｾ縺溘・螻･豁ｴ繧帝∈謚槭＠縺ｦ縺上□縺輔＞縲・ & _
+    message = "同姓同名の利用者が複数いるため、IDまたは履歴を選択してください。" & _
           BuildDuplicateNameCandidatesMessage(indexWs, rowsByName)
 End Function
 
@@ -4500,11 +4500,11 @@ Private Function BuildDuplicateNameSelectionMessage(ByVal indexWs As Worksheet, 
 
     
     BuildDuplicateNameSelectionMessage = _
-        "蜷悟ｧ灘酔蜷阪・蛻ｩ逕ｨ閠・′隍・焚蟄伜惠縺励∪縺吶・ & vbCrLf & _
-        "蟇ｾ雎｡縺ｮ螻･豁ｴ繧帝∈謚槭＠縺ｦ縺上□縺輔＞縲・ & vbCrLf & _
-        "蛻ｩ逕ｨ閠・錐: " & personName & vbCrLf & vbCrLf & _
+        "同姓同名の利用者が複数存在します。" & vbCrLf & _
+        "対象の履歴を選択してください。" & vbCrLf & _
+        "利用者名: " & personName & vbCrLf & vbCrLf & _
         lines & vbCrLf & vbCrLf & _
-        "逡ｪ蜿ｷ繧貞・蜉帙＠縺ｦ縺上□縺輔＞縲・
+        "番号を入力してください。"
 End Function
 
 Private Function PickDuplicateNameIndexRow(ByVal indexWs As Worksheet, _
@@ -4518,7 +4518,7 @@ Private Function PickDuplicateNameIndexRow(ByVal indexWs As Worksheet, _
     If rowsByName.count = 0 Then Exit Function
 
     prompt = BuildDuplicateNameSelectionMessage(indexWs, rowsByName, personName)
-    picked = Application.InputBox(prompt, "蜷悟ｧ灘酔蜷阪・蛟呵｣憺∈謚・, Type:=1)
+    picked = Application.InputBox(prompt, "同姓同名の候補選択", Type:=1)
     If VarType(picked) = vbBoolean Then Exit Function
     If IsError(picked) Then Exit Function
     If Not IsNumeric(picked) Then Exit Function
@@ -4544,13 +4544,13 @@ Private Function BuildDuplicateNameCandidatesMessage(ByVal indexWs As Worksheet,
         idVal = Trim$(CStr(indexWs.Cells(rowNo, 1).value))
         kanaVal = Trim$(CStr(indexWs.Cells(rowNo, 3).value))
         latestVal = Trim$(CStr(indexWs.Cells(rowNo, 6).value))
-        lines = lines & "- ID: " & idVal & " / 縺九↑: " & kanaVal & " / 譛譁ｰ: " & latestVal
+        lines = lines & "- ID: " & idVal & " / かな: " & kanaVal & " / 最新: " & latestVal
         If i < rowsByName.count Then lines = lines & vbCrLf
     Next i
 
     If Len(lines) > 0 Then
                 BuildDuplicateNameCandidatesMessage = vbCrLf & vbCrLf & ":" & vbCrLf & lines & _
-            vbCrLf & vbCrLf & "譁ｰ隕上・蝣ｴ蜷医・谺｡縺ｮID繧剃ｽｿ逕ｨ縺ｧ縺阪∪縺・" & vbCrLf & _
+            vbCrLf & vbCrLf & "新規の場合は次のIDを使用できます:" & vbCrLf & _
             BuildNextAvailableUserIDCandidate(indexWs)
     End If
 End Function
@@ -4643,8 +4643,8 @@ Private Sub HistoryLoadDebug_ScanWorkbookForName(ByVal targetName As String, ByV
         If (Left$(ws.name, Len(EVAL_HISTORY_SHEET_PREFIX)) = EVAL_HISTORY_SHEET_PREFIX) _
            Or StrComp(ws.name, EVAL_SHEET_NAME, vbTextCompare) = 0 Then
             c = FindColByHeaderExact(ws, "Basic.Name")
-                 If c = 0 Then c = FindHeaderCol(ws, "豌丞錐")
-                 If c = 0 Then c = FindHeaderCol(ws, "蛻ｩ逕ｨ閠・錐")
+                 If c = 0 Then c = FindHeaderCol(ws, "氏名")
+                 If c = 0 Then c = FindHeaderCol(ws, "利用者名")
                  If c = 0 Then c = FindHeaderCol(ws, "Name")
 
             If c = 0 Then
