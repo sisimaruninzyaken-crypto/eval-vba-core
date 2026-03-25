@@ -58,6 +58,27 @@ EH:
 
 End Sub
 
+' デバッグ用：テンプレートシートのラベル位置を Immediate に出力
+Public Sub DebugScanPlanSheetLabels(ByVal ws As Worksheet)
+    Dim keywords As Variant
+    keywords = Array("性別", "要介護度", "障害高齢者", "認知症高齢者", "自立度", "介護度")
+    Dim cell As Range
+    Dim lastRow As Long: lastRow = 30
+    Dim c As Long, r As Long
+    For r = 1 To lastRow
+        For c = 1 To 62 ' A to BJ
+            On Error Resume Next
+            Dim v As String: v = CStr(ws.Cells(r, c).value)
+            On Error GoTo 0
+            Dim i As Long
+            For i = LBound(keywords) To UBound(keywords)
+                If InStr(v, CStr(keywords(i))) > 0 Then
+                    Debug.Print "Row=" & r & " Col=" & c & " (" & ws.Cells(r, c).Address(False, False) & ") = [" & v & "]"
+                End If
+            Next i
+        Next c
+    Next r
+End Sub
 
 Private Function GetPreviousCreatedDateText(ByVal owner As Object) As String
     On Error GoTo EH
