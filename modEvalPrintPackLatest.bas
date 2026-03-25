@@ -20,10 +20,10 @@ Public Sub Run_PrintPack_LatestRow()
 
     Dim nm As String, pid As String
     nm = CStr(ws.Cells(lastHit, 89).value)
-    pid = CStr(ws.Cells(lastHit, 97).value) '‹ó‚Ì‚Ü‚Ü‚Å‚àOK
+    pid = CStr(ws.Cells(lastHit, 97).value) 'ç©ºã®ã¾ã¾ã§ã‚‚OK
 
-    'Šù‘¶‚Ì“üŒûiInputBox”Åj‚ğ—¬—p‚·‚é‚½‚ßA‚Ü‚¸‚Í‚»‚Ì‚Ü‚ÜŒÄ‚Ô
-    '¦Ÿ‚Ìè‚ÅABuild_TestEval_PrintPack ‚ğuˆø””Åv‚É•ªŠò‚³‚¹‚ÄŠ®‘Sƒƒ“ƒNƒŠƒbƒN‰»‚·‚é
+    'æ—¢å­˜ã®å…¥å£ï¼ˆInputBoxç‰ˆï¼‰ã‚’æµç”¨ã™ã‚‹ãŸã‚ã€ã¾ãšã¯ãã®ã¾ã¾å‘¼ã¶
+    'â€»æ¬¡ã®æ‰‹ã§ã€Build_TestEval_PrintPack ã‚’ã€Œå¼•æ•°ç‰ˆã€ã«åˆ†å²ã•ã›ã¦å®Œå…¨ãƒ¯ãƒ³ã‚¯ãƒªãƒƒã‚¯åŒ–ã™ã‚‹
     Call Build_TestEval_PrintPack_Forced(nm, pid)
 End Sub
 
@@ -31,12 +31,12 @@ End Sub
 
 
 Public Sub Build_TestEval_PrintPack_Forced(ByVal nm As String, Optional ByVal idFilter As String = "")
-    'Šù‘¶‚Ì Build_TestEval_PrintPack ‚ÌuInputBox‚Åæ‚Á‚Ä‚é nm / idFilterv‚ğ
-    'ŠO‚©‚ç’“ü‚Å‚«‚é‚æ‚¤‚É‚µ‚½‚¾‚¯‚Ì“üŒûB
-    '’†g‚ÍŠù‘¶‚Ì–{‘Ì‚ğŒÄ‚Ôi–{‘Ì‚ª•ªŠ„‚³‚ê‚Ä‚¢‚é‘O’ñjB
+    'æ—¢å­˜ã® Build_TestEval_PrintPack ã®ã€ŒInputBoxã§å–ã£ã¦ã‚‹ nm / idFilterã€ã‚’
+    'å¤–ã‹ã‚‰æ³¨å…¥ã§ãã‚‹ã‚ˆã†ã«ã—ãŸã ã‘ã®å…¥å£ã€‚
+    'ä¸­èº«ã¯æ—¢å­˜ã®æœ¬ä½“ã‚’å‘¼ã¶ï¼ˆæœ¬ä½“ãŒåˆ†å‰²ã•ã‚Œã¦ã„ã‚‹å‰æï¼‰ã€‚
 
-    '«‚±‚ÌŒÄ‚Ño‚µ–¼‚ÍA‚ ‚È‚½‚ÌŒ»sƒR[ƒh‚Ìu–{‘Ìv‚É‡‚í‚¹‚Ä’uŠ·‚·‚é‘O’ñ
-    'iŸ‚Ìè‚ÅA–¢’è‹`‚É‚È‚Á‚½s‚¾‚¯·‚µ‘Ö‚¦‚éj
+    'â†“ã“ã®å‘¼ã³å‡ºã—åã¯ã€ã‚ãªãŸã®ç¾è¡Œã‚³ãƒ¼ãƒ‰ã®ã€Œæœ¬ä½“ã€ã«åˆã‚ã›ã¦ç½®æ›ã™ã‚‹å‰æ
+    'ï¼ˆæ¬¡ã®æ‰‹ã§ã€æœªå®šç¾©ã«ãªã£ãŸè¡Œã ã‘å·®ã—æ›¿ãˆã‚‹ï¼‰
    Call Build_TestEval_PrintPack
 
 End Sub

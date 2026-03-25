@@ -1,12 +1,12 @@
 Attribute VB_Name = "modPainIO"
-'=== [TEMP] Pain IO Load Parse Helpers (ˆê) ===========================
+'=== [TEMP] Pain IO Load Parse Helpers (ä¸€æ™‚) ===========================
 Option Private Module
 
 
 Option Explicit
 
-Private Const COL_IO As Long = 156  ' HEADER_IO —ñiEvalDataj
-Public gPainLoadEnabled As Boolean   ' Šù’è=Falsei“Ç‹Ö~j
+Private Const COL_IO As Long = 156  ' HEADER_IO åˆ—ï¼ˆEvalDataï¼‰
+Public gPainLoadEnabled As Boolean   ' æ—¢å®š=Falseï¼ˆèª­è¾¼ç¦æ­¢ï¼‰
 
 Private Function NormalizePainSite(ByVal s As String) As String
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary")
@@ -20,9 +20,9 @@ Private Function NormalizePainSite(ByVal s As String) As String
     a = Split(s, "/")
     For i = LBound(a) To UBound(a)
         t = Trim$(a(i))
-        ' uèv‚Æuwv‚Í‚Ü‚Æ‚ß‚Äuè/wv‚É“ˆê
-        If t = "è" Or t = "w" Then
-            d("è/w") = 1
+        ' ã€Œæ‰‹ã€ã¨ã€ŒæŒ‡ã€ã¯ã¾ã¨ã‚ã¦ã€Œæ‰‹/æŒ‡ã€ã«çµ±ä¸€
+        If t = "æ‰‹" Or t = "æŒ‡" Then
+            d("æ‰‹/æŒ‡") = 1
         Else
             d(t) = 1
         End If
@@ -33,7 +33,7 @@ End Function
 
 
 
-' IO•¶š—ñ‚©‚ç key ‚É‘Î‰‚·‚é’l‚ğ•Ô‚·i": " ‹æØ‚èA"|" ƒŒƒR[ƒh‹æØ‚èj
+' IOæ–‡å­—åˆ—ã‹ã‚‰ key ã«å¯¾å¿œã™ã‚‹å€¤ã‚’è¿”ã™ï¼ˆ": " åŒºåˆ‡ã‚Šã€"|" ãƒ¬ã‚³ãƒ¼ãƒ‰åŒºåˆ‡ã‚Šï¼‰
 Public Function IO_GetVal(ByVal ioText As String, ByVal key As String) As String
     Dim recs() As String, i As Long, t As String, p As Long, k As String, v As String
     IO_GetVal = ""
@@ -45,7 +45,7 @@ Public Function IO_GetVal(ByVal ioText As String, ByVal key As String) As String
         If Len(t) = 0 Then GoTo NextI
        p = InStr(1, t, ":")
 If p = 0 Then
-    p = InStr(1, t, "=")   ' š‚±‚±‚ğ’Ç‰ÁF=‹æØ‚è‚É‚à‘Î‰
+    p = InStr(1, t, "=")   ' â˜…ã“ã“ã‚’è¿½åŠ ï¼š=åŒºåˆ‡ã‚Šã«ã‚‚å¯¾å¿œ
 End If
 
 If p > 0 Then
@@ -62,8 +62,8 @@ NextI:
 End Function
 
 
-'=== [TEMP] Pain IO Load (Å¬FƒRƒ“ƒ{{VAS) ============================
-' ’¼‹ßÅIs‚ÌIO‚ğ“ÇAáu’Éƒ^ƒu‚Ìå—vƒRƒ“ƒ{‚ÆVAS‚Ö”½‰f
+'=== [TEMP] Pain IO Load (æœ€å°ï¼šã‚³ãƒ³ãƒœï¼‹VAS) ============================
+' ç›´è¿‘æœ€çµ‚è¡Œã®IOã‚’èª­è¾¼ã€ç–¼ç—›ã‚¿ãƒ–ã®ä¸»è¦ã‚³ãƒ³ãƒœã¨VASã¸åæ˜ 
 Private Function ResolvePainPage(ByVal owner As Object) As Object
     Dim mpPhys As Object
     Dim i As Long
@@ -149,7 +149,7 @@ Private Sub LoadPainFromSheet_MinCombos(ByVal ws As Worksheet, ByVal hubRow As L
     
 End Sub
 
-' •¶š—ñ "A/B/C" ¨ Dictionary(Set) ‰»
+' æ–‡å­—åˆ— "A/B/C" â†’ Dictionary(Set) åŒ–
 Private Function MakeSetFromSlash(ByVal s As String) As Object
     Dim d As Object: Set d = CreateObject("Scripting.Dictionary")
     Dim a() As String, i As Long, t As String
@@ -163,7 +163,7 @@ Private Function MakeSetFromSlash(ByVal s As String) As Object
     Set MakeSetFromSlash = d
 End Function
 
-' ListBox ‚Ì‘I‘ğ•œŒ³i€–Ú•¶š—ñˆê’vj
+' ListBox ã®é¸æŠå¾©å…ƒï¼ˆé …ç›®æ–‡å­—åˆ—ä¸€è‡´ï¼‰
 Private Sub RestoreListBoxSelections(lb As MSForms.ListBox, ByVal slash As String)
     Dim want As Object: Set want = MakeSetFromSlash(slash)
     Dim j As Long, txt As String
@@ -177,11 +177,11 @@ End Sub
 Private Sub RestorePainFactors(ByVal container As Object, ByVal slash As String)
     Dim want As Object: Set want = MakeSetFromSlash(slash)
     Dim c As Object, base As String
-    ' ‚¢‚Á‚½‚ñ‘S‰ğœ
+    ' ã„ã£ãŸã‚“å…¨è§£é™¤
     For Each c In container.controls
         If TypeName(c) = "CheckBox" Then c.value = False
     Next
-    ' ŠY“–‚Ì‚İ True
+    ' è©²å½“ã®ã¿ True
     For Each c In container.controls
         If TypeName(c) = "CheckBox" Then
             base = c.name
@@ -195,7 +195,7 @@ Private Sub RestorePainFactors(ByVal container As Object, ByVal slash As String)
 End Sub
 
 
-' ’¼‹ßÅIs‚ÌIO‚ğ“ÇAListBox ‚Æ Factors ‚ğ•œŒ³
+' ç›´è¿‘æœ€çµ‚è¡Œã®IOã‚’èª­è¾¼ã€ListBox ã¨ Factors ã‚’å¾©å…ƒ
 Private Sub LoadPainFromSheet_MinLists(ByVal ws As Worksheet, ByVal hubRow As Long, ByVal owner As Object)
     Dim s As String
     Dim ctl As Object
@@ -216,7 +216,7 @@ Private Sub LoadPainFromSheet_MinLists(ByVal ws As Worksheet, ByVal hubRow As Lo
     Set ctl = ResolvePainControl(owner, "lstPainSite")
     If Not ctl Is Nothing Then RestoreListBoxSelections ctl, t
 
-    ' ---- PainFactors : fraPainFactors ”z‰º‚Ì CheckBox (Nameˆê’v) ----
+    ' ---- PainFactors : fraPainFactors é…ä¸‹ã® CheckBox (Nameä¸€è‡´) ----
     t = IO_GetVal(s, "PainFactors")
     Set ctl = ResolvePainControl(owner, "fraPainFactors")
     If Not ctl Is Nothing Then RestorePainFactors ctl, t
@@ -269,15 +269,15 @@ End Function
 
 
 '=== [TEMP] NOTE TextBox Finder =======================================
-' —Dæ1: –¼Ì‚É "Memo" ‚ğŠÜ‚Ş TextBox
-' —Dæ2: MultiLine=True ‚Ì TextBoxiVASŒn‚ğœŠOj
-' —Dæ3: ã‹L‚ª–³‚¯‚ê‚ÎÅ‘å–ÊÏB‚½‚¾‚µ VAS”z‰º‚ÍœŠO
+' å„ªå…ˆ1: åç§°ã« "Memo" ã‚’å«ã‚€ TextBox
+' å„ªå…ˆ2: MultiLine=True ã® TextBoxï¼ˆVASç³»ã‚’é™¤å¤–ï¼‰
+' å„ªå…ˆ3: ä¸Šè¨˜ãŒç„¡ã‘ã‚Œã°æœ€å¤§é¢ç©ã€‚ãŸã ã— VASé…ä¸‹ã¯é™¤å¤–
 Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
     Dim best As MSForms.TextBox
     Dim bestArea As Double
     Dim c As Object
 
-    ' Ä‹A’Tõ
+    ' å†å¸°æ¢ç´¢
     For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
             If InStr(1, c.name, "Memo", vbTextCompare) > 0 Then
@@ -293,7 +293,7 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
         End If
     Next
 
-    ' MultiLine —DæiVAS”z‰º‚ÍœŠOj
+    ' MultiLine å„ªå…ˆï¼ˆVASé…ä¸‹ã¯é™¤å¤–ï¼‰
     For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
             If SafeIsMultiLine(c) And Not IsUnderVAS(c) Then
@@ -308,7 +308,7 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
         End If
     Next
 
-    ' Å‘å–ÊÏiVAS”z‰ºœŠOj
+    ' æœ€å¤§é¢ç©ï¼ˆVASé…ä¸‹é™¤å¤–ï¼‰
     bestArea = -1
     For Each c In pg.controls
         If TypeName(c) = "TextBox" Then
@@ -339,7 +339,7 @@ Private Function SafeIsMultiLine(tb As Object) As Boolean
     On Error GoTo 0
 End Function
 
-' fraVAS ”z‰º‚©‚Ç‚¤‚©‚ğŒµ–§”»’èiƒIƒuƒWƒFƒNƒgQÆ‚ÅÄ‹Aj
+' fraVAS é…ä¸‹ã‹ã©ã†ã‹ã‚’å³å¯†åˆ¤å®šï¼ˆã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆå‚ç…§ã§å†å¸°ï¼‰
 Private Function IsUnderVAS(target As Object) As Boolean
     Dim pg As Object, vas As Object
     Set pg = ResolvePainPage(frmEval)
@@ -360,9 +360,9 @@ Private Function IsDescendantOf(container As Object, target As Object) As Boolea
 End Function
 
 
-'=== [TEMP] NOTE Loader (’uŠ·”Å) =======================================
+'=== [TEMP] NOTE Loader (ç½®æ›ç‰ˆ) =======================================
 Private Sub LoadPainFromSheet_Note(ByVal owner As Object)
-    Const COL_NOTE As Long = 108  ' HEADER_NOTE —ñ
+    Const COL_NOTE As Long = 108  ' HEADER_NOTE åˆ—
     Dim ws As Worksheet, lr As Long, noteText As String
     Dim pg As Object, tb As MSForms.TextBox
 
@@ -383,7 +383,7 @@ End Sub
 
 
 
-'=== [TEMP] Pain IO Loader (Finalize”Å) ===============================
+'=== [TEMP] Pain IO Loader (Finalizeç‰ˆ) ===============================
 Public Sub LoadPainFromSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim prevEnabled As Boolean
     Dim txtDur As Object
@@ -416,7 +416,7 @@ End Sub
 
 
 
-'=== [TEMP] Latest row helper (IO/NOTEŠî€) ============================
+'=== [TEMP] Latest row helper (IO/NOTEåŸºæº–) ============================
 Private Function LatestRowIO(ByVal ws As Worksheet) As Long
     LatestRowIO = WorksheetFunction.Max(ws.Cells(ws.rows.count, 156).End(xlUp).row, ws.Cells(ws.rows.count, 157).End(xlUp).row)
 
@@ -424,7 +424,7 @@ End Function
 '======================================================================
 
 
-'=== [TEMP] VAS’P‘Ì“ÇƒfƒoƒbƒO =======================================
+'=== [TEMP] VASå˜ä½“èª­è¾¼ãƒ‡ãƒãƒƒã‚° =======================================
 Public Sub Debug_LoadVAS_FromLatest(ByVal owner As Object)
     Dim ws As Worksheet, lr As Long, s As String, t As String, alt As String
     Dim pg As Object
@@ -438,13 +438,13 @@ Public Sub Debug_LoadVAS_FromLatest(ByVal owner As Object)
 
     Debug.Print "[VAS-DBG] lr=", lr, "| IO.VAS=", t, "| NOTE=", alt
 
-    ' ‚Ü‚¸ƒNƒŠƒA
+    ' ã¾ãšã‚¯ãƒªã‚¢
     On Error Resume Next
     pg.controls("fraVAS").controls("txtVAS").text = ""
     pg.controls("fraVAS").controls("sldVAS").value = 0
     On Error GoTo 0
 
-    ' IO‚É‚ ‚ê‚Î‚»‚ê‚ğA–³‚¯‚ê‚ÎNOTE”’l‚ğ“K—p
+    ' IOã«ã‚ã‚Œã°ãã‚Œã‚’ã€ç„¡ã‘ã‚Œã°NOTEæ•°å€¤ã‚’é©ç”¨
     If Len(t) = 0 And IsNumeric(alt) Then t = Trim$(alt)
     If Len(t) > 0 Then
         On Error Resume Next
@@ -457,7 +457,7 @@ Public Sub Debug_LoadVAS_FromLatest(ByVal owner As Object)
 End Sub
 '======================================================================
 
-'=== [TEMP] Pain UI Clear (‹N“®‚Í‹ó‚ÅŠJn) ===========================
+'=== [TEMP] Pain UI Clear (èµ·å‹•æ™‚ã¯ç©ºã§é–‹å§‹) ===========================
 Public Sub ClearPainUI(ByVal owner As Object)
     Dim pg As Object, c As Object, lb As MSForms.ListBox
     Set pg = owner.controls("mpPhys").Pages(4)
@@ -477,7 +477,7 @@ Public Sub ClearPainUI(ByVal owner As Object)
     pg.controls("fraVAS").controls("sldVAS").value = 0
     On Error GoTo 0
 
-    ' --- ListBox ‘S‰ğœ ---
+    ' --- ListBox å…¨è§£é™¤ ---
     On Error Resume Next
     Set lb = pg.controls("lstPainQual")
     If Not lb Is Nothing Then
@@ -497,7 +497,7 @@ On Error GoTo 0
 
 
 
-    ' --- Factors ‘Sƒ`ƒFƒbƒN‰ğœiÄ‹Aj---
+    ' --- Factors å…¨ãƒã‚§ãƒƒã‚¯è§£é™¤ï¼ˆå†å¸°ï¼‰---
     ClearChecksRecursive pg
 End Sub
 
@@ -512,7 +512,7 @@ End Sub
 
 
 
-'=== [TEMP] è“®FÅVs‚ğ‘¦“Ç ======================================
+'=== [TEMP] æ‰‹å‹•ï¼šæœ€æ–°è¡Œã‚’å³èª­è¾¼ ======================================
 Public Sub LoadLatestPainNow()
     
 
@@ -529,7 +529,7 @@ End Sub
 
 Sub ExportAllVBA()
     Dim p As String, vbComp As Object, ext As String
-    p = ThisWorkbook.path & "\vba_export"  ' o—ÍæƒtƒHƒ‹ƒ_
+    p = ThisWorkbook.path & "\vba_export"  ' å‡ºåŠ›å…ˆãƒ•ã‚©ãƒ«ãƒ€
     On Error Resume Next
     MkDir p
     On Error GoTo 0
@@ -546,7 +546,7 @@ Sub ExportAllVBA()
 End Sub
 
 
-'=== LoadLatestSensoryNowi2025-10-22“‡”Åj===
+'=== LoadLatestSensoryNowï¼ˆ2025-10-22çµ±åˆç‰ˆï¼‰===
 Public Sub LoadLatestSensoryNow(Optional ByVal ws As Worksheet)
     If ws Is Nothing Then Set ws = ActiveSheet
     Dim r As Long: r = LatestRowByHeader("IO_Sensory", ws)
@@ -555,11 +555,11 @@ Public Sub LoadLatestSensoryNow(Optional ByVal ws As Worksheet)
         Exit Sub
     End If
 
-    '--- ‹Œ“ÇƒƒWƒbƒN‚ÍŒã•ûŒİŠ·‚Ì‚½‚ßƒRƒƒ“ƒgƒAƒEƒg ---
+    '--- æ—§èª­è¾¼ãƒ­ã‚¸ãƒƒã‚¯ã¯å¾Œæ–¹äº’æ›ã®ãŸã‚ã‚³ãƒ¡ãƒ³ãƒˆã‚¢ã‚¦ãƒˆ ---
     'Call ParseSensoryData(ws.Cells(r, HeaderCol("IO_Sensory", ws)).Value)
     '------------------------------------------------------------
 
-    ' VƒƒWƒbƒNF’¼ÚAPI‚Å“Ç‚İ‚İ
+    ' æ–°ãƒ­ã‚¸ãƒƒã‚¯ï¼šç›´æ¥APIã§èª­ã¿è¾¼ã¿
     Dim raw As String
     raw = LoadLatestSensoryNow_Raw(ws)
     Debug.Print "[LoadSensory] R=" & r & " Len=" & Len(raw) & " | " & Left$(raw, 60)

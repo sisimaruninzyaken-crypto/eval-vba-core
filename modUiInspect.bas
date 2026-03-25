@@ -3,7 +3,7 @@ Attribute VB_Name = "modUiInspect"
 Option Explicit
 
 Public Sub DumpControlsTree(Optional ByVal uf As Object)
-    ' g‚¢•ûFDumpControlsTree frmEval
+    ' ä½¿ã„æ–¹ï¼šDumpControlsTree frmEval
     If uf Is Nothing Then
         
         Exit Sub
@@ -22,7 +22,7 @@ Private Sub DumpChildren(ByVal parent As Object, ByVal path As String)
             Dim tp$, nm$, cap$
             tp = TypeName(c): nm = GetSafeName(c): cap = GetSafeCaption(c)
             
-            ' ƒlƒXƒg‚ğŒ@‚éiFrame / MultiPage / Pagej
+            ' ãƒã‚¹ãƒˆã‚’æ˜ã‚‹ï¼ˆFrame / MultiPage / Pageï¼‰
             If tp = "Frame" Then
                 DumpChildren c, path & "." & nm
             ElseIf tp = "MultiPage" Then
@@ -53,7 +53,7 @@ Private Function GetSafeCaption(o As Object) As String
     Err.Clear
 End Function
 
-' ‚¢‚Ü•\¦’†‚Ìƒ^ƒuiMultiPage‚ÌŒ»İƒy[ƒWj‚É‚ ‚é ComboBox –¼‚ğ—ñ‹“
+' ã„ã¾è¡¨ç¤ºä¸­ã®ã‚¿ãƒ–ï¼ˆMultiPageã®ç¾åœ¨ãƒšãƒ¼ã‚¸ï¼‰ã«ã‚ã‚‹ ComboBox åã‚’åˆ—æŒ™
 Public Sub ListCombosOnActivePage_Safe()
     Dim mp As Object, pg As Object
     Set mp = GetActiveOrFirstMultiPage(frmEval)
@@ -89,7 +89,7 @@ End Sub
 
 
 
-' p¨•]‰¿i•\¦’†‚Ìƒy[ƒWj‚É‚ ‚éå—vƒRƒ“ƒgƒ[ƒ‹‚ğˆê——•\¦
+' å§¿å‹¢è©•ä¾¡ï¼ˆè¡¨ç¤ºä¸­ã®ãƒšãƒ¼ã‚¸ï¼‰ã«ã‚ã‚‹ä¸»è¦ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã‚’ä¸€è¦§è¡¨ç¤º
 Public Sub ListKeyCtrlsOnActivePage_Safe()
     Dim mp As Object, pg As Object
     Set mp = GetActiveOrFirstMultiPage(frmEval)
@@ -100,7 +100,7 @@ Public Sub ListKeyCtrlsOnActivePage_Safe()
     ListByTypeRecursive pg, Array("TextBox", "CheckBox", "OptionButton", "ComboBox")
 End Sub
 
-' ??? helpersi‘O‚É“\‚Á‚½‚à‚Ì‚ğ—¬—pj???
+' ??? helpersï¼ˆå‰ã«è²¼ã£ãŸã‚‚ã®ã‚’æµç”¨ï¼‰???
 Private Function GetActiveOrFirstMultiPage(uf As Object) As Object
     If TypeName(uf.ActiveControl) = "MultiPage" Then
         Set GetActiveOrFirstMultiPage = uf.ActiveControl

@@ -1,17 +1,17 @@
 Attribute VB_Name = "FindBasicInfoCode"
-' ƒvƒƒWƒFƒNƒg“à‚Ì‘Sƒ‚ƒWƒ…[ƒ‹‚©‚çƒL[ƒ[ƒh‚ğ‰¡’fŒŸõ
-' ¦uƒtƒ@ƒCƒ‹ > ƒIƒvƒVƒ‡ƒ“ > ƒZƒLƒ…ƒŠƒeƒB ƒZƒ“ƒ^[ > ƒZƒLƒ…ƒŠƒeƒB ƒZƒ“ƒ^[‚Ìİ’è > ƒ}ƒNƒ‚Ìİ’èv
-'    ‚ÅuVBAƒvƒƒWƒFƒNƒg ƒIƒuƒWƒFƒNƒgƒ‚ƒfƒ‹‚Ö‚ÌM—Š‚ğ•t—^v‚Éƒ`ƒFƒbƒN‚ª•K—v‚Å‚·B
+' ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆå†…ã®å…¨ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã‹ã‚‰ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰ã‚’æ¨ªæ–­æ¤œç´¢
+' â€»ã€Œãƒ•ã‚¡ã‚¤ãƒ« > ã‚ªãƒ—ã‚·ãƒ§ãƒ³ > ã‚»ã‚­ãƒ¥ãƒªãƒ†ã‚£ ã‚»ãƒ³ã‚¿ãƒ¼ > ã‚»ã‚­ãƒ¥ãƒªãƒ†ã‚£ ã‚»ãƒ³ã‚¿ãƒ¼ã®è¨­å®š > ãƒã‚¯ãƒ­ã®è¨­å®šã€
+'    ã§ã€ŒVBAãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆ ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆãƒ¢ãƒ‡ãƒ«ã¸ã®ä¿¡é ¼ã‚’ä»˜ä¸ã€ã«ãƒã‚§ãƒƒã‚¯ãŒå¿…è¦ã§ã™ã€‚
 Public Sub FindBasicInfoCode()
     Dim targets As Variant
-    targets = Array("BasicInfo", "Šî–{î•ñ", "SaveBasicInfo", "LoadBasicInfo", "EnsureHeaderCol_BasicInfo", "•]‰¿“ú", "–¼")
+    targets = Array("BasicInfo", "åŸºæœ¬æƒ…å ±", "SaveBasicInfo", "LoadBasicInfo", "EnsureHeaderCol_BasicInfo", "è©•ä¾¡æ—¥", "æ°å")
 
     On Error GoTo TrustErr
     Dim vbProj As Object, vbComp As Object, codeMod As Object
     Set vbProj = Application.VBE.ActiveVBProject
 
     Dim t As Variant, i As Long, lastLine As Long, lineText As String
-    Debug.Print "---- BasicInfo ŒŸõ ----"
+    Debug.Print "---- BasicInfo æ¤œç´¢ ----"
     For Each vbComp In vbProj.VBComponents
         Set codeMod = vbComp.CodeModule
         If Not codeMod Is Nothing Then
@@ -27,10 +27,10 @@ Public Sub FindBasicInfoCode()
             Next i
         End If
     Next vbComp
-    Debug.Print "---- ŒŸõŠ®—¹ ----"
+    Debug.Print "---- æ¤œç´¢å®Œäº† ----"
     Exit Sub
 
 TrustErr:
-    Debug.Print "[ERROR] ƒvƒƒWƒFƒNƒg‚ÉƒAƒNƒZƒX‚Å‚«‚Ü‚¹‚ñBM—Šİ’è‚ğ—LŒø‚É‚µ‚Ä‚­‚¾‚³‚¢B"
+    Debug.Print "[ERROR] ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆã«ã‚¢ã‚¯ã‚»ã‚¹ã§ãã¾ã›ã‚“ã€‚ä¿¡é ¼è¨­å®šã‚’æœ‰åŠ¹ã«ã—ã¦ãã ã•ã„ã€‚"
 End Sub
 

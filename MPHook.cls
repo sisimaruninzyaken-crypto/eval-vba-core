@@ -7,7 +7,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-'=== MPHooK.cls : MultiPage のタブ切り替え時にIME再適用 =========
+'=== MPHooK.cls : MultiPage 縺ｮ繧ｿ繝門��繧頑崛縺域凾縺ｫIME蜀埼←逕ｨ =========
 Option Explicit
 Public WithEvents mp As MSForms.MultiPage
 Attribute mp.VB_VarHelpID = -1

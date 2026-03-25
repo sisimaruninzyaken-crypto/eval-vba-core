@@ -14,17 +14,17 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     Dim birthBody As String
     SplitWarekiBirthParts GetCtrlTextSafe(owner, "txtBirth"), GetCtrlTextSafe(owner, "txtAge"), eraName, birthBody
 
-    WriteMerged ws, "A2:U2", BuildHeaderDate("ì¬“ú", FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate")))
-    WriteMerged ws, "V2:AP2", BuildHeaderDate("‘O‰ñì¬“ú", FormatWarekiFull(GetPreviousCreatedDateText(owner)))
-    WriteMerged ws, "AQ2:BJ2", BuildHeaderDate("‰‰ñì¬", FormatWarekiFull(GetFirstCreatedDateText(owner)))
+    WriteMerged ws, "A2:U2", BuildHeaderDate("ä½œæˆæ—¥", FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate")))
+    WriteMerged ws, "V2:AP2", BuildHeaderDate("å‰å›žä½œæˆæ—¥", FormatWarekiFull(GetPreviousCreatedDateText(owner)))
+    WriteMerged ws, "AQ2:BJ2", BuildHeaderDate("åˆå›žä½œæˆ", FormatWarekiFull(GetFirstCreatedDateText(owner)))
 
 
     WriteMerged ws, "E3:Q3", GetCtrlTextSafe(owner, "txtHdrKana")
     WriteMerged ws, "V3:AK3", eraName
     WriteMerged ws, "E4:Q4", GetCtrlTextSafe(owner, "txtName")
     WriteMerged ws, "V4:AK4", birthBody
-    WriteMerged ws, "AQ3:BJ3", "Œv‰æì¬ŽÒF" & GetCtrlTextSafe(owner, "txtEvaluator")
-    WriteMerged ws, "AQ4:BJ4", "EŽíF" & GetCtrlTextSafe(owner, "txtEvaluatorJob")
+    WriteMerged ws, "AQ3:BJ3", "è¨ˆç”»ä½œæˆè€…ï¼š" & GetCtrlTextSafe(owner, "txtEvaluator")
+    WriteMerged ws, "AQ4:BJ4", "è·ç¨®ï¼š" & GetCtrlTextSafe(owner, "txtEvaluatorJob")
 
     WriteMerged ws, "A8:AE9", GetCtrlTextSafe(owner, "txtNeedsPt")
     WriteMerged ws, "AF8:BJ9", GetCtrlTextSafe(owner, "txtNeedsFam")
@@ -35,7 +35,7 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     WriteMerged ws, "U14:BJ14", BuildMedicalDatesText(owner)
     WriteMerged ws, "A16:BJ16", GetCtrlTextSafe(owner, "txtTxCourse")
     WriteMerged ws, "A18:BJ18", GetCtrlTextSafe(owner, "txtComplications")
-    WriteMerged ws, "A20:BJ20", GetPlanTextWithFallback(planData, owner, Array("TrainingPrecaution", "Medical.TrainingPrecaution", "‹@”\ŒP—ûŽÀŽ{ã‚Ì—¯ˆÓŽ–€"), Array("txtTrainingNote", "txtRehabNote", "txtPrecaution"))
+    WriteMerged ws, "A20:BJ20", GetPlanTextWithFallback(planData, owner, Array("TrainingPrecaution", "Medical.TrainingPrecaution", "æ©Ÿèƒ½è¨“ç·´å®Ÿæ–½ä¸Šã®ç•™æ„äº‹é …"), Array("txtTrainingNote", "txtRehabNote", "txtPrecaution"))
 
     WriteProgramBlocks ws, planData
 
@@ -172,7 +172,7 @@ End Function
 
 Private Function BuildHeaderDate(ByVal labelText As String, ByVal formattedDate As String) As String
     If Len(Trim$(formattedDate)) = 0 Then Exit Function
-    BuildHeaderDate = labelText & "F" & formattedDate
+    BuildHeaderDate = labelText & "ï¼š" & formattedDate
 End Function
 
 Private Function BuildMedicalDatesText(ByVal owner As Object) As String
@@ -184,7 +184,7 @@ Private Function BuildMedicalDatesText(ByVal owner As Object) As String
     admText = FormatDateForSentence(GetCtrlTextSafeAny(owner, "txtAdmDate", "txtHosp"))
     disText = FormatDateForSentence(GetCtrlTextSafeAny(owner, "txtDisDate", "txtDischarge"))
 
-    BuildMedicalDatesText = "”­Ç“úEŽó“úF" & onsetText & "  ’¼‹ß‚Ì“ü‰@“úF" & admText & "  ’¼‹ß‚Ì‘Þ‰@“úF" & disText
+    BuildMedicalDatesText = "ç™ºç—‡æ—¥ãƒ»å—å‚·æ—¥ï¼š" & onsetText & "  ç›´è¿‘ã®å…¥é™¢æ—¥ï¼š" & admText & "  ç›´è¿‘ã®é€€é™¢æ—¥ï¼š" & disText
 End Function
 
 Private Function BuildHomeEnvText(ByVal owner As Object) As String
@@ -215,15 +215,15 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
     
     
     Dim text As String
-    text = JoinCollection(labels, "A")
+    text = JoinCollection(labels, "ã€")
 
     Dim note As String
     note = GetCtrlTextSafeAny(owner, "txtBIHomeEnvNote", "txtHomeNote")
     If Len(note) > 0 Then
         If Len(text) > 0 Then
-            text = text & "B”õlF" & note
+            text = text & "ã€‚å‚™è€ƒï¼š" & note
         Else
-            text = "”õlF" & note
+            text = "å‚™è€ƒï¼š" & note
         End If
     End If
 
@@ -317,7 +317,7 @@ Private Function FormatWarekiFull(ByVal dateText As String) As String
     ToWareki dt, era, eraYear
     If Len(era) = 0 Then Exit Function
 
-    FormatWarekiFull = era & CStr(eraYear) & "”N" & Month(dt) & "ŒŽ" & day(dt) & "“ú"
+    FormatWarekiFull = era & CStr(eraYear) & "å¹´" & Month(dt) & "æœˆ" & day(dt) & "æ—¥"
 End Function
 
 Private Sub SplitWarekiBirthParts(ByVal birthText As String, ByVal ageText As String, ByRef eraName As String, ByRef bodyText As String)
@@ -327,24 +327,24 @@ Private Sub SplitWarekiBirthParts(ByVal birthText As String, ByVal ageText As St
     Dim era As String, y As Long, m As Long, d As Long
     If ParseWarekiInput(birthText, era, y, m, d) Then
         eraName = era
-        bodyText = CStr(y) & "”N" & CStr(m) & "ŒŽ" & CStr(d) & "“ú¶"
+        bodyText = CStr(y) & "å¹´" & CStr(m) & "æœˆ" & CStr(d) & "æ—¥ç”Ÿ"
     ElseIf IsDate(Trim$(birthText)) Then
         Dim dt As Date
         dt = CDate(Trim$(birthText))
         Dim eraY As Long
         ToWareki dt, eraName, eraY
-        bodyText = CStr(eraY) & "”N" & Month(dt) & "ŒŽ" & day(dt) & "“ú¶"
+        bodyText = CStr(eraY) & "å¹´" & Month(dt) & "æœˆ" & day(dt) & "æ—¥ç”Ÿ"
     Else
         eraName = ExtractEraName(birthText)
         bodyText = Trim$(RemoveEraPrefix(birthText))
-        If Len(bodyText) > 0 Then bodyText = bodyText & "¶"
+        If Len(bodyText) > 0 Then bodyText = bodyText & "ç”Ÿ"
     End If
 
     If Len(Trim$(ageText)) > 0 Then
         If Len(bodyText) > 0 Then
-            bodyText = bodyText & "i" & Trim$(ageText) & "Îj"
+            bodyText = bodyText & "ï¼ˆ" & Trim$(ageText) & "æ­³ï¼‰"
         Else
-            bodyText = "i" & Trim$(ageText) & "Îj"
+            bodyText = "ï¼ˆ" & Trim$(ageText) & "æ­³ï¼‰"
         End If
     End If
 End Sub
@@ -407,16 +407,16 @@ Private Function ExtractEraName(ByVal s As String) As String
     Dim t As String
     t = UCase$(Trim$(s))
 
-    If InStr(1, s, "—ß˜a", vbTextCompare) = 1 Or Left$(t, 1) = "R" Then
-        ExtractEraName = "—ß˜a"
-    ElseIf InStr(1, s, "•½¬", vbTextCompare) = 1 Or Left$(t, 1) = "H" Then
-        ExtractEraName = "•½¬"
-    ElseIf InStr(1, s, "º˜a", vbTextCompare) = 1 Or Left$(t, 1) = "S" Then
-        ExtractEraName = "º˜a"
-    ElseIf InStr(1, s, "‘å³", vbTextCompare) = 1 Or Left$(t, 1) = "T" Then
-        ExtractEraName = "‘å³"
-    ElseIf InStr(1, s, "–¾Ž¡", vbTextCompare) = 1 Or Left$(t, 1) = "M" Then
-        ExtractEraName = "–¾Ž¡"
+    If InStr(1, s, "ä»¤å’Œ", vbTextCompare) = 1 Or Left$(t, 1) = "R" Then
+        ExtractEraName = "ä»¤å’Œ"
+    ElseIf InStr(1, s, "å¹³æˆ", vbTextCompare) = 1 Or Left$(t, 1) = "H" Then
+        ExtractEraName = "å¹³æˆ"
+    ElseIf InStr(1, s, "æ˜­å’Œ", vbTextCompare) = 1 Or Left$(t, 1) = "S" Then
+        ExtractEraName = "æ˜­å’Œ"
+    ElseIf InStr(1, s, "å¤§æ­£", vbTextCompare) = 1 Or Left$(t, 1) = "T" Then
+        ExtractEraName = "å¤§æ­£"
+    ElseIf InStr(1, s, "æ˜Žæ²»", vbTextCompare) = 1 Or Left$(t, 1) = "M" Then
+        ExtractEraName = "æ˜Žæ²»"
     End If
 End Function
 
@@ -441,15 +441,15 @@ End Function
 
 Private Sub ToWareki(ByVal dt As Date, ByRef era As String, ByRef eraYear As Long)
     If dt >= DateSerial(2019, 5, 1) Then
-        era = "—ß˜a": eraYear = Year(dt) - 2018
+        era = "ä»¤å’Œ": eraYear = Year(dt) - 2018
     ElseIf dt >= DateSerial(1989, 1, 8) Then
-        era = "•½¬": eraYear = Year(dt) - 1988
+        era = "å¹³æˆ": eraYear = Year(dt) - 1988
     ElseIf dt >= DateSerial(1926, 12, 25) Then
-        era = "º˜a": eraYear = Year(dt) - 1925
+        era = "æ˜­å’Œ": eraYear = Year(dt) - 1925
     ElseIf dt >= DateSerial(1912, 7, 30) Then
-        era = "‘å³": eraYear = Year(dt) - 1911
+        era = "å¤§æ­£": eraYear = Year(dt) - 1911
     ElseIf dt >= DateSerial(1868, 1, 25) Then
-        era = "–¾Ž¡": eraYear = Year(dt) - 1867
+        era = "æ˜Žæ²»": eraYear = Year(dt) - 1867
     Else
         era = vbNullString: eraYear = 0
     End If
@@ -470,7 +470,7 @@ End Function
 Private Function FormatDateForSentence(ByVal src As String) As String
     Dim dt As Date
     If TryParseDate(src, dt) Then
-        FormatDateForSentence = Year(dt) & "”N" & Month(dt) & "ŒŽ" & day(dt) & "“ú"
+        FormatDateForSentence = Year(dt) & "å¹´" & Month(dt) & "æœˆ" & day(dt) & "æ—¥"
     Else
         FormatDateForSentence = Trim$(NzTextSafe(src))
     End If

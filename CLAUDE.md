@@ -71,6 +71,21 @@ When modifying, direct changes to the correct module per the table above.
 - **Dynamic control names**: `frmEval` has 783+ controls; UI control name changes propagate widely across I/O modules
 - **`Application.Run` usage**: some modules use string-based dynamic dispatch, making call chains harder to trace
 
+## File Encoding
+
+VBA files (`.bas`, `.cls`, `.frm`) are exported from Excel VBE in **Shift-JIS (CP932)**. This repository stores them as **UTF-8 (BOM なし)** so that Claude Code の Read/Edit/Grep ツールが日本語を正しく扱える。
+
+**再エクスポート後は必ず変換スクリプトを実行すること：**
+
+```powershell
+.\convert_encoding.ps1
+```
+
+スクリプトはリポジトリルートの `convert_encoding.ps1`。Shift-JIS → UTF-8 に一括変換する。
+
+> ⚠️ Excel VBE への再インポート時は Shift-JIS に戻す必要がある場合がある。
+> その場合は同スクリプトの `$from`/`$to` を逆にして使用する。
+
 ## Data Storage
 
 - **EvalData sheet**: primary evaluation data (row-per-evaluation)

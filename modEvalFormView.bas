@@ -1,27 +1,27 @@
 Attribute VB_Name = "modEvalFormView"
 Option Explicit
-Public Const CAP_ADL As String = "“úí¶Šˆ“®ì"
-Public Const CAP_BI As String = "ƒo[ƒTƒ‹ƒCƒ“ƒfƒbƒNƒX"
+Public Const CAP_ADL As String = "æ—¥å¸¸ç”Ÿæ´»å‹•ä½œ"
+Public Const CAP_BI As String = "ãƒãƒ¼ã‚µãƒ«ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹"
 Public Const CAP_IADL As String = "IADL"
-Public Const CAP_KYO As String = "‹N‹“®ì"
+Public Const CAP_KYO As String = "èµ·å±…å‹•ä½œ"
 
 Public Const TAG_BI_PREFIX As String = "BI."
 Public Const TAG_IADL_PREFIX As String = "IADL."
 Public Const TAG_POSTURE_PREFIX As String = "POSTURE|"
 
-' === g‘Ì‹@”\•]‰¿ƒ^ƒu—pi’Ç‹Lj ===
-Public Const CAP_FUNC              As String = "g‘Ì‹@”\•]‰¿"
-Public Const CAP_FUNC_ROM          As String = "ROMiå—vŠÖßj"
-Public Const CAP_FUNC_MMT          As String = "‹Ø—ÍiMMTj"
-Public Const CAP_FUNC_SENS_REF     As String = "Š´Šoi•\İE[•”j^‹Ø‹Ù’£E”½ËiázkŠÜ‚Şj/•ÏŒ`Eáu’Éi•”ˆÊ^NRSj"
-Public Const CAP_FUNC_NOTE         As String = "”õl"
+' === èº«ä½“æ©Ÿèƒ½è©•ä¾¡ã‚¿ãƒ–ç”¨ï¼ˆè¿½è¨˜ï¼‰ ===
+Public Const CAP_FUNC              As String = "èº«ä½“æ©Ÿèƒ½è©•ä¾¡"
+Public Const CAP_FUNC_ROM          As String = "ROMï¼ˆä¸»è¦é–¢ç¯€ï¼‰"
+Public Const CAP_FUNC_MMT          As String = "ç­‹åŠ›ï¼ˆMMTï¼‰"
+Public Const CAP_FUNC_SENS_REF     As String = "æ„Ÿè¦šï¼ˆè¡¨åœ¨ãƒ»æ·±éƒ¨ï¼‰ï¼ç­‹ç·Šå¼µãƒ»åå°„ï¼ˆç—™ç¸®å«ã‚€ï¼‰/å¤‰å½¢ãƒ»ç–¼ç—›ï¼ˆéƒ¨ä½ï¼NRSï¼‰"
+Public Const CAP_FUNC_NOTE         As String = "å‚™è€ƒ"
 
-Public Const TAG_FUNC_PREFIX       As String = "PHYS"      ' •Û‘¶—pƒJƒeƒSƒŠÚ“ª«
-Public Const HOST_BODY_NAME        As String = "hostBody"  ' frmEval“à‚ÌƒtƒŒ[ƒ€–¼iŠù‘¶‚»‚Ì‚Ü‚Üj
-Public Const MP_PHYS_NAME          As String = "mpPhys"    ' g‘Ì‹@”\•]‰¿—pMultiPage–¼
+Public Const TAG_FUNC_PREFIX       As String = "PHYS"      ' ä¿å­˜ç”¨ã‚«ãƒ†ã‚´ãƒªæ¥é ­è¾
+Public Const HOST_BODY_NAME        As String = "hostBody"  ' frmEvalå†…ã®ãƒ•ãƒ¬ãƒ¼ãƒ åï¼ˆæ—¢å­˜ãã®ã¾ã¾ï¼‰
+Public Const MP_PHYS_NAME          As String = "mpPhys"    ' èº«ä½“æ©Ÿèƒ½è©•ä¾¡ç”¨MultiPageå
 
 
-Public Const CAP_FUNC_PARALYSIS As String = "–ƒáƒ"
+Public Const CAP_FUNC_PARALYSIS As String = "éº»ç—º"
 
 
 

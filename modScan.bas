@@ -1,7 +1,7 @@
 Attribute VB_Name = "modScan"
 Option Explicit
 
-' === •¶š—ñ’†‚ÌoŒ»‰ñ”‚ğ”‚¦‚éi‘å•¶š¬•¶š‚ğ–³‹j ===
+' === æ–‡å­—åˆ—ä¸­ã®å‡ºç¾å›æ•°ã‚’æ•°ãˆã‚‹ï¼ˆå¤§æ–‡å­—å°æ–‡å­—ã‚’ç„¡è¦–ï¼‰ ===
 Private Function CountOccur(ByVal haystack As String, ByVal needle As String) As Long
     Dim p As Long, n As Long, s As String, t As String
     s = LCase$(haystack): t = LCase$(needle)
@@ -16,16 +16,16 @@ Private Function CountOccur(ByVal haystack As String, ByVal needle As String) As
     CountOccur = n
 End Function
 
-' === ƒvƒƒWƒFƒNƒg‘S‘Ì‚ğ‘–¸‚µ‚Äƒ}ƒbƒv‚ğì‚éiM—ŠƒAƒNƒZƒX‚ª•K—vj ===
+' === ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆå…¨ä½“ã‚’èµ°æŸ»ã—ã¦ãƒãƒƒãƒ—ã‚’ä½œã‚‹ï¼ˆä¿¡é ¼ã‚¢ã‚¯ã‚»ã‚¹ãŒå¿…è¦ï¼‰ ===
 Public Sub MakeProjectMap()
-    ' •K—vİ’è: [ƒtƒ@ƒCƒ‹]¨[ƒIƒvƒVƒ‡ƒ“]¨[ƒZƒLƒ…ƒŠƒeƒB ƒZƒ“ƒ^[]¨
-    '  [VBA ƒvƒƒWƒFƒNƒg ƒIƒuƒWƒFƒNƒg ƒ‚ƒfƒ‹‚Ö‚ÌƒAƒNƒZƒX‚ğM—Š‚·‚é] ‚Éƒ`ƒFƒbƒN
+    ' å¿…è¦è¨­å®š: [ãƒ•ã‚¡ã‚¤ãƒ«]â†’[ã‚ªãƒ—ã‚·ãƒ§ãƒ³]â†’[ã‚»ã‚­ãƒ¥ãƒªãƒ†ã‚£ ã‚»ãƒ³ã‚¿ãƒ¼]â†’
+    '  [VBA ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆ ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ ãƒ¢ãƒ‡ãƒ«ã¸ã®ã‚¢ã‚¯ã‚»ã‚¹ã‚’ä¿¡é ¼ã™ã‚‹] ã«ãƒã‚§ãƒƒã‚¯
     On Error GoTo EH
 
     Dim wb As Workbook, sh As Worksheet
     Set wb = ThisWorkbook
 
-    ' ƒV[ƒg€”õ
+    ' ã‚·ãƒ¼ãƒˆæº–å‚™
     Const MAP_NAME As String = "PROJECT_MAP"
     Application.DisplayAlerts = False
     On Error Resume Next
@@ -35,7 +35,7 @@ Public Sub MakeProjectMap()
     Set sh = wb.Worksheets.Add
     sh.name = MAP_NAME
 
-    ' Œ©o‚µ
+    ' è¦‹å‡ºã—
     Dim h As Variant
     h = Array("Component", "Type", "Lines", _
               "mpADL", "EnsureBI_IADL", "BuildKyoOnADL", "RemoveAllMpADL", _
@@ -45,12 +45,12 @@ Public Sub MakeProjectMap()
         sh.Cells(1, i + 1).value = h(i)
     Next
 
-    ' QÆ‚Í late bindingiExtensibility QÆ‚È‚µ‚Å“®‚­j
+    ' å‚ç…§ã¯ late bindingï¼ˆExtensibility å‚ç…§ãªã—ã§å‹•ãï¼‰
     Dim vbProj As Object: Set vbProj = wb.VBProject
     Dim comp As Object, cm As Object
     Dim r As Long: r = 2
 
-    ' Œ^’è”iQÆ‚È‚µ‘Î‰j
+    ' å‹å®šæ•°ï¼ˆå‚ç…§ãªã—å¯¾å¿œï¼‰
     Const ctStdModule As Long = 1
     Const ctClassMod  As Long = 2
     Const ctMSForm    As Long = 3
@@ -79,7 +79,7 @@ Public Sub MakeProjectMap()
         sh.Cells(r, 2).value = kind
         sh.Cells(r, 3).value = nLines
 
-        ' ƒL[Œê‚ÌoŒ»‰ñ”
+        ' ã‚­ãƒ¼èªã®å‡ºç¾å›æ•°
         sh.Cells(r, 4).value = CountOccur(code, "mpADL")
         sh.Cells(r, 5).value = CountOccur(code, "EnsureBI_IADL")
         sh.Cells(r, 6).value = CountOccur(code, "BuildKyoOnADL")
@@ -93,33 +93,33 @@ Public Sub MakeProjectMap()
         r = r + 1
     Next
 
-    ' ‘ÌÙ
+    ' ä½“è£
     With sh
         .rows(1).Font.Bold = True
         .Columns.AutoFit
     End With
 
-    MsgBox "PROJECT_MAP ‚ğì¬‚µ‚Ü‚µ‚½B", vbInformation
+    MsgBox "PROJECT_MAP ã‚’ä½œæˆã—ã¾ã—ãŸã€‚", vbInformation
     Exit Sub
 EH:
-    MsgBox "MakeProjectMap ƒGƒ‰[: " & Err.Description, vbExclamation
+    MsgBox "MakeProjectMap ã‚¨ãƒ©ãƒ¼: " & Err.Description, vbExclamation
 End Sub
 
-' === ‚Ç‚±‚Å mpADL ‚ğ¶¬‚µ‚Ä‚¢‚é‚©‚ÌÚ×ˆê——is”Ô†•t‚«j ===
+' === ã©ã“ã§ mpADL ã‚’ç”Ÿæˆã—ã¦ã„ã‚‹ã‹ã®è©³ç´°ä¸€è¦§ï¼ˆè¡Œç•ªå·ä»˜ãï¼‰ ===
 Public Sub FindMpADLCreates()
     On Error GoTo EH
     Dim wb As Workbook: Set wb = ThisWorkbook
     Dim vbProj As Object: Set vbProj = wb.VBProject
     Dim comp As Object, cm As Object
     Debug.Print String(60, "-")
-    Debug.Print "[SCAN] mpADL ‚ğ Add/Set ‚µ‚Ä‚¢‚és‚Ìˆê——"
+    Debug.Print "[SCAN] mpADL ã‚’ Add/Set ã—ã¦ã„ã‚‹è¡Œã®ä¸€è¦§"
     For Each comp In vbProj.VBComponents
         Set cm = comp.CodeModule
         Dim n As Long: n = cm.CountOfLines
         Dim i As Long
         For i = 1 To n
             Dim ln As String: ln = cm.lines(i, 1)
-            ' ¶¬/‘ã“ü‚Á‚Û‚¢s‚ğE‚¤i‚´‚Á‚­‚èj
+            ' ç”Ÿæˆ/ä»£å…¥ã£ã½ã„è¡Œã‚’æ‹¾ã†ï¼ˆã–ã£ãã‚Šï¼‰
             If InStr(1, LCase$(ln), "set mpadl") > 0 Or _
                InStr(1, LCase$(ln), "controls.add(""forms.multipage.1""") > 0 Then
                 Debug.Print comp.name & ":" & i & "  " & Trim$(ln)
@@ -127,10 +127,10 @@ Public Sub FindMpADLCreates()
         Next
     Next
     Debug.Print String(60, "-")
-    MsgBox "Immediate ƒEƒBƒ“ƒhƒEiCtrl+Gj‚Éo—Í‚µ‚Ü‚µ‚½B", vbInformation
+    MsgBox "Immediate ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ï¼ˆCtrl+Gï¼‰ã«å‡ºåŠ›ã—ã¾ã—ãŸã€‚", vbInformation
     Exit Sub
 EH:
-    MsgBox "FindMpADLCreates ƒGƒ‰[: " & Err.Description, vbExclamation
+    MsgBox "FindMpADLCreates ã‚¨ãƒ©ãƒ¼: " & Err.Description, vbExclamation
 End Sub
 
 
