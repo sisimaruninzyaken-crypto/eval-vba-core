@@ -1541,6 +1541,26 @@ map = Array( _
         End If
         Next i
 
+    ' --- 後方互換フォールバック: BI.SocialParticipation が未移行 or 行が空の場合は旧列名で再試行 ---
+    Dim cSP As Long: cSP = FindHeaderCol(ws, "BI.SocialParticipation")
+    If cSP = 0 Or Len(Trim$(CStr(ws.Cells(r, cSP).value))) = 0 Then
+        Dim cSPOld As Long: cSPOld = FindHeaderCol(ws, "生活状況")
+        If cSPOld > 0 And Len(Trim$(CStr(ws.Cells(r, cSPOld).value))) > 0 Then
+            Dim oLiving As Object: Set oLiving = FindCtlDeep(owner, "txtLiving")
+            If Not oLiving Is Nothing Then oLiving.value = ws.Cells(r, cSPOld).value
+        End If
+    End If
+
+    ' --- 後方互換フォールバック: 評価日が空の場合は Basic.EvalDate 列で再試行 ---
+    Dim cED As Long: cED = FindHeaderCol(ws, "評価日")
+    If cED = 0 Or Len(Trim$(CStr(ws.Cells(r, cED).value))) = 0 Then
+        Dim cEDNew As Long: cEDNew = FindHeaderCol(ws, "Basic.EvalDate")
+        If cEDNew > 0 And Len(Trim$(CStr(ws.Cells(r, cEDNew).value))) > 0 Then
+            Dim oEDate As Object: Set oEDate = FindCtlDeep(owner, "txtEDate")
+            If Not oEDate Is Nothing Then oEDate.value = ws.Cells(r, cEDNew).value
+        End If
+    End If
+
     c = FindHeaderCol(ws, "住宅状況")
     If c > 0 Then DeserializeNamedChecks owner, HomeEnvControlNames(), CStr(ws.Cells(r, c).value)
 
