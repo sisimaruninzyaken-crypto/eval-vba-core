@@ -8007,6 +8007,24 @@ Private Sub HandleBasicInfoEnterRoute(ByRef KeyCode As MSForms.ReturnInteger, Op
     nextTarget.SetFocus
 End Sub
 
+' clsBasicInfoEnterTextHook / clsBasicInfoEnterComboHook から呼ばれる
+' Enterキー押下時に次のタブストップへフォーカスを移す
+Public Sub MoveBasicInfoFocusNext(ByVal ctl As Object)
+    On Error Resume Next
+    Dim targetIdx As Long
+    targetIdx = ctl.TabIndex + 1
+
+    Dim c As MSForms.Control
+    For Each c In Me.Controls
+        If c.TabIndex = targetIdx Then
+            c.SetFocus
+            On Error GoTo 0
+            Exit Sub
+        End If
+    Next c
+    On Error GoTo 0
+End Sub
+
 Private Function ReadText(ByVal o As Object) As String
     ' Value優先、ダメならText
     On Error Resume Next
