@@ -943,11 +943,11 @@ End Sub
 
 
 Private Function HasControls(o As Object) As Boolean
-    On Error Resume Next
-    Dim t As Long: t = o.controls.count
-    HasControls = (Err.Number = 0)
-    Err.Clear
-    On Error GoTo 0
+    ' TypeName で判定することでエラーを発生させない
+    ' （VBE が「すべてのエラーで中断」モードの場合に On Error が無視されるため）
+    If o Is Nothing Then Exit Function
+    Dim tn As String: tn = TypeName(o)
+    HasControls = (tn = "Frame" Or tn = "Page" Or tn = "frmEval")
 End Function
 '====================================================================
 
