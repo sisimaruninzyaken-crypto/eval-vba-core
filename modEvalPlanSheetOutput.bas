@@ -640,7 +640,12 @@ End Function
 
 Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVal text As String)
     On Error Resume Next
-    ws.Range(addressText).Cells(1, 1).value = NzTextSafe(text)
+    Dim cell As Range
+    Set cell = ws.Range(addressText).Cells(1, 1)
+    If Not cell Is Nothing Then
+        If cell.MergeCells Then Set cell = cell.MergeArea.Cells(1, 1)
+        cell.value = NzTextSafe(text)
+    End If
     Err.Clear
     On Error GoTo 0
 End Sub
