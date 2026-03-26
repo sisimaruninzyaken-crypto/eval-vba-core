@@ -2451,6 +2451,7 @@ End Sub
 Public Sub Save_TestEvalToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     Dim c As Long
     Dim s As String
+    Dim evalNote As String
 
     If ws Is Nothing Then Exit Sub
     If r < 2 Then r = 2
@@ -2460,10 +2461,12 @@ Public Sub Save_TestEvalToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal ow
 
     ' フォーム上の値から IO 文字列を生成（今は空のままでもOK）
     s = Build_TestEval_IO(owner)
+    evalNote = Build_TestEval_Note(owner)
 
         ' 指定行に上書き保存
     ws.Cells(r, c).Value2 = CStr(s)
     SaveTestEvalMemoColumns ws, r, owner
+    SaveTestEvalCriticalFindingsColumn ws, r, evalNote
     ws.Cells(r, 181).value = val(owner.txtTUG.value)
 
 
@@ -2504,6 +2507,12 @@ Private Sub SaveTestEvalMemoColumns(ByVal ws As Worksheet, ByVal r As Long, ByVa
     SaveTestEvalMemoColumn ws, r, owner, "TestEval_Memo_SemiTandem", "txtMemo_SemiTandem"
     SaveTestEvalMemoColumn ws, r, owner, "TestEval_Memo_GripR", "txtMemo_GripR"
     SaveTestEvalMemoColumn ws, r, owner, "TestEval_Memo_GripL", "txtMemo_GripL"
+End Sub
+
+Private Sub SaveTestEvalCriticalFindingsColumn(ByVal ws As Worksheet, ByVal r As Long, ByVal evalNote As String)
+    Dim c As Long
+    c = EnsureHeader(ws, "EvalTestCriticalFindings")
+    ws.Cells(r, c).Value2 = ExtractImportantEvalFindings(evalNote)
 End Sub
 
 Private Sub LoadTestEvalMemoColumns(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
