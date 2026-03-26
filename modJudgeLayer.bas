@@ -13,7 +13,8 @@ Public Function JudgeBasicPlanInputs(ByVal normalized As Object) As Object
     judged("NeedFamily") = GetValue(normalized, "NeedFamily")
     judged("MMT_IO") = GetValue(normalized, "MMT_IO")
     judged("TrunkROMLimitTags") = GetValue(normalized, "TrunkROMLimitTags")
-    judged("EvalTestNote") = GetValue(normalized, "EvalTestNote")
+    judged("EvalTestCriticalFindings") = GetValue(normalized, "EvalTestCriticalFindings")
+    judged("EvalTestNoteRaw") = GetValue(normalized, "EvalTestNoteRaw")
 
     Set JudgeBasicPlanInputs = judged
 End Function

@@ -142,8 +142,7 @@ Private Function GetLatestBasicTextByHeader(ByVal headerName As String) As Strin
 
     
     Set ws = ThisWorkbook.Worksheets("EvalData")
-    On Error GoTo 0
-    If ws Is Nothing Then Exit Function
+
 
     rLatest = FindLatestRowByName(ws, nm)
     If rLatest <= 0 Then Exit Function
@@ -693,3 +692,85 @@ End Function
 ' UniqueLinesInOrder / FindLatestRowByName / ReadStr_Compat / IO_GetVal なども既存のまま
 
 
+
+' 評価テスト備考欄から重要所見のみをルールベース抽出する
+' 返却形式: pain|balance_decline|trunk_support_decline|gait_instability|endurance_decline|attention_cognitive_issue|assist_required_during_activity
+Public Function ExtractImportantEvalFindings(ByVal evalTestNoteRaw As String) As String
+    Dim normalized As String
+    Dim findings As Object
+    Dim orderedKeys As Variant
+    Dim i As Long
+    Dim out() As String
+
+    normalized = LCase$(Trim$(evalTestNoteRaw))
+    If LenB(normalized) = 0 Then Exit Function
+
+    Set findings = CreateObject("Scripting.Dictionary")
+    findings.CompareMode = vbTextCompare
+
+    If MatchAnyPattern(normalized, Array("疼痛", "痛み", "痛", "pain", "nrs", "vas")) Then
+        findings("pain") = True
+    End If
+
+    If MatchAnyPattern(normalized, Array("バランス低下", "平衡", "ふらつ", "転倒リスク", "balance")) Then
+        findings("balance_decline") = True
+    End If
+
+    If MatchAnyPattern(normalized, Array("体幹保持低下", "体幹保持", "体幹", "座位保持不良", "trunk")) Then
+        findings("trunk_support_decline") = True
+    End If
+
+    If MatchAnyPattern(normalized, Array("歩行不安定", "歩行時ふらつ", "千鳥", "gait", "unstable walk")) Then
+        findings("gait_instability") = True
+    End If
+
+    If MatchAnyPattern(normalized, Array("耐久性低下", "易疲労", "疲れやす", "持久", "endurance")) Then
+        findings("endurance_decline") = True
+    End If
+
+    If MatchAnyPattern(normalized, Array("注意", "認知", "理解低下", "見当識", "attention", "cognitive")) Then
+        findings("attention_cognitive_issue") = True
+    End If
+
+    If MatchAnyPattern(normalized, Array("介助必要", "介助を要", "見守り", "扶助", "assist", "assistance")) Then
+        findings("assist_required_during_activity") = True
+    End If
+
+    If findings.count = 0 Then Exit Function
+
+    orderedKeys = Array("pain", "balance_decline", "trunk_support_decline", "gait_instability", "endurance_decline", "attention_cognitive_issue", "assist_required_during_activity")
+    ReDim out(0 To UBound(orderedKeys))
+
+    For i = LBound(orderedKeys) To UBound(orderedKeys)
+        If findings.exists(CStr(orderedKeys(i))) Then
+            out(i) = CStr(orderedKeys(i))
+        End If
+    Next i
+
+    ExtractImportantEvalFindings = JoinNonEmpty(out, "|")
+End Function
+
+Private Function MatchAnyPattern(ByVal target As String, ByVal patterns As Variant) As Boolean
+    Dim i As Long
+
+    For i = LBound(patterns) To UBound(patterns)
+        If InStr(1, target, CStr(patterns(i)), vbTextCompare) > 0 Then
+            MatchAnyPattern = True
+            Exit Function
+        End If
+    Next i
+End Function
+
+Private Function JoinNonEmpty(ByVal items As Variant, ByVal delimiter As String) As String
+    Dim i As Long
+    Dim result As String
+
+    For i = LBound(items) To UBound(items)
+        If LenB(Trim$(CStr(items(i)))) > 0 Then
+            If LenB(result) > 0 Then result = result & delimiter
+            result = result & CStr(items(i))
+        End If
+    Next i
+
+    JoinNonEmpty = result
+End Function

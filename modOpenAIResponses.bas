@@ -153,7 +153,8 @@ Private Function BuildBasicSystemPrompt() As String
     BuildBasicSystemPrompt = _
         "You are an assistant for drafting a basic rehabilitation plan." & _
         " Use only provided structured facts." & _
-        " Never add or infer missing patient inputs."
+        " Never add or infer missing patient inputs." & _
+        " Never complete missing facts from supplemental notes."
 End Function
 
 Private Function BuildBasicUserPrompt(ByVal planStructure As Object) As String
@@ -166,8 +167,15 @@ Private Function BuildBasicUserPrompt(ByVal planStructure As Object) As String
     lines.Add "以下はVBA判定済みデータです。判断を追加せず文章化のみ行ってください。"
 
     For Each k In planStructure.keys
-        lines.Add CStr(k) & ": " & CStr(planStructure(k))
+        If StrComp(CStr(k), "EvalTestNoteRaw", vbTextCompare) <> 0 Then
+            lines.Add CStr(k) & ": " & CStr(planStructure(k))
+        End If
     Next k
+
+    If planStructure.exists("EvalTestNoteRaw") Then
+        lines.Add "[supplemental_note_raw] " & CStr(planStructure("EvalTestNoteRaw"))
+    End If
+
 
     ReDim arr(1 To lines.count)
     For i = 1 To lines.count

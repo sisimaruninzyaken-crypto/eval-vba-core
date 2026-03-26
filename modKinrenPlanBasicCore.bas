@@ -658,7 +658,8 @@ Public Function BuildBasicPlanStructureFromJudge(ByVal judged As Object) As Obje
     Set result = BuildBasicPlanStructure(mainCause, needSelf, needFamily, needByDifficulty, mmtMap)
     result("FunctionCandidate") = CStr(judged("FunctionCandidate"))
     result("TrunkROMLimitTags") = CStr(judged("TrunkROMLimitTags"))
-    result("EvalTestNote") = CStr(judged("EvalTestNote"))
+    result("EvalTestCriticalFindings") = CStr(judged("EvalTestCriticalFindings"))
+    result("EvalTestNoteRaw") = CStr(judged("EvalTestNoteRaw"))
 
     Set BuildBasicPlanStructureFromJudge = result
 End Function
