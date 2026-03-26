@@ -47,7 +47,7 @@ Public Function BuildBasicInputV1() As String
     strengthBand = GetStrengthBand()
     needsPatient = GetLatestBasicTextByHeader("Š³ŽÒNeeds")
     needsFamily = GetLatestBasicTextByHeader("‰Æ‘°Needs")
-    evalTestNote = GetLatestBasicTextByHeader("TestEval_Note")
+    evalTestNote = GetEvalTestNoteFromMemoHeaders()
 
     For i = LBound(keys) To UBound(keys)
         Select Case CStr(keys(i))
@@ -96,6 +96,41 @@ Public Function BuildBasicInputV1() As String
 
 BuildBasicInputV1 = Join(lines, vbCrLf)
 End Function
+
+Private Function GetEvalTestNoteFromMemoHeaders() As String
+    Dim result As String
+    Dim memo10mWalk As String
+    Dim memoTUG As String
+    Dim memoSTS5 As String
+    Dim memoSemiTandem As String
+    Dim memoGripR As String
+    Dim memoGripL As String
+
+    memo10mWalk = GetLatestBasicTextByHeader("TestEval_Memo_10mWalk")
+    memoTUG = GetLatestBasicTextByHeader("TestEval_Memo_TUG")
+    memoSTS5 = GetLatestBasicTextByHeader("TestEval_Memo_STS5")
+    memoSemiTandem = GetLatestBasicTextByHeader("TestEval_Memo_SemiTandem")
+    memoGripR = GetLatestBasicTextByHeader("TestEval_Memo_GripR")
+    memoGripL = GetLatestBasicTextByHeader("TestEval_Memo_GripL")
+
+    AppendEvalTestNote result, "10ms", memo10mWalk
+    AppendEvalTestNote result, "TUG", memoTUG
+    AppendEvalTestNote result, "STS5", memoSTS5
+    AppendEvalTestNote result, "Z~^f", memoSemiTandem
+    AppendEvalTestNote result, "?E", memoGripR
+    AppendEvalTestNote result, "?", memoGripL
+
+    GetEvalTestNoteFromMemoHeaders = result
+End Function
+
+Private Sub AppendEvalTestNote(ByRef result As String, ByVal label As String, ByVal memo As String)
+    If LenB(Trim$(memo)) = 0 Then Exit Sub
+
+    If LenB(result) > 0 Then
+        result = result & vbCrLf
+    End If
+    result = result & label & ": " & Trim$(memo)
+End Sub
 
 Private Function GetLatestBasicTextByHeader(ByVal headerName As String) As String
     Dim ws As Worksheet
