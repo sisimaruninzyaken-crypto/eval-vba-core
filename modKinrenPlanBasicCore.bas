@@ -647,6 +647,7 @@ Public Function BuildBasicPlanStructureFromJudge(ByVal judged As Object) As Obje
     Dim needFamily As String
     Dim needByDifficulty As String
     Dim mmtMap As Object
+    Dim result As Object
 
     mainCause = CStr(judged("MainCause"))
     needSelf = CStr(judged("NeedPatient"))
@@ -654,7 +655,12 @@ Public Function BuildBasicPlanStructureFromJudge(ByVal judged As Object) As Obje
     needByDifficulty = CStr(judged("ActivityCandidate"))
     Set mmtMap = BuildMMTMapFromIO(CStr(judged("MMT_IO")))
 
-    Set BuildBasicPlanStructureFromJudge = BuildBasicPlanStructure(mainCause, needSelf, needFamily, needByDifficulty, mmtMap)
+    Set result = BuildBasicPlanStructure(mainCause, needSelf, needFamily, needByDifficulty, mmtMap)
+    result("FunctionCandidate") = CStr(judged("FunctionCandidate"))
+    result("TrunkROMLimitTags") = CStr(judged("TrunkROMLimitTags"))
+    result("EvalTestNote") = CStr(judged("EvalTestNote"))
+
+    Set BuildBasicPlanStructureFromJudge = result
 End Function
 
 Private Function BuildMMTMapFromIO(ByVal mmtIO As String) As Object

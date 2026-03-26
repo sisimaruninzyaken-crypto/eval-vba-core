@@ -151,8 +151,9 @@ End Function
 
 Private Function BuildBasicSystemPrompt() As String
     BuildBasicSystemPrompt = _
-        "あなたは医療計画書の文章作成専用アシスタントです。" & _
-        "判定・診断・数値解釈は行わず、入力済みの構造化データを自然文に整形してください。"
+        "You are an assistant for drafting a basic rehabilitation plan." & _
+        " Use only provided structured facts." & _
+        " Never add or infer missing patient inputs."
 End Function
 
 Private Function BuildBasicUserPrompt(ByVal planStructure As Object) As String

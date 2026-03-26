@@ -12,6 +12,8 @@ Public Function JudgeBasicPlanInputs(ByVal normalized As Object) As Object
     judged("NeedPatient") = GetValue(normalized, "NeedPatient")
     judged("NeedFamily") = GetValue(normalized, "NeedFamily")
     judged("MMT_IO") = GetValue(normalized, "MMT_IO")
+    judged("TrunkROMLimitTags") = GetValue(normalized, "TrunkROMLimitTags")
+    judged("EvalTestNote") = GetValue(normalized, "EvalTestNote")
 
     Set JudgeBasicPlanInputs = judged
 End Function
@@ -39,6 +41,11 @@ Private Function JudgeMainCause(ByVal normalized As Object) As String
 End Function
 
 Private Function JudgeFunctionCandidate(ByVal normalized As Object) As String
+    If LenB(Trim$(CStr(GetValue(normalized, "TrunkROMLimitTags")))) > 0 Then
+        JudgeFunctionCandidate = "áu’É"
+        Exit Function
+    End If
+    
     Select Case GetValue(normalized, "LivingType")
         Case "“Æ‹": JudgeFunctionCandidate = "ˆÚæˆÀ’è«"
         Case "“¯‹": JudgeFunctionCandidate = "•às‹v«"

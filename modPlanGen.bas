@@ -5,7 +5,7 @@ Option Explicit
 
 ' [必須] BASIC_KEYS_V1 の既存（あなたの現行のまま）
 Public Function BasicKeysV1() As Variant
- BasicKeysV1 = Split("care_level_band|primary_condition_cat|comorbidity_cat_list|history_flags|living_type|support_availability|bi_total|bi_low_items|iadl_limits|bed_mobility_band|rom_limit_tags|strength_band|pain_band|pain_site_tags|needs_patient|needs_family", "|")
+  BasicKeysV1 = Split("care_level_band|primary_condition_cat|comorbidity_cat_list|history_flags|living_type|support_availability|bi_total|bi_low_items|iadl_limits|bed_mobility_band|rom_limit_tags|strength_band|pain_band|pain_site_tags|needs_patient|needs_family|eval_test_note", "|")
 End Function
 
 ' [必須] BuildBasicInputV1（bed_mobility_band を追加済み）
@@ -27,6 +27,7 @@ Public Function BuildBasicInputV1() As String
     Dim strengthBand As String
     Dim needsPatient As String
     Dim needsFamily As String
+    Dim evalTestNote As String
 
     keys = BasicKeysV1()
     ReDim values(LBound(keys) To UBound(keys))
@@ -46,7 +47,7 @@ Public Function BuildBasicInputV1() As String
     strengthBand = GetStrengthBand()
     needsPatient = GetLatestBasicTextByHeader("患者Needs")
     needsFamily = GetLatestBasicTextByHeader("家族Needs")
-
+    evalTestNote = GetLatestBasicTextByHeader("TestEval_Note")
 
     For i = LBound(keys) To UBound(keys)
         Select Case CStr(keys(i))
@@ -82,6 +83,8 @@ Public Function BuildBasicInputV1() As String
                 values(i) = needsPatient
             Case "needs_family"
                 values(i) = needsFamily
+            Case "eval_test_note"
+                values(i) = evalTestNote
 
             Case Else
                 values(i) = vbNullString
@@ -325,6 +328,13 @@ Private Function GetRomLimitTags() As String
     AddRomLimitTag ws, look, rLatest, "ROM_Upper_Shoulder_ER_L", 45, "Shoulder_ER_L", tags
     AddRomLimitTag ws, look, rLatest, "ROM_Upper_Shoulder_IR_R", 50, "Shoulder_IR_R", tags
     AddRomLimitTag ws, look, rLatest, "ROM_Upper_Shoulder_IR_L", 50, "Shoulder_IR_L", tags
+    AddRomLimitTag ws, look, rLatest, "ROM_Trunk_Flex", 40, "Trunk_Flex", tags
+    AddRomLimitTag ws, look, rLatest, "ROM_Trunk_Ext", 20, "Trunk_Ext", tags
+    AddRomLimitTag ws, look, rLatest, "ROM_Trunk_Rot_R", 30, "Trunk_Rot_R", tags
+    AddRomLimitTag ws, look, rLatest, "ROM_Trunk_Rot_L", 30, "Trunk_Rot_L", tags
+    AddRomLimitTag ws, look, rLatest, "ROM_Trunk_LatFlex_R", 30, "Trunk_LatFlex_R", tags
+    AddRomLimitTag ws, look, rLatest, "ROM_Trunk_LatFlex_L", 30, "Trunk_LatFlex_L", tags
+    
     
     If tags.count = 0 Then Exit Function
 

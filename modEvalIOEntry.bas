@@ -1063,7 +1063,8 @@ Private Function TestEvalCompareKeys() As Variant
         "Test_Grip_R_kg", _
         "Test_Grip_L_kg", _
         "Test_5xSitStand_sec", _
-        "Test_SemiTandem_sec" _
+        "Test_SemiTandem_sec", _
+        "TestEval_Note" _
     )
 End Function
 
@@ -2411,12 +2412,40 @@ Public Function Build_TestEval_IO(owner As Object) As String
     s = s & "|Test_Grip_L_kg=" & vGripL
     s = s & "|Test_5xSitStand_sec=" & v5x
     s = s & "|Test_SemiTandem_sec=" & vSemi
+    s = s & "|TestEval_Note=" & Build_TestEval_Note(owner)
 
     Build_TestEval_IO = s
 End Function
 
 
+Public Function Build_TestEval_Note(ByVal owner As Object) As String
+    Dim chunks As Collection
+    Dim arr() As String
+    Dim i As Long
 
+    Set chunks = New Collection
+    AddTestEvalNoteChunk chunks, "10mWalk", GetCtlTextGeneric(owner, "txtMemo_10mWalk")
+    AddTestEvalNoteChunk chunks, "TUG", GetCtlTextGeneric(owner, "txtMemo_TUG")
+    AddTestEvalNoteChunk chunks, "5xSTS", GetCtlTextGeneric(owner, "txtMemo_STS5")
+    AddTestEvalNoteChunk chunks, "SemiTandem", GetCtlTextGeneric(owner, "txtMemo_SemiTandem")
+    AddTestEvalNoteChunk chunks, "GripR", GetCtlTextGeneric(owner, "txtMemo_GripR")
+    AddTestEvalNoteChunk chunks, "GripL", GetCtlTextGeneric(owner, "txtMemo_GripL")
+
+    If chunks.count = 0 Then Exit Function
+
+    ReDim arr(1 To chunks.count)
+    For i = 1 To chunks.count
+        arr(i) = CStr(chunks(i))
+    Next i
+
+    Build_TestEval_Note = Join(arr, " / ")
+End Function
+
+Private Sub AddTestEvalNoteChunk(ByVal chunks As Collection, ByVal label As String, ByVal memoText As String)
+    memoText = Trim$(memoText)
+    If LenB(memoText) = 0 Then Exit Sub
+    chunks.Add label & ":" & memoText
+End Sub
 
 
 Public Sub Save_TestEvalToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
