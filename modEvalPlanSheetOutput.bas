@@ -700,6 +700,17 @@ Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVa
         If top.row >= baseRow Then
             top.value = NzTextSafe(text)
             GoTo done
+        ElseIf cell.MergeCells Then
+            Dim ma As Range
+            Set ma = cell.MergeArea
+            If top.row = baseRow - 1 _
+               And ma.rows.count = 2 _
+               And ma.Columns.count > 1 _
+               And ma.row + ma.rows.count - 1 >= baseRow Then
+                top.value = NzTextSafe(text)
+                GoTo done
+            End If
+            
         End If
     Next cell
 done:
