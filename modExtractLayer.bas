@@ -76,7 +76,7 @@ Private Function ReadLatestEvalTextByHeader(ByVal patientName As String, ByVal h
 
     If LenB(Trim$(patientName)) = 0 Then Exit Function
 
-    If Not ResolveLatestEvalSourceSheet(ws) Then Exit Function
+    Set ws = ThisWorkbook.Worksheets("EvalData")
     latestRow = FindLatestRowByName(ws, patientName)
     If latestRow <= 0 Then Exit Function
 
@@ -85,37 +85,3 @@ Private Function ReadLatestEvalTextByHeader(ByVal patientName As String, ByVal h
 EH:
     ReadLatestEvalTextByHeader = vbNullString
 End Function
-
-
-
-Private Function ResolveLatestEvalSourceSheet(ByRef ws As Worksheet) As Boolean
-    On Error GoTo EH
-
-    Dim frm As Object
-    If TryGetEvalForm(frm) Then
-        If modEvalIOEntry.TryGetUserHistorySheet(frm, ws) Then
-            ResolveLatestEvalSourceSheet = True
-            Exit Function
-        End If
-    End If
-
-    Exit Function
-EH:
-    ResolveLatestEvalSourceSheet = False
-End Function
-
-Private Function TryGetEvalForm(ByRef frm As Object) As Boolean
-    On Error GoTo EH
-    Dim uf As Object
-    For Each uf In VBA.UserForms
-        If StrComp(TypeName(uf), "frmEval", vbTextCompare) = 0 Then
-            Set frm = uf
-            TryGetEvalForm = True
-            Exit Function
-        End If
-    Next uf
-    Exit Function
-EH:
-    TryGetEvalForm = False
-End Function
-
