@@ -159,6 +159,7 @@ Private Function BuildPlanDataFromResult(ByVal result As Object) As Object
     If result.exists("AIDraft") Then
         Set aiDraft = result("AIDraft")
         If Not aiDraft Is Nothing Then
+  Debug.Print "[BuildPlanDataFromResult] aiDraft(MonitoringText)=", DebugDumpValue(aiDraft, "MonitoringText")
             If aiDraft.exists("MonitoringText") Then d("Monitoring.Change") = aiDraft("MonitoringText")
             If aiDraft.exists("HomeExercise") Then d("HomeExercise") = aiDraft("HomeExercise")
             For pi = 1 To 5
@@ -178,6 +179,9 @@ Private Function BuildPlanDataFromResult(ByVal result As Object) As Object
     If result.exists("ChangeIssue") Then
         Set ci = result("ChangeIssue")
         If Not ci Is Nothing Then
+              Debug.Print "[BuildPlanDataFromResult] ci(Change)=", DebugDumpValue(ci, "Change")
+            Debug.Print "[BuildPlanDataFromResult] ci(Issue)=", DebugDumpValue(ci, "Issue")
+        
             If ci.exists("Change") Then d("Monitoring.Change") = ci("Change")
             If ci.exists("Issue") Then d("Monitoring.Issue") = ci("Issue")
         End If
@@ -185,6 +189,29 @@ Private Function BuildPlanDataFromResult(ByVal result As Object) As Object
 
     Set BuildPlanDataFromResult = d
 End Function
+
+Private Function DebugDumpValue(ByVal d As Object, ByVal key As String) As String
+    On Error GoTo EH
+    If d Is Nothing Then
+        DebugDumpValue = "(dict=nil)"
+        Exit Function
+    End If
+    If Not d.exists(key) Then
+        DebugDumpValue = "(missing)"
+        Exit Function
+    End If
+    Dim s As String
+    s = CStr(d(key))
+    If LenB(Trim$(s)) = 0 Then
+        DebugDumpValue = "(empty)"
+    Else
+        DebugDumpValue = s
+    End If
+    Exit Function
+EH:
+    DebugDumpValue = "(error:" & Err.Number & ")"
+End Function
+
 
 Private Function GetPreviousEvalSnapshot(ByVal owner As Object) As Object
     Dim ws As Worksheet
