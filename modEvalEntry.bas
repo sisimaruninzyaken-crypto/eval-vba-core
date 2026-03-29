@@ -31,7 +31,7 @@ Dim ws As Worksheet
 
     Dim comp As Object
     For Each comp In ThisWorkbook.VBProject.VBComponents
-        ws.Cells(r, 1).value = typeName(comp)
+        ws.Cells(r, 1).value = TypeName(comp)
         ws.Cells(r, 2).value = comp.name
         r = r + 1
 
@@ -43,7 +43,7 @@ Dim ws As Worksheet
             If Not d Is Nothing Then
                 For i = 0 To d.Controls.count - 1
                     ws.Cells(r, 2).value = "Ctrl"
-                    ws.Cells(r, 3).value = typeName(d.Controls(i))
+                    ws.Cells(r, 3).value = TypeName(d.Controls(i))
                     ws.Cells(r, 4).value = d.Controls(i).name
                     On Error Resume Next
                     ws.Cells(r, 5).value = d.Controls(i).caption
@@ -87,7 +87,7 @@ Public Sub Validate_App()
     Dim c As Object
     Dim hostMove As Object: Set hostMove = Nothing
     For Each c In frm.Controls
-        If typeName(c) = "Frame" Then
+        If TypeName(c) = "Frame" Then
             If StrComp(c.name, HOST_MOVE_NAME, vbTextCompare) = 0 Then
                 Set hostMove = c
                 Exit For
@@ -102,7 +102,7 @@ Public Sub Validate_App()
     ' 3) mpADL ÇéÊìæÅiMultiPageÅj
     Dim mp As Object: Set mp = Nothing
     For Each c In hostMove.Controls
-        If typeName(c) = "MultiPage" Then
+        If TypeName(c) = "MultiPage" Then
             If StrComp(c.name, MP_ADL_NAME, vbTextCompare) = 0 Then
                 Set mp = c
                 Exit For

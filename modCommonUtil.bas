@@ -276,7 +276,7 @@ Private Function FindControlRecursive(ByVal node As Object, ByVal targetName As 
         Next child
     End If
 
-    If typeName(node) = "MultiPage" Then
+    If TypeName(node) = "MultiPage" Then
         On Error Resume Next
         For Each page In node.Pages
             On Error GoTo 0
@@ -339,7 +339,7 @@ Private Function BuildVisitedKey(ByVal node As Object) As String
     End If
     On Error GoTo 0
 
-    BuildVisitedKey = typeName(node) & "|" & h & "|" & n
+    BuildVisitedKey = TypeName(node) & "|" & h & "|" & n
 End Function
 
 
@@ -387,7 +387,7 @@ Public Function HasControls(ByVal o As Object) As Boolean
     ' TypeName で判定することでエラーを発生させない
     ' （VBE が「すべてのエラーで中断」モードの場合に On Error が無視されるため）
     If o Is Nothing Then Exit Function
-    Dim tn As String: tn = typeName(o)
+    Dim tn As String: tn = TypeName(o)
     HasControls = (tn = "Frame" Or tn = "Page" Or tn = "frmEval")
 End Function
 
@@ -413,7 +413,7 @@ Private Function CountDupTagsInFrame(ByVal seen As Object, ByVal fr As Object) A
 
     For Each c In fr.Controls
         If c.parent Is fr Then
-            If typeName(c) = "CheckBox" Or typeName(c) = "ComboBox" Or typeName(c) = "TextBox" Or typeName(c) = "OptionButton" Then
+            If TypeName(c) = "CheckBox" Or TypeName(c) = "ComboBox" Or TypeName(c) = "TextBox" Or TypeName(c) = "OptionButton" Then
                 t = ""
                 On Error Resume Next
                 t = CStr(c.tag)
@@ -427,7 +427,7 @@ Private Function CountDupTagsInFrame(ByVal seen As Object, ByVal fr As Object) A
                         seen.Add t, True
                     End If
                 Else
-                    Debug.Print "EMPTY TAG at " & typeName(c) & " L=" & c.Left & " T=" & c.top
+                    Debug.Print "EMPTY TAG at " & TypeName(c) & " L=" & c.Left & " T=" & c.top
                 End If
             End If
         End If
@@ -475,7 +475,7 @@ Private Function CollectInFrame(ByVal fr As Object, ByVal prefix As String) As S
     Dim c As Object, t As String, s As String
     For Each c In fr.Controls
         If c.parent Is fr Then
-            If typeName(c) = "CheckBox" Then
+            If TypeName(c) = "CheckBox" Then
                 t = CStr(c.tag)
                 If Len(t) > 0 And Left$(t, Len(prefix)) = prefix Then
                     If c.value = True Then s = s & Replace$(t, prefix, "") & "、"
@@ -495,7 +495,7 @@ Private Function GetTagText(ByVal tagName As String) As String
     Set fr = f2.Controls("Frame35")
     For Each c In fr.Controls
         If c.parent Is fr Then
-            If typeName(c) = "TextBox" And CStr(c.tag) = tagName Then
+            If TypeName(c) = "TextBox" And CStr(c.tag) = tagName Then
                 GetTagText = Replace$(CStr(c.text), vbCrLf, " ")
                 Exit Function
             End If
@@ -506,7 +506,7 @@ Private Function GetTagText(ByVal tagName As String) As String
     Set fr = f2.Controls("Frame36")
     For Each c In fr.Controls
         If c.parent Is fr Then
-            If typeName(c) = "TextBox" And CStr(c.tag) = tagName Then
+            If TypeName(c) = "TextBox" And CStr(c.tag) = tagName Then
                 GetTagText = Replace$(CStr(c.text), vbCrLf, " ")
                 Exit Function
             End If

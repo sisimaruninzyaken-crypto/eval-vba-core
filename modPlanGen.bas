@@ -663,7 +663,7 @@ Private Function GetFrmEvalControlText(ByVal controlName As String) As String
     Set target = FindControlRecursive(frmEval, controlName)
     If target Is Nothing Then Exit Function
 
-    Select Case typeName(target)
+    Select Case TypeName(target)
         Case "TextBox", "ComboBox"
             If LenB(CStr(target.value)) > 0 Then
                 GetFrmEvalControlText = CStr(target.value)

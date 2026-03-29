@@ -40,7 +40,7 @@ Public Sub TidyBasicInfo_TwoColumns()
 
     ' ãå Label### ÇëSÇƒâBÇ∑ÅiFrame32íºâ∫ÇÃÇ›Åj
     For Each c In f32.Controls
-        If typeName(c) = "Label" Then
+        If TypeName(c) = "Label" Then
             If Left$(c.name, 5) = "Label" Then
                 c.Visible = False
             End If
@@ -216,9 +216,9 @@ Private Function FindBasicInfoRiskFrame(ByVal parent As Object) As Object
     Dim child As Object
 
     For Each c In parent.Controls
-        If typeName(c) = "Frame" Then
+        If TypeName(c) = "Frame" Then
             For Each child In c.Controls
-                If typeName(child) = "CheckBox" Then
+                If TypeName(child) = "CheckBox" Then
                     If CStr(child.tag) = "RiskGroup" Then
                         Set FindBasicInfoRiskFrame = c
                         Exit Function
@@ -276,7 +276,7 @@ Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
     ' Collect checkboxes
     cnt = 0
     For Each c In riskFrame.Controls
-        If typeName(c) = "CheckBox" Then
+        If TypeName(c) = "CheckBox" Then
             cnt = cnt + 1
             ReDim Preserve names(1 To cnt)
             ReDim Preserve tops(1 To cnt)

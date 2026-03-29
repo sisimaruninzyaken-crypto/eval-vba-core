@@ -41,7 +41,7 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     Dim dbgTx As String: dbgTx = GetCtrlTextSafe(owner, "txtTxCourse")
     Dim dbgCp As String: dbgCp = GetCtrlTextSafe(owner, "txtComplications")
     Dim dbgLv As String: dbgLv = GetCtrlTextSafe(owner, "txtLiving")
-    Debug.Print "[WriteEvalPlanSheet] owner=" & typeName(owner) & _
+    Debug.Print "[WriteEvalPlanSheet] owner=" & TypeName(owner) & _
         " | txtLiving=[" & dbgLv & "]" & _
         " | txtTxCourse=[" & dbgTx & "]" & _
         " | txtComplications=[" & dbgCp & "]"
@@ -50,7 +50,7 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     Debug.Print "[WES] step 11 A18"
     WriteMerged ws, "A18:BJ18", dbgCp
     Debug.Print "[WES] step 12 A20 start"
-    Dim tmpA20 As String: tmpA20 = GetPlanTextWithFallback(planData, owner, Array("TrainingPrecaution", "Medical.TrainingPrecaution", "機能訓練実施上の留意事項"), Array("txtTrainingNote", "txtRehabNote", "txtPrecaution"))
+    Dim tmpA20 As String: tmpA20 = GetPlanText(planData, Array("Monitoring.Change", "monitoring.change", "MonitoringChange", "changeText", "Monitoring.Issue", "monitoring.issue", "MonitoringIssue", "issueText"))
     Debug.Print "[WES] step 12 A20 done=[" & tmpA20 & "]"
     WriteMerged ws, "A20:BJ20", tmpA20
     ' 目標行は結合セル検出を使わず直接書き込み（行24=機能, 25=活動, 26=参加）
@@ -203,7 +203,7 @@ Private Function GetIndexValue(ByVal src As Variant, ByVal idx As Long) As Varia
     On Error GoTo EH
     If IsObject(src) Then
         Dim t As String
-        t = typeName(src)
+        t = TypeName(src)
         If StrComp(t, "Collection", vbTextCompare) = 0 Then
             If idx >= 1 And idx <= CLng(CallByName(src, "Count", VbGet)) Then
                 GetIndexValue = CallByName(src, "Item", VbGet, idx)
@@ -382,7 +382,7 @@ End Sub
 
 Private Function IsHomeEnvCheckControl(ByVal ctl As Object) As Boolean
     If ObjectIsNothingSafe(ctl) Then Exit Function
-    If StrComp(typeName(ctl), "CheckBox", vbTextCompare) <> 0 Then Exit Function
+    If StrComp(TypeName(ctl), "CheckBox", vbTextCompare) <> 0 Then Exit Function
 
     Dim tagText As String
     tagText = GetControlTagSafe(ctl)

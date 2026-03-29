@@ -5,7 +5,7 @@ Option Explicit
 Private Sub WalkContainer(ByVal cont As Object, ByRef maxBottom As Double)
     
    '--- MultiPage は Controls を持たない（Pages を掘る）
-If typeName(cont) = "MultiPage" Then
+If TypeName(cont) = "MultiPage" Then
     Dim p As MSForms.page
     For Each p In cont.Pages
         WalkContainer p, maxBottom
@@ -31,8 +31,8 @@ End If
     ' 葉（入力部品など）だけで maxBottom を更新する
     If c.Visible Then
         If Not isContainer Then
-            If c.top + c.Height > maxBottom Then maxBottom = c.top + c.Height: lastMaxInfo = typeName(c) & "  " & c.name & "  Bottom=" & (c.top + c.Height)
-            If c.top + c.Height > maxBottom Then lastMaxInfo = typeName(c) & "  " & c.name & "  Bottom=" & (c.top + c.Height)
+            If c.top + c.Height > maxBottom Then maxBottom = c.top + c.Height: lastMaxInfo = TypeName(c) & "  " & c.name & "  Bottom=" & (c.top + c.Height)
+            If c.top + c.Height > maxBottom Then lastMaxInfo = TypeName(c) & "  " & c.name & "  Bottom=" & (c.top + c.Height)
 
         End If
     End If
