@@ -228,7 +228,7 @@ EH:
 End Function
 
 Private Function FindLatestEvalRow(ByVal ws As Worksheet) As Long
-    Dim colEvalDate As Long
+    Dim cDate As Long
     Dim r As Long
     Dim latestRow As Long
     Dim latestDate As Date
@@ -236,11 +236,11 @@ Private Function FindLatestEvalRow(ByVal ws As Worksheet) As Long
     Dim d As Date
     On Error GoTo EH
 
-    colEvalDate = FindSheetColByHeader(ws, "Basic.EvalDate")
-    If colEvalDate = 0 Then Exit Function
+    cDate = FindSheetColByHeader(ws, "Basic.EvalDate")
+    If cDate = 0 Then Exit Function
     For r = 2 To ws.UsedRange.rows.count
-        If IsDate(ws.Cells(r, colEvalDate).value) Then
-            d = DateValue(CDate(ws.Cells(r, colEvalDate).value))
+        If IsDate(ws.Cells(r, cDate).Value) Then
+            d = DateValue(CDate(ws.Cells(r, cDate).Value))
             If Not hasDate Or d > latestDate Then
                 latestDate = d
                 latestRow = r
