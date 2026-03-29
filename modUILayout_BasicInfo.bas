@@ -39,7 +39,7 @@ Public Sub TidyBasicInfo_TwoColumns()
     End If
 
     ' ãå Label### ÇëSÇƒâBÇ∑ÅiFrame32íºâ∫ÇÃÇ›Åj
-    For Each c In f32.controls
+    For Each c In f32.Controls
         If typeName(c) = "Label" Then
             If Left$(c.name, 5) = "Label" Then
                 c.Visible = False
@@ -51,23 +51,23 @@ Public Sub TidyBasicInfo_TwoColumns()
     Set txtED = frmEval.EvalCtl("txtEDate", "Page1")
     
     Set t = frmEval.EvalCtl("txtEvaluatorJob", "Page1")
-    If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtEvaluatorJob", True)
+    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtEvaluatorJob", True)
     t.tag = "BI.EvaluatorJob"
     
     Set t = frmEval.EvalCtl("txtAdmDate", "Page1")
-    If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtAdmDate", True)
+    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtAdmDate", True)
 
     Set t = frmEval.EvalCtl("txtDisDate", "Page1")
-    If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtDisDate", True)
+    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtDisDate", True)
 
     Set t = frmEval.EvalCtl("txtTxCourse", "Page1")
-    If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtTxCourse", True)
+    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtTxCourse", True)
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
 
     Set t = frmEval.EvalCtl("txtComplications", "Page1")
-    If t Is Nothing Then Set t = f32.controls.Add("Forms.TextBox.1", "txtComplications", True)
+    If t Is Nothing Then Set t = f32.Controls.Add("Forms.TextBox.1", "txtComplications", True)
     t.multiline = True
     t.EnterKeyBehavior = True
     t.WordWrap = True
@@ -169,8 +169,8 @@ aCapL = Array( _
     If Not c Is Nothing Then c.Visible = False
     yR = yR + gapY
 
-    If Not ControlExists(f32, "txtAdmDate") Then f32.controls.Add "Forms.TextBox.1", "txtAdmDate"
-    If Not ControlExists(f32, "txtDisDate") Then f32.controls.Add "Forms.TextBox.1", "txtDisDate"
+    If Not ControlExists(f32, "txtAdmDate") Then f32.Controls.Add "Forms.TextBox.1", "txtAdmDate"
+    If Not ControlExists(f32, "txtDisDate") Then f32.Controls.Add "Forms.TextBox.1", "txtDisDate"
 
 
     ' èáèòÅFî≠è«ì˙Å®éÂêfífÅ®ì¸â@ì˙Å®ëﬁâ@ì˙
@@ -215,9 +215,9 @@ Private Function FindBasicInfoRiskFrame(ByVal parent As Object) As Object
     Dim c As Object
     Dim child As Object
 
-    For Each c In parent.controls
+    For Each c In parent.Controls
         If typeName(c) = "Frame" Then
-            For Each child In c.controls
+            For Each child In c.Controls
                 If typeName(child) = "CheckBox" Then
                     If CStr(child.tag) = "RiskGroup" Then
                         Set FindBasicInfoRiskFrame = c
@@ -234,7 +234,7 @@ End Function
 Private Sub PlaceCtl(ByVal parent As Object, ByVal nm As String, ByVal L As Double, ByVal t As Double, ByVal w As Double, ByVal h As Double)
     Dim c As Object
     On Error Resume Next
-    Set c = parent.controls(nm)
+    Set c = parent.Controls(nm)
     On Error GoTo 0
     If c Is Nothing Then Exit Sub
 
@@ -275,7 +275,7 @@ Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
 
     ' Collect checkboxes
     cnt = 0
-    For Each c In riskFrame.controls
+    For Each c In riskFrame.Controls
         If typeName(c) = "CheckBox" Then
             cnt = cnt + 1
             ReDim Preserve names(1 To cnt)
@@ -311,7 +311,7 @@ Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
     idx = 1
     y = padT
     For i = 1 To half
-        Set c = riskFrame.controls(names(idx))
+        Set c = riskFrame.Controls(names(idx))
         c.Left = x1
         c.top = y
         c.Width = colW
@@ -322,7 +322,7 @@ Private Sub ArrangeRiskChecks_TwoCols(ByVal riskFrame As Object)
 
     y = padT
     For i = 1 To (cnt - half)
-        Set c = riskFrame.controls(names(idx))
+        Set c = riskFrame.Controls(names(idx))
         c.Left = x2
         c.top = y
         c.Width = colW
@@ -336,11 +336,11 @@ End Sub
 Private Sub EnsureLabel(ByVal parent As Object, ByVal nm As String, ByVal cap As String, ByVal L As Double, ByVal t As Double, ByVal w As Double, ByVal h As Double)
     Dim lb As Object
     On Error Resume Next
-    Set lb = parent.controls(nm)
+    Set lb = parent.Controls(nm)
     On Error GoTo 0
 
     If lb Is Nothing Then
-        Set lb = parent.controls.Add("Forms.Label.1", nm)
+        Set lb = parent.Controls.Add("Forms.Label.1", nm)
     End If
 
     lb.Visible = True

@@ -30,10 +30,10 @@ Public Function SerializeRL(container As Object) As String
         On Error Resume Next
 
         ' 子コントロールを走査
-        For Each ch In node.controls
+        For Each ch In node.Controls
             ' 子がさらに Controls/Pages を持つならキューへ
             Dim dummy As Object, pg As Object
-            Set dummy = ch.controls
+            Set dummy = ch.Controls
             If Err.Number = 0 Then q.Add ch
             Err.Clear
             
@@ -141,7 +141,7 @@ Public Sub SaveSensoryToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owne
 
     ' ① MultiPage 内から Caption に「感覚」を含む Page を特定（例：感覚（表在・深部））
     On Error Resume Next
-    For Each ctl In owner.controls
+    For Each ctl In owner.Controls
         If typeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
@@ -161,9 +161,9 @@ Public Sub SaveSensoryToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owne
     Do While q.count > 0
         Set node = q(1): q.Remove 1
         On Error Resume Next
-        For Each ch In node.controls
+        For Each ch In node.Controls
             ' 子がさらに Controls を持つならキューに積む
-            Set tmp = ch.controls
+            Set tmp = ch.Controls
             If Err.Number = 0 Then q.Add ch
             Err.Clear
 
@@ -257,13 +257,13 @@ Dim note As String
 
 On Error Resume Next
 ' ページ内で MultiLine または最も背の高い TextBox を選ぶ（＝読み込みと同じ基準）
-For Each box In target.controls
+For Each box In target.Controls
     If typeName(box) = "TextBox" Then
         If box.multiline Or box.Height > bestH Then
             Set noteCtl = box: bestH = box.Height
         End If
     ElseIf typeName(box) = "Frame" Then
-        For Each subCtl In box.controls
+        For Each subCtl In box.Controls
             If typeName(subCtl) = "TextBox" Then
                 If subCtl.multiline Or subCtl.Height > bestH Then
                     Set noteCtl = subCtl: bestH = subCtl.Height
@@ -296,14 +296,14 @@ End Sub
 Private Function FindCtlDeep(root As Object, ByVal ctlName As String) As Object
     Dim ch As Object, tmp As Object
     On Error Resume Next
-    Set FindCtlDeep = root.controls(ctlName) ' まず直下を試す
+    Set FindCtlDeep = root.Controls(ctlName) ' まず直下を試す
     On Error GoTo 0
     If Not FindCtlDeep Is Nothing Then Exit Function
 
     ' 子を順に掘る（Controlsを持たない場合はエラーを握りつぶす）
-    For Each ch In root.controls
+    For Each ch In root.Controls
         On Error Resume Next
-        Set tmp = ch.controls
+        Set tmp = ch.Controls
         If Err.Number = 0 Then
             Set tmp = FindCtlDeep(ch, ctlName)
             If Not tmp Is Nothing Then
@@ -321,7 +321,7 @@ Public Sub TraceSensoryComboNames(owner As Object)
     Dim ctl As Object, subCtl As Object, mp As Object, pg As Object, target As Object
 
     ' MultiPage内で Caption に「感覚」を含むページだけ特定
-    For Each ctl In owner.controls
+    For Each ctl In owner.Controls
         If typeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
@@ -336,11 +336,11 @@ Public Sub TraceSensoryComboNames(owner As Object)
     If target Is Nothing Then Set target = owner
 
     ' 1階層＋Frame内のComboBoxだけを列挙（再帰なし、.Pagesにも触れない）
-    For Each ctl In target.controls
+    For Each ctl In target.Controls
         If typeName(ctl) = "ComboBox" Then
             Debug.Print "[SENSE][CB] "; ctl.name
         ElseIf typeName(ctl) = "Frame" Then
-            For Each subCtl In ctl.controls
+            For Each subCtl In ctl.Controls
                 If typeName(subCtl) = "ComboBox" Then
                     Debug.Print "[SENSE][CB] "; subCtl.name
                 End If
@@ -366,7 +366,7 @@ End If
 
     ' 1) 「感覚」を含むタブを特定（例：感覚（表在・深部））
     On Error Resume Next
-    For Each ctl In owner.controls
+    For Each ctl In owner.Controls
         If typeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
@@ -402,8 +402,8 @@ cont:
     Do While q.count > 0
         Set node = q(1): q.Remove 1
         On Error Resume Next
-        For Each ch In node.controls
-            Set tmp = ch.controls
+        For Each ch In node.Controls
+            Set tmp = ch.Controls
             If Err.Number = 0 Then q.Add ch  ' 子を掘る
             Err.Clear
             If typeName(ch) = "ComboBox" Then combos.Add ch
@@ -489,13 +489,13 @@ note = CStr(ws.Cells(r, cNote).value)
 
 On Error Resume Next
 ' ページ内で MultiLine または最も背の高い TextBox を選ぶ
-For Each box In target.controls
+For Each box In target.Controls
     If typeName(box) = "TextBox" Then
         If box.multiline Or box.Height > bestH Then
             Set noteCtl = box: bestH = box.Height
         End If
     ElseIf typeName(box) = "Frame" Then
-        For Each subCtl In box.controls
+        For Each subCtl In box.Controls
             If typeName(subCtl) = "TextBox" Then
                 If subCtl.multiline Or subCtl.Height > bestH Then
                     Set noteCtl = subCtl: bestH = subCtl.Height

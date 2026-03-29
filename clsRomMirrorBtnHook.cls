@@ -18,7 +18,7 @@ Private Sub btn_Click()
     On Error Resume Next
 
     Dim c As Object
-    For Each c In btn.parent.controls
+    For Each c In btn.parent.Controls
         If typeName(c) = "TextBox" Then
             Dim nm As String
             nm = CStr(c.name)
@@ -26,7 +26,7 @@ Private Sub btn_Click()
                 Dim leftName As String
                 leftName = Left$(nm, Len(nm) - 2) & "_L"
                 Dim tL As MSForms.TextBox
-                Set tL = btn.parent.controls(leftName)
+                Set tL = btn.parent.Controls(leftName)
                 If Not tL Is Nothing Then
                     If Trim$(CStr(c.text)) <> "" Then
                         tL.text = c.text

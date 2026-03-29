@@ -34,6 +34,12 @@ Public Function BuildBasicPlanStructure(ByVal mainCause As String, _
     result("MMT_MinScore") = mmtMap(mmtTargetMuscle)
     result("MainCause") = mainCause
 
+    ' R/L個別スコアを整形して追加
+    Dim rScore As String, lScore As String
+    rScore = IIf(mmtMap.exists(mmtTargetMuscle & "_R"), CStr(CLng(mmtMap(mmtTargetMuscle & "_R"))), "")
+    lScore = IIf(mmtMap.exists(mmtTargetMuscle & "_L"), CStr(CLng(mmtMap(mmtTargetMuscle & "_L"))), "")
+    result("MMT_TargetMuscle_Score") = FormatMMTScoreStr(rScore, lScore)
+
     
         If Len(Trim$(needSelf)) > 0 Then
           reason = "本人希望"
@@ -600,7 +606,7 @@ Public Function GetLowerMMTMap_FromFrmEval() As Object
     
     Set p = mp.Pages(1) ' 下肢
     
-    For Each c In p.controls
+    For Each c In p.Controls
         If typeName(c) = "Label" Then
             If Left$(c.name, 4) = "lbl_" Then
                 nm = CStr(c.caption)
@@ -625,7 +631,7 @@ End Function
 Private Function GetMMTValueSafe(ByVal container As Object, ByVal cboName As String) As Double
     On Error GoTo EH
     Dim v As String
-    v = Trim$(container.controls(cboName).value & "")
+    v = Trim$(container.Controls(cboName).value & "")
     If Len(v) = 0 Then
         GetMMTValueSafe = 99
         Exit Function
@@ -658,6 +664,7 @@ Public Function BuildBasicPlanStructureFromJudge(ByVal judged As Object) As Obje
     Set result = BuildBasicPlanStructure(mainCause, needSelf, needFamily, needByDifficulty, mmtMap)
     result("FunctionCandidate") = CStr(judged("FunctionCandidate"))
     result("TrunkROMLimitTags") = CStr(judged("TrunkROMLimitTags"))
+    result("TrunkROM_LimitedValues") = FormatLimitedROMValues(CStr(judged("TrunkROMRaw")))
     result("EvalTestCriticalFindings") = CStr(judged("EvalTestCriticalFindings"))
     result("EvalTestNoteRaw") = CStr(judged("EvalTestNoteRaw"))
 
@@ -665,14 +672,148 @@ Public Function BuildBasicPlanStructureFromJudge(ByVal judged As Object) As Obje
 End Function
 
 Private Function BuildMMTMapFromIO(ByVal mmtIO As String) As Object
+    ' フォーマット: side|筋名|右値|左値;side|筋名|右値|左値;...
+    ' side: 0=上肢, 1=下肢
     Dim m As Object
     Set m = CreateObject("Scripting.Dictionary")
 
-    ' TODO: 既存MMT_IOフォーマットの正式パーサーに置換する。
-    ' 最低限のフォールバック値をセット。
-    m("大腿四頭筋") = 3
-    m("中殿筋") = 3
-    m("腸腰筋") = 3
+    mmtIO = Trim$(mmtIO)
+    If LenB(mmtIO) = 0 Then GoTo Fallback
 
+    Dim records() As String
+    records = Split(mmtIO, ";")
+
+    Dim i As Long
+    For i = LBound(records) To UBound(records)
+        Dim rec As String
+        rec = Trim$(records(i))
+        If LenB(rec) = 0 Then GoTo NextMMTRecord
+
+        Dim parts() As String
+        parts = Split(rec, "|")
+        If UBound(parts) < 3 Then GoTo NextMMTRecord
+
+        ' 下肢（side=1）のみ対象
+        If Trim$(parts(0)) <> "1" Then GoTo NextMMTRecord
+
+        Dim muscleName As String
+        muscleName = Trim$(parts(1))
+        If LenB(muscleName) = 0 Then GoTo NextMMTRecord
+
+        Dim rStr As String, lStr As String
+        rStr = Trim$(parts(2))
+        lStr = Trim$(parts(3))
+
+        Dim hasR As Boolean, hasL As Boolean
+        hasR = IsNumeric(rStr) And LenB(rStr) > 0
+        hasL = IsNumeric(lStr) And LenB(lStr) > 0
+        If Not hasR And Not hasL Then GoTo NextMMTRecord
+
+        Dim minVal As Double
+        If hasR And hasL Then
+            minVal = CDbl(rStr)
+            If CDbl(lStr) < minVal Then minVal = CDbl(lStr)
+        ElseIf hasR Then
+            minVal = CDbl(rStr)
+        Else
+            minVal = CDbl(lStr)
+        End If
+
+        ' 筋名を計画生成で使うキーに正規化
+        Dim shortKey As String
+        shortKey = NormalizeMuscleKey(muscleName)
+        m(shortKey) = minVal
+        ' R/L個別値も保存（表示用）
+        If hasR Then m(shortKey & "_R") = CDbl(rStr)
+        If hasL Then m(shortKey & "_L") = CDbl(lStr)
+NextMMTRecord:
+    Next i
+
+    If m.count = 0 Then GoTo Fallback
     Set BuildMMTMapFromIO = m
+    Exit Function
+
+Fallback:
+    m("膝伸展") = 3
+    m("股外転") = 3
+    m("腸腰筋") = 3
+    Set BuildMMTMapFromIO = m
+End Function
+
+Private Function NormalizeMuscleKey(ByVal name As String) As String
+    Select Case name
+        Case "足関節背屈": NormalizeMuscleKey = "背屈"
+        Case "足関節底屈": NormalizeMuscleKey = "底屈"
+        Case "股屈曲":     NormalizeMuscleKey = "腸腰筋"
+        Case Else:         NormalizeMuscleKey = name
+    End Select
+End Function
+
+' MMTのR/Lスコアを "R:3/L:2" 形式に整形
+Private Function FormatMMTScoreStr(ByVal rStr As String, ByVal lStr As String) As String
+    If LenB(rStr) > 0 And LenB(lStr) > 0 Then
+        FormatMMTScoreStr = "R:" & rStr & "/L:" & lStr
+    ElseIf LenB(rStr) > 0 Then
+        FormatMMTScoreStr = rStr
+    ElseIf LenB(lStr) > 0 Then
+        FormatMMTScoreStr = lStr
+    End If
+End Function
+
+' ROM制限のある方向と角度を "体幹屈曲: 40度, 体幹伸展: 20度" 形式に整形
+Private Function FormatLimitedROMValues(ByVal trunkRomRaw As String) As String
+    trunkRomRaw = Trim$(trunkRomRaw)
+    If LenB(trunkRomRaw) = 0 Then Exit Function
+
+    Dim parts() As String
+    parts = Split(trunkRomRaw, "|")
+
+    Dim chunks As Collection
+    Set chunks = New Collection
+
+    Dim i As Long
+    For i = LBound(parts) To UBound(parts)
+        Dim kv() As String
+        kv = Split(Trim$(parts(i)), "=")
+        If UBound(kv) <> 1 Then GoTo NextROMItem
+        If Not IsNumeric(Trim$(kv(1))) Then GoTo NextROMItem
+
+        Dim key As String
+        Dim v As Double
+        key = Trim$(kv(0))
+        v = CDbl(Trim$(kv(1)))
+
+        Dim isLimited As Boolean
+        Select Case key
+            Case "Trunk_Flex":                         isLimited = (v <= 40)
+            Case "Trunk_Ext":                          isLimited = (v <= 20)
+            Case "Trunk_Rot_R", "Trunk_Rot_L":        isLimited = (v <= 30)
+            Case "Trunk_LatFlex_R", "Trunk_LatFlex_L": isLimited = (v <= 30)
+            Case Else:                                 isLimited = False
+        End Select
+
+        If isLimited Then chunks.Add ROMKeyToJapanese(key) & ": " & CLng(v) & "度"
+NextROMItem:
+    Next i
+
+    If chunks.count = 0 Then Exit Function
+
+    Dim arr() As String
+    ReDim arr(1 To chunks.count)
+    For i = 1 To chunks.count
+        arr(i) = CStr(chunks(i))
+    Next i
+    FormatLimitedROMValues = Join(arr, ", ")
+End Function
+
+Private Function ROMKeyToJapanese(ByVal key As String) As String
+    Select Case key
+        Case "Trunk_Flex":       ROMKeyToJapanese = "体幹屈曲"
+        Case "Trunk_Ext":        ROMKeyToJapanese = "体幹伸展"
+        Case "Trunk_Rot_R":      ROMKeyToJapanese = "体幹回旋右"
+        Case "Trunk_Rot_L":      ROMKeyToJapanese = "体幹回旋左"
+        Case "Trunk_LatFlex_R":  ROMKeyToJapanese = "体幹側屈右"
+        Case "Trunk_LatFlex_L":  ROMKeyToJapanese = "体幹側屈左"
+        Case Else:               ROMKeyToJapanese = key
+    End Select
 End Function

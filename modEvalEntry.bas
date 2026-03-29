@@ -41,12 +41,12 @@ Dim ws As Worksheet
             Dim d As Object, i As Long
             Set d = comp.Designer
             If Not d Is Nothing Then
-                For i = 0 To d.controls.count - 1
+                For i = 0 To d.Controls.count - 1
                     ws.Cells(r, 2).value = "Ctrl"
-                    ws.Cells(r, 3).value = typeName(d.controls(i))
-                    ws.Cells(r, 4).value = d.controls(i).name
+                    ws.Cells(r, 3).value = typeName(d.Controls(i))
+                    ws.Cells(r, 4).value = d.Controls(i).name
                     On Error Resume Next
-                    ws.Cells(r, 5).value = d.controls(i).caption
+                    ws.Cells(r, 5).value = d.Controls(i).caption
                     On Error GoTo 0
                     r = r + 1
                 Next
@@ -86,7 +86,7 @@ Public Sub Validate_App()
     ' 2) hostMove を取得（Frame）
     Dim c As Object
     Dim hostMove As Object: Set hostMove = Nothing
-    For Each c In frm.controls
+    For Each c In frm.Controls
         If typeName(c) = "Frame" Then
             If StrComp(c.name, HOST_MOVE_NAME, vbTextCompare) = 0 Then
                 Set hostMove = c
@@ -101,7 +101,7 @@ Public Sub Validate_App()
 
     ' 3) mpADL を取得（MultiPage）
     Dim mp As Object: Set mp = Nothing
-    For Each c In hostMove.controls
+    For Each c In hostMove.Controls
         If typeName(c) = "MultiPage" Then
             If StrComp(c.name, MP_ADL_NAME, vbTextCompare) = 0 Then
                 Set mp = c

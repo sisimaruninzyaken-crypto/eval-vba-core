@@ -21,7 +21,7 @@ Private Sub tb_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Inte
     If KeyCode = vbKeyReturn Then
     Dim lb As Object
     On Error Resume Next
-    Set lb = frmEval.controls("lstNameSuggest")
+    Set lb = frmEval.Controls("lstNameSuggest")
     On Error GoTo 0
     
     
@@ -29,7 +29,7 @@ Private Sub tb_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Inte
     If KeyCode = vbKeyDown Or KeyCode = vbKeyUp Then
     Dim lb2 As Object
     On Error Resume Next
-    Set lb2 = frmEval.controls("lstNameSuggest")
+    Set lb2 = frmEval.Controls("lstNameSuggest")
     On Error GoTo 0
 
     If Not lb2 Is Nothing Then
@@ -54,8 +54,8 @@ End If
             If lb.ListCount > 0 Then
                 If lb.ListIndex < 0 Then lb.ListIndex = 0
 
-                frmEval.controls("frHeader").controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
-                frmEval.controls("txtName").text = frmEval.controls("frHeader").controls("txtHdrName").text
+                frmEval.Controls("frHeader").Controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
+                frmEval.Controls("txtName").text = frmEval.Controls("frHeader").Controls("txtHdrName").text
                 lb.Visible = False
             End If
         End If
@@ -64,7 +64,7 @@ End If
 End If
         
     ' ヘッダ → 裏口同期（既存ロジック駆動）
-    frmEval.controls("txtName").text = tb.text
+    frmEval.Controls("txtName").text = tb.text
 
     ' 候補BOXを確実に出す
     frmEval.EnsureNameSuggestList

@@ -13,6 +13,7 @@ Public Function JudgeBasicPlanInputs(ByVal normalized As Object) As Object
     judged("NeedFamily") = GetValue(normalized, "NeedFamily")
     judged("MMT_IO") = GetValue(normalized, "MMT_IO")
     judged("TrunkROMLimitTags") = GetValue(normalized, "TrunkROMLimitTags")
+    judged("TrunkROMRaw") = GetValue(normalized, "TrunkROMRaw")
     judged("EvalTestCriticalFindings") = GetValue(normalized, "EvalTestCriticalFindings")
     judged("EvalTestNoteRaw") = GetValue(normalized, "EvalTestNoteRaw")
 
@@ -35,9 +36,9 @@ Private Function JudgeMainCause(ByVal normalized As Object) As String
     If InStr(1, GetValue(normalized, "MMT_IO"), "áu’É", vbTextCompare) > 0 Then
         JudgeMainCause = "áu’É"
     ElseIf InStr(1, GetValue(normalized, "MMT_IO"), "‹Ø—Í", vbTextCompare) > 0 Then
-        JudgeMainCause = "‹Ø—Í’á‰º"
+        JudgeMainCause = "–ƒáƒ"
     Else
-        JudgeMainCause = "‘Ï‹v«’á‰º"
+        JudgeMainCause = "¢“ï“x"
     End If
 End Function
 

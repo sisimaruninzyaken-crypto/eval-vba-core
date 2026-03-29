@@ -70,7 +70,7 @@ Public Sub ROM_AlignFix_Set20()
     Dim bestGap As Double
 
     ' --- ROMページ特定 ---
-    For Each c In frmEval.controls
+    For Each c In frmEval.Controls
         If typeName(c) = "MultiPage" Then
             For i = 0 To c.Pages.count - 1
                 If InStr(1, CStr(c.Pages(i).caption), "ROM", vbTextCompare) > 0 _
@@ -88,7 +88,7 @@ Public Sub ROM_AlignFix_Set20()
     Dim desired As Single, curr As Single
     Dim adjSmall As Long, adjNote As Long, skip As Long
 
-    For Each ctrl In pg.controls
+    For Each ctrl In pg.Controls
         If typeName(ctrl) = "TextBox" Then
             Set txt = ctrl
 
@@ -102,14 +102,14 @@ Public Sub ROM_AlignFix_Set20()
             Set lbl = Nothing
             If isBig Then
                 ' ① 親内の「備考」ラベル
-                For Each tmp In txt.parent.controls
+                For Each tmp In txt.parent.Controls
                     If typeName(tmp) = "Label" Then
                         If InStr(1, CStr(tmp.caption), "備考", vbTextCompare) > 0 Then Set lbl = tmp: Exit For
                     End If
                 Next tmp
                 ' ② 見つからなければページ全体の「備考」ラベル
                 If lbl Is Nothing Then
-                    For Each tmpZ In pg.controls
+                    For Each tmpZ In pg.Controls
                         If typeName(tmpZ) = "Label" Then
                             If InStr(1, CStr(tmpZ.caption), "備考", vbTextCompare) > 0 Then Set lbl = tmpZ: Exit For
                         End If
@@ -120,7 +120,7 @@ Public Sub ROM_AlignFix_Set20()
 If lbl Is Nothing Then
     bestGap = 1E+20
     Dim d As Double   ' ← ②で説明する d の宣言。既に上で宣言していれば不要
-    For Each tmp In txt.parent.controls
+    For Each tmp In txt.parent.Controls
         If typeName(tmp) = "Label" Then
             If tmp.Left <= txt.Left And tmp.Width <= 120 _
                And (LenB(CStr(tmp.caption)) >= 2 Or tmp.Width >= 12) Then
@@ -172,7 +172,7 @@ Public Sub ROM_NoteFix_Once()
     Dim ml As Boolean, oldTop As Single
 
     ' ROMページ特定
-    For Each c In frmEval.controls
+    For Each c In frmEval.Controls
         If typeName(c) = "MultiPage" Then
             Set mp = c
             For i = 0 To mp.Pages.count - 1
@@ -187,7 +187,7 @@ Public Sub ROM_NoteFix_Once()
     If pg Is Nothing Then Debug.Print "[NoteFix] ROM page not found": Exit Sub
 
     ' 「備考」ラベル
-    For Each ctrl In pg.controls
+    For Each ctrl In pg.Controls
         If typeName(ctrl) = "Label" Then
             If InStr(1, CStr(ctrl.caption), "備考", vbTextCompare) > 0 Then Set lbl = ctrl: Exit For
         End If
@@ -195,7 +195,7 @@ Public Sub ROM_NoteFix_Once()
     If lbl Is Nothing Then Debug.Print "[NoteFix] 備考ラベルなし": Exit Sub
 
     ' 最大サイズのMultiLineテキスト（備考本体）
-    For Each ctrl In pg.controls
+    For Each ctrl In pg.Controls
         If typeName(ctrl) = "TextBox" Then
             ml = False: On Error Resume Next: ml = ctrl.multiline: On Error GoTo 0
             If ml Or ctrl.Height >= 80 Or ctrl.Width >= 400 Then
@@ -274,7 +274,7 @@ Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
     Dim tagKey As String: tagKey = "CBBase="
 
     ' ?? ROMページを特定（Captionに ROM / ＲＯＭ / 主要関節 / 関節可動域 を含む）??
-    For Each mp In frmEval.controls
+    For Each mp In frmEval.Controls
         If typeName(mp) = "MultiPage" Then
             For i = 0 To mp.Pages.count - 1
                 Set pg = mp.Pages(i)
@@ -298,7 +298,7 @@ Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
         Set cont = stk(stk.count): stk.Remove stk.count
 
         On Error Resume Next
-        For Each c In cont.controls
+        For Each c In cont.Controls
             ' 子コンテナはスタックに積む
             Select Case typeName(c)
                 Case "Frame", "Page"
@@ -343,7 +343,7 @@ Public Sub ROM_VerifyOnce()
     Dim ngTB As Long, ngCB As Long, base As Double, pos As Long, cap As String
 
     ' ROMページ特定
-    For Each mp In frmEval.controls
+    For Each mp In frmEval.Controls
         If typeName(mp) = "MultiPage" Then
             For i = 0 To mp.Pages.count - 1
                 cap = CStr(mp.Pages(i).caption)
@@ -360,7 +360,7 @@ Public Sub ROM_VerifyOnce()
     If Not found Then Debug.Print "[VERIFY] ROM page not found": Exit Sub
 
     ' 検証
-    For Each c In pg.controls
+    For Each c In pg.Controls
         If typeName(c) = "TextBox" Then
             If c.multiline = False And c.Height <> 15 Then ngTB = ngTB + 1
         ElseIf typeName(c) = "CheckBox" Then
@@ -386,7 +386,7 @@ Public Sub ROM_Fix_TextBoxHeight_Recursive_OnROM_Once()
     Dim mp As Object, pg As Object, i As Long, found As Boolean
 
     ' ROMページを特定
-    For Each mp In frmEval.controls
+    For Each mp In frmEval.Controls
         If typeName(mp) = "MultiPage" Then
             For i = 0 To mp.Pages.count - 1
                 Set pg = mp.Pages(i)
@@ -409,7 +409,7 @@ End Sub
 Private Sub FixTextBoxHeightRecursive(cont As Object, h As Single)
     Dim c As Control, j As Long
     On Error Resume Next
-    For Each c In cont.controls
+    For Each c In cont.Controls
         Select Case typeName(c)
             Case "Frame", "Page"
                 Call FixTextBoxHeightRecursive(c, h)
@@ -430,7 +430,7 @@ End Sub
 '--- 対象ページ（筋力/MMT）の特定 ---
 Private Function GetMMTPage() As Object
     Dim c As Object, mp As Object, i As Long
-    For Each c In frmEval.controls
+    For Each c In frmEval.Controls
         If typeName(c) = "MultiPage" Then
             Set mp = c
             For i = 0 To mp.Pages.count - 1
@@ -449,9 +449,9 @@ End Function
 '--- 自動生成タグのものだけ削除 ---
 Private Sub MMT_ClearGen(pg As Object)
     Dim idx As Long
-    For idx = pg.controls.count - 1 To 0 Step -1
-        If Left$(pg.controls(idx).tag & "", 6) = "MMTGEN" Then
-            pg.controls.Remove pg.controls(idx).name
+    For idx = pg.Controls.count - 1 To 0 Step -1
+        If Left$(pg.Controls(idx).tag & "", 6) = "MMTGEN" Then
+            pg.Controls.Remove pg.Controls(idx).name
         End If
     Next
 End Sub
@@ -487,7 +487,7 @@ End Sub
 '--- Label 生成 ---
 Private Sub MakeLabel(pg As Object, nm As String, cap As String, L As Single, t As Single, w As Single, h As Single)
     Dim o As MSForms.label
-    Set o = pg.controls.Add("Forms.Label.1", nm, True)
+    Set o = pg.Controls.Add("Forms.Label.1", nm, True)
     With o
         .caption = cap
         .Left = L: .top = t: .Width = w: .Height = h
@@ -498,7 +498,7 @@ End Sub
 '--- ComboBox 生成（MMT 0～5） ---
 Private Sub MakeCombo(pg As Object, nm As String, L As Single, t As Single, w As Single, h As Single)
     Dim o As MSForms.ComboBox
-    Set o = pg.controls.Add("Forms.ComboBox.1", nm, True)
+    Set o = pg.Controls.Add("Forms.ComboBox.1", nm, True)
     With o
         .Left = L: .top = t: .Width = w: .Height = h
         .Style = fmStyleDropDownList
@@ -535,7 +535,7 @@ End Sub
 '--- MMTページを含む MultiPage とそのインデックスを取得 ---
 Private Function FindMMT_MultiPage(ByRef mp As Object, ByRef idx As Long) As Boolean
     Dim c As Object, i As Long
-    For Each c In frmEval.controls
+    For Each c In frmEval.Controls
         If typeName(c) = "MultiPage" Then
             For i = 0 To c.Pages.count - 1
                 Dim cap$: cap = c.Pages(i).caption
@@ -563,8 +563,8 @@ End Function
 '--- 自動生成の掃除 ---
 Private Sub ClearGenerated(pg As Object)
     Dim j As Long
-    For j = pg.controls.count - 1 To 0 Step -1
-        If Left$(pg.controls(j).tag & "", 6) = "MMTGEN" Then pg.controls.Remove pg.controls(j).name
+    For j = pg.Controls.count - 1 To 0 Step -1
+        If Left$(pg.Controls(j).tag & "", 6) = "MMTGEN" Then pg.Controls.Remove pg.Controls(j).name
     Next
 End Sub
 
@@ -589,14 +589,14 @@ End Sub
 
 Private Sub MakeLbl(pg As Object, nm$, cap$, L!, t!, w!, h!)
     Dim o As MSForms.label
-    Set o = pg.controls.Add("Forms.Label.1", nm, True)
+    Set o = pg.Controls.Add("Forms.Label.1", nm, True)
     o.caption = cap: o.Left = L: o.top = t: o.Width = w: o.Height = h: o.tag = "MMTGEN"
 End Sub
 
 Private Sub MakeCbo(ByVal pg As Object, ByVal nm As String, _
                     ByVal L As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
     Dim o As MSForms.ComboBox
-    Set o = pg.controls.Add("Forms.ComboBox.1", nm, True)
+    Set o = pg.Controls.Add("Forms.ComboBox.1", nm, True)
     With o
         .Left = L: .top = t: .Width = w: .Height = h
         .Style = fmStyleDropDownList
@@ -618,11 +618,11 @@ Public Sub MMT_BuildChildTabs_Frame()
 
     Dim fra As MSForms.Frame, mp As MSForms.MultiPage
     On Error Resume Next
-    Set fra = pg.controls("fraMMTWrap")
+    Set fra = pg.Controls("fraMMTWrap")
     On Error GoTo 0
     If fra Is Nothing Then
         ' Frameをフォームに追加してから親をMMTページへ
-        Set fra = frmEval.controls.Add("Forms.Frame.1", "fraMMTWrap", True)
+        Set fra = frmEval.Controls.Add("Forms.Frame.1", "fraMMTWrap", True)
         Set fra.parent = pg
         With fra
             .caption = ""
@@ -633,10 +633,10 @@ Public Sub MMT_BuildChildTabs_Frame()
     End If
 
     On Error Resume Next
-    Set mp = fra.controls("mpMMTChild")
+    Set mp = fra.Controls("mpMMTChild")
     On Error GoTo 0
     If mp Is Nothing Then
-        Set mp = fra.controls.Add("Forms.MultiPage.1", "mpMMTChild", True)
+        Set mp = fra.Controls.Add("Forms.MultiPage.1", "mpMMTChild", True)
         With mp
             .Left = 6: .top = 6
             .Width = fra.Width - 12
@@ -673,16 +673,16 @@ Public Sub Swap_DailyLogList_ToMonthlyDraftBox()
     ' 重要：New は使わない（Initializeで落ちる環境があるため）
     Set uf = frmEval            ' 起動中のインスタンスを参照
 
-    Set lb = uf.controls("lstDailyLogList")
+    Set lb = uf.Controls("lstDailyLogList")
     Set host = lb.parent        ' fraDailyLog のはず
 
     ' 既に作ってあればそれを使う
     On Error Resume Next
-    Set tb = host.controls("txtMonthlyMonitoringDraft")
+    Set tb = host.Controls("txtMonthlyMonitoringDraft")
     On Error GoTo EH
 
     If tb Is Nothing Then
-        Set tb = host.controls.Add("Forms.TextBox.1", "txtMonthlyMonitoringDraft", True)
+        Set tb = host.Controls.Add("Forms.TextBox.1", "txtMonthlyMonitoringDraft", True)
     End If
 
     ' 位置とサイズを lstDailyLogList に合わせる
@@ -724,16 +724,16 @@ Public Sub Ensure_MonthlyDraftBox_UnderFraDailyLog()
     Dim tb As Object
 
     Set uf = VBA.UserForms(0)
-    Set f = uf.controls("fraDailyLog")
-    Set lb = f.controls("lstDailyLogList")
+    Set f = uf.Controls("fraDailyLog")
+    Set lb = f.Controls("lstDailyLogList")
 
     ' 既存があれば取得、なければ作成（fraDailyLog 直下）
     On Error Resume Next
-    Set tb = f.controls("txtMonthlyMonitoringDraft")
+    Set tb = f.Controls("txtMonthlyMonitoringDraft")
     On Error GoTo EH
 
     If tb Is Nothing Then
-        Set tb = f.controls.Add("Forms.TextBox.1", "txtMonthlyMonitoringDraft", True)
+        Set tb = f.Controls.Add("Forms.TextBox.1", "txtMonthlyMonitoringDraft", True)
     End If
 
     ' ListBoxと同じ矩形に合わせる（確定値）
@@ -781,9 +781,9 @@ Public Sub Verify_MonthlyExport_OpensWorkbook()
 
     ' いま使ってる呼び出しと同じ
     Call ExportMonitoring_ToMonthlyWorkbook( _
-        CDate(frmEval.controls("txtDailyDate").text), _
-        frmEval.controls("frHeader").controls("txtHdrName").text, _
-        frmEval.controls("txtMonthlyMonitoringDraft").text)
+        CDate(frmEval.Controls("txtDailyDate").text), _
+        frmEval.Controls("frHeader").Controls("txtHdrName").text, _
+        frmEval.Controls("txtMonthlyMonitoringDraft").text)
 
     Debug.Print "After:  ActiveWB=" & ActiveWorkbook.name & "  Count=" & Workbooks.count
 

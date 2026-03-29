@@ -16,8 +16,8 @@ End Sub
 Private Sub DumpChildren(ByVal parent As Object, ByVal path As String)
     Dim i As Long, c As Object
     On Error Resume Next
-    For i = 0 To parent.controls.count - 1
-        Set c = parent.controls(i)
+    For i = 0 To parent.Controls.count - 1
+        Set c = parent.Controls(i)
         If Not c Is Nothing Then
             Dim tp$, nm$, cap$
             tp = typeName(c): nm = GetSafeName(c): cap = GetSafeCaption(c)
@@ -68,7 +68,7 @@ End Sub
 Private Function FindFirstByType(container As Object, ByVal t As String) As Object
     Dim c As Object
     On Error Resume Next
-    For Each c In container.controls
+    For Each c In container.Controls
         If typeName(c) = t Then Set FindFirstByType = c: Exit Function
         If HasControls(c) Then
             Set FindFirstByType = FindFirstByType(c, t)
@@ -80,7 +80,7 @@ End Function
 Private Sub ListCombosRecursive(parent As Object)
     Dim c As Object
     On Error Resume Next
-    For Each c In parent.controls
+    For Each c In parent.Controls
         If typeName(c) = "ComboBox" Then Debug.Print c.name
         If HasControls(c) Then ListCombosRecursive c
     Next
@@ -114,7 +114,7 @@ End Function
 Private Sub ListByTypeRecursive(parent As Object, wantTypes As Variant, Optional ByVal path As String = "")
     Dim c As Object, t$, nm$, cap$
     On Error Resume Next
-    For Each c In parent.controls
+    For Each c In parent.Controls
         t = typeName(c)
         If IsWantedType(t, wantTypes) Then
             nm = SafeName(c): cap = SafeCaption(c)
@@ -133,7 +133,7 @@ End Function
 
 Private Function HasControls(obj As Object) As Boolean
     On Error Resume Next
-    HasControls = (obj.controls.count >= 0)
+    HasControls = (obj.Controls.count >= 0)
 End Function
 
 Private Function SafeCaption(o As Object) As String

@@ -627,7 +627,7 @@ Private Function GetBedMobilityBand() As String
 
     Set ws = ThisWorkbook.Worksheets("EvalData")
 
-    nm = Trim$(frmEval.controls("txtName").text)
+    nm = Trim$(frmEval.Controls("txtName").text)
     If LenB(nm) = 0 Then Exit Function
 
     ' ※あなたの既存 FindLatestRowByName を使う前提（NormalizeName含む版でOK）
@@ -680,7 +680,7 @@ Public Function FindControlRecursive(ByVal container As Object, ByVal targetName
     If container Is Nothing Then Exit Function
 
     On Error Resume Next
-    Set FindControlRecursive = container.controls(targetName)
+    Set FindControlRecursive = container.Controls(targetName)
     On Error GoTo 0
     If Not FindControlRecursive Is Nothing Then Exit Function
 

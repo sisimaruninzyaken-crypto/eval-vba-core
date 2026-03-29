@@ -167,23 +167,7 @@ End Sub
 
 
 Public Sub AddHeaderArchiveDeleteButton()
-    Dim f As Object: Set f = frmEval
-    Dim hdr As MSForms.Frame: Set hdr = f.controls("frHeader")
-
-    Dim btn As MSForms.CommandButton
-
-    On Error Resume Next
-    Set btn = hdr.controls("cmdArchiveDelete")
-    On Error GoTo 0
-
-    If btn Is Nothing Then
-        Set btn = hdr.controls.Add("Forms.CommandButton.1", "cmdArchiveDelete", True)
-        btn.caption = "終了者削除"
-        btn.Width = 90
-        btn.Height = hdr.controls("txtHdrPID").Height
-        btn.top = hdr.controls("txtHdrPID").top
-        btn.Left = 8
-    End If
+    ' 終了者削除ボタンは廃止 - 計画生成ボタンに置き換え済み（frmEval内で配置）
 End Sub
 
 

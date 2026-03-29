@@ -8,10 +8,10 @@ Public Sub Posture_ListOnce()
     On Error Resume Next
 
     ' どれかのMultiPageを見つける（名前に依存しない）
-    For Each c In uf.controls
+    For Each c In uf.Controls
         If typeName(c) = "MultiPage" Then Set mp = c: Exit For
-        If c.controls.count >= 0 Then
-            For Each y In c.controls
+        If c.Controls.count >= 0 Then
+            For Each y In c.Controls
                 If typeName(y) = "MultiPage" Then Set mp = y: Exit For
             Next
             If Not mp Is Nothing Then Exit For
@@ -23,10 +23,10 @@ Public Sub Posture_ListOnce()
     Debug.Print "=== Controls on current page (type | name | caption) ==="
 
     ' ページ直下と1階層内側（Frameなど）を列挙
-    For Each c In pg.controls
+    For Each c In pg.Controls
         Debug.Print typeName(c), "|", SafeName1(c), "|", SafeCap1(c)
-        If c.controls.count >= 0 Then
-            For Each y In c.controls
+        If c.Controls.count >= 0 Then
+            For Each y In c.Controls
                 Debug.Print "  -", typeName(y), "|", SafeName1(y), "|", SafeCap1(y)
             Next
         End If

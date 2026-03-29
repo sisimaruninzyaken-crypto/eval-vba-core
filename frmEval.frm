@@ -15,6 +15,7 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
 
+
 Option Explicit
 
 '=== frmEval ヘッダ：共通で使う変数 ===
@@ -121,6 +122,8 @@ Private WithEvents mBIEnter_txtDisDate As MSForms.TextBox
 Attribute mBIEnter_txtDisDate.VB_VarHelpID = -1
 Private WithEvents mBIEnter_txtTxCourse As MSForms.TextBox
 Attribute mBIEnter_txtTxCourse.VB_VarHelpID = -1
+Private WithEvents btnGeneratePlanCtl As MSForms.CommandButton
+Attribute btnGeneratePlanCtl.VB_VarHelpID = -1
 
 
 
@@ -151,7 +154,7 @@ Private Sub FitFrameHeightToChildren(f As MSForms.Frame, Optional margin As Sing
 
     If f Is Nothing Then Exit Sub
 
-    For Each c In f.controls
+    For Each c In f.Controls
         If c.top + c.Height > maxBottom Then
             maxBottom = c.top + c.Height
         End If
@@ -212,11 +215,11 @@ End Sub
 ' 既存の保存処理で参照されるラッパー（見た目と挙動は変えない）
 Private Function CtrlText(ByVal ctrlName As String) As String
     On Error Resume Next
-    CtrlText = Trim$(Me.controls(ctrlName).text & "")
+    CtrlText = Trim$(Me.Controls(ctrlName).text & "")
 End Function
 Private Sub SetCtrlText(ByVal ctrlName As String, ByVal v As String)
     On Error Resume Next
-    Me.controls(ctrlName).text = v
+    Me.Controls(ctrlName).text = v
 End Sub
 
 Private Function SafeGetControl(ByVal parent As Object, ByVal nm As String) As Object
@@ -270,7 +273,7 @@ End Function
 Private Function CreateFrameP(parent As MSForms.Frame, title As String, _
                               Optional minHeight As Single = 120) As MSForms.Frame
     Dim f As MSForms.Frame
-    Set f = parent.controls.Add("Forms.Frame.1")
+    Set f = parent.Controls.Add("Forms.Frame.1")
     With f
         .caption = title
         .Left = 6
@@ -306,9 +309,9 @@ Function CreateLabel( _
 
     Dim lb As MSForms.label
     If nm <> "" Then
-        Set lb = parent.controls.Add("Forms.Label.1", nm)
+        Set lb = parent.Controls.Add("Forms.Label.1", nm)
     Else
-        Set lb = parent.controls.Add("Forms.Label.1")
+        Set lb = parent.Controls.Add("Forms.Label.1")
     End If
 
     With lb
@@ -342,7 +345,7 @@ Private Function CreateTextBox(parent As MSForms.Frame, x As Single, y As Single
                                w As Single, h As Single, multiline As Boolean, _
                                Optional name As String = "", Optional tag As String = "") As MSForms.TextBox
     Dim tb As MSForms.TextBox
-    Set tb = parent.controls.Add("Forms.TextBox.1", IIf(name = "", vbNullString, name))
+    Set tb = parent.Controls.Add("Forms.TextBox.1", IIf(name = "", vbNullString, name))
     With tb
         .Left = x
         .top = y
@@ -358,7 +361,7 @@ End Function
 Private Function CreateCombo(parent As MSForms.Frame, x As Single, y As Single, _
                              w As Single, Optional name As String = "", Optional tag As String = "") As MSForms.ComboBox
     Dim cb As MSForms.ComboBox
-    Set cb = parent.controls.Add("Forms.ComboBox.1", IIf(name = "", vbNullString, name))
+    Set cb = parent.Controls.Add("Forms.ComboBox.1", IIf(name = "", vbNullString, name))
     With cb
         .Left = x
         .top = y
@@ -373,7 +376,7 @@ Private Function CreateCheck(parent As MSForms.Frame, caption As String, _
                              x As Single, y As Single, Optional name As String = "", _
                              Optional tag As String = "") As MSForms.CheckBox
     Dim ck As MSForms.CheckBox
-    Set ck = parent.controls.Add("Forms.CheckBox.1", IIf(name = "", vbNullString, name))
+    Set ck = parent.Controls.Add("Forms.CheckBox.1", IIf(name = "", vbNullString, name))
     With ck
         .caption = caption
         .Left = x
@@ -401,7 +404,7 @@ Private Function BuildCheckFrame(parent As MSForms.Frame, _
     items As Variant, Optional groupTag As String = "") As MSForms.Frame
 
     Dim f As MSForms.Frame
-    Set f = parent.controls.Add("Forms.Frame.1")
+    Set f = parent.Controls.Add("Forms.Frame.1")
     With f
         .caption = title
         .Left = x
@@ -421,7 +424,7 @@ Private Function BuildCheckFrame(parent As MSForms.Frame, _
         col = (i - LBound(items)) Mod 2
         row = (i - LBound(items)) \ 2
         Dim ck As MSForms.CheckBox
-        Set ck = f.controls.Add("Forms.CheckBox.1", "ck_" & CStr(i))
+        Set ck = f.Controls.Add("Forms.CheckBox.1", "ck_" & CStr(i))
         With ck
             .caption = CStr(items(i))
             .Left = 12 + col * colW
@@ -443,18 +446,18 @@ Private Sub BuildAssistiveChecksInWalkEval(ByVal assistiveCsv As String)
     If frTarget Is Nothing Then Exit Sub
 
     Dim i As Long
-    For i = frTarget.controls.count - 1 To 0 Step -1
-        If typeName(frTarget.controls(i)) = "CheckBox" Then
-            If frTarget.controls(i).tag = "AssistiveGroup" Then
-                frTarget.controls.Remove frTarget.controls(i).name
+    For i = frTarget.Controls.count - 1 To 0 Step -1
+        If typeName(frTarget.Controls(i)) = "CheckBox" Then
+            If frTarget.Controls(i).tag = "AssistiveGroup" Then
+                frTarget.Controls.Remove frTarget.Controls(i).name
             End If
         End If
     Next
 
     Dim maxBottom As Single
     maxBottom = 0
-    For i = 0 To frTarget.controls.count - 1
-        With frTarget.controls(i)
+    For i = 0 To frTarget.Controls.count - 1
+        With frTarget.Controls(i)
             If .top + .Height > maxBottom Then maxBottom = .top + .Height
         End With
     Next
@@ -488,7 +491,7 @@ Public Function GetWalkAssistiveTargetFrame() As MSForms.Frame
     Set root = GetWalkRootFrame()
     If root Is Nothing Then Exit Function
     
-    For Each c In root.controls
+    For Each c In root.Controls
         If typeName(c) = "Frame" Then
             If InStr(1, CStr(c.name), "gait", vbTextCompare) > 0 _
                Or InStr(1, CStr(c.caption), "", vbTextCompare) > 0 Then
@@ -583,7 +586,7 @@ End Function
 Private Sub AddRLAChk(f As MSForms.Frame, ByVal key As String, ByVal caption As String, _
                       ByVal x As Single, ByVal y As Single)
     Dim ck As MSForms.CheckBox
-    Set ck = f.controls.Add("Forms.CheckBox.1", "RLA_" & key & "_" & Replace(caption, "/", "_"))
+    Set ck = f.Controls.Add("Forms.CheckBox.1", "RLA_" & key & "_" & Replace(caption, "/", "_"))
     With ck
         .caption = caption
         .Left = x
@@ -595,7 +598,7 @@ End Sub
 Private Sub AddRLAOpt(f As MSForms.Frame, ByVal key As String, ByVal caption As String, _
                       ByVal x As Single, ByVal y As Single)
     Dim ob As MSForms.OptionButton
-    Set ob = f.controls.Add("Forms.OptionButton.1")
+    Set ob = f.Controls.Add("Forms.OptionButton.1")
     With ob
         .caption = caption
         .groupName = key
@@ -793,19 +796,19 @@ Private Sub SetupInputModesJP()
     ApplyInputModeJP Me
 
     If FnHasControl("txtAge") Then
-    Debug.Print "[IME] txtAge =", Me.controls("txtAge").IMEMode
+    Debug.Print "[IME] txtAge =", Me.Controls("txtAge").IMEMode
 Else
     Debug.Print "[IME] txtAge = (not found)"
 End If
 
 If FnHasControl("txtEDate") Then
-    Debug.Print "[IME] txtEDate =", Me.controls("txtEDate").IMEMode
+    Debug.Print "[IME] txtEDate =", Me.Controls("txtEDate").IMEMode
 Else
     Debug.Print "[IME] txtEDate = (not found)"
 End If
 
 If FnHasControl("txtPost_Note") Then
-    Debug.Print "[IME] txtPost_Note =", Me.controls("txtPost_Note").IMEMode
+    Debug.Print "[IME] txtPost_Note =", Me.Controls("txtPost_Note").IMEMode
 Else
     Debug.Print "[IME] txtPost_Note = (not found)"
 End If
@@ -815,7 +818,7 @@ End Sub
 '=== ヘルパー：コントロール存在チェック（衝突回避の別名） ===
 Private Function FnHasControl(ByVal nm As String) As Boolean
     Dim c As MSForms.Control
-    For Each c In Me.controls
+    For Each c In Me.Controls
         If StrComp(c.name, nm, vbTextCompare) = 0 Then
             FnHasControl = True
             Exit Function
@@ -851,7 +854,7 @@ Private Sub ApplyInputModeJP(container As Object)
     If Not HasControls(container) Then Exit Sub
 
     Dim c As MSForms.Control
-    For Each c In container.controls
+    For Each c In container.Controls
         Select Case typeName(c)
             Case "TextBox", "ComboBox"
                 On Error Resume Next
@@ -898,7 +901,7 @@ End Function
 ' （任意）保存前に数字欄を半角に統一しておく
 Private Sub NormalizeNumericInputsToHalfwidth()
     Dim c As MSForms.Control
-    For Each c In Me.controls
+    For Each c In Me.Controls
         Call NormalizeNumericInContainer(c)
     Next
 End Sub
@@ -921,7 +924,7 @@ Private Sub NormalizeNumericInContainer(container As Object)
     If Not HasControls(container) Then Exit Sub
 
     Dim c As MSForms.Control
-    For Each c In container.controls
+    For Each c In container.Controls
         Select Case typeName(c)
             Case "TextBox", "ComboBox"
                 If ShouldBeNumericField(c) Then
@@ -999,11 +1002,11 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
 
     ' 2) ページ内のホスト Frame を取得（無ければ作成）
     Dim host As MSForms.Frame, c As Control
-    For Each c In pgMove.controls
+    For Each c In pgMove.Controls
         If typeName(c) = "Frame" Then Set host = c: Exit For
     Next
     If host Is Nothing Then
-        Set host = pgMove.controls.Add("Forms.Frame.1", "frMoveHost")
+        Set host = pgMove.Controls.Add("Forms.Frame.1", "frMoveHost")
         host.Left = 6: host.top = 6
         host.Width = pgMove.InsideWidth - 12
         host.Height = pgMove.InsideHeight - 12
@@ -1011,14 +1014,14 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
 
     ' 3) host 内の MultiPage だけを全消去（ほかは触らない）
     Dim i As Long
-    For i = host.controls.count - 1 To 0 Step -1
-        If typeName(host.controls(i)) = "MultiPage" Then
-            host.controls.Remove host.controls(i).name
+    For i = host.Controls.count - 1 To 0 Step -1
+        If typeName(host.Controls(i)) = "MultiPage" Then
+            host.Controls.Remove host.Controls(i).name
         End If
     Next
 
     ' 4) mpADL を作成＆3枚保証（0:BI / 1:IADL / 2:起居動作）
-    Set mpADL = host.controls.Add("Forms.MultiPage.1", "mpADL")
+    Set mpADL = host.Controls.Add("Forms.MultiPage.1", "mpADL")
     Trace "mpADL ready; pages=" & mpADL.Pages.count, "BI/IADL"
 
     With mpADL
@@ -1048,12 +1051,12 @@ Set EnsureBI_IADL = mpADL
     ' 一旦クリアしてから作成（空／重複どちらにも対応）
     Dim iCtl As Long
     
-     For iCtl = pBI.controls.count - 1 To 0 Step -1
-    If Left(pBI.controls(iCtl).name, 5) = "lblBI" _
-    Or Left(pBI.controls(iCtl).name, 5) = "cmbBI" _
-    Or pBI.controls(iCtl).name = "txtBITotal" _
-    Or pBI.controls(iCtl).name = "frBIHomeEnv" Then
-        pBI.controls.Remove pBI.controls(iCtl).name
+     For iCtl = pBI.Controls.count - 1 To 0 Step -1
+    If Left(pBI.Controls(iCtl).name, 5) = "lblBI" _
+    Or Left(pBI.Controls(iCtl).name, 5) = "cmbBI" _
+    Or pBI.Controls(iCtl).name = "txtBITotal" _
+    Or pBI.Controls(iCtl).name = "frBIHomeEnv" Then
+        pBI.Controls.Remove pBI.Controls(iCtl).name
     End If
 Next
 
@@ -1067,12 +1070,12 @@ Next
     yBI = 18
 
     Dim lblBI As MSForms.label, txtBI As MSForms.TextBox
-    Set lblBI = pBI.controls.Add("Forms.Label.1", "lblBIHeader")
+    Set lblBI = pBI.Controls.Add("Forms.Label.1", "lblBIHeader")
     With lblBI
         .caption = "バーサルインデックス（点）"
         .Left = 12: .top = yBI: .Width = 160
     End With
-    Set txtBI = pBI.controls.Add("Forms.TextBox.1", "txtBITotal")
+    Set txtBI = pBI.Controls.Add("Forms.TextBox.1", "txtBITotal")
     With txtBI
         .tag = "BI.Total"
         .Left = lblBI.Left + lblBI.Width + 8
@@ -1083,10 +1086,10 @@ Next
 
     For idx = LBound(biItems) To UBound(biItems)
         Dim lb As MSForms.label, cb As MSForms.ComboBox
-        Set lb = pBI.controls.Add("Forms.Label.1", "lblBI_" & CStr(idx))
+        Set lb = pBI.Controls.Add("Forms.Label.1", "lblBI_" & CStr(idx))
         With lb: .caption = CStr(biItems(idx)): .Left = 12: .top = yBI: .Width = 160: End With
 
-        Set cb = pBI.controls.Add("Forms.ComboBox.1", "cmbBI_" & CStr(idx))
+        Set cb = pBI.Controls.Add("Forms.ComboBox.1", "cmbBI_" & CStr(idx))
         AttachBIHook cb
         With cb
             .tag = "BI." & CStr(biItems(idx))
@@ -1129,7 +1132,7 @@ Next
     Dim ckHome As MSForms.CheckBox
     Dim yHome As Single
 
-Set frHomeEnv = pBI.controls.Add("Forms.Frame.1", "frBIHomeEnv")
+Set frHomeEnv = pBI.Controls.Add("Forms.Frame.1", "frBIHomeEnv")
 With frHomeEnv
     .caption = "住宅状況（該当のみチェック）"
     .Left = 420
@@ -1160,7 +1163,7 @@ homeNames = Array( _
 
 yHome = 18
 For h = LBound(homeItems) To UBound(homeItems)
-    Set ckHome = frHomeEnv.controls.Add("Forms.CheckBox.1", CStr(homeNames(h)))
+    Set ckHome = frHomeEnv.Controls.Add("Forms.CheckBox.1", CStr(homeNames(h)))
 
     Dim col As Long, row As Long
     col = h Mod 2
@@ -1178,7 +1181,7 @@ Next h
 
 yHome = 18 + ((UBound(homeItems) + 1 + 1) \ 2) * 20
 
-Set lblHomeNote = frHomeEnv.controls.Add("Forms.Label.1", "lblBIHomeEnvNote")
+Set lblHomeNote = frHomeEnv.Controls.Add("Forms.Label.1", "lblBIHomeEnvNote")
 With lblHomeNote
     .caption = "備考"
     .Left = 12
@@ -1186,7 +1189,7 @@ With lblHomeNote
     .Width = 60
 End With
 
-Set txtHomeNote = frHomeEnv.controls.Add("Forms.TextBox.1", "txtBIHomeEnvNote")
+Set txtHomeNote = frHomeEnv.Controls.Add("Forms.TextBox.1", "txtBIHomeEnvNote")
 With txtHomeNote
     .tag = "BI.HomeEnv.Note"           '←Tagはそのまま
     .Left = 12
@@ -1206,8 +1209,8 @@ frHomeEnv.Height = txtHomeNote.top + txtHomeNote.Height + 12
 
     '======================== IADL（9項目） ========================
     Dim pIADL As MSForms.page: Set pIADL = mpADL.Pages(1)
-    For iCtl = pIADL.controls.count - 1 To 0 Step -1
-        pIADL.controls.Remove pIADL.controls(iCtl).name
+    For iCtl = pIADL.Controls.count - 1 To 0 Step -1
+        pIADL.Controls.Remove pIADL.Controls(iCtl).name
     Next
 
     Dim iadlItems As Variant, iadlChoices As Variant
@@ -1231,10 +1234,10 @@ frHomeEnv.Height = txtHomeNote.top + txtHomeNote.Height + 12
         yIADL = 18 + rowI * rowH
 
         Dim lb2 As MSForms.label, cb2 As MSForms.ComboBox
-        Set lb2 = pIADL.controls.Add("Forms.Label.1", "lblIADL_" & CStr(j))
+        Set lb2 = pIADL.Controls.Add("Forms.Label.1", "lblIADL_" & CStr(j))
         With lb2: .caption = CStr(iadlItems(j)): .Left = xIADL: .top = yIADL: .Width = 120: End With
 
-        Set cb2 = pIADL.controls.Add("Forms.ComboBox.1", "cmbIADL_" & CStr(j))
+        Set cb2 = pIADL.Controls.Add("Forms.ComboBox.1", "cmbIADL_" & CStr(j))
         With cb2
             .tag = "IADL." & CStr(iadlItems(j))
             .Left = xIADL + 120
@@ -1247,9 +1250,9 @@ frHomeEnv.Height = txtHomeNote.top + txtHomeNote.Height + 12
 
     Dim gridBottom As Single: gridBottom = 18 + iadlRows * rowH
     Dim lblINote As MSForms.label, txtINote As MSForms.TextBox
-    Set lblINote = pIADL.controls.Add("Forms.Label.1", "lblIADLNote")
+    Set lblINote = pIADL.Controls.Add("Forms.Label.1", "lblIADLNote")
     With lblINote: .caption = "備考": .Left = 12: .top = gridBottom + 12: .Width = 40: End With
-    Set txtINote = pIADL.controls.Add("Forms.TextBox.1", "txtIADLNote")
+    Set txtINote = pIADL.Controls.Add("Forms.TextBox.1", "txtIADLNote")
     With txtINote
         .tag = "IADL.備考"
         .Left = 60
@@ -1273,9 +1276,9 @@ frHomeEnv.Height = txtHomeNote.top + txtHomeNote.Height + 12
 
     '--- BI: 住宅状況を右側へ固定（最後に当てる：整列で戻されないように）---
 On Error Resume Next
-pBI.controls("frBIHomeEnv").Left = 600
-pBI.controls("frBIHomeEnv").top = 12
-pBI.controls("frBIHomeEnv").ZOrder 0
+pBI.Controls("frBIHomeEnv").Left = 600
+pBI.Controls("frBIHomeEnv").top = 12
+pBI.Controls("frBIHomeEnv").ZOrder 0
 On Error GoTo 0
 
 
@@ -1385,7 +1388,7 @@ Public Sub RecalcBI()
 
     ' --- 「バーサルインデックス」タブを持つ MultiPage を探す ---
     Set mpADL = Nothing
-    For Each ctrl In Me.controls
+    For Each ctrl In Me.Controls
         If TypeOf ctrl Is MSForms.MultiPage Then
             Set mpADL = ctrl
             If mpADL.Pages.count > 0 Then
@@ -1405,7 +1408,7 @@ Public Sub RecalcBI()
     total = 0
     For idx = 0 To 9
         Set cb = Nothing
-        Set cb = pBI.controls("cmbBI_" & CStr(idx))
+        Set cb = pBI.Controls("cmbBI_" & CStr(idx))
         If Not cb Is Nothing Then
             v = Trim$(CStr(cb.value))
             If Len(v) > 0 Then
@@ -1415,7 +1418,7 @@ Public Sub RecalcBI()
     Next idx
 
     ' --- 合計を txtBITotal に反映 ---
-    Set txt = pBI.controls("txtBITotal")
+    Set txt = pBI.Controls("txtBITotal")
     If Not txt Is Nothing Then
         txt.value = total
     End If
@@ -1449,7 +1452,7 @@ Public Sub ApplyImeToIADLNote()
      Dim mpA As MSForms.MultiPage, c As Control
      If hostMove Is Nothing Then Exit Sub
 
-    For Each c In hostMove.controls
+    For Each c In hostMove.Controls
         If typeName(c) = "MultiPage" Then
             If c.name = "mpADL" Then Set mpA = c: Exit For
         End If
@@ -1457,7 +1460,7 @@ Public Sub ApplyImeToIADLNote()
     If mpA Is Nothing Then Exit Sub
 
     Dim tb As MSForms.TextBox
-    Set tb = mpA.Pages(1).controls("txtIADLNote") ' Page(1) = IADL
+    Set tb = mpA.Pages(1).Controls("txtIADLNote") ' Page(1) = IADL
     If Not tb Is Nothing Then tb.IMEMode = fmIMEModeHiragana
 
    
@@ -1530,24 +1533,24 @@ End Sub
 Private Sub RemoveAllMpADL()
     Dim i As Long, c As Control
     ' フォーム直下
-    For i = Me.controls.count - 1 To 0 Step -1
-        If typeName(Me.controls(i)) = "MultiPage" Then
-            If Me.controls(i).name = "mpADL" Then
-                Me.controls.Remove Me.controls(i).name
+    For i = Me.Controls.count - 1 To 0 Step -1
+        If typeName(Me.Controls(i)) = "MultiPage" Then
+            If Me.Controls(i).name = "mpADL" Then
+                Me.Controls.Remove Me.Controls(i).name
             End If
         End If
     Next i
 
     ' ルート MultiPage（mp）の各ページ内
     Dim mp As MSForms.MultiPage, p As MSForms.page
-    For Each c In Me.controls
+    For Each c In Me.Controls
         If typeName(c) = "MultiPage" Then Set mp = c: Exit For
     Next c
     If Not mp Is Nothing Then
         For i = 0 To mp.Pages.count - 1
-            For Each c In mp.Pages(i).controls
+            For Each c In mp.Pages(i).Controls
                 If typeName(c) = "MultiPage" Then
-                    If c.name = "mpADL" Then mp.Pages(i).controls.Remove c.name
+                    If c.name = "mpADL" Then mp.Pages(i).Controls.Remove c.name
                 End If
             Next c
         Next i
@@ -1588,21 +1591,21 @@ Private Sub BuildKyoOnADL(pg As MSForms.page)
     
 ' 寝返り
 Set lb = CreateLabel(fr, "寝返り", COL_LX, y)
-Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_Roll", True)
+Set cb = fr.Controls.Add("Forms.ComboBox.1", "cmbKyo_Roll", True)
 With cb: .Left = COL_LX + lblW + 60: .top = y - 3: .Width = 120: End With
 AddItemsToCombo cb, choices
 y = y + rowH
 
 ' 起き上がり
 Set lb = CreateLabel(fr, "起き上がり", COL_LX, y)
-Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_SitUp", True)
+Set cb = fr.Controls.Add("Forms.ComboBox.1", "cmbKyo_SitUp", True)
 With cb: .Left = COL_LX + lblW + 60: .top = y - 3: .Width = 120: End With
 AddItemsToCombo cb, choices
 y = y + rowH
 
 ' 座位保持
 Set lb = CreateLabel(fr, "座位保持", COL_LX, y)
-Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbKyo_SitHold", True)
+Set cb = fr.Controls.Add("Forms.ComboBox.1", "cmbKyo_SitHold", True)
 With cb: .Left = COL_LX + lblW + 60: .top = y - 3: .Width = 120: End With
 AddItemsToCombo cb, choices
 y = y + rowH
@@ -1621,7 +1624,7 @@ cboStand.List = MakeList("自立,見守り（監視下）,一部介助,全介助")
 
     ' 備考
     Set lb = CreateLabel(fr, "備考", COL_LX, y)
-    Set txt = fr.controls.Add("Forms.TextBox.1", "txtKyoNote")
+    Set txt = fr.Controls.Add("Forms.TextBox.1", "txtKyoNote")
     With txt
         .Left = COL_LX + 40
         .top = y - 3
@@ -1668,7 +1671,7 @@ End Sub
 '―― フォーム内の MultiPage を自動検出（名前に依存しない）
 Private Function FindMainMultiPage() As MSForms.MultiPage
     Dim c As MSForms.Control
-    For Each c In Me.controls
+    For Each c In Me.Controls
         If TypeOf c Is MSForms.MultiPage Then
             Set FindMainMultiPage = c
             Exit Function
@@ -1690,7 +1693,7 @@ End Function
 '―― Page 内で Frame を取得（無ければ作成）
 Private Function FindOrAddFrame(pg As MSForms.page, nm As String) As MSForms.Frame
     Dim c As MSForms.Control
-    For Each c In pg.controls
+    For Each c In pg.Controls
         If TypeOf c Is MSForms.Frame Then
             If StrComp(c.name, nm, vbTextCompare) = 0 Then
                 Set FindOrAddFrame = c
@@ -1698,14 +1701,14 @@ Private Function FindOrAddFrame(pg As MSForms.page, nm As String) As MSForms.Fra
             End If
         End If
     Next
-    Set FindOrAddFrame = pg.controls.Add("Forms.Frame.1", nm, True)
+    Set FindOrAddFrame = pg.Controls.Add("Forms.Frame.1", nm, True)
 End Function
 
 '―― 子コントロール全削除（生成前に一度だけ）
 Private Sub ClearChildren(fr As MSForms.Frame)
     Dim i As Long
-    For i = fr.controls.count - 1 To 0 Step -1
-        fr.controls.Remove fr.controls(i).name
+    For i = fr.Controls.count - 1 To 0 Step -1
+        fr.Controls.Remove fr.Controls(i).name
     Next
 End Sub
 
@@ -1758,12 +1761,12 @@ Private Sub CreatePostureRows(fr As MSForms.Frame)
     For i = LBound(items) To UBound(items)
         ' ラベル
         Dim lb As MSForms.label
-        Set lb = fr.controls.Add("Forms.Label.1", "lblPost_" & CStr(i), True)
+        Set lb = fr.Controls.Add("Forms.Label.1", "lblPost_" & CStr(i), True)
         lb.caption = CStr(items(i))
 
         ' コンボ（保存/読込に使う Tag を付与）
         Dim cb As MSForms.ComboBox
-        Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPost_" & CStr(i), True)
+        Set cb = fr.Controls.Add("Forms.ComboBox.1", "cmbPost_" & CStr(i), True)
         cb.Style = fmStyleDropDownList
         cb.tag = POSTURE_TAG_PREFIX & CStr(items(i))
 
@@ -1781,11 +1784,11 @@ Private Sub CreatePostureRows(fr As MSForms.Frame)
 
     '―― 備考ラベル＋テキストボックス（5行相当）
     Dim lbNote As MSForms.label
-    Set lbNote = fr.controls.Add("Forms.Label.1", "lblPost_Note", True)
+    Set lbNote = fr.Controls.Add("Forms.Label.1", "lblPost_Note", True)
     lbNote.caption = "備考"
 
     Dim txtNote As MSForms.TextBox
-    Set txtNote = fr.controls.Add("Forms.TextBox.1", "txtPost_Note", True)
+    Set txtNote = fr.Controls.Add("Forms.TextBox.1", "txtPost_Note", True)
     With txtNote
         .multiline = True
         .EnterKeyBehavior = True
@@ -1829,13 +1832,13 @@ Private Sub LayoutPosture()
         x = 12 + c * colW
         y = startY + r * rowH
 
-        With fr.controls("lblPost_" & CStr(i))
+        With fr.Controls("lblPost_" & CStr(i))
             .Left = x
             .top = y + 3
             .Width = labelW
             .Visible = True
         End With
-        With fr.controls("cmbPost_" & CStr(i))
+        With fr.Controls("cmbPost_" & CStr(i))
             .Left = x + labelW + 6
             .top = y
             .Width = 100
@@ -1845,13 +1848,13 @@ Private Sub LayoutPosture()
 
     '―― 備考の位置とサイズ（5行分 ≒ 約90px）
     Dim noteTop As Single: noteTop = startY + rows * rowH + 10
-    With fr.controls("lblPost_Note")
+    With fr.Controls("lblPost_Note")
         .Left = 12
         .top = noteTop + 2
         .Width = 40
         .Visible = True
     End With
-    With fr.controls("txtPost_Note")
+    With fr.Controls("txtPost_Note")
         .Left = 12 + 40 + 6
         .top = noteTop
         .Width = fr.Width - 24 - 46
@@ -1902,7 +1905,7 @@ Private Sub HookRomMirrorButtonsInContainer(ByVal container As Object)
         Exit Sub
     End If
 
-    For Each c In container.controls
+    For Each c In container.Controls
         If typeName(c) = "CommandButton" Then
             If CStr(c.tag) = "ROM_MIRROR" Then
                 Dim h As clsRomMirrorBtnHook
@@ -1926,10 +1929,10 @@ End Sub
 
 Private Function RequiredOk() As Boolean
     On Error Resume Next
-    RequiredOk = (Len(Trim$(Me.controls("txtPID").text)) > 0) _
-        And (Len(Trim$(Me.controls("txtName").text)) > 0) _
-        And IsNumeric(Me.controls("txtAge").text) _
-        And (val(Me.controls("txtAge").text) >= 0)
+    RequiredOk = (Len(Trim$(Me.Controls("txtPID").text)) > 0) _
+        And (Len(Trim$(Me.Controls("txtName").text)) > 0) _
+        And IsNumeric(Me.Controls("txtAge").text) _
+        And (val(Me.Controls("txtAge").text) >= 0)
 End Function
 
 Private Sub RefreshSaveEnabled()
@@ -1941,7 +1944,7 @@ Private Sub txtPID_Change():  RefreshSaveEnabled: End Sub
 Private Sub txtHdrName_Change()
      EnsureNameSuggestList
 
-     Me.controls("txtName").text = Me.controls("frHeader").controls("txtHdrName").text
+     Me.Controls("txtName").text = Me.Controls("frHeader").Controls("txtHdrName").text
      Me.UpdateNameSuggest
 
      UpdateNameSuggest
@@ -1963,8 +1966,8 @@ Public Sub UpdateNameSuggest()
 
 
 
-    Set host = Me.controls("frHeader")
-    Set tb = host.controls("txtHdrName")
+    Set host = Me.Controls("frHeader")
+    Set tb = host.Controls("txtHdrName")
 
 
 
@@ -1972,9 +1975,9 @@ Public Sub UpdateNameSuggest()
     On Error Resume Next
         Dim i As Long
         Set lb = Nothing
-           For i = Me.controls.count - 1 To 0 Step -1
-           If Me.controls(i).name = "lstNameSuggest" Then
-        Set lb = Me.controls(i)
+           For i = Me.Controls.count - 1 To 0 Step -1
+           If Me.Controls(i).name = "lstNameSuggest" Then
+        Set lb = Me.Controls(i)
         Exit For
     End If
 Next i
@@ -1983,7 +1986,7 @@ Next i
 
     If lb Is Nothing Then
         EnsureNameSuggestList
-        Set lb = Me.controls("lstNameSuggest")
+        Set lb = Me.Controls("lstNameSuggest")
     End If
 
 
@@ -2085,7 +2088,7 @@ Private Sub txtAge_Change():  RefreshSaveEnabled: End Sub
 '========================
 Private Function CreateScrollHost(pg As MSForms.page) As MSForms.Frame
     Dim host As MSForms.Frame
-    Set host = pg.controls.Add("Forms.Frame.1")
+    Set host = pg.Controls.Add("Forms.Frame.1")
 
     With host
         .caption = ""
@@ -2197,12 +2200,12 @@ End Function
 '========================
 Private Function GetRLAGroupLevel(ByVal grp As String) As String
     Dim c As MSForms.Control, p As MSForms.page, fr As MSForms.Control, ob As MSForms.Control
-    For Each c In hostWalk.controls
+    For Each c In hostWalk.Controls
         If typeName(c) = "MultiPage" Then
             For Each p In c.Pages
-                For Each fr In p.controls
+                For Each fr In p.Controls
                     If typeName(fr) = "Frame" Then
-                        For Each ob In fr.controls
+                        For Each ob In fr.Controls
                             If typeName(ob) = "OptionButton" Then
                                 If ob.groupName = grp And ob.value Then GetRLAGroupLevel = ob.caption: Exit Function
                             End If
@@ -2222,23 +2225,23 @@ Private Function CollectFormData() As Object
     Dim c As MSForms.Control, oc As MSForms.Control, ic As MSForms.Control
 
     Dim j As Long
-    For Each c In Me.controls
+    For Each c In Me.Controls
         Select Case typeName(c)
             Case "MultiPage"
                 For j = 0 To c.Pages.count - 1
                     Dim p As MSForms.page: Set p = c.Pages(j)
                     Dim co As MSForms.Control
-                    For Each co In p.controls
+                    For Each co In p.Controls
                         CollectOne d, co
                         If typeName(co) = "Frame" Then
-                            For Each ic In co.controls: CollectOne d, ic: Next
+                            For Each ic In co.Controls: CollectOne d, ic: Next
                         ElseIf typeName(co) = "MultiPage" Then
                             Dim p2 As MSForms.page, fr As MSForms.Control, it As MSForms.Control
                             For Each p2 In co.Pages
-                                For Each fr In p2.controls
+                                For Each fr In p2.Controls
                                     CollectOne d, fr
                                     If typeName(fr) = "Frame" Then
-                                        For Each it In fr.controls: CollectOne d, it: Next
+                                        For Each it In fr.Controls: CollectOne d, it: Next
                                     End If
                                 Next
                             Next
@@ -2282,12 +2285,12 @@ End Sub
 
 Private Function AggregateChecks(ByVal groupTag As String) As String
     Dim picks As String, c As MSForms.Control, p As MSForms.page, fr As MSForms.Control, cc As MSForms.Control
-    For Each c In Me.controls
+    For Each c In Me.Controls
         If typeName(c) = "MultiPage" Then
             For Each p In c.Pages
-                For Each fr In p.controls
+                For Each fr In p.Controls
                     If typeName(fr) = "Frame" Then
-                        For Each cc In fr.controls
+                        For Each cc In fr.Controls
                             If typeName(cc) = "CheckBox" Then
                                 If cc.tag = groupTag And cc.value Then picks = IIf(Len(picks) = 0, cc.caption, picks & "/" & cc.caption)
                             End If
@@ -2302,7 +2305,7 @@ End Function
 
 Private Function BuildRLAString(ByVal f As MSForms.Frame, ByVal key As String) As String
     Dim c As MSForms.Control, acc As String
-    For Each c In f.controls
+    For Each c In f.Controls
         If typeName(c) = "CheckBox" Then
             If Left$(c.name, 4) = "RLA_" And Mid$(c.name, 5, Len(key)) = key Then
                 If c.value Then acc = IIf(Len(acc) = 0, c.caption, acc & "/" & c.caption)
@@ -2315,16 +2318,16 @@ End Function
 Private Function FindAllFramesByCaptionPart(ByVal part As String) As Collection
     Dim col As New Collection
     Dim c As MSForms.Control, p As MSForms.page, oc As MSForms.Control
-    For Each c In Me.controls
+    For Each c In Me.Controls
         If typeName(c) = "MultiPage" Then
             For Each p In c.Pages
-                For Each oc In p.controls
+                For Each oc In p.Controls
                     If typeName(oc) = "Frame" Then
                         If InStr(1, oc.caption, part, vbTextCompare) > 0 Then col.Add oc
                     ElseIf typeName(oc) = "MultiPage" Then
                         Dim p2 As MSForms.page, oc2 As MSForms.Control
                         For Each p2 In oc.Pages
-                            For Each oc2 In p2.controls
+                            For Each oc2 In p2.Controls
                                 If typeName(oc2) = "Frame" Then
                                     If InStr(1, oc2.caption, part, vbTextCompare) > 0 Then col.Add oc2
                                 End If
@@ -2343,7 +2346,7 @@ End Function
 '========================
 Private Function CheckRange(frm As Object, ByVal nm As String, ByVal lo As Double, ByVal hi As Double, ByVal message As String, ByRef sb As String) As Boolean
     If Not FnHasControl(nm) Then CheckRange = True: Exit Function
-    Dim t As String: t = Trim$(frm.controls(nm).text & "")
+    Dim t As String: t = Trim$(frm.Controls(nm).text & "")
     If t = "" Then CheckRange = True: Exit Function
     If Not IsNumeric(t) Then sb = sb & "・" & message & vbCrLf: CheckRange = False: Exit Function
     Dim v As Double: v = CDbl(t)
@@ -2355,18 +2358,18 @@ Private Function ValidateForm(ByRef errmsg As String) As Boolean
     Dim ok As Boolean: ok = True
     Dim sb As String: sb = ""
 
-    If FnHasControl("txtName") Then If Trim$(Me.controls("txtName").text) = "" Then ok = False: sb = sb & "・氏名を入力してください。" & vbCrLf
+    If FnHasControl("txtName") Then If Trim$(Me.Controls("txtName").text) = "" Then ok = False: sb = sb & "・氏名を入力してください。" & vbCrLf
     If FnHasControl("txtAge") Then
-        If Trim$(Me.controls("txtAge").text) = "" Or Not IsNumeric(Me.controls("txtAge").text) Then
+        If Trim$(Me.Controls("txtAge").text) = "" Or Not IsNumeric(Me.Controls("txtAge").text) Then
             ok = False: sb = sb & "・年齢を数値で入力してください。" & vbCrLf
-        ElseIf val(Me.controls("txtAge").text) < 0 Or val(Me.controls("txtAge").text) > 120 Then
+        ElseIf val(Me.Controls("txtAge").text) < 0 Or val(Me.Controls("txtAge").text) > 120 Then
             ok = False: sb = sb & "・年齢は0～120で入力してください。" & vbCrLf
         End If
     End If
 
     ' 評価日チェック
     If FnHasControl("txtEDate") Then
-        If Not IsDate(Me.controls("txtEDate").text) Then
+        If Not IsDate(Me.Controls("txtEDate").text) Then
             ok = False: sb = sb & "・評価日を正しい日付（yyyy/mm/dd 等）で入力してください。" & vbCrLf
         End If
     End If
@@ -2384,7 +2387,7 @@ End Function
 
 Private Sub btnSaveCtl_Click()
     Call SyncAgeFromBirth
-    Me.controls("txtName").text = Me.controls("txtHdrName").text
+    Me.Controls("txtName").text = Me.Controls("txtHdrName").text
     SaveEvaluation_Append_From Me
 End Sub
 
@@ -2393,7 +2396,7 @@ End Sub
 '=== frmEval：前回読込ボタン 完全貼り替え ============================
 Private Sub btnLoadPrevCtl_Click()
 
-Me.controls("txtName").text = Me.controls("txtHdrName").text
+Me.Controls("txtName").text = Me.Controls("txtHdrName").text
 
 
 
@@ -2404,6 +2407,10 @@ Me.Repaint
 
     Exit Sub
 
+End Sub
+
+Private Sub btnGeneratePlanCtl_Click()
+    modBasicPipeline.RunBasicPlan
 End Sub
 
 Public Sub HandleHdrLoadPrevClick()
@@ -2563,12 +2570,12 @@ End Sub
 '=== ここから補助関数群（frmEval ローカル） ============================
 Private Function FxGetText(ByVal ctrlName As String) As String
     On Error Resume Next
-    FxGetText = Trim$(Me.controls(ctrlName).text)
+    FxGetText = Trim$(Me.Controls(ctrlName).text)
 End Function
 
 Private Sub FxSetText(ByVal ctrlName As String, ByVal value As String)
     On Error Resume Next
-    Me.controls(ctrlName).text = value
+    Me.Controls(ctrlName).text = value
 End Sub
 
 Private Function GetOrCreateEvalSheet() As Worksheet
@@ -2713,7 +2720,7 @@ End Sub
 
 Private Sub SetImeRecursive(container As Object)
     Dim ctl As Control
-    For Each ctl In container.controls
+    For Each ctl In container.Controls
         If typeName(ctl) = "TextBox" Then ctl.IMEMode = fmIMEModeHiragana
 
         Select Case typeName(ctl)
@@ -2732,11 +2739,11 @@ End Sub
 Private Sub FixRestNRS_Once()
     Dim L As Control, c As Control
     On Error Resume Next
-    Set c = Me.controls("cmbNRS_Move")                  ' 動作時NRSのコンボ
+    Set c = Me.Controls("cmbNRS_Move")                  ' 動作時NRSのコンボ
     If c Is Nothing Then Exit Sub
 
     ' 近い高さにあるラベルを探す（見つからなければ新規に作る）
-    For Each L In Me.controls
+    For Each L In Me.Controls
         If typeName(L) = "Label" Then
             If L.caption = "安静時NRS" Or (Abs(L.top - c.top) <= 20 And L.Left < c.Left) Then
                 Exit For
@@ -2744,7 +2751,7 @@ Private Sub FixRestNRS_Once()
         End If
     Next
     If L Is Nothing Then
-        Set L = c.parent.controls.Add("Forms.Label.1", "lblNRS_Rest", True)
+        Set L = c.parent.Controls.Add("Forms.Label.1", "lblNRS_Rest", True)
     End If
 
     ' 表示・位置・サイズを確定
@@ -2782,7 +2789,7 @@ End Sub
 ' 指定キャプションのボタンを再帰で探す
 Private Function FindButtonByCaption(container As Object, ByVal cap As String) As MSForms.CommandButton
     Dim c As Object, hit As MSForms.CommandButton
-    For Each c In container.controls
+    For Each c In container.Controls
         If typeName(c) = "CommandButton" Then
             If CStr(c.caption) = cap Then
                 Set FindButtonByCaption = c
@@ -2852,7 +2859,7 @@ SafeExit:
     End If
 
     ' それ以外は Controls を走査
-    For Each c In container.controls
+    For Each c In container.Controls
         If typeName(c) = "CommandButton" Then
             If InStr(Replace$(c.caption, vbCrLf, ""), needle) > 0 Then
                 Set FindButtonByCaptionLike = c
@@ -2885,7 +2892,7 @@ Private Sub GatherButtons(container As Object, ByRef arr As Collection)
     End If
 
     ' それ以外は Controls
-    For Each c In container.controls
+    For Each c In container.Controls
         If typeName(c) = "CommandButton" Then arr.Add c
         If typeName(c) = "Frame" Or typeName(c) = "Page" Then
             GatherButtons c, arr
@@ -2944,7 +2951,7 @@ Private Sub DumpButtonsProc(container As Object)
     If typeName(container) = "MultiPage" Then
         'MultiPage は Pages 配下を回す
         For Each pg In container.Pages
-            For Each c In pg.controls
+            For Each c In pg.Controls
                 If typeName(c) = "CommandButton" Then
                     Debug.Print "Type=CommandButton, cap=[" & c.caption & _
                                 "], Top=" & c.top & ", Left=" & c.Left
@@ -2956,7 +2963,7 @@ Private Sub DumpButtonsProc(container As Object)
         Next
     Else
         '通常のコンテナ（UserForm / Frame / Page など）
-        For Each c In container.controls
+        For Each c In container.Controls
             If typeName(c) = "CommandButton" Then
                 Debug.Print "Type=CommandButton, cap=[" & c.caption & _
                             "], Top=" & c.top & ", Left=" & c.Left
@@ -2996,7 +3003,7 @@ Private Sub UserForm_Activate()
     Call Align_BIHomeEnv_Once
     
     
-    Me.controls("txtHdrName").SetFocus
+    Me.Controls("txtHdrName").SetFocus
     
 
 End Sub
@@ -3040,7 +3047,7 @@ Me.Left = Application.Left + (Application.Width - Me.Width) / 2: Me.top = Applic
     Call LegacyInit
     EnsureMpPhysChangeHook_Once
 #If APP_DEBUG Then
-    Debug.Print "[PostInit] CtlCount=" & Me.controls.count
+    Debug.Print "[PostInit] CtlCount=" & Me.Controls.count
 #End If
 
 TidyBaseLayout_Once
@@ -3096,7 +3103,7 @@ End If
     
     BuildDailyLog_ExtractButton Me
     BuildDailyLog_SaveButton Me
-    Me.controls("txtEDate").value = Date
+    Me.Controls("txtEDate").value = Date
     Dim txtDailyDate As Object
     Set txtDailyDate = DailyLogCtl("txtDailyDate")
     If Not txtDailyDate Is Nothing Then txtDailyDate.value = Date
@@ -3110,7 +3117,7 @@ End If
 
     
     On Error Resume Next
-    Me.controls("btnSaveCtl").Visible = False
+    Me.Controls("btnSaveCtl").Visible = False
     On Error GoTo 0
     
     'Me.Height = Application.UsableHeight - 40
@@ -3148,7 +3155,7 @@ If Not mpPhysObj Is Nothing Then
     If Not pgPhys0 Is Nothing Then
        Set frPhys8 = SafeGetControl(pgPhys0, "Frame8")
         If Not frPhys8 Is Nothing Then
-            Set mpROMObj = frPhys8.controls("mpROM")
+            Set mpROMObj = frPhys8.Controls("mpROM")
             frPhys8.Height = mpPhysObj.Height
             If Not mpROMObj Is Nothing Then
                 mpROMObj.Height = frPhys8.InsideHeight - mpROMObj.top
@@ -3173,11 +3180,21 @@ On Error GoTo 0
     ApplyScroll_MP1_Page3_7_Once
     
     Call Preview_NameToHeader
-    Me.controls("txtName").Visible = False
-    Me.controls("txtPID").Visible = False
+    Me.Controls("txtName").Visible = False
+    Me.Controls("txtPID").Visible = False
 
     
-    AddHeaderArchiveDeleteButton
+    ' 終了者削除の代わりに計画生成ボタンをfrHeaderに配置
+    Dim frHdrRef As MSForms.Frame
+    Set frHdrRef = Me.Controls("frHeader")
+    Set btnGeneratePlanCtl = frHdrRef.Controls.Add("Forms.CommandButton.1")
+    With btnGeneratePlanCtl
+        .caption = "計画生成": .Accelerator = "G"
+        .Width = 90: .name = "cmdArchiveDelete"
+        .Height = frHdrRef.Controls("txtHdrPID").Height
+        .top = frHdrRef.Controls("txtHdrPID").top
+        .Left = 8
+    End With
 
       RearrangeHeaderTopAreaLayout
       
@@ -3186,7 +3203,7 @@ AddPrintButton_TestEval
 Call Ensure_MonthlyDraftBox_UnderFraDailyLog
 
 Set mHdrNameSink = New cHdrNameSink
-mHdrNameSink.Hook Me.controls("frHeader").controls("txtHdrName")
+mHdrNameSink.Hook Me.Controls("frHeader").Controls("txtHdrName")
 
 
 Call Align_LoadPrevButton_NextToHdrKana(Me)
@@ -3195,7 +3212,7 @@ Call HookRomMirrorButtons_Once
 
 '--- hook header "LoadPrev" button (MUST be after Ensure_LoadPrevButton_Once) ---
 Set mHdrLoadPrevHook = New clsHdrBtnHook
-Set mHdrLoadPrevHook.btn = Me.controls("frHeader").controls("cmdHdrLoadPrev")
+Set mHdrLoadPrevHook.btn = Me.Controls("frHeader").Controls("cmdHdrLoadPrev")
 mHdrLoadPrevHook.tag = "LoadPrev"
 Set mHdrLoadPrevHook.owner = Me
 DoEvents
@@ -3240,14 +3257,14 @@ Private Sub Fix_InnerScrollBars()
 
 On Error Resume Next
 
-Me.controls("MultiPage1").Pages("Page1").controls("Frame1").ScrollBars = fmScrollBarsNone
-Me.controls("MultiPage1").Pages("Page1").controls("Frame1").KeepScrollBarsVisible = fmScrollBarsNone
+Me.Controls("MultiPage1").Pages("Page1").Controls("Frame1").ScrollBars = fmScrollBarsNone
+Me.Controls("MultiPage1").Pages("Page1").Controls("Frame1").KeepScrollBarsVisible = fmScrollBarsNone
 
-Me.controls("MultiPage1").Pages("Page3").controls("Frame8").ScrollBars = fmScrollBarsNone
-Me.controls("MultiPage1").Pages("Page3").controls("Frame8").KeepScrollBarsVisible = fmScrollBarsNone
+Me.Controls("MultiPage1").Pages("Page3").Controls("Frame8").ScrollBars = fmScrollBarsNone
+Me.Controls("MultiPage1").Pages("Page3").Controls("Frame8").KeepScrollBarsVisible = fmScrollBarsNone
 
-Me.controls("MultiPage1").Pages("Page3").controls("Frame9").ScrollBars = fmScrollBarsNone
-Me.controls("MultiPage1").Pages("Page3").controls("Frame9").KeepScrollBarsVisible = fmScrollBarsNone
+Me.Controls("MultiPage1").Pages("Page3").Controls("Frame9").ScrollBars = fmScrollBarsNone
+Me.Controls("MultiPage1").Pages("Page3").Controls("Frame9").KeepScrollBarsVisible = fmScrollBarsNone
 
 On Error GoTo 0
 
@@ -3302,7 +3319,7 @@ Me.StartUpPosition = 1      ' CenterOwner（任意：中央に出したい場合）
 
 
     ' ルート MultiPage
-    Set mp = Me.controls.Add("Forms.MultiPage.1")
+    Set mp = Me.Controls.Add("Forms.MultiPage.1")
     With mp
         .Left = 6: .top = 6
         .Width = Me.InsideWidth - 12
@@ -3462,7 +3479,7 @@ ResizeFrameToContent fTests, row3 + 112
     '================ 歩行評価（自立度 / RLA） ================
 Trace "WALK start", "Init"
 
-Set mpWalk = hostWalk.controls.Add("Forms.MultiPage.1")
+Set mpWalk = hostWalk.Controls.Add("Forms.MultiPage.1")
 
 ' 変数宣言は With の外でOK
 Dim w As Single, h As Single
@@ -3488,7 +3505,7 @@ mpWalk.Pages(0).caption = "自立度"
 mpWalk.Pages(1).caption = "RLA"
 
 
-    Set hostWalkGait = mpWalk.Pages(0).controls.Add("Forms.Frame.1", "hostWalkGait")
+    Set hostWalkGait = mpWalk.Pages(0).Controls.Add("Forms.Frame.1", "hostWalkGait")
     With hostWalkGait
     .caption = ""
     .Left = 0: .top = 0
@@ -3514,11 +3531,11 @@ End With
     ResizeFrameToContent fGait, y + rowH
 
     Dim hostWalkRLA As MSForms.Frame
-    Set hostWalkRLA = mpWalk.Pages(1).controls.Add("Forms.Frame.1")
+    Set hostWalkRLA = mpWalk.Pages(1).Controls.Add("Forms.Frame.1")
     With hostWalkRLA: .caption = "": .Left = 0: .top = 0: .Width = mpWalk.Width - 12: .Height = mpWalk.Height - 30: .ScrollBars = fmScrollBarsNone: End With
 
     Dim mpRLA As MSForms.MultiPage
-    Set mpRLA = hostWalkRLA.controls.Add("Forms.MultiPage.1")
+    Set mpRLA = hostWalkRLA.Controls.Add("Forms.MultiPage.1")
     With mpRLA
         .Left = 0: .top = 0
         .Width = hostWalkRLA.Width - 6
@@ -3529,7 +3546,7 @@ End With
     mpRLA.Pages(1).caption = "遊脚期（PSw-TSw）"
 
     Dim hostRLAStance As MSForms.Frame
-    Set hostRLAStance = mpRLA.Pages(0).controls.Add("Forms.Frame.1")
+    Set hostRLAStance = mpRLA.Pages(0).Controls.Add("Forms.Frame.1")
 With hostRLAStance
     .caption = ""
     .Left = 0: .top = 0
@@ -3545,7 +3562,7 @@ End With
     Build_RLA_ChecksPart fRLA1, "stance": ResizeFrameToContent fRLA1, 260
 
     Dim hostRLASwing As MSForms.Frame
-    Set hostRLASwing = mpRLA.Pages(1).controls.Add("Forms.Frame.1")
+    Set hostRLASwing = mpRLA.Pages(1).Controls.Add("Forms.Frame.1")
 With hostRLASwing
     .caption = ""
     .Left = 0: .top = 0
@@ -3591,7 +3608,7 @@ End With
     '--- 下部の「閉じる」 ---
     Trace "CLOSE start", "Init"
 
-Set btnCloseCtl = Me.controls.Add("Forms.CommandButton.1")
+Set btnCloseCtl = Me.Controls.Add("Forms.CommandButton.1")
 With btnCloseCtl
     .caption = "閉じる"
     .Width = 60
@@ -3625,12 +3642,12 @@ RecalcBI
     Set chkDelta = CreateCheck(fBasic, "変更点のみ保存（空欄は前回値を引継ぎ）", COL_LX, 6, "chkDeltaOnly", "Delta.Only")
     chkDelta.AutoSize = True: chkDelta.WordWrap = False
 
-    Set btnLoadPrevCtl = fBasic.controls.Add("Forms.CommandButton.1")
+    Set btnLoadPrevCtl = fBasic.Controls.Add("Forms.CommandButton.1")
     With btnLoadPrevCtl
         .caption = "前回の値を読み込む": .Accelerator = "L"
         .Width = 180: .Height = 24: .name = "btnLoadPrevCtl"
     End With
-    Set btnSaveCtl = fBasic.controls.Add("Forms.CommandButton.1")
+    Set btnSaveCtl = fBasic.Controls.Add("Forms.CommandButton.1")
     With btnSaveCtl
         .caption = "シートへ保存": .Accelerator = "S"
         .Width = 120: .Height = 24: .name = "btnSaveCtl"
@@ -3743,7 +3760,7 @@ RecalcBI
 
     ' 初期の保存ボタン活性状態を反映
     RefreshSaveEnabled
-    Me.controls("btnSaveCtl").Enabled = True  ' ← 一旦、保存ボタンを常時有効化
+    Me.Controls("btnSaveCtl").Enabled = True  ' ← 一旦、保存ボタンを常時有効化
     
     
 
@@ -3810,7 +3827,7 @@ RecalcBI
   
 '== ROM内の空ページ(Page14/15)を起動時に自動削除 ==
 Dim ctlZ As Object, mpZ As MSForms.MultiPage, iZ As Long, capZ As String
-For Each ctlZ In Me.controls
+For Each ctlZ In Me.Controls
     If typeName(ctlZ) = "MultiPage" Then
         Set mpZ = ctlZ
         For iZ = mpZ.Pages.count - 1 To 0 Step -1
@@ -3827,7 +3844,7 @@ Dim mpN As Object, pgN As Object, pN As Object, cN As Object
 
 ' --- ROMページ特定（"ROM" または "主要関節"） ---
 Set mpN = Nothing: Set pgN = Nothing
-For Each cN In Me.controls
+For Each cN In Me.Controls
     If typeName(cN) = "MultiPage" Then
         Set mpN = cN
         Exit For
@@ -3856,7 +3873,7 @@ If Not pgN Is Nothing Then
     Do While stk.count > 0
         Set parent = stk(1): stk.Remove 1
         On Error Resume Next
-        For Each ctl In parent.controls
+        For Each ctl In parent.Controls
             On Error GoTo 0
             Select Case typeName(ctl)
                 Case "Frame", "MultiPage", "Page"
@@ -3895,7 +3912,7 @@ Dim noteTB As Object, areaMax As Double
 ' ROMページをその場で特定してから開始
 Dim rootPg As Object, c0 As Object, mp0 As Object, i0 As Long
 Set rootPg = Nothing
-For Each c0 In Me.controls
+For Each c0 In Me.Controls
     If typeName(c0) = "MultiPage" Then
         Set mp0 = c0
         For i0 = 0 To mp0.Pages.count - 1
@@ -3920,7 +3937,7 @@ Do While qH.count > 0
         Next iH
     Else
         On Error Resume Next
-        For Each ctlH In parentH.controls
+        For Each ctlH In parentH.Controls
             On Error GoTo 0
            Select Case typeName(ctlH)
     Case "Frame", "Page"
@@ -3958,7 +3975,7 @@ Call MMT_BuildChildTabs_Direct
 
 
 Dim c As Control
-For Each c In Me.controls
+For Each c In Me.Controls
     If typeName(c) = "Label" Then
         If c.caption = "NRS" Then
             c.caption = "安静時NRS"
@@ -3973,7 +3990,7 @@ Dim lbl As MSForms.label, cmb As MSForms.ComboBox
 Dim ct As Control
 
 ' 安静時NRSラベルを特定
-For Each ct In Me.controls
+For Each ct In Me.Controls
     If typeName(ct) = "Label" Then
         If ct.caption = "安静時NRS" Then
             Set srcLbl = ct
@@ -3984,7 +4001,7 @@ Next
 
 If Not srcLbl Is Nothing Then
     ' 安静時NRSの右側にある既存Comboを推定（同じ高さ±6）
-    For Each ct In Me.controls
+    For Each ct In Me.Controls
         If typeName(ct) = "ComboBox" Then
             If Abs(ct.top - srcLbl.top) <= 20 And ct.Left > srcLbl.Left Then
                 Set srcCmb = ct: Exit For
@@ -3993,18 +4010,18 @@ If Not srcLbl Is Nothing Then
     Next
 
     ' 既に作成済みなら何もしない
-    For Each ct In Me.controls
+    For Each ct In Me.Controls
         If typeName(ct) = "Label" And ct.name = "lblNRS_Move" Then Set lbl = ct
         If typeName(ct) = "ComboBox" And ct.name = "cmbNRS_Move" Then Set cmb = ct
     Next
 
     If lbl Is Nothing Then
-       Set lbl = srcLbl.parent.controls.Add("Forms.Label.1", "lblNRS_Move", True)
+       Set lbl = srcLbl.parent.Controls.Add("Forms.Label.1", "lblNRS_Move", True)
         lbl.caption = "動作時NRS"
     End If
 
     If cmb Is Nothing Then
-       Set cmb = srcLbl.parent.controls.Add("Forms.ComboBox.1", "cmbNRS_Move", True)
+       Set cmb = srcLbl.parent.Controls.Add("Forms.ComboBox.1", "cmbNRS_Move", True)
         cmb.Style = fmStyleDropDownList
         Dim i As Long
         For i = 0 To 10: cmb.AddItem CStr(i): Next i
@@ -4041,9 +4058,9 @@ End Sub
 
 Sub ShowFrame12()
     Dim f As Control, t As Control
-    For Each f In frmEval.controls
+    For Each f In frmEval.Controls
         If typeName(f) = "Frame" Then
-            For Each t In f.controls
+            For Each t In f.Controls
                 If typeName(t) = "TextBox" And t.name = "TextBox2" Then
                     f.ZOrder 0                 '一番手前に
                     f.caption = "★これがFrame12★" '見つけやすくする
@@ -4085,14 +4102,14 @@ Public Sub AddPainQualUI()
     Set host = GetPainHost()
 
     ' 見出し
-    Set cap = host.controls.Add("Forms.Label.1", "lblPainQual", True)
+    Set cap = host.Controls.Add("Forms.Label.1", "lblPainQual", True)
     cap.caption = "痛みの性質（複数選択可）"
     cap.Left = 12
     cap.top = 12
     cap.AutoSize = True
 
     ' リストボックス（複数選択）
-    Set lb = host.controls.Add("Forms.ListBox.1", "lstPainQual", True)
+    Set lb = host.Controls.Add("Forms.ListBox.1", "lstPainQual", True)
     lb.Left = 12
     lb.top = cap.top + cap.Height + 6
     lb.Width = 240
@@ -4137,14 +4154,14 @@ Public Sub AddPainFactorsUI()
     Set host = GetPainHost()
 
     ' 見出し
-    Set cap = host.controls.Add("Forms.Label.1", "lblPainFactors", True)
+    Set cap = host.Controls.Add("Forms.Label.1", "lblPainFactors", True)
     cap.caption = "誘因・軽減因子"
     cap.Left = 270
     cap.top = 280
     cap.AutoSize = True
 
     ' コンテナフレーム
-    Set fr = host.controls.Add("Forms.Frame.1", "fraPainFactors", True)
+    Set fr = host.Controls.Add("Forms.Frame.1", "fraPainFactors", True)
     fr.Left = cap.Left
     fr.top = cap.top + cap.Height + 4
     fr.Width = 360
@@ -4173,7 +4190,7 @@ Public Sub AddPainFactorsUI()
     y = 8
     For i = LBound(provItems) To UBound(provItems)
         Dim cb As MSForms.CheckBox
-        Set cb = fr.controls.Add("Forms.CheckBox.1", CStr(provItems(i)(0)), True)
+        Set cb = fr.Controls.Add("Forms.CheckBox.1", CStr(provItems(i)(0)), True)
         cb.caption = CStr(provItems(i)(1))
         cb.Left = 12
         cb.top = y
@@ -4184,7 +4201,7 @@ Public Sub AddPainFactorsUI()
     y = 8
     For i = LBound(relItems) To UBound(relItems)
         Dim cb2 As MSForms.CheckBox
-        Set cb2 = fr.controls.Add("Forms.CheckBox.1", CStr(relItems(i)(0)), True)
+        Set cb2 = fr.Controls.Add("Forms.CheckBox.1", CStr(relItems(i)(0)), True)
         cb2.caption = CStr(relItems(i)(1))
         cb2.Left = fr.Width \ 2 + 8
         cb2.top = y
@@ -4208,28 +4225,28 @@ Public Sub AddVASUI()
     Set host = GetPainHost()
 
     ' 見出し
-    Set cap = host.controls.Add("Forms.Label.1", "lblVAS", True)
+    Set cap = host.Controls.Add("Forms.Label.1", "lblVAS", True)
     cap.caption = "VAS（0?100）"
     cap.Left = 640
     cap.top = 280
     cap.AutoSize = True
 
     ' コンテナ
-    Set fr = host.controls.Add("Forms.Frame.1", "fraVAS", True)
+    Set fr = host.Controls.Add("Forms.Frame.1", "fraVAS", True)
     fr.Left = cap.Left
     fr.top = cap.top + cap.Height + 4
     fr.Width = 122
     fr.Height = 64
 
     ' テキストボックス（数値 0?100）
-    Set tb = fr.controls.Add("Forms.TextBox.1", "txtVAS", True)
+    Set tb = fr.Controls.Add("Forms.TextBox.1", "txtVAS", True)
     tb.Left = 8
     tb.top = 10
     tb.Width = 40
     tb.text = "0"
 
     ' スクロールバー（横）0?100
-    Set sb = fr.controls.Add("Forms.ScrollBar.1", "sldVAS", True)
+    Set sb = fr.Controls.Add("Forms.ScrollBar.1", "sldVAS", True)
     sb.Left = tb.Left + tb.Width + 6
     sb.top = tb.top + 2
     sb.Width = 60
@@ -4279,7 +4296,7 @@ Public Sub AddPainCourseUI()
     Set host = GetPainHost()
 
     ' 見出し
-    Set lb = host.controls.Add("Forms.Label.1", "lblPainCourse", True)
+    Set lb = host.Controls.Add("Forms.Label.1", "lblPainCourse", True)
     lb.caption = "痛みの経過・時間変化"
     lb.Left = 12
     lb.top = 280
@@ -4287,39 +4304,39 @@ Public Sub AddPainCourseUI()
 
     ' コンテナ
     Dim fr As MSForms.Frame
-    Set fr = host.controls.Add("Forms.Frame.1", "fraPainCourse", True)
+    Set fr = host.Controls.Add("Forms.Frame.1", "fraPainCourse", True)
     fr.Left = lb.Left
     fr.top = lb.top + lb.Height + 4
     fr.Width = 610
     fr.Height = 78
 
     ' 発症時期
-    Set lb = fr.controls.Add("Forms.Label.1", "lblPainOnset", True)
+    Set lb = fr.Controls.Add("Forms.Label.1", "lblPainOnset", True)
     lb.caption = "発症時期"
     lb.Left = 12: lb.top = 10: lb.AutoSize = True
 
-    Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPainOnset", True)
+    Set cb = fr.Controls.Add("Forms.ComboBox.1", "cmbPainOnset", True)
     cb.Left = lb.Left + 60: cb.top = 8: cb.Width = 140
     cb.List = Array("急性（?1週）", "亜急性（?3か月）", "慢性（3か月?）", "再燃／再発", "不明")
 
     ' 持続時間
-    Set lb = fr.controls.Add("Forms.Label.1", "lblPainDuration", True)
+    Set lb = fr.Controls.Add("Forms.Label.1", "lblPainDuration", True)
     lb.caption = "持続"
     lb.Left = 260: lb.top = 10: lb.AutoSize = True
 
-    Set tb = fr.controls.Add("Forms.TextBox.1", "txtPainDuration", True)
+    Set tb = fr.Controls.Add("Forms.TextBox.1", "txtPainDuration", True)
     tb.Left = lb.Left + 36: tb.top = 8: tb.Width = 40: tb.text = ""
 
-    Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPainDurationUnit", True)
+    Set cb = fr.Controls.Add("Forms.ComboBox.1", "cmbPainDurationUnit", True)
     cb.Left = tb.Left + tb.Width + 6: cb.top = 8: cb.Width = 70
     cb.List = Array("日", "週", "か月", "年")
 
     ' 日内変動
-    Set lb = fr.controls.Add("Forms.Label.1", "lblPainDayPeriod", True)
+    Set lb = fr.Controls.Add("Forms.Label.1", "lblPainDayPeriod", True)
     lb.caption = "日内変動"
     lb.Left = 12: lb.top = 38: lb.AutoSize = True
 
-    Set cb = fr.controls.Add("Forms.ComboBox.1", "cmbPainDayPeriod", True)
+    Set cb = fr.Controls.Add("Forms.ComboBox.1", "cmbPainDayPeriod", True)
     cb.Left = lb.Left + 54: cb.top = 36: cb.Width = 260
     cb.List = Array("朝に強い", "昼に強い", "夜に強い", "入浴後に軽減", "活動後に増悪", "一定で変化なし")
 End Sub
@@ -4348,21 +4365,21 @@ Public Sub AddPainSiteUI()
     Set host = GetPainHost()
 
     ' 見出し
-    Set lb = host.controls.Add("Forms.Label.1", "lblPainSite", True)
+    Set lb = host.Controls.Add("Forms.Label.1", "lblPainSite", True)
     lb.caption = "疼痛部位（複数選択可）"
     lb.Left = 12
     lb.top = 380
     lb.AutoSize = True
 
     ' フレーム
-    Set fr = host.controls.Add("Forms.Frame.1", "fraPainSite", True)
+    Set fr = host.Controls.Add("Forms.Frame.1", "fraPainSite", True)
     fr.Left = lb.Left
     fr.top = lb.top + lb.Height + 4
     fr.Width = 360
     fr.Height = 140
 
     ' リスト（複数選択）
-    Set lst = fr.controls.Add("Forms.ListBox.1", "lstPainSite", True)
+    Set lst = fr.Controls.Add("Forms.ListBox.1", "lstPainSite", True)
     lst.Left = 12
     lst.top = 10
     lst.Width = fr.Width - 24
@@ -4400,14 +4417,14 @@ Public Sub SummarizePainUI()
     
     ' 参照取得
     On Error Resume Next
-    Set lbQ = fr.controls("lstPainQual")
-    Set lbS = SafeGetControl(fr, "fraPainSite").controls("lstPainSite")
+    Set lbQ = fr.Controls("lstPainQual")
+    Set lbS = SafeGetControl(fr, "fraPainSite").Controls("lstPainSite")
     Set frF = SafeGetControl(fr, "fraPainFactors")
-    vas = SafeGetControl(fr, "fraVAS").controls("txtVAS").text
-    onset = SafeGetControl(fr, "fraPainCourse").controls("cmbPainOnset").text
-    dura = SafeGetControl(fr, "fraPainCourse").controls("txtPainDuration").text
-    unit = SafeGetControl(fr, "fraPainCourse").controls("cmbPainDurationUnit").text
-    day = SafeGetControl(fr, "fraPainCourse").controls("cmbPainDayPeriod").text
+    vas = SafeGetControl(fr, "fraVAS").Controls("txtVAS").text
+    onset = SafeGetControl(fr, "fraPainCourse").Controls("cmbPainOnset").text
+    dura = SafeGetControl(fr, "fraPainCourse").Controls("txtPainDuration").text
+    unit = SafeGetControl(fr, "fraPainCourse").Controls("cmbPainDurationUnit").text
+    day = SafeGetControl(fr, "fraPainCourse").Controls("cmbPainDayPeriod").text
     On Error GoTo 0
 
     ' 痛みの性質
@@ -4435,7 +4452,7 @@ Public Sub SummarizePainUI()
     s = s & "｜因子: "
     If Not frF Is Nothing Then
         Dim tmpF As String: tmpF = ""
-        For Each c In frF.controls
+        For Each c In frF.Controls
             If typeName(c) = "CheckBox" Then
                 If c.value = True Then tmpF = tmpF & c.caption & "／"
             End If
@@ -4471,7 +4488,7 @@ Public Sub RemoveLegacyPainUI()
     ' Probeで[LEGACY?]と判定されたものだけ削除（新UIやNRS/備考は残す）
     For Each n In Array("Label85", "TextBox1", "Label86", "Label87", "ComboBox39", "TextBox2", "txtPainMemo_lbl", "txtPainMemo", "lblNRS_Move", "cmbNRS_Move")
         On Error Resume Next
-        f.controls.Remove CStr(n)
+        f.Controls.Remove CStr(n)
         If Err.Number = 0 Then Debug.Print "[removed]", n Else Debug.Print "[skip]", n, "err", Err.Number
         Err.Clear
         On Error GoTo 0
@@ -4493,58 +4510,58 @@ If GetPainHost Is Nothing Then Exit Sub
     If f Is Nothing Then Exit Sub
 
     ' 上段：左＝性質、右＝VAS
-    With f.controls("lblPainQual")
+    With f.Controls("lblPainQual")
         .Left = 12: .top = 12: .ZOrder 0
     End With
-    With f.controls("lstPainQual")
+    With f.Controls("lstPainQual")
         .Left = 12
-        .top = f.controls("lblPainQual").top + f.controls("lblPainQual").Height + 4
+        .top = f.Controls("lblPainQual").top + f.Controls("lblPainQual").Height + 4
         .Width = 360: .Height = 120
         .ZOrder 0
     End With
-    With f.controls("lblVAS")
+    With f.Controls("lblVAS")
         .Left = 420: .top = 12: .ZOrder 0
     End With
     With SafeGetControl(f, "fraVAS")
         .Left = 420
-        .top = f.controls("lblVAS").top + f.controls("lblVAS").Height + 4
+        .top = f.Controls("lblVAS").top + f.Controls("lblVAS").Height + 4
         .ZOrder 0
     End With
 
     ' 中段：左＝経過、右＝誘因・軽減
-    With f.controls("lblPainCourse")
+    With f.Controls("lblPainCourse")
         .Left = 12: .top = 160: .ZOrder 0
     End With
     With SafeGetControl(f, "fraPainCourse")
         .Left = 12
-        .top = f.controls("lblPainCourse").top + f.controls("lblPainCourse").Height + 4
+        .top = f.Controls("lblPainCourse").top + f.Controls("lblPainCourse").Height + 4
         .Width = 360
         .ZOrder 0
     End With
-    With f.controls("lblPainFactors")
+    With f.Controls("lblPainFactors")
         .Left = 420: .top = 160: .ZOrder 0
     End With
     With SafeGetControl(f, "fraPainFactors")
         .Left = 420
-        .top = f.controls("lblPainFactors").top + f.controls("lblPainFactors").Height + 4
+        .top = f.Controls("lblPainFactors").top + f.Controls("lblPainFactors").Height + 4
         .Width = 330
         .ZOrder 0
     End With
 
     ' 下段：左＝部位、最下段＝備考
-    With f.controls("lblPainSite")
+    With f.Controls("lblPainSite")
         .Left = 12: .top = 300: .ZOrder 0
     End With
     With SafeGetControl(f, "fraPainSite")
         .Left = 12
-        .top = f.controls("lblPainSite").top + f.controls("lblPainSite").Height + 4
+        .top = f.Controls("lblPainSite").top + f.Controls("lblPainSite").Height + 4
         .Width = 360: .Height = 140
         .ZOrder 0
     End With
-    With f.controls("txtPainMemo_lbl")
+    With f.Controls("txtPainMemo_lbl")
         .top = 470: .ZOrder 0
     End With
-    With f.controls("txtPainMemo")
+    With f.Controls("txtPainMemo")
         .top = 492: .ZOrder 0
     End With
 End Sub
@@ -4556,12 +4573,12 @@ Sub RemoveLegacyPainUI_Final()
     Set fr = GetPainHost()
     If fr Is Nothing Then Exit Sub
     
-    For Each c In fr.controls
+    For Each c In fr.Controls
         Select Case c.name
             Case "Label85", "TextBox1", "Label86", "Label87", _
                  "ComboBox39", "TextBox2", "txtPainMemo_lbl", "txtPainMemo"
                 Debug.Print "[remove]", c.name
-                fr.controls.Remove c.name
+                fr.Controls.Remove c.name
         End Select
     Next
     
@@ -4582,7 +4599,7 @@ Public Sub MatchPainFrameHeights()
     If z Is Nothing Then Exit Sub
     Set pf = SafeGetControl(z, "fraPainFactors")
     Set ps = SafeGetControl(z, "fraPainSite")
-    Set lb = z.controls("lblPainFactors")
+    Set lb = z.Controls("lblPainFactors")
 
     Dim newH As Single, bottom As Single, availH As Single
     newH = ps.Height
@@ -4616,8 +4633,8 @@ Public Sub TidyPainBoxes()
     If z Is Nothing Then Exit Sub
     Set ps = SafeGetControl(z, "fraPainSite")
     Set pf = SafeGetControl(z, "fraPainFactors")
-    Set lbPS = z.controls("lblPainSite")
-    Set lbPF = z.controls("lblPainFactors")
+    Set lbPS = z.Controls("lblPainSite")
+    Set lbPF = z.Controls("lblPainFactors")
 
     ' 疼痛部位のラベルを枠直上に揃える（位置は現状維持なら不要）
     lbPS.Left = ps.Left: lbPS.top = ps.top - lbPS.Height - 4
@@ -4645,7 +4662,7 @@ End Sub
 ' 汎用: フレーム内コントロール取得（Nothing許容）
 Private Function GetCtl(ByVal host As Object, ByVal name As String) As Object
     On Error Resume Next
-    Set GetCtl = host.controls(name)
+    Set GetCtl = host.Controls(name)
     On Error GoTo 0
 End Function
 
@@ -4732,7 +4749,7 @@ Public Sub TidyPainCourse()
     Dim bottomY As Single
     bottomY = 0
     Dim c As Control
-    For Each c In frCourse.controls
+    For Each c In frCourse.Controls
         bottomY = Application.WorksheetFunction.Max(bottomY, c.top + c.Height)
     Next
     frCourse.Height = bottomY + m
@@ -4753,10 +4770,10 @@ Public Sub WidenAndTidyPainCourse()
         Dim txtDur As MSForms.TextBox
         Dim cmbUnit As MSForms.ComboBox
 
-        Set cmbOnset = .controls("cmbPainOnset")
-        Set lblDur = .controls("lblPainDuration")
-        Set txtDur = .controls("txtPainDuration")
-        Set cmbUnit = .controls("cmbPainDurationUnit")
+        Set cmbOnset = .Controls("cmbPainOnset")
+        Set lblDur = .Controls("lblPainDuration")
+        Set txtDur = .Controls("txtPainDuration")
+        Set cmbUnit = .Controls("cmbPainDurationUnit")
 
         ' 横並びの確定ロジック（今回「完璧」になった式と同じ）
         lblDur.Left = cmbOnset.Left + cmbOnset.Width + 12
@@ -4794,30 +4811,30 @@ Dim L As MSForms.label
 
 On Error Resume Next
 '--- 直下 ---
-Set L = Me.controls("lblVAS"):           If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
-Set L = Me.controls("lblPainQual"):      If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
-Set L = Me.controls("lblPainCourse"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
-Set L = Me.controls("lblPainSite"):      If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
-Set L = Me.controls("lblPainFactors"):   If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
+Set L = Me.Controls("lblVAS"):           If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
+Set L = Me.Controls("lblPainQual"):      If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+Set L = Me.Controls("lblPainCourse"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+Set L = Me.Controls("lblPainSite"):      If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
+Set L = Me.Controls("lblPainFactors"):   If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
 
 '--- Frame3 内 ---
 Set f = SafeGetControl(Me, "Frame3")
 If Not f Is Nothing Then
-    Set L = f.controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
-    Set L = f.controls("lblPainQual"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
-    Set L = f.controls("lblPainCourse"):  If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
-    Set L = f.controls("lblPainSite"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
-    Set L = f.controls("lblPainFactors"): If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
+    Set L = f.Controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
+    Set L = f.Controls("lblPainQual"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+    Set L = f.Controls("lblPainCourse"):  If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+    Set L = f.Controls("lblPainSite"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
+    Set L = f.Controls("lblPainFactors"): If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
 End If
 
 '--- Frame12 内 ---
 Set f = SafeGetControl(Me, "Frame12")
 If Not f Is Nothing Then
-    Set L = f.controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
-    Set L = f.controls("lblPainQual"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
-    Set L = f.controls("lblPainCourse"):  If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
-    Set L = f.controls("lblPainSite"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
-    Set L = f.controls("lblPainFactors"): If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
+    Set L = f.Controls("lblVAS"):         If Not L Is Nothing Then L.WordWrap = False: L.caption = "VAS（0～100）": L.WordWrap = False: L.AutoSize = False: L.Width = 120
+    Set L = f.Controls("lblPainQual"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+    Set L = f.Controls("lblPainCourse"):  If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 140
+    Set L = f.Controls("lblPainSite"):    If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
+    Set L = f.Controls("lblPainFactors"): If Not L Is Nothing Then L.WordWrap = False: L.AutoSize = False: L.Width = 150
 End If
 On Error GoTo 0
 '=== /Pain headings finalize ===
@@ -4826,7 +4843,7 @@ On Error GoTo 0
 End Sub
 Private Sub FixPainCaptionsAndWidth()
     Dim c As Control
-    For Each c In Me.controls
+    For Each c In Me.Controls
         If typeName(c) = "Frame" Then
             ' 左：見出し（痛みの性質…）を折り返さない幅にする（親右端?24pt）
             If InStr(c.caption, "痛") > 0 And InStr(c.caption, "性質") > 0 Then
@@ -4846,7 +4863,7 @@ Public Sub FixPainLabels_Final()
     Dim f As Control, c As Control, L As Object
 
     '--- 直下のラベルを処理 ---
-    For Each c In Me.controls
+    For Each c In Me.Controls
         If typeName(c) = "Label" Then
             If c.name = "lblPainQual" Then
                 Set L = c
@@ -4861,9 +4878,9 @@ Public Sub FixPainLabels_Final()
     Next
 
     '--- 各Frame内のラベルを処理 ---
-    For Each f In Me.controls
+    For Each f In Me.Controls
         If typeName(f) = "Frame" Then
-            For Each c In f.controls
+            For Each c In f.Controls
                 If typeName(c) = "Label" Then
                     If c.name = "lblPainQual" Then
                         Set L = c
@@ -4883,7 +4900,7 @@ End Sub
 
 Public Sub ListToneKeyCaptions()
     Dim c As Control
-    For Each c In frmEval.controls
+    For Each c In frmEval.Controls
         On Error Resume Next
         If typeName(c) = "CheckBox" Or typeName(c) = "OptionButton" Or typeName(c) = "Label" Then
             Dim cap As String: cap = CStr(c.caption)
@@ -4903,7 +4920,7 @@ Private Function GetWalkBaseTop(ByVal f As MSForms.Frame) As Single
     If f Is Nothing Then Exit Function
 
     bestTop = 99999
-    For Each ctl In f.controls
+    For Each ctl In f.Controls
         If typeName(ctl) = "ComboBox" Or typeName(ctl) = "Label" Then
             If ctl.top < bestTop Then bestTop = ctl.top
         End If
@@ -4968,7 +4985,7 @@ Private Sub BuildWalkIndep_DistanceOutdoor()
     Set f = GetWalkAssistiveTargetFrame()
     If f Is Nothing Then Exit Sub
 
-    For Each ctl In f.controls
+    For Each ctl In f.Controls
         If typeName(ctl) = "ComboBox" Then
             Set cmbBase = ctl
             Exit For
@@ -4986,10 +5003,10 @@ Private Sub BuildWalkIndep_DistanceOutdoor()
     topOut = topDist + 24
 
     On Error Resume Next
-    Set lblDist = f.controls("lblWalkDistance")
-    Set cmbDist = f.controls("cmbWalkDistance")
-    Set lblOut = f.controls("lblWalkOutdoor")
-    Set cmbOut = f.controls("cmbWalkOutdoor")
+    Set lblDist = f.Controls("lblWalkDistance")
+    Set cmbDist = f.Controls("cmbWalkDistance")
+    Set lblOut = f.Controls("lblWalkOutdoor")
+    Set cmbOut = f.Controls("cmbWalkOutdoor")
     On Error GoTo 0
 
     If lblDist Is Nothing Then Set lblDist = CreateLabel(f, "", leftLabel, topDist, wLabel, "lblWalkDistance")
@@ -5047,9 +5064,9 @@ Private Sub BuildWalkIndep_Stability()
     top4 = top3 + 24
 
     Dim i As Long
-    For i = f.controls.count - 1 To 0 Step -1
-        If StrComp(Left$(f.controls(i).name, 12), "chkWalkStab_", vbTextCompare) = 0 Then
-            f.controls.Remove f.controls(i).name
+    For i = f.Controls.count - 1 To 0 Step -1
+        If StrComp(Left$(f.Controls(i).name, 12), "chkWalkStab_", vbTextCompare) = 0 Then
+            f.Controls.Remove f.Controls(i).name
         End If
     Next i
 
@@ -5059,33 +5076,33 @@ Private Sub BuildWalkIndep_Stability()
     leftPos = 12
 
     
-    Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Furatsuki", True)
+    Set chk = f.Controls.Add("Forms.CheckBox.1", "chkWalkStab_Furatsuki", True)
     chk.caption = "ふらつきあり": chk.Left = leftPos: chk.top = top4: chk.Width = 90: chk.Height = 18
     
     leftPos = leftPos + chk.Width + 12
     
 
     
-    Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Foot", True)
+    Set chk = f.Controls.Add("Forms.CheckBox.1", "chkWalkStab_Foot", True)
     chk.caption = "足運び不安定": chk.Left = leftPos: chk.top = top4: chk.Width = 100: chk.Height = 18
     
     leftPos = leftPos + chk.Width + 12
     
     
-    Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Turn", True)
+    Set chk = f.Controls.Add("Forms.CheckBox.1", "chkWalkStab_Turn", True)
     chk.caption = "方向転換不安": chk.Left = leftPos: chk.top = top4: chk.Width = 100: chk.Height = 18
     
     leftPos = leftPos + chk.Width + 12
     
     
     
-    Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_Slow", True)
+    Set chk = f.Controls.Add("Forms.CheckBox.1", "chkWalkStab_Slow", True)
     chk.caption = "速度低下": chk.Left = leftPos: chk.top = top4: chk.Width = 80: chk.Height = 18
     
     leftPos = leftPos + chk.Width + 12
 
 
-    Set chk = f.controls.Add("Forms.CheckBox.1", "chkWalkStab_FallRisk", True)
+    Set chk = f.Controls.Add("Forms.CheckBox.1", "chkWalkStab_FallRisk", True)
     chk.caption = "転倒リスク高い": chk.Left = leftPos: chk.top = top4: chk.Width = 110: chk.Height = 18
 End Sub
 
@@ -5105,7 +5122,7 @@ Private Sub BuildWalkIndep_Speed()
     top5 = baseTop + 96
 
     On Error Resume Next
-    f.controls.Remove "cmbGaitSpeedDetail"
+    f.Controls.Remove "cmbGaitSpeedDetail"
     On Error GoTo 0
     
     CreateLabel f, "歩行速度", 12, top5, 60
@@ -5128,7 +5145,7 @@ Private Sub BuildWalk_AbnormalTab()
     Dim pg As MSForms.page
 
     ' 歩行評価用の MultiPage2 を探す
-    For Each ctl In Me.controls
+    For Each ctl In Me.Controls
         If typeName(ctl) = "MultiPage" Then
             If ctl.name = "MultiPage2" Then
                 Set mp = ctl
@@ -5152,7 +5169,7 @@ Private Sub BuildWalk_AbnormalTab()
 
     ' ひとまず中に空のフレームだけ置いておく（中身は後で作る）
     Dim f As MSForms.Frame
-    Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbnormal", True)
+    Set f = pg.Controls.Add("Forms.Frame.1", "fraWalkAbnormal", True)
     With f
         .caption = "異常歩行パターン（チェック）"
         .Left = 6
@@ -5171,7 +5188,7 @@ Private Sub BuildWalkAbnormal_Frames()
     Dim w As Single, h As Single
 
     ' MultiPage2（歩行評価）を取得
-    For Each ctl In Me.controls
+    For Each ctl In Me.Controls
         If typeName(ctl) = "MultiPage" And ctl.name = "MultiPage2" Then
             Set mp = ctl
             Exit For
@@ -5190,14 +5207,14 @@ Private Sub BuildWalkAbnormal_Frames()
     h = mp.Height - 24
 
     ' 既存フレーム削除（再生成用）
-    For Each ctl In pg.controls
+    For Each ctl In pg.Controls
         If typeName(ctl) = "Frame" Then
-            pg.controls.Remove ctl.name
+            pg.Controls.Remove ctl.name
         End If
     Next
 
     ' --- A：片麻痺系 ---
-    Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbn_A", True)
+    Set f = pg.Controls.Add("Forms.Frame.1", "fraWalkAbn_A", True)
     With f
         .caption = "A：片麻痺・脳血管障害パターン"
         .Left = 6
@@ -5207,7 +5224,7 @@ Private Sub BuildWalkAbnormal_Frames()
     End With
 
     ' --- B：パーキンソン系 ---
-    Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbn_B", True)
+    Set f = pg.Controls.Add("Forms.Frame.1", "fraWalkAbn_B", True)
     With f
         .caption = "B：パーキンソン関連パターン"
         .Left = w / 2 + 6
@@ -5217,7 +5234,7 @@ Private Sub BuildWalkAbnormal_Frames()
     End With
 
     ' --- C：整形・高齢者不安定歩行 ---
-    Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbn_C", True)
+    Set f = pg.Controls.Add("Forms.Frame.1", "fraWalkAbn_C", True)
     With f
         .caption = "C：整形・高齢者不安定歩行"
         .Left = 6
@@ -5227,7 +5244,7 @@ Private Sub BuildWalkAbnormal_Frames()
     End With
 
     ' --- D：協調障害・失調 ---
-    Set f = pg.controls.Add("Forms.Frame.1", "fraWalkAbn_D", True)
+    Set f = pg.Controls.Add("Forms.Frame.1", "fraWalkAbn_D", True)
     With f
         .caption = "D：協調障害・失調パターン"
         .Left = w / 2 + 6
@@ -5248,7 +5265,7 @@ Private Sub BuildWalkAbnormal_Checks()
     Dim i As Long, topPos As Single
     
     ' MultiPage2 を取得
-    For Each ctl In Me.controls
+    For Each ctl In Me.Controls
         If typeName(ctl) = "MultiPage" And ctl.name = "MultiPage2" Then
             Set mp = ctl
             Exit For
@@ -5341,13 +5358,13 @@ Private Sub BuildWalkAbnormal_Checks()
 
     For idx = 0 To 3
         ' 対象フレーム取得
-        Set f = pg.controls(fNames(idx))
+        Set f = pg.Controls(fNames(idx))
         If f Is Nothing Then GoTo ContinueNext
         
         ' 既存チェック削除
-        For Each ctl In f.controls
+        For Each ctl In f.Controls
             If typeName(ctl) = "CheckBox" Then
-                f.controls.Remove ctl.name
+                f.Controls.Remove ctl.name
             End If
         Next ctl
         
@@ -5359,7 +5376,7 @@ Private Sub BuildWalkAbnormal_Checks()
         maxBottom = 0
 
         For i = LBound(arr) To UBound(arr)
-            Set chk = f.controls.Add("Forms.CheckBox.1", fNames(idx) & "_chk" & CStr(i), True)
+            Set chk = f.Controls.Add("Forms.CheckBox.1", fNames(idx) & "_chk" & CStr(i), True)
             With chk
                 .caption = arr(i)
                 .Left = 12
@@ -5437,12 +5454,12 @@ Public Sub BuildCogMentalUI_Simple()
     End If
 
     ' いったん中身を全部クリア（元のラベル／コンボ／既存マルチページも含めて）
-    Do While f.controls.count > 0
-        f.controls.Remove f.controls(0).name
+    Do While f.Controls.count > 0
+        f.Controls.Remove f.Controls(0).name
     Loop
 
     ' 子MultiPageを追加（認知機能 / 精神面 の2タブのみ）
-    Set mp = f.controls.Add("Forms.MultiPage.1", "mpCogMental", True)
+    Set mp = f.Controls.Add("Forms.MultiPage.1", "mpCogMental", True)
            With mp
         .Left = 6
         .top = 0          ' ← ここを 6 → 0 に
@@ -5504,8 +5521,8 @@ Public Sub BuildCog_CognitionCore()
     End If
     
     ' 既存コントロールをクリア（やり直し用）
-    Do While pg.controls.count > 0
-        pg.controls.Remove pg.controls(0).name
+    Do While pg.Controls.count > 0
+        pg.Controls.Remove pg.Controls(0).name
     Loop
     
     ' レイアウト基準
@@ -5528,7 +5545,7 @@ Public Sub BuildCog_CognitionCore()
     
     '―― 1行目：記憶／注意 ――
     ' 記憶
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblCogMemory", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblCogMemory", True)
     With lbl
         .caption = "記憶"
         .Left = col1Left
@@ -5537,7 +5554,7 @@ Public Sub BuildCog_CognitionCore()
         .Height = 18
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbCogMemory", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbCogMemory", True)
     With cmb
         .Left = col1Left + lblW + 6
         .top = rowTop - 2
@@ -5550,7 +5567,7 @@ Public Sub BuildCog_CognitionCore()
     End With
     
     ' 注意
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblCogAttention", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblCogAttention", True)
     With lbl
         .caption = "注意"
         .Left = col2Left
@@ -5559,7 +5576,7 @@ Public Sub BuildCog_CognitionCore()
         .Height = 18
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbCogAttention", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbCogAttention", True)
     With cmb
         .Left = col2Left + lblW + 6
         .top = rowTop - 2
@@ -5575,7 +5592,7 @@ Public Sub BuildCog_CognitionCore()
     rowTop = rowTop + rowGap
     
     ' 見当識
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblCogOrientation", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblCogOrientation", True)
     With lbl
         .caption = "見当識"
         .Left = col1Left
@@ -5584,7 +5601,7 @@ Public Sub BuildCog_CognitionCore()
         .Height = 18
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbCogOrientation", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbCogOrientation", True)
     With cmb
         .Left = col1Left + lblW + 6
         .top = rowTop - 2
@@ -5597,7 +5614,7 @@ Public Sub BuildCog_CognitionCore()
     End With
     
     ' 判断
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblCogJudgement", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblCogJudgement", True)
     With lbl
         .caption = "判断"
         .Left = col2Left
@@ -5606,7 +5623,7 @@ Public Sub BuildCog_CognitionCore()
         .Height = 18
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbCogJudgement", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbCogJudgement", True)
     With cmb
         .Left = col2Left + lblW + 6
         .top = rowTop - 2
@@ -5622,7 +5639,7 @@ Public Sub BuildCog_CognitionCore()
     rowTop = rowTop + rowGap
     
     ' 遂行
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblCogExecutive", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblCogExecutive", True)
     With lbl
         .caption = "遂行"
         .Left = col1Left
@@ -5631,7 +5648,7 @@ Public Sub BuildCog_CognitionCore()
         .Height = 18
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbCogExecutive", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbCogExecutive", True)
     With cmb
         .Left = col1Left + lblW + 6
         .top = rowTop - 2
@@ -5644,7 +5661,7 @@ Public Sub BuildCog_CognitionCore()
     End With
     
     ' 言語
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblCogLanguage", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblCogLanguage", True)
     With lbl
         .caption = "言語"
         .Left = col2Left
@@ -5653,7 +5670,7 @@ Public Sub BuildCog_CognitionCore()
         .Height = 18
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbCogLanguage", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbCogLanguage", True)
     With cmb
         .Left = col2Left + lblW + 6
         .top = rowTop - 2
@@ -5702,13 +5719,13 @@ Public Sub BuildCog_DementiaBlock()
     
        ' いったん、既存の認知症ブロックを消す（やり直し用）
     Dim i As Long
-    For i = pg.controls.count - 1 To 0 Step -1
-        With pg.controls(i)
+    For i = pg.Controls.count - 1 To 0 Step -1
+        With pg.Controls(i)
             If .name = "lblDementiaType" _
                Or .name = "cmbDementiaType" _
                Or .name = "lblDementiaNote" _
                Or .name = "txtDementiaNote" Then
-                pg.controls.Remove .name
+                pg.Controls.Remove .name
             End If
         End With
     Next i
@@ -5718,7 +5735,7 @@ Public Sub BuildCog_DementiaBlock()
     fraTop = 18 + 3 * 24 + 18   ' 18(最初) + 3行*24 + 余白
     
     ' 見出しラベル「認知症の種類」
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblDementiaType", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblDementiaType", True)
     With lbl
         .caption = "認知症の種類"
         .Left = 12
@@ -5728,7 +5745,7 @@ Public Sub BuildCog_DementiaBlock()
     End With
     
     ' 診断名コンボ
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbDementiaType", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbDementiaType", True)
     With cmb
         .Left = lbl.Left + lbl.Width + 6
         .top = fraTop - 2
@@ -5745,7 +5762,7 @@ Public Sub BuildCog_DementiaBlock()
     End With
     
     ' 備考ラベル
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblDementiaNote", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblDementiaNote", True)
     With lbl
         .caption = "備考"
         .Left = cmb.Left + cmb.Width + 12
@@ -5755,7 +5772,7 @@ Public Sub BuildCog_DementiaBlock()
     End With
     
     ' 備考テキスト
-    Set txt = pg.controls.Add("Forms.TextBox.1", "txtDementiaNote", True)
+    Set txt = pg.Controls.Add("Forms.TextBox.1", "txtDementiaNote", True)
     With txt
         .Left = lbl.Left + lbl.Width + 6
         .top = fraTop - 2
@@ -5802,10 +5819,10 @@ Public Sub BuildCog_BPSD()
     
     ' --- 既存BPSDコントロール削除 ---
     Dim c As MSForms.Control
-    For i = pg.controls.count - 1 To 0 Step -1
-        If typeName(pg.controls(i)) = "CheckBox" _
-           Or pg.controls(i).name Like "lblBPSD*" Then
-            pg.controls.Remove pg.controls(i).name
+    For i = pg.Controls.count - 1 To 0 Step -1
+        If typeName(pg.Controls(i)) = "CheckBox" _
+           Or pg.Controls(i).name Like "lblBPSD*" Then
+            pg.Controls.Remove pg.Controls(i).name
         End If
     Next i
     
@@ -5814,7 +5831,7 @@ Public Sub BuildCog_BPSD()
     topY = topY + 24               '認知症種類の行
     
     ' 見出し
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblBPSD_Title", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblBPSD_Title", True)
     With lbl
         .caption = "認知症の周辺症状（BPSD）"
         .Left = 12
@@ -5834,7 +5851,7 @@ Public Sub BuildCog_BPSD()
     col = 0: row = 0
     
     For i = LBound(items) To UBound(items)
-        Set chk = pg.controls.Add("Forms.CheckBox.1", "chkBPSD" & CStr(i), True)
+        Set chk = pg.Controls.Add("Forms.CheckBox.1", "chkBPSD" & CStr(i), True)
         With chk
             .caption = items(i)
             .Left = 12 + (col * 140)
@@ -5887,8 +5904,8 @@ Public Sub BuildCog_MentalBlock()
     
     ' 既存クリア（やり直し用）
     Dim i As Long
-    For i = pg.controls.count - 1 To 0 Step -1
-        pg.controls.Remove pg.controls(i).name
+    For i = pg.Controls.count - 1 To 0 Step -1
+        pg.Controls.Remove pg.Controls(i).name
     Next i
     
     ' レイアウト
@@ -5900,7 +5917,7 @@ Public Sub BuildCog_MentalBlock()
     topY = 18
     
     ' --- 気分 ---
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblMood", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblMood", True)
     With lbl
         .caption = "気分"
         .Left = left1
@@ -5908,7 +5925,7 @@ Public Sub BuildCog_MentalBlock()
         .Width = lblW
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbMood", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbMood", True)
     With cmb
         .Left = left1 + lblW + 6
         .top = topY - 2
@@ -5920,7 +5937,7 @@ Public Sub BuildCog_MentalBlock()
     End With
     
     ' --- 意欲 ---
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblMotivation", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblMotivation", True)
     With lbl
         .caption = "意欲"
         .Left = left2
@@ -5928,7 +5945,7 @@ Public Sub BuildCog_MentalBlock()
         .Width = lblW
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbMotivation", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbMotivation", True)
     With cmb
         .Left = left2 + lblW + 6
         .top = topY - 2
@@ -5943,7 +5960,7 @@ Public Sub BuildCog_MentalBlock()
     ' --- 不安 ---
     topY = topY + rowGap
     
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblAnxiety", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblAnxiety", True)
     With lbl
         .caption = "不安"
         .Left = left1
@@ -5951,7 +5968,7 @@ Public Sub BuildCog_MentalBlock()
         .Width = lblW
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbAnxiety", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbAnxiety", True)
     With cmb
         .Left = left1 + lblW + 6
         .top = topY - 2
@@ -5964,7 +5981,7 @@ Public Sub BuildCog_MentalBlock()
     End With
     
     ' --- 対人 ---
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblRelation", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblRelation", True)
     With lbl
         .caption = "対人関係"
         .Left = left2
@@ -5972,7 +5989,7 @@ Public Sub BuildCog_MentalBlock()
         .Width = lblW
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbRelation", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbRelation", True)
     With cmb
         .Left = left2 + lblW + 6
         .top = topY - 2
@@ -5987,7 +6004,7 @@ Public Sub BuildCog_MentalBlock()
     ' --- 睡眠 ---
     topY = topY + rowGap
     
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblSleep", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblSleep", True)
     With lbl
         .caption = "睡眠"
         .Left = left1
@@ -5995,7 +6012,7 @@ Public Sub BuildCog_MentalBlock()
         .Width = lblW
     End With
     
-    Set cmb = pg.controls.Add("Forms.ComboBox.1", "cmbSleep", True)
+    Set cmb = pg.Controls.Add("Forms.ComboBox.1", "cmbSleep", True)
     With cmb
         .Left = left1 + lblW + 6
         .top = topY - 2
@@ -6011,7 +6028,7 @@ Public Sub BuildCog_MentalBlock()
     ' --- 備考 ---
     topY = topY + rowGap + 8
     
-    Set lbl = pg.controls.Add("Forms.Label.1", "lblMentalNote", True)
+    Set lbl = pg.Controls.Add("Forms.Label.1", "lblMentalNote", True)
     With lbl
         .caption = "備考"
         .Left = left1
@@ -6019,7 +6036,7 @@ Public Sub BuildCog_MentalBlock()
         .Width = lblW
     End With
     
-    Set txt = pg.controls.Add("Forms.TextBox.1", "txtMentalNote", True)
+    Set txt = pg.Controls.Add("Forms.TextBox.1", "txtMentalNote", True)
     With txt
         .Left = left1 + lblW + 6
         .top = topY - 2
@@ -6062,7 +6079,7 @@ Private Sub BuildDailyLogTab()
     On Error GoTo EH
 
     If fra Is Nothing Then
-        Set fra = pg.controls.Add("Forms.Frame.1", "fraDailyLog")
+        Set fra = pg.Controls.Add("Forms.Frame.1", "fraDailyLog")
         fra.caption = "日々の記録"
         fra.Left = 6
     fra.top = 6
@@ -6117,10 +6134,10 @@ Private Sub BuildDailyLogLayout()
     
     '=== 記録日ラベル ===
     On Error Resume Next
-    Set lbl = f.controls("lblDailyDate")
+    Set lbl = f.Controls("lblDailyDate")
     On Error GoTo EH
 
-    If lbl Is Nothing Then Set lbl = f.controls.Add("Forms.Label.1", "lblDailyDate")
+    If lbl Is Nothing Then Set lbl = f.Controls.Add("Forms.Label.1", "lblDailyDate")
     With lbl
         .caption = "記録日"
         .Left = leftMargin
@@ -6133,7 +6150,7 @@ Private Sub BuildDailyLogLayout()
     On Error Resume Next
     Set txt = SafeGetControl(f, "txtDailyDate")
     On Error GoTo EH
-    If txt Is Nothing Then Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyDate")
+    If txt Is Nothing Then Set txt = f.Controls.Add("Forms.TextBox.1", "txtDailyDate")
     With txt
         .Left = lbl.Left + lbl.Width + 6
         .top = lbl.top - 2
@@ -6144,9 +6161,9 @@ Private Sub BuildDailyLogLayout()
     '=== 記録者ラベル ===
     On Error Resume Next
 
-    Set lbl = f.controls("lblDailyStaff")
+    Set lbl = f.Controls("lblDailyStaff")
     On Error GoTo EH
-    If lbl Is Nothing Then Set lbl = f.controls.Add("Forms.Label.1", "lblDailyStaff")
+    If lbl Is Nothing Then Set lbl = f.Controls.Add("Forms.Label.1", "lblDailyStaff")
     With lbl
         .caption = "記録者"
         .Left = txt.Left + txt.Width + 24
@@ -6159,7 +6176,7 @@ Private Sub BuildDailyLogLayout()
     On Error Resume Next
     Set txt = SafeGetControl(f, "txtDailyStaff")
     On Error GoTo EH
-    If txt Is Nothing Then Set txt = f.controls.Add("Forms.TextBox.1", "txtDailyStaff")
+    If txt Is Nothing Then Set txt = f.Controls.Add("Forms.TextBox.1", "txtDailyStaff")
     With txt
         .Left = lbl.Left + lbl.Width + 6
         .top = lbl.top - 2
@@ -6178,8 +6195,8 @@ Private Sub BuildDailyLogLayout()
 
     '=== 記録内容テキスト（マルチライン） ===
     On Error Resume Next
-    f.controls.Remove "lblDailyNote"
-    f.controls.Remove "txtDailyNote"
+    f.Controls.Remove "lblDailyNote"
+    f.Controls.Remove "txtDailyNote"
     On Error GoTo EH
  
 ExitHere:
@@ -6201,9 +6218,9 @@ Private Sub CreateDailyField(ByVal f As Object, ByVal lblName As String, ByVal t
     Dim txt As Object
 
     On Error Resume Next
-    Set lbl = f.controls(lblName)
+    Set lbl = f.Controls(lblName)
     On Error GoTo 0
-    If lbl Is Nothing Then Set lbl = f.controls.Add("Forms.Label.1", lblName)
+    If lbl Is Nothing Then Set lbl = f.Controls.Add("Forms.Label.1", lblName)
 
     With lbl
         .caption = caption
@@ -6214,9 +6231,9 @@ Private Sub CreateDailyField(ByVal f As Object, ByVal lblName As String, ByVal t
     End With
 
     On Error Resume Next
-    Set txt = f.controls(txtName)
+    Set txt = f.Controls(txtName)
     On Error GoTo 0
-    If txt Is Nothing Then Set txt = f.controls.Add("Forms.TextBox.1", txtName)
+    If txt Is Nothing Then Set txt = f.Controls.Add("Forms.TextBox.1", txtName)
 
     With txt
         .Left = x
@@ -6260,16 +6277,16 @@ Public Sub BuildDailyLog_HistoryList(owner As Object)
     End If
     
     On Error Resume Next
-    f.controls.Remove "lstDailyLogList"
-    f.controls.Remove "lblDailyHistory"
-    f.controls.Remove "lblDailyMonitoringCreate"
+    f.Controls.Remove "lstDailyLogList"
+    f.Controls.Remove "lblDailyHistory"
+    f.Controls.Remove "lblDailyMonitoringCreate"
     On Error GoTo 0
 
 '--- 履歴ラベル作成 ---
 Dim lbl As MSForms.label
 Dim lblMonitoring As MSForms.label
 
-Set lblMonitoring = f.controls.Add("Forms.Label.1", "lblDailyMonitoringCreate", True)
+Set lblMonitoring = f.Controls.Add("Forms.Label.1", "lblDailyMonitoringCreate", True)
 With lblMonitoring
     .caption = "モニタリング本文"
     .Left = margin
@@ -6280,7 +6297,7 @@ With lblMonitoring
 End With
 
     ' ListBox 追加
-    Set lst = f.controls.Add("Forms.ListBox.1", "lstDailyLogList", True)
+    Set lst = f.Controls.Add("Forms.ListBox.1", "lstDailyLogList", True)
 
   
     With lst
@@ -6328,11 +6345,11 @@ Public Sub BuildDailyLog_ExtractButton(owner As Object)
 
     ' 既にボタンがあれば削除して作り直し（冪等）
     On Error Resume Next
-    f.controls.Remove "cmdDailyExtract"
+    f.Controls.Remove "cmdDailyExtract"
     On Error GoTo 0
 
     ' 抽出ボタン追加
-    Set cmd = f.controls.Add("Forms.CommandButton.1", "cmdDailyExtract", True)
+    Set cmd = f.Controls.Add("Forms.CommandButton.1", "cmdDailyExtract", True)
 
     With cmd
         .caption = "モニタリング作成"
@@ -6374,11 +6391,11 @@ Public Sub BuildDailyLog_SaveButton(owner As Object)
 
     ' 既にボタンがあれば削除して作り直し（冪等）
     On Error Resume Next
-    f.controls.Remove "cmdDailySave"
+    f.Controls.Remove "cmdDailySave"
     On Error GoTo 0
 
     ' 保存ボタン追加
-    Set cmd = f.controls.Add("Forms.CommandButton.1", "cmdDailySave", True)
+    Set cmd = f.Controls.Add("Forms.CommandButton.1", "cmdDailySave", True)
 
     With cmd
         .caption = "日々の記録を保存"
@@ -6413,7 +6430,7 @@ Private Sub mDailyExtract_Click()
         If InStr(1, box.value, "（この月の記録はありません）", vbTextCompare) > 0 Then
             
             box.value = "【月次モニタリング下書き】" & vbCrLf & _
-            "対象：" & Me.controls("frHeader").controls("txtHdrName").value & vbCrLf & _
+            "対象：" & Me.Controls("frHeader").Controls("txtHdrName").value & vbCrLf & _
                  "期間：" & Format$(DateSerial(Year(CDate(DailyLogCtl("txtDailyDate").value)), _
                                       Month(CDate(DailyLogCtl("txtDailyDate").value)), 1), "yyyy/mm/dd") & _
             " - " & _
@@ -6426,7 +6443,7 @@ Private Sub mDailyExtract_Click()
 
                       Call ExportMonitoring_ToMonthlyWorkbook( _
           CDate(DailyLogCtl("txtDailyDate").value), _
-                Me.controls("frHeader").controls("txtHdrName").value, _
+                Me.Controls("frHeader").Controls("txtHdrName").value, _
                 box.value)
 
            Exit Sub
@@ -6460,7 +6477,7 @@ DailyLogCtl("txtMonthlyMonitoringDraft").value = _
 
             Call ExportMonitoring_ToMonthlyWorkbook( _
         CDate(DailyLogCtl("txtDailyDate").value), _
-        Me.controls("frHeader").controls("txtHdrName").value, _
+        Me.Controls("frHeader").Controls("txtHdrName").value, _
          DailyLogCtl("txtMonthlyMonitoringDraft").value)
 
         
@@ -6485,7 +6502,7 @@ Public Sub PlaceGlobalSaveButton_Once()
     Dim c As MSForms.Control
 
     ' 「閉じる」ボタンをキャプションで特定
-    For Each c In Me.controls
+    For Each c In Me.Controls
         If TypeOf c Is MSForms.CommandButton Then
             If c.caption = "閉じる" Then
                 Set btnClose = c
@@ -6501,12 +6518,12 @@ Public Sub PlaceGlobalSaveButton_Once()
 
     ' 既にグローバル保存ボタンがあるか確認
     On Error Resume Next
-    Set btnSave = Me.controls("cmdSaveGlobal")
+    Set btnSave = Me.Controls("cmdSaveGlobal")
     On Error GoTo 0
 
     ' なければ新規作成
     If btnSave Is Nothing Then
-        Set btnSave = Me.controls.Add("Forms.CommandButton.1", "cmdSaveGlobal")
+        Set btnSave = Me.Controls.Add("Forms.CommandButton.1", "cmdSaveGlobal")
         btnSave.caption = "シートへ保存"
     End If
 
@@ -6523,12 +6540,12 @@ Dim btnClear As MSForms.CommandButton
 
 ' 既に存在するか確認
 On Error Resume Next
-Set btnClear = Me.controls("cmdClearGlobal")
+Set btnClear = Me.Controls("cmdClearGlobal")
 On Error GoTo 0
 
 ' なければ新規作成
 If btnClear Is Nothing Then
-    Set btnClear = Me.controls.Add("Forms.CommandButton.1", "cmdClearGlobal")
+    Set btnClear = Me.Controls.Add("Forms.CommandButton.1", "cmdClearGlobal")
     btnClear.caption = "クリア"
 End If
 
@@ -6584,7 +6601,7 @@ End Sub
 Private Sub mGlobalClear_Clicked()
     Dim c As MSForms.Control
 
-    For Each c In Me.controls
+    For Each c In Me.Controls
         ' テキストボックスは空に
         If TypeOf c Is MSForms.TextBox Then
             ' 評価日(txtEDate)と日々記録の日付(txtDailyDate)はクリアしない
@@ -6626,7 +6643,7 @@ Private Sub mDailyList_DblClicked()
     Dim buf As String
     
     ' 対象の一覧ListBoxを取得
-    Set lb = Me.controls("lstDailyLogList")
+    Set lb = Me.Controls("lstDailyLogList")
     
     ' 全行・全列をタブ区切り＋改行で連結
     For r = 0 To lb.ListCount - 1
@@ -6692,11 +6709,11 @@ Private Function GetMainMultiPage() As MSForms.MultiPage
     Dim c As Control
     
     On Error Resume Next
-    Set GetMainMultiPage = Me.controls("MultiPage1")
+    Set GetMainMultiPage = Me.Controls("MultiPage1")
     On Error GoTo 0
     If Not GetMainMultiPage Is Nothing Then Exit Function
 
-    For Each c In Me.controls
+    For Each c In Me.Controls
         If typeName(c) = "MultiPage" Then
             Set GetMainMultiPage = c
             Exit Function
@@ -6723,7 +6740,7 @@ Public Function GetWalkRootFrame() As MSForms.Frame
     If mp Is Nothing Then Exit Function
 
     For Each pg In mp.Pages
-        For Each c In pg.controls
+        For Each c In pg.Controls
             If typeName(c) = "Frame" Then
                 If InStr(1, CStr(c.caption), "", vbTextCompare) > 0 _
                    Or InStr(1, CStr(c.name), "walk", vbTextCompare) > 0 Then
@@ -6758,7 +6775,7 @@ Public Function GetCogRootFrame() As MSForms.Frame
     Set host = EvalCtl("Frame7")
     If host Is Nothing Then Exit Function
 
-    For Each c In host.controls
+    For Each c In host.Controls
         If typeName(c) = "Frame" Then
             If firstFrame Is Nothing Then Set firstFrame = c
             If StrComp(CStr(c.name), "Frame30", vbTextCompare) = 0 Then
@@ -6783,7 +6800,7 @@ Public Function GetCogTabs() As MSForms.MultiPage
     Set f = GetCogRootFrame()
     If f Is Nothing Then Exit Function
 
-    For Each c In f.controls
+    For Each c In f.Controls
         If typeName(c) = "MultiPage" Then
             If InStr(1, CStr(c.name), "Cog", vbTextCompare) > 0 Or InStr(1, CStr(c.name), "Mental", vbTextCompare) > 0 Then
                 Set GetCogTabs = c
@@ -6791,7 +6808,7 @@ Public Function GetCogTabs() As MSForms.MultiPage
             End If
         End If
     Next
-    For Each c In f.controls
+    For Each c In f.Controls
         If typeName(c) = "MultiPage" Then
             Set GetCogTabs = c
             Exit Function
@@ -6811,7 +6828,7 @@ Private Sub FixWalkRootFrameHeight()
     If f Is Nothing Then Exit Sub
 
     ' 子コントロールの一番下の位置を調べる
-    For Each c In f.controls
+    For Each c In f.Controls
         If c.top + c.Height > maxBottom Then
             maxBottom = c.top + c.Height
         End If
@@ -6986,7 +7003,7 @@ Private Function GetPageRootFrame(ByVal pageIndex As Long) As MSForms.Frame
     End If
 
     ' そのページ内の「一番大きな Frame = ルートフレーム」とみなす
-    For Each c In pg.controls
+    For Each c In pg.Controls
         If typeName(c) = "Frame" And typeName(c.parent) = "Page" Then
             Set f = c
             area = f.Width * f.Height
@@ -7056,17 +7073,17 @@ Public Sub AdjustBottomButtons()
     If Not ControlExists(Me, "cmdSaveGlobal") Then Exit Sub
     If Not ControlExists(Me, "cmdClearGlobal") Then Exit Sub
 
-    yBtn = Me.InsideHeight - Me.controls("btnCloseCtl").Height - 12
+    yBtn = Me.InsideHeight - Me.Controls("btnCloseCtl").Height - 12
 
-    Me.controls("btnCloseCtl").top = yBtn
-    Me.controls("cmdSaveGlobal").top = yBtn
-    Me.controls("cmdClearGlobal").top = yBtn
+    Me.Controls("btnCloseCtl").top = yBtn
+    Me.Controls("cmdSaveGlobal").top = yBtn
+    Me.Controls("cmdClearGlobal").top = yBtn
     
     
      ' ★ここ（前面へ）
-    Me.controls("btnCloseCtl").ZOrder 0
-    Me.controls("cmdSaveGlobal").ZOrder 0
-    Me.controls("cmdClearGlobal").ZOrder 0
+    Me.Controls("btnCloseCtl").ZOrder 0
+    Me.Controls("cmdSaveGlobal").ZOrder 0
+    Me.Controls("cmdClearGlobal").ZOrder 0
     
 End Sub
 
@@ -7110,10 +7127,10 @@ End If
 
     '--- Header（操作バー：固定・非スクロール）---
     On Error Resume Next
-    Set frHeader = Me.controls("frHeader")
+    Set frHeader = Me.Controls("frHeader")
     On Error GoTo 0
     If frHeader Is Nothing Then
-        Set frHeader = Me.controls.Add("Forms.Frame.1", "frHeader", True)
+        Set frHeader = Me.Controls.Add("Forms.Frame.1", "frHeader", True)
         frHeader.caption = vbNullString
         frHeader.SpecialEffect = fmSpecialEffectFlat
     End If
@@ -7141,10 +7158,10 @@ End If
 
     '--- Viewport（評価コンテンツ専用：必要ならスクロール）---
     On Error Resume Next
-    Set frViewport = Me.controls("frViewport")
+    Set frViewport = Me.Controls("frViewport")
     On Error GoTo 0
     If frViewport Is Nothing Then
-        Set frViewport = Me.controls.Add("Forms.Frame.1", "frViewport", True)
+        Set frViewport = Me.Controls.Add("Forms.Frame.1", "frViewport", True)
         frViewport.caption = vbNullString
         frViewport.SpecialEffect = fmSpecialEffectFlat
     End If
@@ -7188,13 +7205,13 @@ Public Sub MoveGlobalButtonsToHeader_Once()
     On Error GoTo EH
     Dim stepN As String
 
-10  stepN = "GetHeader": Dim f As MSForms.Frame: Set f = Me.controls("frHeader")
+10  stepN = "GetHeader": Dim f As MSForms.Frame: Set f = Me.Controls("frHeader")
 
 20  stepN = "GetButtons"
     Dim bClear As MSForms.Control, bSave As MSForms.Control, bClose As MSForms.Control
-    Set bClear = Me.controls("cmdClearGlobal")
-    Set bSave = Me.controls("cmdSaveGlobal")
-    Set bClose = Me.controls("btnCloseCtl")
+    Set bClear = Me.Controls("cmdClearGlobal")
+    Set bSave = Me.Controls("cmdSaveGlobal")
+    Set bClose = Me.Controls("btnCloseCtl")
 
 30  stepN = "SetParent"
     bClear.parent = f
@@ -7232,13 +7249,13 @@ Public Sub CreateHeaderButtons_Once()
     done = True
 
     Dim f As MSForms.Frame
-    Set f = Me.controls("frHeader")
+    Set f = Me.Controls("frHeader")
 
     ' 既存ボタン（処理の本体）
     Dim bClear As MSForms.Control, bSave As MSForms.Control, bClose As MSForms.Control
-    Set bClear = Me.controls("cmdClearGlobal")
-    Set bSave = Me.controls("cmdSaveGlobal")
-    Set bClose = Me.controls("btnCloseCtl")
+    Set bClear = Me.Controls("cmdClearGlobal")
+    Set bSave = Me.Controls("cmdSaveGlobal")
+    Set bClose = Me.Controls("btnCloseCtl")
 
     ' 既存は見えなくする（位置は触らない）
     bClear.Visible = False
@@ -7251,14 +7268,14 @@ Public Sub CreateHeaderButtons_Once()
     Dim hClose As MSForms.CommandButton
 
      On Error Resume Next
-    Set hClear = f.controls("cmdClearHeader")
-    Set hSave = f.controls("cmdSaveHeader")
-    Set hClose = f.controls("cmdCloseHeader")
+    Set hClear = f.Controls("cmdClearHeader")
+    Set hSave = f.Controls("cmdSaveHeader")
+    Set hClose = f.Controls("cmdCloseHeader")
     On Error GoTo 0
 
-    If hClear Is Nothing Then Set hClear = f.controls.Add("Forms.CommandButton.1", "cmdClearHeader", True)
-    If hSave Is Nothing Then Set hSave = f.controls.Add("Forms.CommandButton.1", "cmdSaveHeader", True)
-    If hClose Is Nothing Then Set hClose = f.controls.Add("Forms.CommandButton.1", "cmdCloseHeader", True)
+    If hClear Is Nothing Then Set hClear = f.Controls.Add("Forms.CommandButton.1", "cmdClearHeader", True)
+    If hSave Is Nothing Then Set hSave = f.Controls.Add("Forms.CommandButton.1", "cmdSaveHeader", True)
+    If hClose Is Nothing Then Set hClose = f.Controls.Add("Forms.CommandButton.1", "cmdCloseHeader", True)
 
     ' 見た目は既存を踏襲
     hClear.caption = bClear.caption: hClear.Width = bClear.Width: hClear.Height = bClear.Height
@@ -7299,12 +7316,12 @@ Dim hLoadPrev As MSForms.CommandButton
 
 ' 既にあればそれを掴む（＝インスタンスを増やさない）
 On Error Resume Next
-Set hLoadPrev = f.controls("cmdHdrLoadPrev")
+Set hLoadPrev = f.Controls("cmdHdrLoadPrev")
 On Error GoTo 0
 
 ' 無ければ作る
 If hLoadPrev Is Nothing Then
-    Set hLoadPrev = f.controls.Add("Forms.CommandButton.1", "cmdHdrLoadPrev", True)
+    Set hLoadPrev = f.Controls.Add("Forms.CommandButton.1", "cmdHdrLoadPrev", True)
 End If
 
 hLoadPrev.caption = "前回の値を読み込む"
@@ -7315,7 +7332,7 @@ hLoadPrev.top = hClose.top
 ' 位置：txtHdrKana の右（txtHdrKana が無い場合は右端の左に置く）
 On Error Resume Next
 Dim tbKana As MSForms.Control
-Set tbKana = f.controls("txtHdrKana")
+Set tbKana = f.Controls("txtHdrKana")
 On Error GoTo 0
 
 If Not tbKana Is Nothing Then
@@ -7333,7 +7350,7 @@ RearrangeHeaderTopAreaLayout
 
 ' 旧ボタンは非表示
 On Error Resume Next
-Set mp1 = Me.controls("MultiPage1")
+Set mp1 = Me.Controls("MultiPage1")
 If Not mp1 Is Nothing Then
     Set pg1 = mp1.Pages(0)
     If Not pg1 Is Nothing Then
@@ -7641,16 +7658,16 @@ End Sub
 
 Public Sub AddPrintButton_TestEval()
     Dim f As MSForms.Frame
-    Set f = Me.controls("txtTUG").parent
+    Set f = Me.Controls("txtTUG").parent
     If f Is Nothing Then Exit Sub
 
     Dim btn As MSForms.CommandButton
     On Error Resume Next
-    Set btn = f.controls("cmdPrintTestEval")
+    Set btn = f.Controls("cmdPrintTestEval")
     On Error GoTo 0
 
     If btn Is Nothing Then
-        Set btn = f.controls.Add("Forms.CommandButton.1", "cmdPrintTestEval", True)
+        Set btn = f.Controls.Add("Forms.CommandButton.1", "cmdPrintTestEval", True)
         With btn
        .caption = "グラフ印刷"
         btn.Width = 120
@@ -7697,7 +7714,7 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
     dTo = DateSerial(Year(CDate(v)), Month(CDate(v)) + 1, 0)
 
     ' 対象者＝フォーム氏名（DailyLogのB列と一致）
-    nm = Trim$(Me.controls("frHeader").controls("txtHdrName").value)
+    nm = Trim$(Me.Controls("frHeader").Controls("txtHdrName").value)
     If nm = "" Then
         MsgBox "氏名を入力してください。", vbExclamation
         Exit Sub
@@ -7717,7 +7734,7 @@ End If
 
     lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
 
-    pid = Trim$(Me.controls("frHeader").controls("txtHdrPID").value)
+    pid = Trim$(Me.Controls("frHeader").Controls("txtHdrPID").value)
     cntSameName = Application.WorksheetFunction.CountIf(ws.Range("C:C"), nm)
 
     s = "【モニタリング】" & vbCrLf _
@@ -7801,21 +7818,21 @@ Public Sub EnsureNameSuggestList()
     Dim lb As MSForms.ListBox
 
     Set host = Me
-    Set tb = host.controls("txtHdrName")
+    Set tb = host.Controls("txtHdrName")
 
 
     On Error Resume Next
-    Set lb = Me.controls("lstNameSuggest")
+    Set lb = Me.Controls("lstNameSuggest")
     On Error GoTo 0
 
 
     If lb Is Nothing Then
-        Set lb = host.controls.Add("Forms.ListBox.1", "lstNameSuggest", True)
+        Set lb = host.Controls.Add("Forms.ListBox.1", "lstNameSuggest", True)
     End If
 
     With lb
-        .Left = Me.controls("frHeader").Left + tb.Left
-        .top = Me.controls("frHeader").top + tb.top + tb.Height + 4
+        .Left = Me.Controls("frHeader").Left + tb.Left
+        .top = Me.Controls("frHeader").top + tb.top + tb.Height + 4
         .Width = 200     ' 横をコンパクトに
         .Height = 60     ' 3件くらい見える高さ
 
@@ -7823,7 +7840,7 @@ Public Sub EnsureNameSuggestList()
     End With
     
       Set mNameSuggestSink = New cNameSuggestSink
-      mNameSuggestSink.Hook Me.controls("lstNameSuggest")
+      mNameSuggestSink.Hook Me.Controls("lstNameSuggest")
     
 End Sub
 
@@ -7831,7 +7848,7 @@ End Sub
 
 Private Sub txtHdrName_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
     ' ヘッダ入力 → 裏口へ同期（既存ロジック駆動のため）
-    Me.controls("txtName").text = Me.controls("frHeader").controls("txtHdrName").text
+    Me.Controls("txtName").text = Me.Controls("frHeader").Controls("txtHdrName").text
 
     ' 候補BOX確保 → 更新
     EnsureNameSuggestList
@@ -7843,15 +7860,15 @@ End Sub
 
 Private Sub lstNameSuggest_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
     Dim lb As MSForms.ListBox
-    Set lb = Me.controls("lstNameSuggest")
+    Set lb = Me.Controls("lstNameSuggest")
 
     If lb.ListIndex < 0 Then Exit Sub
 
     ' ヘッダの氏名だけ反映
-    Me.controls("frHeader").controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
+    Me.Controls("frHeader").Controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
 
     ' 裏口同期（既存ロジック用）
-    Me.controls("txtName").text = Me.controls("frHeader").controls("txtHdrName").text
+    Me.Controls("txtName").text = Me.Controls("frHeader").Controls("txtHdrName").text
 
     lb.Visible = False
 End Sub
@@ -7863,7 +7880,7 @@ End Sub
 '====================================================
 Private Function TryGetCtl(ByVal container As Object, ByVal ctlName As String, ByRef outCtl As Object) As Boolean
     Dim c As Object
-    For Each c In container.controls
+    For Each c In container.Controls
         If StrComp(c.name, ctlName, vbTextCompare) = 0 Then
             Set outCtl = c
             TryGetCtl = True
@@ -7891,7 +7908,7 @@ Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     
     
         ' 無ければ作る（frHeader配下）
-        Set btn = hdr.controls.Add("Forms.CommandButton.1", BTN_NAME, True)
+        Set btn = hdr.Controls.Add("Forms.CommandButton.1", BTN_NAME, True)
         btn.caption = "前回の値を読み込む"
         btn.Accelerator = "L"
         btn.Width = 180
@@ -8016,7 +8033,7 @@ Public Sub MoveBasicInfoFocusNext(ByVal ctl As Object)
     targetIdx = ctl.TabIndex + 1
 
     Dim c As MSForms.Control
-    For Each c In Me.controls
+    For Each c In Me.Controls
         If c.TabIndex = targetIdx Then
             c.SetFocus
             On Error GoTo 0
@@ -8168,7 +8185,7 @@ Public Sub Align_BIHomeEnv_Once()
 
     Dim fr As Object
     
-    Set fr = Me.controls("mpADL").Object.Pages(0).controls("frBIHomeEnv")
+    Set fr = Me.Controls("mpADL").Object.Pages(0).Controls("frBIHomeEnv")
     
     If Not fr Is Nothing Then
         fr.Left = fr.parent.InsideWidth - fr.Width - 12

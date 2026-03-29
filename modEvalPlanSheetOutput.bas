@@ -45,18 +45,39 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
         " | txtLiving=[" & dbgLv & "]" & _
         " | txtTxCourse=[" & dbgTx & "]" & _
         " | txtComplications=[" & dbgCp & "]"
+    Debug.Print "[WES] step 10 A16"
     WriteMerged ws, "A16:BJ16", dbgTx
+    Debug.Print "[WES] step 11 A18"
     WriteMerged ws, "A18:BJ18", dbgCp
-    WriteMerged ws, "A20:BJ20", GetPlanTextWithFallback(planData, owner, Array("TrainingPrecaution", "Medical.TrainingPrecaution", "機能訓練実施上の留意事項"), Array("txtTrainingNote", "txtRehabNote", "txtPrecaution"))
+    Debug.Print "[WES] step 12 A20 start"
+    Dim tmpA20 As String: tmpA20 = GetPlanTextWithFallback(planData, owner, Array("TrainingPrecaution", "Medical.TrainingPrecaution", "機能訓練実施上の留意事項"), Array("txtTrainingNote", "txtRehabNote", "txtPrecaution"))
+    Debug.Print "[WES] step 12 A20 done=[" & tmpA20 & "]"
+    WriteMerged ws, "A20:BJ20", tmpA20
+    ' 目標行は結合セル検出を使わず直接書き込み（行24=機能, 25=活動, 26=参加）
+    DebugScanGoalMerge ws  ' 行23-27の結合構造をイミディエイトに出力
+    WriteGoalRow ws, 24, PrefixGoalText("（機能）", GetPlanText(planData, Array("Function_Short", "function_short", "FunctionShort"))), _
+                        PrefixGoalText("（機能）", GetPlanText(planData, Array("Function_Long", "function_long", "FunctionLong")))
+    WriteGoalRow ws, 25, PrefixGoalText("（活動）", GetPlanText(planData, Array("Activity_Short", "activity_short", "ActivityShort"))), _
+                        PrefixGoalText("（活動）", GetPlanText(planData, Array("Activity_Long", "activity_long", "ActivityLong")))
+    WriteGoalRow ws, 26, PrefixGoalText("（参加）", GetPlanText(planData, Array("Participation_Short", "participation_short", "ParticipationShort"))), _
+                        PrefixGoalText("（参加）", GetPlanText(planData, Array("Participation_Long", "participation_long", "ParticipationLong")))
 
+    Debug.Print "[WES] step 28 HomeExercise"
+    WriteMerged ws, "A46:AE47", GetPlanText(planData, Array("HomeExercise", "homeExercise"))
+    On Error Resume Next
+    ws.Cells(46, 1).WrapText = True
+    On Error GoTo 0
+    Debug.Print "[WES] step 30 Programs"
     WriteProgramBlocks ws, planData
-
+    Debug.Print "[WES] step 40 A50 Monitoring"
     WriteMerged ws, "A50:AE51", GetPlanText(planData, Array("Monitoring.Change", "monitoring.change", "MonitoringChange", "changeText"))
     WriteMerged ws, "AF50:BJ51", GetPlanText(planData, Array("Monitoring.Issue", "monitoring.issue", "MonitoringIssue", "issueText"))
+    Debug.Print "[WES] step 50 done"
 
 
     Exit Sub
 EH:
+    Debug.Print "[WriteEvalPlanSheet] Error " & Err.Number & ": " & Err.Description
     Err.Clear
 
 
@@ -120,6 +141,17 @@ End Function
 
 
 
+Private Function GetProgramNote(ByVal idx As Long) As String
+    Select Case idx
+        Case 1: GetProgramNote = "疼痛・疲労に注意し、無理のない負荷で実施する。"
+        Case 2: GetProgramNote = "過度な伸張を避け、痛みが出たら中止する。"
+        Case 3: GetProgramNote = "転倒に注意し、必要に応じ手すりや補助を使用する。"
+        Case 4: GetProgramNote = "息切れ・めまいに注意し、休憩をはさみながら実施する。"
+        Case 5: GetProgramNote = "体調不良時は中止し、安全な環境で実施する。"
+        Case Else: GetProgramNote = ""
+    End Select
+End Function
+
 Private Sub WriteProgramBlocks(ByVal ws As Worksheet, ByVal planData As Object)
     Dim i As Long
     Dim startRow As Long
@@ -130,7 +162,15 @@ Private Sub WriteProgramBlocks(ByVal ws As Worksheet, ByVal planData As Object)
         item = GetProgramItem(planData, i)
 
         WriteMerged ws, "C" & startRow & ":AE" & (startRow + 2), GetProgramField(planData, item, i, Array("Content", "Program", "ProgramContent", "programContent"), Array("Program" & i & "Content"))
-        WriteMerged ws, "AF" & startRow & ":AR" & (startRow + 2), GetProgramField(planData, item, i, Array("Note", "Notes", "Caution", "Consideration"), Array("Program" & i & "Note"))
+        ' コンテンツセルを折り返し表示に設定（3行結合済みのため行高調整は不要）
+        On Error Resume Next
+        ws.Cells(startRow, 3).WrapText = True
+        On Error GoTo 0
+        ' 留意点：役割別定型文をVBAで決め打ち
+        WriteMerged ws, "AF" & startRow & ":AR" & (startRow + 2), GetProgramNote(i)
+        On Error Resume Next
+        ws.Cells(startRow, 32).WrapText = True
+        On Error GoTo 0
         WriteMerged ws, "AS" & startRow & ":AX" & (startRow + 2), GetProgramField(planData, item, i, Array("Frequency", "Freq", "frequency"), Array("Program" & i & "Frequency"))
         WriteMerged ws, "AY" & startRow & ":BD" & (startRow + 2), GetProgramField(planData, item, i, Array("Time", "Duration", "time"), Array("Program" & i & "Time"))
         WriteMerged ws, "BE" & startRow & ":BJ" & (startRow + 2), GetProgramField(planData, item, i, Array("Performer", "Staff", "Executor", "staff"), Array("Program" & i & "Performer"))
@@ -186,21 +226,31 @@ EH:
 End Function
 
 Private Function GetPlanTextWithFallback(ByVal planData As Object, ByVal owner As Object, ByVal planKeys As Variant, ByVal ctrlNames As Variant) As String
+    On Error GoTo EH
     Dim s As String
+    Debug.Print "[GPTF] GetPlanText start"
     s = GetPlanText(planData, planKeys)
+    Debug.Print "[GPTF] GetPlanText done=[" & s & "]"
     If Len(s) > 0 Then
         GetPlanTextWithFallback = s
         Exit Function
     End If
 
     Dim i As Long
+    Debug.Print "[GPTF] ctrlNames lb=" & LBound(ctrlNames) & " ub=" & UBound(ctrlNames)
     For i = LBound(ctrlNames) To UBound(ctrlNames)
+        Debug.Print "[GPTF] GetCtrlTextSafe " & CStr(ctrlNames(i))
         s = GetCtrlTextSafe(owner, CStr(ctrlNames(i)))
+        Debug.Print "[GPTF] done=[" & s & "]"
         If Len(s) > 0 Then
             GetPlanTextWithFallback = s
             Exit Function
         End If
     Next i
+    Exit Function
+EH:
+    Debug.Print "[GPTF] Error " & Err.Number & ": " & Err.Description & " i=" & i
+    Err.Clear
 End Function
 
 Private Function BuildHeaderDate(ByVal labelText As String, ByVal formattedDate As String) As String
@@ -718,19 +768,63 @@ done:
     On Error GoTo 0
 End Sub
 
-Private Function NzTextSafe(ByVal v As Variant, Optional ByVal fallback As String = vbNullString) As String
+' 目標行専用：行番号を直接指定して左半分(A列=1)と右半分(AF列=32)に書き込む
+' 結合セル内のどのセルに書いても値はマージトップに設定されるため、merge検出不要
+Private Sub WriteGoalRow(ByVal ws As Worksheet, ByVal rowNum As Long, ByVal leftText As String, ByVal rightText As String)
+    On Error Resume Next
+
+    ws.Cells(rowNum, 1).value = leftText
+    ws.Cells(rowNum, 1).WrapText = True
+    If Err.Number <> 0 Then Debug.Print "[WriteGoalRow] row=" & rowNum & " col=1 Err" & Err.Number & ": " & Err.Description
+    Err.Clear
+
+    ws.Cells(rowNum, 32).value = rightText
+    ws.Cells(rowNum, 32).WrapText = True
+    If Err.Number <> 0 Then Debug.Print "[WriteGoalRow] row=" & rowNum & " col=32 Err" & Err.Number & ": " & Err.Description
+    Err.Clear
+
+    ' 結合セルはAutoFit不可のため最低行高を設定（約3行分）
+    If ws.rows(rowNum).RowHeight < 45 Then ws.rows(rowNum).RowHeight = 45
+    If Err.Number <> 0 Then Err.Clear
+
+    On Error GoTo 0
+End Sub
+
+' 行23-27の結合セル構造をイミディエイトに出力（診断用）
+Private Sub DebugScanGoalMerge(ByVal ws As Worksheet)
+    On Error Resume Next
+    Dim r As Long
+    Dim c As Variant
+    Dim cell As Range
+    For r = 23 To 27
+        For Each c In Array(1, 32)  ' A列=1, AF列=32
+            Set cell = ws.Cells(r, c)
+            Dim addr As String
+            If cell.MergeCells Then
+                addr = cell.MergeArea.Address(False, False)
+            Else
+                addr = cell.Address(False, False) & " (no merge)"
+            End If
+            Debug.Print "[MergeScan] R" & r & "C" & c & " merge=" & addr & " val=[" & Left$(CStr(cell.value), 20) & "]"
+        Next
+    Next r
+    Err.Clear
+    On Error GoTo 0
+End Sub
+
+Private Function NzTextSafe(ByVal v As Variant, Optional ByVal Fallback As String = vbNullString) As String
     On Error GoTo EH
     If IsError(v) Then
-        NzTextSafe = fallback
+        NzTextSafe = Fallback
     ElseIf IsNull(v) Then
-        NzTextSafe = fallback
+        NzTextSafe = Fallback
     ElseIf IsEmpty(v) Then
-        NzTextSafe = fallback
+        NzTextSafe = Fallback
     ElseIf IsObject(v) Then
         If ObjectIsNothingSafe(v) Then
-            NzTextSafe = fallback
+            NzTextSafe = Fallback
         Else
-            NzTextSafe = fallback
+            NzTextSafe = Fallback
         End If
     Else
 
@@ -738,7 +832,7 @@ Private Function NzTextSafe(ByVal v As Variant, Optional ByVal fallback As Strin
     End If
     Exit Function
 EH:
-    NzTextSafe = fallback
+    NzTextSafe = Fallback
     Err.Clear
 End Function
 
@@ -778,18 +872,32 @@ Private Function ResolvePath(ByVal source As Variant, ByVal path As String) As V
     
     
     Dim cur As Variant
-    cur = source
+    If IsObject(source) Then
+        Set cur = source
+    Else
+        cur = source
+    End If
 
     Dim parts() As String
     parts = Split(path, ".")
 
     Dim i As Long
+    Dim mv As Variant
     For i = LBound(parts) To UBound(parts)
-        cur = GetMemberValue(cur, parts(i))
-        If IsEmpty(cur) Then Exit Function
+        mv = GetMemberValue(cur, parts(i))
+        If IsEmpty(mv) Then Exit Function
+        If IsObject(mv) Then
+            Set cur = mv
+        Else
+            cur = mv
+        End If
     Next i
 
-    ResolvePath = cur
+    If IsObject(cur) Then
+        Set ResolvePath = cur
+    Else
+        ResolvePath = cur
+    End If
 End Function
 
 Private Function GetMemberValue(ByVal source As Variant, ByVal memberName As String) As Variant
@@ -823,4 +931,9 @@ Private Function ObjectIsNothingSafe(ByVal obj As Object) As Boolean
 EH:
     ObjectIsNothingSafe = True
     Err.Clear
+End Function
+
+Private Function PrefixGoalText(ByVal prefix As String, ByVal goalText As String) As String
+    If Len(goalText) = 0 Then Exit Function
+    PrefixGoalText = prefix & goalText
 End Function

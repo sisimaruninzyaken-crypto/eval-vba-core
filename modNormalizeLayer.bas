@@ -14,6 +14,7 @@ Public Function NormalizeBasicSourceData(ByVal extracted As Object) As Object
     normalized("NeedFamily") = TrimValue(extracted, "NeedFamilyRaw")
     normalized("MMT_IO") = TrimValue(extracted, "MMT_IO_Raw")
     normalized("TrunkROMLimitTags") = NormalizeTrunkROMLimitTags(TrimValue(extracted, "TrunkROMRaw"))
+    normalized("TrunkROMRaw") = TrimValue(extracted, "TrunkROMRaw")
     normalized("EvalTestNoteRaw") = TrimValue(extracted, "EvalTestNoteRaw")
     normalized("EvalTestCriticalFindings") = ExtractImportantEvalFindings(normalized("EvalTestNoteRaw"))
 
