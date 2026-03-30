@@ -869,8 +869,18 @@ Private Function ResolvePath(ByVal source As Variant, ByVal path As String) As V
     ElseIf IsEmpty(source) Or IsNull(source) Or IsError(source) Then
         Exit Function
     End If
-    
-    
+
+    Dim direct As Variant
+    direct = GetMemberValue(source, path)
+    If Not IsEmpty(direct) Then
+        If IsObject(direct) Then
+            Set ResolvePath = direct
+        Else
+            ResolvePath = direct
+        End If
+        Exit Function
+    End If
+
     Dim cur As Variant
     If IsObject(source) Then
         Set cur = source
@@ -914,14 +924,45 @@ Private Function GetMemberValue(ByVal source As Variant, ByVal memberName As Str
         Exit Function
     End If
 
-
     Err.Clear
     GetMemberValue = CallByName(source, "Item", VbGet, memberName)
     If Err.Number <> 0 Then
         Err.Clear
-        GetMemberValue = Empty
+        If IsDictionaryObject(source) Then
+            GetMemberValue = GetDictionaryValueInsensitive(source, memberName)
+        Else
+            GetMemberValue = Empty
+        End If
     End If
     On Error GoTo 0
+End Function
+
+Private Function IsDictionaryObject(ByVal source As Variant) As Boolean
+    On Error GoTo EH
+    If IsObject(source) Then
+        IsDictionaryObject = (StrComp(TypeName(source), "Dictionary", vbTextCompare) = 0)
+    End If
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function GetDictionaryValueInsensitive(ByVal dictObj As Object, ByVal lookupKey As String) As Variant
+    On Error GoTo EH
+
+    Dim k As Variant
+    For Each k In dictObj.keys
+        If StrComp(CStr(k), lookupKey, vbTextCompare) = 0 Then
+            GetDictionaryValueInsensitive = dictObj.item(k)
+            Exit Function
+        End If
+    Next k
+
+    GetDictionaryValueInsensitive = Empty
+    Exit Function
+EH:
+    GetDictionaryValueInsensitive = Empty
+    Err.Clear
 End Function
 
 Private Function ObjectIsNothingSafe(ByVal obj As Object) As Boolean
