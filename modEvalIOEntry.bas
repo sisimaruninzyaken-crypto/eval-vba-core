@@ -1008,7 +1008,7 @@ Private Function BuildCurrentMMTCompareValue(owner As Object) As String
 
     For p = 0 To mp.Pages.count - 1
         For Each c In mp.Pages(p).Controls
-            If TypeName(c) = "ComboBox" Then
+            If typeName(c) = "ComboBox" Then
                 Dim nm As String
                 Dim side As String
 
@@ -1148,7 +1148,7 @@ Private Sub CountTextInputsRecursive(ByVal container As Object, ByVal excludedRo
             If IsDescendantControl(ctrl, excludedRoot) Then GoTo NextControl
         End If
 
-        Select Case TypeName(ctrl)
+        Select Case typeName(ctrl)
             Case "TextBox", "ComboBox"
                 totalCount = totalCount + 1
                 On Error Resume Next
@@ -1630,7 +1630,7 @@ If GetBool(owner, "chkLoadPosture", True) Then Call IO_SafeRunLoad("LoadPostureF
 Debug.Print "[TRACE] Done POSTURE"
 
 Debug.Print "[TRACE] About to run MMT"
-If TypeName(owner) = "frmEval" Then
+If typeName(owner) = "frmEval" Then
     owner.QueueMMTLoadAfterUI ws, r
 Else
     Call MMT.LoadMMTFromSheet(ws, r, owner)
@@ -1729,7 +1729,7 @@ Public Function GetTextByLabelInFrame(ByVal frm As Object, ByVal labelCaption As
     ' --- 以下は今のロジックそのまま ---
     Dim lb As Object, ctl As Object
     For Each ctl In frm.Controls
-        If TypeName(ctl) = "Label" Then
+        If typeName(ctl) = "Label" Then
             If InStr(1, CStr(ctl.caption), labelCaption, vbTextCompare) > 0 Then
                 Set lb = ctl: Exit For
             End If
@@ -1740,7 +1740,7 @@ Public Function GetTextByLabelInFrame(ByVal frm As Object, ByVal labelCaption As
     Dim best As Object, bestScore As Double
     bestScore = 1E+20
     For Each ctl In frm.Controls
-        If TypeName(ctl) = "TextBox" Then
+        If typeName(ctl) = "TextBox" Then
             Dim dy As Double: dy = Abs((ctl.top + ctl.Height / 2) - (lb.top + lb.Height / 2))
             If dy <= lb.Height Then
                 Dim dx As Double: dx = ctl.Left - lb.Left
@@ -1763,7 +1763,7 @@ End Function
 Private Function FindFrameByCaptionDeep_Walk(ByVal container As Object, ByVal captionLike As String) As MSForms.Frame
     On Error Resume Next
 
-    If TypeName(container) = "MultiPage" Then
+    If typeName(container) = "MultiPage" Then
         Dim pg As Object
         For Each pg In container.Pages
             Set FindFrameByCaptionDeep_Walk = FindFrameByCaptionDeep_Walk(pg, captionLike)
@@ -1776,7 +1776,7 @@ Private Function FindFrameByCaptionDeep_Walk(ByVal container As Object, ByVal ca
 
     Dim ctl As Object
     For Each ctl In container.Controls
-        Select Case TypeName(ctl)
+        Select Case typeName(ctl)
             Case "Frame"
                 If InStr(1, CStr(ctl.caption), captionLike, vbTextCompare) > 0 Then
                     Set FindFrameByCaptionDeep_Walk = ctl: Exit Function
@@ -2012,7 +2012,7 @@ Private Function FindControlDeep(ByVal parent As Object, ByVal targetName As Str
     On Error GoTo 0
 
     ' 2) MultiPage は Pages を走査
-    If TypeName(parent) = "MultiPage" Then
+    If typeName(parent) = "MultiPage" Then
         Dim pg As Object
         For Each pg In parent.Pages
             Set hit = FindControlDeep(pg, targetName)
@@ -2046,7 +2046,7 @@ Private Function FindGroupByAnyCaption(frm As Object, captions As Variant) As Ob
         ' コンテナ（Frame/Pageなど）だけ調べる
         If Not cont.Controls Is Nothing Then
             For Each c In cont.Controls
-                If TypeName(c) = "CheckBox" Then
+                If typeName(c) = "CheckBox" Then
                     For Each cap In captions
                         If Trim$(c.caption) = CStr(cap) Then
                             Set FindGroupByAnyCaption = cont
@@ -2082,7 +2082,7 @@ Public Function SerializeChecks(frm As Object, targetName As String, Optional is
 
     Dim s As String, c As Object
     For Each c In grp.Controls
-        If TypeName(c) = "CheckBox" Then
+        If typeName(c) = "CheckBox" Then
             If c.value = True Then
                 If LenB(s) > 0 Then s = s & ","
                 s = s & Trim$(c.caption)
@@ -2107,7 +2107,7 @@ Public Sub DeserializeChecks(frm As Object, targetName As String, ByVal csv As S
 
     Dim c As Object
     For Each c In grp.Controls
-        If TypeName(c) = "CheckBox" Then
+        If typeName(c) = "CheckBox" Then
             c.value = dict.exists(Trim$(c.caption))
         End If
     Next
@@ -2566,7 +2566,7 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner
         ' Tag="WalkIndepLevel" のコンボを探して値を戻す
         Set cLvl = Nothing
         For Each c In owner.Controls
-            If TypeName(c) = "ComboBox" Then
+            If typeName(c) = "ComboBox" Then
                 If c.tag = "WalkIndepLevel" Then
                     Set cLvl = c
                     Exit For
@@ -2596,7 +2596,7 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner
 
     ' --- 安定性チェック（chkWalkStab_*）を一度全部OFF ---
     For Each c In owner.Controls
-        If TypeName(c) = "CheckBox" Then
+        If typeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If StrComp(Left$(nm, 12), "chkWalkStab_", vbTextCompare) = 0 Then
                 c.value = False
@@ -2613,7 +2613,7 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner
             If Len(nm) > 0 Then
                 Set c = FindControlRecursive(owner, nm)
                 If Not c Is Nothing Then
-                    If TypeName(c) = "CheckBox" Then c.value = True
+                    If typeName(c) = "CheckBox" Then c.value = True
                 End If
             End If
         Next i
@@ -2641,12 +2641,12 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
 
     ' まず、RLA 関連のチェック・レベルを全部リセット
     For Each c In owner.Controls
-        If TypeName(c) = "CheckBox" Then
+        If typeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If InStr(1, nm, "RLA_", vbTextCompare) = 1 Then
                 c.value = False
             End If
-        ElseIf TypeName(c) = "OptionButton" Then
+        ElseIf typeName(c) = "OptionButton" Then
             If InStr(1, c.groupName, "IC", vbTextCompare) = 1 _
                Or InStr(1, c.groupName, "LR", vbTextCompare) = 1 _
                Or InStr(1, c.groupName, "MSt", vbTextCompare) = 1 _
@@ -2679,7 +2679,7 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
                 cap = Trim$(parts(i))
                 If Len(cap) > 0 Then
                     For Each c In owner.Controls
-                        If TypeName(c) = "CheckBox" Then
+                        If typeName(c) = "CheckBox" Then
                             nm = CStr(c.name)
                             If InStr(1, nm, "RLA_" & CStr(phase) & "_", vbTextCompare) = 1 Then
                                 If CStr(c.caption) = cap Then
@@ -2695,7 +2695,7 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
         ' --- レベル（OptionButton：GroupName=phase & Caption一致でON） ---
         If Len(level) > 0 Then
             For Each c In owner.Controls
-                If TypeName(c) = "OptionButton" Then
+                If typeName(c) = "OptionButton" Then
                     If StrComp(c.groupName, CStr(phase), vbTextCompare) = 0 Then
                         If CStr(c.caption) = level Then
                             c.value = True
@@ -2724,7 +2724,7 @@ Public Sub Load_WalkAbnFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
 
     ' 一旦、fraWalkAbn_* の全チェックをOFFにする
     For Each c In owner.Controls
-        If TypeName(c) = "CheckBox" Then
+        If typeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If InStr(1, nm, "fraWalkAbn_", vbTextCompare) = 1 Then
                 c.value = False
@@ -2739,7 +2739,7 @@ Public Sub Load_WalkAbnFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
         If Len(nm) > 0 Then
             Set c = FindControlRecursive(owner, nm)
             If Not c Is Nothing Then
-                If TypeName(c) = "CheckBox" Then
+                If typeName(c) = "CheckBox" Then
                     c.value = True
                 End If
             End If
@@ -2818,7 +2818,7 @@ Private Function SerializeCheckedCaptionsByTag(parent As Object, groupTag As Str
     Dim childCsv As String
 
     For Each ctl In parent.Controls
-        If TypeName(ctl) = "CheckBox" Then
+        If typeName(ctl) = "CheckBox" Then
             If StrComp(CStr(ctl.tag), groupTag, vbTextCompare) = 0 Then
                 If ctl.value = True Then
                     If LenB(s) > 0 Then s = s & ","
@@ -2856,7 +2856,7 @@ Private Sub DeserializeCheckedCaptionsByTag(parent As Object, groupTag As String
     End If
 
     For Each ctl In parent.Controls
-        If TypeName(ctl) = "CheckBox" Then
+        If typeName(ctl) = "CheckBox" Then
             If StrComp(CStr(ctl.tag), groupTag, vbTextCompare) = 0 Then
                 ctl.value = dict.exists(Trim$(ctl.caption))
             End If
@@ -2891,7 +2891,7 @@ Set cLvl = FindControlRecursive(owner, "cmbWalkIndep")
 If cLvl Is Nothing Then
     ' タグで検索する（今回の正式ルート）
     For Each c In owner.Controls
-        If TypeName(c) = "ComboBox" Then
+        If typeName(c) = "ComboBox" Then
             If c.tag = "WalkIndepLevel" Then
                 Set cLvl = c
                 Exit For
@@ -2918,7 +2918,7 @@ If Not cLvl Is Nothing Then vLevel = Trim$(cLvl.value)
     ' 安定性チェック（chkWalkStab_～ を全部拾う）
     Set hits = New Collection
     For Each c In owner.Controls
-        If TypeName(c) = "CheckBox" Then
+        If typeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If StrComp(Left$(nm, 12), "chkWalkStab_", vbTextCompare) = 0 Then
                 If c.value = True Then
@@ -2960,7 +2960,7 @@ Public Function Build_WalkAbn_IO(owner As Object) As String
     
     For Each c In owner.Controls
         ' fraWalkAbn_?_chk? という名前の CheckBox だけ拾う
-        If TypeName(c) = "CheckBox" Then
+        If typeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If InStr(1, nm, "fraWalkAbn_", vbTextCompare) = 1 Then
                 If c.value = True Then
@@ -3031,7 +3031,7 @@ Public Function Build_WalkRLA_IO(owner As Object) As String
 
         ' --- チェック（RLA_<phase>_～）を拾う ---
         For Each c In owner.Controls
-            If TypeName(c) = "CheckBox" Then
+            If typeName(c) = "CheckBox" Then
                 nm = CStr(c.name)
                 If InStr(1, nm, "RLA_" & CStr(phase) & "_", vbTextCompare) = 1 Then
                     If c.value = True Then
@@ -3051,7 +3051,7 @@ Public Function Build_WalkRLA_IO(owner As Object) As String
 
         ' --- レベル（OptionButton, GroupName=phase）を拾う ---
         For Each c In owner.Controls
-            If TypeName(c) = "OptionButton" Then
+            If typeName(c) = "OptionButton" Then
                 If StrComp(c.groupName, CStr(phase), vbTextCompare) = 0 Then
                     If c.value = True Then
                         level = CStr(c.caption)   ' 軽度 / 中等度 / 高度
@@ -3208,7 +3208,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     bpsd = ""
      With pgCog
         For Each c In .Controls
-            If TypeName(c) = "CheckBox" Then
+            If typeName(c) = "CheckBox" Then
                 If c.value = True Then
                     If Len(bpsd) > 0 Then bpsd = bpsd & "|"
                     bpsd = bpsd & CStr(c.caption)
@@ -4013,7 +4013,7 @@ Private Sub DumpIfIDLike(ByVal c As Object)
     On Error GoTo 0
     
     If InStr(nm, "id") > 0 Or InStr(tg, "id") > 0 Or InStr(cap, "id") > 0 Then
-        Debug.Print TypeName(c) & "  name=" & c.name & "  tag=" & tg & "  caption=" & cap & "  value=" & val
+        Debug.Print typeName(c) & "  name=" & c.name & "  tag=" & tg & "  caption=" & cap & "  value=" & val
     End If
 End Sub
 

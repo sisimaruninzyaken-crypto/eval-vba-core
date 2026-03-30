@@ -20,7 +20,7 @@ Private Sub DumpChildren(ByVal parent As Object, ByVal path As String)
         Set c = parent.Controls(i)
         If Not c Is Nothing Then
             Dim tp$, nm$, cap$
-            tp = TypeName(c): nm = GetSafeName(c): cap = GetSafeCaption(c)
+            tp = typeName(c): nm = GetSafeName(c): cap = GetSafeCaption(c)
             
             ' ネストを掘る（Frame / MultiPage / Page）
             If tp = "Frame" Then
@@ -69,7 +69,7 @@ Private Function FindFirstByType(container As Object, ByVal t As String) As Obje
     Dim c As Object
     On Error Resume Next
     For Each c In container.Controls
-        If TypeName(c) = t Then Set FindFirstByType = c: Exit Function
+        If typeName(c) = t Then Set FindFirstByType = c: Exit Function
         If HasControls(c) Then
             Set FindFirstByType = FindFirstByType(c, t)
             If Not FindFirstByType Is Nothing Then Exit Function
@@ -81,7 +81,7 @@ Private Sub ListCombosRecursive(parent As Object)
     Dim c As Object
     On Error Resume Next
     For Each c In parent.Controls
-        If TypeName(c) = "ComboBox" Then Debug.Print c.name
+        If typeName(c) = "ComboBox" Then Debug.Print c.name
         If HasControls(c) Then ListCombosRecursive c
     Next
 End Sub
@@ -102,7 +102,7 @@ End Sub
 
 ' ??? helpers（前に貼ったものを流用）???
 Private Function GetActiveOrFirstMultiPage(uf As Object) As Object
-    If TypeName(uf.ActiveControl) = "MultiPage" Then
+    If typeName(uf.ActiveControl) = "MultiPage" Then
         Set GetActiveOrFirstMultiPage = uf.ActiveControl
     Else
         Set GetActiveOrFirstMultiPage = FindFirstByType(uf, "MultiPage")
@@ -115,7 +115,7 @@ Private Sub ListByTypeRecursive(parent As Object, wantTypes As Variant, Optional
     Dim c As Object, t$, nm$, cap$
     On Error Resume Next
     For Each c In parent.Controls
-        t = TypeName(c)
+        t = typeName(c)
         If IsWantedType(t, wantTypes) Then
             nm = SafeName(c): cap = SafeCaption(c)
             Debug.Print t, padRight(path & SafeName(parent), 30), nm, "Caption:", cap

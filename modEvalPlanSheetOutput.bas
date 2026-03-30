@@ -14,9 +14,9 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     Dim birthBody As String
     SplitWarekiBirthParts GetCtrlTextSafe(owner, "txtBirth"), GetCtrlTextSafe(owner, "txtAge"), eraName, birthBody
 
-    WriteMerged ws, "A2:U2", BuildHeaderDate("????", FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate")))
-    WriteMerged ws, "V2:AP2", BuildHeaderDate("?O?????", FormatWarekiFull(GetPreviousCreatedDateText(owner)))
-    WriteMerged ws, "AQ2:BJ2", BuildHeaderDate("?????", FormatWarekiFull(GetFirstCreatedDateText(owner)))
+    WriteMerged ws, "A2:U2", BuildHeaderDate("作成日", FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate")))
+    WriteMerged ws, "V2:AP2", BuildHeaderDate("前回作成日", FormatWarekiFull(GetPreviousCreatedDateText(owner)))
+    WriteMerged ws, "AQ2:BJ2", BuildHeaderDate("初回作成", FormatWarekiFull(GetFirstCreatedDateText(owner)))
 
 
     WriteMerged ws, "E3:Q3", GetCtrlTextSafe(owner, "txtHdrKana")
@@ -25,8 +25,8 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     WriteMerged ws, "V4:AK4", birthBody
     WriteMerged ws, "R4:U4", GetCtrlTextSafe(owner, "cboSex")
     WriteMerged ws, "AL4:AP4", GetCtrlTextSafe(owner, "cboCare")
-    WriteMerged ws, "AQ3:BJ3", "?v?????F" & GetCtrlTextSafe(owner, "txtEvaluator")
-    WriteMerged ws, "AQ4:BJ4", "?E??F" & GetCtrlTextSafe(owner, "txtEvaluatorJob")
+    WriteMerged ws, "AQ3:BJ3", "計画作成者：" & GetCtrlTextSafe(owner, "txtEvaluator")
+    WriteMerged ws, "AQ4:BJ4", "職種：" & GetCtrlTextSafe(owner, "txtEvaluatorJob")
     WriteMerged ws, "O5:AE5", GetCtrlTextSafe(owner, "cboElder")
     WriteMerged ws, "AS5:BJ5", GetCtrlTextSafe(owner, "cboDementia")
 
@@ -41,7 +41,7 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     Dim dbgTx As String: dbgTx = GetCtrlTextSafe(owner, "txtTxCourse")
     Dim dbgCp As String: dbgCp = GetCtrlTextSafe(owner, "txtComplications")
     Dim dbgLv As String: dbgLv = GetCtrlTextSafe(owner, "txtLiving")
-    Debug.Print "[WriteEvalPlanSheet] owner=" & TypeName(owner) & _
+    Debug.Print "[WriteEvalPlanSheet] owner=" & typeName(owner) & _
         " | txtLiving=[" & dbgLv & "]" & _
         " | txtTxCourse=[" & dbgTx & "]" & _
         " | txtComplications=[" & dbgCp & "]"
@@ -50,17 +50,17 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     Debug.Print "[WES] step 11 A18"
     WriteMerged ws, "A18:BJ18", dbgCp
     Debug.Print "[WES] step 12 A20 start"
-    Dim tmpA20 As String: tmpA20 = GetPlanText(planData, Array("Monitoring.Change", "monitoring.change", "MonitoringChange", "changeText", "Monitoring.Issue", "monitoring.issue", "MonitoringIssue", "issueText"))
+    Dim tmpA20 As String: tmpA20 = GetPlanTextWithFallback(planData, owner, Array("TrainingPrecaution", "Medical.TrainingPrecaution", "機能訓練実施上の留意事項"), Array("txtTrainingNote", "txtRehabNote", "txtPrecaution"))
     Debug.Print "[WES] step 12 A20 done=[" & tmpA20 & "]"
     WriteMerged ws, "A20:BJ20", tmpA20
-    ' ??W?s??????Z?????o??g?????????????i?s24=?@?\, 25=????, 26=?Q???j
-    DebugScanGoalMerge ws  ' ?s23-27??????\????C?~?f?B?G?C?g??o??
-    WriteGoalRow ws, 24, PrefixGoalText("?i?@?\?j", GetPlanText(planData, Array("Function_Short", "function_short", "FunctionShort"))), _
-                        PrefixGoalText("?i?@?\?j", GetPlanText(planData, Array("Function_Long", "function_long", "FunctionLong")))
-    WriteGoalRow ws, 25, PrefixGoalText("?i?????j", GetPlanText(planData, Array("Activity_Short", "activity_short", "ActivityShort"))), _
-                        PrefixGoalText("?i?????j", GetPlanText(planData, Array("Activity_Long", "activity_long", "ActivityLong")))
-    WriteGoalRow ws, 26, PrefixGoalText("?i?Q???j", GetPlanText(planData, Array("Participation_Short", "participation_short", "ParticipationShort"))), _
-                        PrefixGoalText("?i?Q???j", GetPlanText(planData, Array("Participation_Long", "participation_long", "ParticipationLong")))
+    ' 目標行は結合セル検出を使わず直接書き込み（行24=機能, 25=活動, 26=参加）
+    DebugScanGoalMerge ws  ' 行23-27の結合構造をイミディエイトに出力
+    WriteGoalRow ws, 24, PrefixGoalText("（機能）", GetPlanText(planData, Array("Function_Short", "function_short", "FunctionShort"))), _
+                        PrefixGoalText("（機能）", GetPlanText(planData, Array("Function_Long", "function_long", "FunctionLong")))
+    WriteGoalRow ws, 25, PrefixGoalText("（活動）", GetPlanText(planData, Array("Activity_Short", "activity_short", "ActivityShort"))), _
+                        PrefixGoalText("（活動）", GetPlanText(planData, Array("Activity_Long", "activity_long", "ActivityLong")))
+    WriteGoalRow ws, 26, PrefixGoalText("（参加）", GetPlanText(planData, Array("Participation_Short", "participation_short", "ParticipationShort"))), _
+                        PrefixGoalText("（参加）", GetPlanText(planData, Array("Participation_Long", "participation_long", "ParticipationLong")))
 
     Debug.Print "[WES] step 28 HomeExercise"
     WriteMerged ws, "A46:AE47", GetPlanText(planData, Array("HomeExercise", "homeExercise"))
@@ -83,10 +83,10 @@ EH:
 
 End Sub
 
-' ?f?o?b?O?p?F?e???v???[?g?V?[?g????x????u?? Immediate ??o??
+' デバッグ用：テンプレートシートのラベル位置を Immediate に出力
 Public Sub DebugScanPlanSheetLabels(ByVal ws As Worksheet)
     Dim keywords As Variant
-    keywords = Array("????", "?v???x", "??Q?????", "?F?m??????", "?????x", "???x")
+    keywords = Array("性別", "要介護度", "障害高齢者", "認知症高齢者", "自立度", "介護度")
     Dim cell As Range
     Dim lastRow As Long: lastRow = 30
     Dim c As Long, r As Long
@@ -143,11 +143,11 @@ End Function
 
 Private Function GetProgramNote(ByVal idx As Long) As String
     Select Case idx
-        Case 1: GetProgramNote = "?u??E??J???????A???????????????{????B"
-        Case 2: GetProgramNote = "??x??L???????A?????o?????~????B"
-        Case 3: GetProgramNote = "?]?|???????A?K?v?????????????g?p????B"
-        Case 4: GetProgramNote = "?????E???????????A?x?e????????????{????B"
-        Case 5: GetProgramNote = "????s???????~???A???S????????{????B"
+        Case 1: GetProgramNote = "疼痛・疲労に注意し、無理のない負荷で実施する。"
+        Case 2: GetProgramNote = "過度な伸張を避け、痛みが出たら中止する。"
+        Case 3: GetProgramNote = "転倒に注意し、必要に応じ手すりや補助を使用する。"
+        Case 4: GetProgramNote = "息切れ・めまいに注意し、休憩をはさみながら実施する。"
+        Case 5: GetProgramNote = "体調不良時は中止し、安全な環境で実施する。"
         Case Else: GetProgramNote = ""
     End Select
 End Function
@@ -162,11 +162,11 @@ Private Sub WriteProgramBlocks(ByVal ws As Worksheet, ByVal planData As Object)
         item = GetProgramItem(planData, i)
 
         WriteMerged ws, "C" & startRow & ":AE" & (startRow + 2), GetProgramField(planData, item, i, Array("Content", "Program", "ProgramContent", "programContent"), Array("Program" & i & "Content"))
-        ' ?R???e???c?Z?????????\??????i3?s???????????s????????s?v?j
+        ' コンテンツセルを折り返し表示に設定（3行結合済みのため行高調整は不要）
         On Error Resume Next
         ws.Cells(startRow, 3).WrapText = True
         On Error GoTo 0
-        ' ????_?F??????^????VBA???????
+        ' 留意点：役割別定型文をVBAで決め打ち
         WriteMerged ws, "AF" & startRow & ":AR" & (startRow + 2), GetProgramNote(i)
         On Error Resume Next
         ws.Cells(startRow, 32).WrapText = True
@@ -203,7 +203,7 @@ Private Function GetIndexValue(ByVal src As Variant, ByVal idx As Long) As Varia
     On Error GoTo EH
     If IsObject(src) Then
         Dim t As String
-        t = TypeName(src)
+        t = typeName(src)
         If StrComp(t, "Collection", vbTextCompare) = 0 Then
             If idx >= 1 And idx <= CLng(CallByName(src, "Count", VbGet)) Then
                 GetIndexValue = CallByName(src, "Item", VbGet, idx)
@@ -255,7 +255,7 @@ End Function
 
 Private Function BuildHeaderDate(ByVal labelText As String, ByVal formattedDate As String) As String
     If Len(Trim$(formattedDate)) = 0 Then Exit Function
-    BuildHeaderDate = labelText & "?F" & formattedDate
+    BuildHeaderDate = labelText & "：" & formattedDate
 End Function
 
 Private Function BuildMedicalDatesText(ByVal owner As Object) As String
@@ -267,7 +267,7 @@ Private Function BuildMedicalDatesText(ByVal owner As Object) As String
     admText = FormatDateForSentence(GetCtrlTextSafeAny(owner, "txtAdmDate", "txtHosp"))
     disText = FormatDateForSentence(GetCtrlTextSafeAny(owner, "txtDisDate", "txtDischarge"))
 
-    BuildMedicalDatesText = "??????E?????F" & onsetText & "  ???????@???F" & admText & "  ??????@???F" & disText
+    BuildMedicalDatesText = "発症日・受傷日：" & onsetText & "  直近の入院日：" & admText & "  直近の退院日：" & disText
 End Function
 
 Private Function BuildHomeEnvText(ByVal owner As Object) As String
@@ -298,15 +298,15 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
     
     
     Dim text As String
-    text = JoinCollection(labels, "?A")
+    text = JoinCollection(labels, "、")
 
     Dim note As String
     note = GetCtrlTextSafeAny(owner, "txtBIHomeEnvNote", "txtHomeNote")
     If Len(note) > 0 Then
         If Len(text) > 0 Then
-            text = text & "?B???l?F" & note
+            text = text & "。備考：" & note
         Else
-            text = "???l?F" & note
+            text = "備考：" & note
         End If
     End If
 
@@ -382,7 +382,7 @@ End Sub
 
 Private Function IsHomeEnvCheckControl(ByVal ctl As Object) As Boolean
     If ObjectIsNothingSafe(ctl) Then Exit Function
-    If StrComp(TypeName(ctl), "CheckBox", vbTextCompare) <> 0 Then Exit Function
+    If StrComp(typeName(ctl), "CheckBox", vbTextCompare) <> 0 Then Exit Function
 
     Dim tagText As String
     tagText = GetControlTagSafe(ctl)
@@ -400,7 +400,7 @@ Private Function FormatWarekiFull(ByVal dateText As String) As String
     ToWareki dt, era, eraYear
     If Len(era) = 0 Then Exit Function
 
-    FormatWarekiFull = era & CStr(eraYear) & "?N" & Month(dt) & "??" & day(dt) & "??"
+    FormatWarekiFull = era & CStr(eraYear) & "年" & Month(dt) & "月" & day(dt) & "日"
 End Function
 
 Private Sub SplitWarekiBirthParts(ByVal birthText As String, ByVal ageText As String, ByRef eraName As String, ByRef bodyText As String)
@@ -410,24 +410,24 @@ Private Sub SplitWarekiBirthParts(ByVal birthText As String, ByVal ageText As St
     Dim era As String, y As Long, m As Long, d As Long
     If ParseWarekiInput(birthText, era, y, m, d) Then
         eraName = era
-        bodyText = CStr(y) & "?N" & CStr(m) & "??" & CStr(d) & "????"
+        bodyText = CStr(y) & "年" & CStr(m) & "月" & CStr(d) & "日生"
     ElseIf IsDate(Trim$(birthText)) Then
         Dim dt As Date
         dt = CDate(Trim$(birthText))
         Dim eraY As Long
         ToWareki dt, eraName, eraY
-        bodyText = CStr(eraY) & "?N" & Month(dt) & "??" & day(dt) & "????"
+        bodyText = CStr(eraY) & "年" & Month(dt) & "月" & day(dt) & "日生"
     Else
         eraName = ExtractEraName(birthText)
         bodyText = Trim$(RemoveEraPrefix(birthText))
-        If Len(bodyText) > 0 Then bodyText = bodyText & "??"
+        If Len(bodyText) > 0 Then bodyText = bodyText & "生"
     End If
 
     If Len(Trim$(ageText)) > 0 Then
         If Len(bodyText) > 0 Then
-            bodyText = bodyText & "?i" & Trim$(ageText) & "??j"
+            bodyText = bodyText & "（" & Trim$(ageText) & "歳）"
         Else
-            bodyText = "?i" & Trim$(ageText) & "??j"
+            bodyText = "（" & Trim$(ageText) & "歳）"
         End If
     End If
 End Sub
@@ -510,16 +510,16 @@ Private Function ExtractEraName(ByVal s As String) As String
     Dim t As String
     t = UCase$(Trim$(s))
 
-    If InStr(1, s, "??a", vbTextCompare) = 1 Or Left$(t, 1) = "R" Then
-        ExtractEraName = "??a"
-    ElseIf InStr(1, s, "????", vbTextCompare) = 1 Or Left$(t, 1) = "H" Then
-        ExtractEraName = "????"
-    ElseIf InStr(1, s, "???a", vbTextCompare) = 1 Or Left$(t, 1) = "S" Then
-        ExtractEraName = "???a"
-    ElseIf InStr(1, s, "??", vbTextCompare) = 1 Or Left$(t, 1) = "T" Then
-        ExtractEraName = "??"
-    ElseIf InStr(1, s, "????", vbTextCompare) = 1 Or Left$(t, 1) = "M" Then
-        ExtractEraName = "????"
+    If InStr(1, s, "令和", vbTextCompare) = 1 Or Left$(t, 1) = "R" Then
+        ExtractEraName = "令和"
+    ElseIf InStr(1, s, "平成", vbTextCompare) = 1 Or Left$(t, 1) = "H" Then
+        ExtractEraName = "平成"
+    ElseIf InStr(1, s, "昭和", vbTextCompare) = 1 Or Left$(t, 1) = "S" Then
+        ExtractEraName = "昭和"
+    ElseIf InStr(1, s, "大正", vbTextCompare) = 1 Or Left$(t, 1) = "T" Then
+        ExtractEraName = "大正"
+    ElseIf InStr(1, s, "明治", vbTextCompare) = 1 Or Left$(t, 1) = "M" Then
+        ExtractEraName = "明治"
     End If
 End Function
 
@@ -544,15 +544,15 @@ End Function
 
 Private Sub ToWareki(ByVal dt As Date, ByRef era As String, ByRef eraYear As Long)
     If dt >= DateSerial(2019, 5, 1) Then
-        era = "??a": eraYear = Year(dt) - 2018
+        era = "令和": eraYear = Year(dt) - 2018
     ElseIf dt >= DateSerial(1989, 1, 8) Then
-        era = "????": eraYear = Year(dt) - 1988
+        era = "平成": eraYear = Year(dt) - 1988
     ElseIf dt >= DateSerial(1926, 12, 25) Then
-        era = "???a": eraYear = Year(dt) - 1925
+        era = "昭和": eraYear = Year(dt) - 1925
     ElseIf dt >= DateSerial(1912, 7, 30) Then
-        era = "??": eraYear = Year(dt) - 1911
+        era = "大正": eraYear = Year(dt) - 1911
     ElseIf dt >= DateSerial(1868, 1, 25) Then
-        era = "????": eraYear = Year(dt) - 1867
+        era = "明治": eraYear = Year(dt) - 1867
     Else
         era = vbNullString: eraYear = 0
     End If
@@ -573,7 +573,7 @@ End Function
 Private Function FormatDateForSentence(ByVal src As String) As String
     Dim dt As Date
     If TryParseDate(src, dt) Then
-        FormatDateForSentence = Year(dt) & "?N" & Month(dt) & "??" & day(dt) & "??"
+        FormatDateForSentence = Year(dt) & "年" & Month(dt) & "月" & day(dt) & "日"
     Else
         FormatDateForSentence = Trim$(NzTextSafe(src))
     End If
@@ -734,8 +734,8 @@ Private Function JoinCollection(ByVal col As Collection, ByVal delimiter As Stri
 End Function
 
 Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVal text As String)
-    ' ?w???????s??~????Z???????????Z????T???????????
-    ' ?i??: A15:A16 ????????????AA16 ????n??????? B16 ??~??????j
+    ' 指定範囲の先頭行以降に先頭セルがある結合セルを探して書き込む
+    ' （例: A15:A16 が結合済みの場合、A16 から始まる範囲では B16 以降に書く）
     On Error Resume Next
     Dim rng As Range
     Set rng = ws.Range(addressText)
@@ -768,8 +768,8 @@ done:
     On Error GoTo 0
 End Sub
 
-' ??W?s??p?F?s???????w?????????(A??=1)??E????(AF??=32)?????????
-' ?????Z???????Z??????????l??}?[?W?g?b?v?????????Amerge???o?s?v
+' 目標行専用：行番号を直接指定して左半分(A列=1)と右半分(AF列=32)に書き込む
+' 結合セル内のどのセルに書いても値はマージトップに設定されるため、merge検出不要
 Private Sub WriteGoalRow(ByVal ws As Worksheet, ByVal rowNum As Long, ByVal leftText As String, ByVal rightText As String)
     On Error Resume Next
 
@@ -783,21 +783,21 @@ Private Sub WriteGoalRow(ByVal ws As Worksheet, ByVal rowNum As Long, ByVal left
     If Err.Number <> 0 Then Debug.Print "[WriteGoalRow] row=" & rowNum & " col=32 Err" & Err.Number & ": " & Err.Description
     Err.Clear
 
-    ' ?????Z????AutoFit?s????????s??????i??3?s???j
+    ' 結合セルはAutoFit不可のため最低行高を設定（約3行分）
     If ws.rows(rowNum).RowHeight < 45 Then ws.rows(rowNum).RowHeight = 45
     If Err.Number <> 0 Then Err.Clear
 
     On Error GoTo 0
 End Sub
 
-' ?s23-27??????Z???\????C?~?f?B?G?C?g??o??i?f?f?p?j
+' 行23-27の結合セル構造をイミディエイトに出力（診断用）
 Private Sub DebugScanGoalMerge(ByVal ws As Worksheet)
     On Error Resume Next
     Dim r As Long
     Dim c As Variant
     Dim cell As Range
     For r = 23 To 27
-        For Each c In Array(1, 32)  ' A??=1, AF??=32
+        For Each c In Array(1, 32)  ' A列=1, AF列=32
             Set cell = ws.Cells(r, c)
             Dim addr As String
             If cell.MergeCells Then
@@ -869,18 +869,8 @@ Private Function ResolvePath(ByVal source As Variant, ByVal path As String) As V
     ElseIf IsEmpty(source) Or IsNull(source) Or IsError(source) Then
         Exit Function
     End If
-
-    Dim direct As Variant
-    direct = GetMemberValue(source, path)
-    If Not IsEmpty(direct) Then
-        If IsObject(direct) Then
-            Set ResolvePath = direct
-        Else
-            ResolvePath = direct
-        End If
-        Exit Function
-    End If
-
+    
+    
     Dim cur As Variant
     If IsObject(source) Then
         Set cur = source
@@ -924,45 +914,14 @@ Private Function GetMemberValue(ByVal source As Variant, ByVal memberName As Str
         Exit Function
     End If
 
+
     Err.Clear
     GetMemberValue = CallByName(source, "Item", VbGet, memberName)
     If Err.Number <> 0 Then
         Err.Clear
-        If IsDictionaryObject(source) Then
-            GetMemberValue = GetDictionaryValueInsensitive(source, memberName)
-        Else
-            GetMemberValue = Empty
-        End If
+        GetMemberValue = Empty
     End If
     On Error GoTo 0
-End Function
-
-Private Function IsDictionaryObject(ByVal source As Variant) As Boolean
-    On Error GoTo EH
-    If IsObject(source) Then
-        IsDictionaryObject = (StrComp(TypeName(source), "Dictionary", vbTextCompare) = 0)
-    End If
-    Exit Function
-EH:
-    Err.Clear
-End Function
-
-Private Function GetDictionaryValueInsensitive(ByVal dictObj As Object, ByVal lookupKey As String) As Variant
-    On Error GoTo EH
-
-    Dim k As Variant
-    For Each k In dictObj.keys
-        If StrComp(CStr(k), lookupKey, vbTextCompare) = 0 Then
-            GetDictionaryValueInsensitive = dictObj.item(k)
-            Exit Function
-        End If
-    Next k
-
-    GetDictionaryValueInsensitive = Empty
-    Exit Function
-EH:
-    GetDictionaryValueInsensitive = Empty
-    Err.Clear
 End Function
 
 Private Function ObjectIsNothingSafe(ByVal obj As Object) As Boolean

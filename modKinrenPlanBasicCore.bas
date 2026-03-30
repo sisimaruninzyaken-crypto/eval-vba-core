@@ -607,7 +607,7 @@ Public Function GetLowerMMTMap_FromFrmEval() As Object
     Set p = mp.Pages(1) ' ‰ºŽˆ
     
     For Each c In p.Controls
-        If TypeName(c) = "Label" Then
+        If typeName(c) = "Label" Then
             If Left$(c.name, 4) = "lbl_" Then
                 nm = CStr(c.caption)
                 

@@ -447,7 +447,7 @@ Private Sub BuildAssistiveChecksInWalkEval(ByVal assistiveCsv As String)
 
     Dim i As Long
     For i = frTarget.Controls.count - 1 To 0 Step -1
-        If TypeName(frTarget.Controls(i)) = "CheckBox" Then
+        If typeName(frTarget.Controls(i)) = "CheckBox" Then
             If frTarget.Controls(i).tag = "AssistiveGroup" Then
                 frTarget.Controls.Remove frTarget.Controls(i).name
             End If
@@ -492,7 +492,7 @@ Public Function GetWalkAssistiveTargetFrame() As MSForms.Frame
     If root Is Nothing Then Exit Function
     
     For Each c In root.Controls
-        If TypeName(c) = "Frame" Then
+        If typeName(c) = "Frame" Then
             If InStr(1, CStr(c.name), "gait", vbTextCompare) > 0 _
                Or InStr(1, CStr(c.caption), "", vbTextCompare) > 0 Then
                 Set GetWalkAssistiveTargetFrame = c
@@ -838,7 +838,7 @@ End Function
 Private Sub ApplyInputModeJP(container As Object)
     Dim typ As String
     On Error Resume Next
-    typ = TypeName(container)
+    typ = typeName(container)
     On Error GoTo 0
 
     If typ = "MultiPage" Then
@@ -855,7 +855,7 @@ Private Sub ApplyInputModeJP(container As Object)
 
     Dim c As MSForms.Control
     For Each c In container.Controls
-        Select Case TypeName(c)
+        Select Case typeName(c)
             Case "TextBox", "ComboBox"
                 On Error Resume Next
                 If ShouldBeNumericField(c) Then
@@ -910,7 +910,7 @@ End Sub
 Private Sub NormalizeNumericInContainer(container As Object)
     Dim typ As String
     On Error Resume Next
-    typ = TypeName(container)
+    typ = typeName(container)
     On Error GoTo 0
 
     If typ = "MultiPage" Then
@@ -925,7 +925,7 @@ Private Sub NormalizeNumericInContainer(container As Object)
 
     Dim c As MSForms.Control
     For Each c In container.Controls
-        Select Case TypeName(c)
+        Select Case typeName(c)
             Case "TextBox", "ComboBox"
                 If ShouldBeNumericField(c) Then
                     On Error Resume Next
@@ -950,7 +950,7 @@ Private Function HasControls(o As Object) As Boolean
     ' TypeName で判定することでエラーを発生させない
     ' （VBE が「すべてのエラーで中断」モードの場合に On Error が無視されるため）
     If o Is Nothing Then Exit Function
-    Dim tn As String: tn = TypeName(o)
+    Dim tn As String: tn = typeName(o)
     HasControls = (tn = "Frame" Or tn = "Page" Or tn = "frmEval")
 End Function
 '====================================================================
@@ -1003,7 +1003,7 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
     ' 2) ページ内のホスト Frame を取得（無ければ作成）
     Dim host As MSForms.Frame, c As Control
     For Each c In pgMove.Controls
-        If TypeName(c) = "Frame" Then Set host = c: Exit For
+        If typeName(c) = "Frame" Then Set host = c: Exit For
     Next
     If host Is Nothing Then
         Set host = pgMove.Controls.Add("Forms.Frame.1", "frMoveHost")
@@ -1015,7 +1015,7 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
     ' 3) host 内の MultiPage だけを全消去（ほかは触らない）
     Dim i As Long
     For i = host.Controls.count - 1 To 0 Step -1
-        If TypeName(host.Controls(i)) = "MultiPage" Then
+        If typeName(host.Controls(i)) = "MultiPage" Then
             host.Controls.Remove host.Controls(i).name
         End If
     Next
@@ -1453,7 +1453,7 @@ Public Sub ApplyImeToIADLNote()
      If hostMove Is Nothing Then Exit Sub
 
     For Each c In hostMove.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             If c.name = "mpADL" Then Set mpA = c: Exit For
         End If
     Next c
@@ -1534,7 +1534,7 @@ Private Sub RemoveAllMpADL()
     Dim i As Long, c As Control
     ' フォーム直下
     For i = Me.Controls.count - 1 To 0 Step -1
-        If TypeName(Me.Controls(i)) = "MultiPage" Then
+        If typeName(Me.Controls(i)) = "MultiPage" Then
             If Me.Controls(i).name = "mpADL" Then
                 Me.Controls.Remove Me.Controls(i).name
             End If
@@ -1544,12 +1544,12 @@ Private Sub RemoveAllMpADL()
     ' ルート MultiPage（mp）の各ページ内
     Dim mp As MSForms.MultiPage, p As MSForms.page
     For Each c In Me.Controls
-        If TypeName(c) = "MultiPage" Then Set mp = c: Exit For
+        If typeName(c) = "MultiPage" Then Set mp = c: Exit For
     Next c
     If Not mp Is Nothing Then
         For i = 0 To mp.Pages.count - 1
             For Each c In mp.Pages(i).Controls
-                If TypeName(c) = "MultiPage" Then
+                If typeName(c) = "MultiPage" Then
                     If c.name = "mpADL" Then mp.Pages(i).Controls.Remove c.name
                 End If
             Next c
@@ -1897,7 +1897,7 @@ Private Sub HookRomMirrorButtonsInContainer(ByVal container As Object)
     On Error Resume Next
 
     Dim c As Object
-    If TypeName(container) = "MultiPage" Then
+    If typeName(container) = "MultiPage" Then
         Dim pg As MSForms.page
         For Each pg In container.Pages
             HookRomMirrorButtonsInContainer pg
@@ -1906,7 +1906,7 @@ Private Sub HookRomMirrorButtonsInContainer(ByVal container As Object)
     End If
 
     For Each c In container.Controls
-        If TypeName(c) = "CommandButton" Then
+        If typeName(c) = "CommandButton" Then
             If CStr(c.tag) = "ROM_MIRROR" Then
                 Dim h As clsRomMirrorBtnHook
                 Set h = New clsRomMirrorBtnHook
@@ -1915,7 +1915,7 @@ Private Sub HookRomMirrorButtonsInContainer(ByVal container As Object)
             End If
         End If
 
-        If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
+        If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then
             HookRomMirrorButtonsInContainer c
         End If
     Next
@@ -2201,12 +2201,12 @@ End Function
 Private Function GetRLAGroupLevel(ByVal grp As String) As String
     Dim c As MSForms.Control, p As MSForms.page, fr As MSForms.Control, ob As MSForms.Control
     For Each c In hostWalk.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             For Each p In c.Pages
                 For Each fr In p.Controls
-                    If TypeName(fr) = "Frame" Then
+                    If typeName(fr) = "Frame" Then
                         For Each ob In fr.Controls
-                            If TypeName(ob) = "OptionButton" Then
+                            If typeName(ob) = "OptionButton" Then
                                 If ob.groupName = grp And ob.value Then GetRLAGroupLevel = ob.caption: Exit Function
                             End If
                         Next
@@ -2226,21 +2226,21 @@ Private Function CollectFormData() As Object
 
     Dim j As Long
     For Each c In Me.Controls
-        Select Case TypeName(c)
+        Select Case typeName(c)
             Case "MultiPage"
                 For j = 0 To c.Pages.count - 1
                     Dim p As MSForms.page: Set p = c.Pages(j)
                     Dim co As MSForms.Control
                     For Each co In p.Controls
                         CollectOne d, co
-                        If TypeName(co) = "Frame" Then
+                        If typeName(co) = "Frame" Then
                             For Each ic In co.Controls: CollectOne d, ic: Next
-                        ElseIf TypeName(co) = "MultiPage" Then
+                        ElseIf typeName(co) = "MultiPage" Then
                             Dim p2 As MSForms.page, fr As MSForms.Control, it As MSForms.Control
                             For Each p2 In co.Pages
                                 For Each fr In p2.Controls
                                     CollectOne d, fr
-                                    If TypeName(fr) = "Frame" Then
+                                    If typeName(fr) = "Frame" Then
                                         For Each it In fr.Controls: CollectOne d, it: Next
                                     End If
                                 Next
@@ -2274,7 +2274,7 @@ End Function
 
 Private Sub CollectOne(ByRef d As Object, ByVal ctl As MSForms.Control)
     If Len(ctl.tag & "") = 0 Then Exit Sub
-    Select Case TypeName(ctl)
+    Select Case typeName(ctl)
         Case "TextBox", "ComboBox": d(ctl.tag) = ctl.text
         Case "CheckBox"
             If ctl.tag <> "AssistiveGroup" And ctl.tag <> "RiskGroup" Then
@@ -2286,12 +2286,12 @@ End Sub
 Private Function AggregateChecks(ByVal groupTag As String) As String
     Dim picks As String, c As MSForms.Control, p As MSForms.page, fr As MSForms.Control, cc As MSForms.Control
     For Each c In Me.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             For Each p In c.Pages
                 For Each fr In p.Controls
-                    If TypeName(fr) = "Frame" Then
+                    If typeName(fr) = "Frame" Then
                         For Each cc In fr.Controls
-                            If TypeName(cc) = "CheckBox" Then
+                            If typeName(cc) = "CheckBox" Then
                                 If cc.tag = groupTag And cc.value Then picks = IIf(Len(picks) = 0, cc.caption, picks & "/" & cc.caption)
                             End If
                         Next
@@ -2306,7 +2306,7 @@ End Function
 Private Function BuildRLAString(ByVal f As MSForms.Frame, ByVal key As String) As String
     Dim c As MSForms.Control, acc As String
     For Each c In f.Controls
-        If TypeName(c) = "CheckBox" Then
+        If typeName(c) = "CheckBox" Then
             If Left$(c.name, 4) = "RLA_" And Mid$(c.name, 5, Len(key)) = key Then
                 If c.value Then acc = IIf(Len(acc) = 0, c.caption, acc & "/" & c.caption)
             End If
@@ -2319,16 +2319,16 @@ Private Function FindAllFramesByCaptionPart(ByVal part As String) As Collection
     Dim col As New Collection
     Dim c As MSForms.Control, p As MSForms.page, oc As MSForms.Control
     For Each c In Me.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             For Each p In c.Pages
                 For Each oc In p.Controls
-                    If TypeName(oc) = "Frame" Then
+                    If typeName(oc) = "Frame" Then
                         If InStr(1, oc.caption, part, vbTextCompare) > 0 Then col.Add oc
-                    ElseIf TypeName(oc) = "MultiPage" Then
+                    ElseIf typeName(oc) = "MultiPage" Then
                         Dim p2 As MSForms.page, oc2 As MSForms.Control
                         For Each p2 In oc.Pages
                             For Each oc2 In p2.Controls
-                                If TypeName(oc2) = "Frame" Then
+                                If typeName(oc2) = "Frame" Then
                                     If InStr(1, oc2.caption, part, vbTextCompare) > 0 Then col.Add oc2
                                 End If
                             Next
@@ -2721,9 +2721,9 @@ End Sub
 Private Sub SetImeRecursive(container As Object)
     Dim ctl As Control
     For Each ctl In container.Controls
-        If TypeName(ctl) = "TextBox" Then ctl.IMEMode = fmIMEModeHiragana
+        If typeName(ctl) = "TextBox" Then ctl.IMEMode = fmIMEModeHiragana
 
-        Select Case TypeName(ctl)
+        Select Case typeName(ctl)
             Case "Frame", "UserForm"
                 SetImeRecursive ctl
 
@@ -2744,7 +2744,7 @@ Private Sub FixRestNRS_Once()
 
     ' 近い高さにあるラベルを探す（見つからなければ新規に作る）
     For Each L In Me.Controls
-        If TypeName(L) = "Label" Then
+        If typeName(L) = "Label" Then
             If L.caption = "安静時NRS" Or (Abs(L.top - c.top) <= 20 And L.Left < c.Left) Then
                 Exit For
             End If
@@ -2790,13 +2790,13 @@ End Sub
 Private Function FindButtonByCaption(container As Object, ByVal cap As String) As MSForms.CommandButton
     Dim c As Object, hit As MSForms.CommandButton
     For Each c In container.Controls
-        If TypeName(c) = "CommandButton" Then
+        If typeName(c) = "CommandButton" Then
             If CStr(c.caption) = cap Then
                 Set FindButtonByCaption = c
                 Exit Function
             End If
         End If
-        If TypeOf c Is MSForms.Frame Or TypeOf c Is MSForms.MultiPage Or TypeName(c) = "Page" Then
+        If TypeOf c Is MSForms.Frame Or TypeOf c Is MSForms.MultiPage Or typeName(c) = "Page" Then
             Set hit = FindButtonByCaption(c, cap)
             If Not hit Is Nothing Then Set FindButtonByCaption = hit: Exit Function
         End If
@@ -2813,8 +2813,8 @@ Private Sub HookHeaderButtons()
 Const CAP_SAVE As String = "シートへ保存"          ' ← cap=[ ] の中身だけ
 Const CAP_LOAD As String = "前回の値を読み込む"    ' ← cap=[ ] の中身だけ
 
-Debug.Print "[TEST] 保存like:", TypeName(FindButtonByCaptionLike(Me, "保存"))
-Debug.Print "[TEST] 読み込like:", TypeName(FindButtonByCaptionLike(Me, "読み込"))
+Debug.Print "[TEST] 保存like:", typeName(FindButtonByCaptionLike(Me, "保存"))
+Debug.Print "[TEST] 読み込like:", typeName(FindButtonByCaptionLike(Me, "読み込"))
 
 
 Set btnHdrSave = FindButtonByCaptionLike(Me, CAP_SAVE)
@@ -2847,7 +2847,7 @@ SafeExit:
     Dim hit As Object
 
     ' MultiPage は Pages 経由で潜る（ここが重要）
-    If TypeName(container) = "MultiPage" Then
+    If typeName(container) = "MultiPage" Then
         For Each pg In container.Pages
             Set hit = FindButtonByCaptionLike(pg, needle)
             If Not hit Is Nothing Then
@@ -2860,12 +2860,12 @@ SafeExit:
 
     ' それ以外は Controls を走査
     For Each c In container.Controls
-        If TypeName(c) = "CommandButton" Then
+        If typeName(c) = "CommandButton" Then
             If InStr(Replace$(c.caption, vbCrLf, ""), needle) > 0 Then
                 Set FindButtonByCaptionLike = c
                 Exit Function
             End If
-        ElseIf TypeName(c) = "Frame" Or TypeName(c) = "Page" Then
+        ElseIf typeName(c) = "Frame" Or typeName(c) = "Page" Then
             Set hit = FindButtonByCaptionLike(c, needle)
             If Not hit Is Nothing Then
                 Set FindButtonByCaptionLike = hit
@@ -2884,7 +2884,7 @@ Private Sub GatherButtons(container As Object, ByRef arr As Collection)
     Dim pg As MSForms.page
 
     ' MultiPage は Pages を再帰
-    If TypeName(container) = "MultiPage" Then
+    If typeName(container) = "MultiPage" Then
         For Each pg In container.Pages
             GatherButtons pg, arr
         Next
@@ -2893,8 +2893,8 @@ Private Sub GatherButtons(container As Object, ByRef arr As Collection)
 
     ' それ以外は Controls
     For Each c In container.Controls
-        If TypeName(c) = "CommandButton" Then arr.Add c
-        If TypeName(c) = "Frame" Or TypeName(c) = "Page" Then
+        If typeName(c) = "CommandButton" Then arr.Add c
+        If typeName(c) = "Frame" Or typeName(c) = "Page" Then
             GatherButtons c, arr
         End If
     Next
@@ -2948,15 +2948,15 @@ Private Sub DumpButtonsProc(container As Object)
     Dim c As Control
     Dim pg As MSForms.page
 
-    If TypeName(container) = "MultiPage" Then
+    If typeName(container) = "MultiPage" Then
         'MultiPage は Pages 配下を回す
         For Each pg In container.Pages
             For Each c In pg.Controls
-                If TypeName(c) = "CommandButton" Then
+                If typeName(c) = "CommandButton" Then
                     Debug.Print "Type=CommandButton, cap=[" & c.caption & _
                                 "], Top=" & c.top & ", Left=" & c.Left
                 End If
-                If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
+                If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then
                     DumpButtonsProc c
                 End If
             Next
@@ -2964,11 +2964,11 @@ Private Sub DumpButtonsProc(container As Object)
     Else
         '通常のコンテナ（UserForm / Frame / Page など）
         For Each c In container.Controls
-            If TypeName(c) = "CommandButton" Then
+            If typeName(c) = "CommandButton" Then
                 Debug.Print "Type=CommandButton, cap=[" & c.caption & _
                             "], Top=" & c.top & ", Left=" & c.Left
             End If
-            If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
+            If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then
                 DumpButtonsProc c
             End If
         Next
@@ -3828,7 +3828,7 @@ RecalcBI
 '== ROM内の空ページ(Page14/15)を起動時に自動削除 ==
 Dim ctlZ As Object, mpZ As MSForms.MultiPage, iZ As Long, capZ As String
 For Each ctlZ In Me.Controls
-    If TypeName(ctlZ) = "MultiPage" Then
+    If typeName(ctlZ) = "MultiPage" Then
         Set mpZ = ctlZ
         For iZ = mpZ.Pages.count - 1 To 0 Step -1
             capZ = CStr(mpZ.Pages(iZ).caption)
@@ -3845,7 +3845,7 @@ Dim mpN As Object, pgN As Object, pN As Object, cN As Object
 ' --- ROMページ特定（"ROM" または "主要関節"） ---
 Set mpN = Nothing: Set pgN = Nothing
 For Each cN In Me.Controls
-    If TypeName(cN) = "MultiPage" Then
+    If typeName(cN) = "MultiPage" Then
         Set mpN = cN
         Exit For
     End If
@@ -3875,7 +3875,7 @@ If Not pgN Is Nothing Then
         On Error Resume Next
         For Each ctl In parent.Controls
             On Error GoTo 0
-            Select Case TypeName(ctl)
+            Select Case typeName(ctl)
                 Case "Frame", "MultiPage", "Page"
                     stk.Add ctl                      ' 子をたどる
                 Case "Label"
@@ -3913,7 +3913,7 @@ Dim noteTB As Object, areaMax As Double
 Dim rootPg As Object, c0 As Object, mp0 As Object, i0 As Long
 Set rootPg = Nothing
 For Each c0 In Me.Controls
-    If TypeName(c0) = "MultiPage" Then
+    If typeName(c0) = "MultiPage" Then
         Set mp0 = c0
         For i0 = 0 To mp0.Pages.count - 1
             If InStr(1, CStr(mp0.Pages(i0).caption), "ROM", vbTextCompare) > 0 _
@@ -3930,7 +3930,7 @@ qH.Add rootPg
 Do While qH.count > 0
     Set parentH = qH(1): qH.Remove 1
 
-    If TypeName(parentH) = "MultiPage" Then
+    If typeName(parentH) = "MultiPage" Then
         ' MultiPage は Controls を持たないので Pages を個別に辿る
         For iH = 0 To parentH.Pages.count - 1
             qH.Add parentH.Pages(iH)
@@ -3939,7 +3939,7 @@ Do While qH.count > 0
         On Error Resume Next
         For Each ctlH In parentH.Controls
             On Error GoTo 0
-           Select Case TypeName(ctlH)
+           Select Case typeName(ctlH)
     Case "Frame", "Page"
         qH.Add ctlH                      ' 子コンテナを辿る
     Case "MultiPage"
@@ -3976,7 +3976,7 @@ Call MMT_BuildChildTabs_Direct
 
 Dim c As Control
 For Each c In Me.Controls
-    If TypeName(c) = "Label" Then
+    If typeName(c) = "Label" Then
         If c.caption = "NRS" Then
             c.caption = "安静時NRS"
             Exit For
@@ -3991,7 +3991,7 @@ Dim ct As Control
 
 ' 安静時NRSラベルを特定
 For Each ct In Me.Controls
-    If TypeName(ct) = "Label" Then
+    If typeName(ct) = "Label" Then
         If ct.caption = "安静時NRS" Then
             Set srcLbl = ct
             Exit For
@@ -4002,7 +4002,7 @@ Next
 If Not srcLbl Is Nothing Then
     ' 安静時NRSの右側にある既存Comboを推定（同じ高さ±6）
     For Each ct In Me.Controls
-        If TypeName(ct) = "ComboBox" Then
+        If typeName(ct) = "ComboBox" Then
             If Abs(ct.top - srcLbl.top) <= 20 And ct.Left > srcLbl.Left Then
                 Set srcCmb = ct: Exit For
             End If
@@ -4011,8 +4011,8 @@ If Not srcLbl Is Nothing Then
 
     ' 既に作成済みなら何もしない
     For Each ct In Me.Controls
-        If TypeName(ct) = "Label" And ct.name = "lblNRS_Move" Then Set lbl = ct
-        If TypeName(ct) = "ComboBox" And ct.name = "cmbNRS_Move" Then Set cmb = ct
+        If typeName(ct) = "Label" And ct.name = "lblNRS_Move" Then Set lbl = ct
+        If typeName(ct) = "ComboBox" And ct.name = "cmbNRS_Move" Then Set cmb = ct
     Next
 
     If lbl Is Nothing Then
@@ -4059,9 +4059,9 @@ End Sub
 Sub ShowFrame12()
     Dim f As Control, t As Control
     For Each f In frmEval.Controls
-        If TypeName(f) = "Frame" Then
+        If typeName(f) = "Frame" Then
             For Each t In f.Controls
-                If TypeName(t) = "TextBox" And t.name = "TextBox2" Then
+                If typeName(t) = "TextBox" And t.name = "TextBox2" Then
                     f.ZOrder 0                 '一番手前に
                     f.caption = "★これがFrame12★" '見つけやすくする
                     Beep
@@ -4453,7 +4453,7 @@ Public Sub SummarizePainUI()
     If Not frF Is Nothing Then
         Dim tmpF As String: tmpF = ""
         For Each c In frF.Controls
-            If TypeName(c) = "CheckBox" Then
+            If typeName(c) = "CheckBox" Then
                 If c.value = True Then tmpF = tmpF & c.caption & "／"
             End If
         Next
@@ -4844,7 +4844,7 @@ End Sub
 Private Sub FixPainCaptionsAndWidth()
     Dim c As Control
     For Each c In Me.Controls
-        If TypeName(c) = "Frame" Then
+        If typeName(c) = "Frame" Then
             ' 左：見出し（痛みの性質…）を折り返さない幅にする（親右端?24pt）
             If InStr(c.caption, "痛") > 0 And InStr(c.caption, "性質") > 0 Then
                 On Error Resume Next
@@ -4864,7 +4864,7 @@ Public Sub FixPainLabels_Final()
 
     '--- 直下のラベルを処理 ---
     For Each c In Me.Controls
-        If TypeName(c) = "Label" Then
+        If typeName(c) = "Label" Then
             If c.name = "lblPainQual" Then
                 Set L = c
                 On Error Resume Next
@@ -4879,9 +4879,9 @@ Public Sub FixPainLabels_Final()
 
     '--- 各Frame内のラベルを処理 ---
     For Each f In Me.Controls
-        If TypeName(f) = "Frame" Then
+        If typeName(f) = "Frame" Then
             For Each c In f.Controls
-                If TypeName(c) = "Label" Then
+                If typeName(c) = "Label" Then
                     If c.name = "lblPainQual" Then
                         Set L = c
                         On Error Resume Next
@@ -4902,10 +4902,10 @@ Public Sub ListToneKeyCaptions()
     Dim c As Control
     For Each c In frmEval.Controls
         On Error Resume Next
-        If TypeName(c) = "CheckBox" Or TypeName(c) = "OptionButton" Or TypeName(c) = "Label" Then
+        If typeName(c) = "CheckBox" Or typeName(c) = "OptionButton" Or typeName(c) = "Label" Then
             Dim cap As String: cap = CStr(c.caption)
             If InStr(cap, "MAS_") > 0 Or InStr(cap, "反射_") > 0 Then
-                Debug.Print "[TONE-CTL]", TypeName(c), c.name, "|", cap
+                Debug.Print "[TONE-CTL]", typeName(c), c.name, "|", cap
             End If
         End If
         On Error GoTo 0
@@ -4921,7 +4921,7 @@ Private Function GetWalkBaseTop(ByVal f As MSForms.Frame) As Single
 
     bestTop = 99999
     For Each ctl In f.Controls
-        If TypeName(ctl) = "ComboBox" Or TypeName(ctl) = "Label" Then
+        If typeName(ctl) = "ComboBox" Or typeName(ctl) = "Label" Then
             If ctl.top < bestTop Then bestTop = ctl.top
         End If
     Next
@@ -4986,7 +4986,7 @@ Private Sub BuildWalkIndep_DistanceOutdoor()
     If f Is Nothing Then Exit Sub
 
     For Each ctl In f.Controls
-        If TypeName(ctl) = "ComboBox" Then
+        If typeName(ctl) = "ComboBox" Then
             Set cmbBase = ctl
             Exit For
         End If
@@ -5146,7 +5146,7 @@ Private Sub BuildWalk_AbnormalTab()
 
     ' 歩行評価用の MultiPage2 を探す
     For Each ctl In Me.Controls
-        If TypeName(ctl) = "MultiPage" Then
+        If typeName(ctl) = "MultiPage" Then
             If ctl.name = "MultiPage2" Then
                 Set mp = ctl
                 Exit For
@@ -5189,7 +5189,7 @@ Private Sub BuildWalkAbnormal_Frames()
 
     ' MultiPage2（歩行評価）を取得
     For Each ctl In Me.Controls
-        If TypeName(ctl) = "MultiPage" And ctl.name = "MultiPage2" Then
+        If typeName(ctl) = "MultiPage" And ctl.name = "MultiPage2" Then
             Set mp = ctl
             Exit For
         End If
@@ -5208,7 +5208,7 @@ Private Sub BuildWalkAbnormal_Frames()
 
     ' 既存フレーム削除（再生成用）
     For Each ctl In pg.Controls
-        If TypeName(ctl) = "Frame" Then
+        If typeName(ctl) = "Frame" Then
             pg.Controls.Remove ctl.name
         End If
     Next
@@ -5266,7 +5266,7 @@ Private Sub BuildWalkAbnormal_Checks()
     
     ' MultiPage2 を取得
     For Each ctl In Me.Controls
-        If TypeName(ctl) = "MultiPage" And ctl.name = "MultiPage2" Then
+        If typeName(ctl) = "MultiPage" And ctl.name = "MultiPage2" Then
             Set mp = ctl
             Exit For
         End If
@@ -5363,7 +5363,7 @@ Private Sub BuildWalkAbnormal_Checks()
         
         ' 既存チェック削除
         For Each ctl In f.Controls
-            If TypeName(ctl) = "CheckBox" Then
+            If typeName(ctl) = "CheckBox" Then
                 f.Controls.Remove ctl.name
             End If
         Next ctl
@@ -5820,7 +5820,7 @@ Public Sub BuildCog_BPSD()
     ' --- 既存BPSDコントロール削除 ---
     Dim c As MSForms.Control
     For i = pg.Controls.count - 1 To 0 Step -1
-        If TypeName(pg.Controls(i)) = "CheckBox" _
+        If typeName(pg.Controls(i)) = "CheckBox" _
            Or pg.Controls(i).name Like "lblBPSD*" Then
             pg.Controls.Remove pg.Controls(i).name
         End If
@@ -6714,7 +6714,7 @@ Private Function GetMainMultiPage() As MSForms.MultiPage
     If Not GetMainMultiPage Is Nothing Then Exit Function
 
     For Each c In Me.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             Set GetMainMultiPage = c
             Exit Function
         End If
@@ -6741,7 +6741,7 @@ Public Function GetWalkRootFrame() As MSForms.Frame
 
     For Each pg In mp.Pages
         For Each c In pg.Controls
-            If TypeName(c) = "Frame" Then
+            If typeName(c) = "Frame" Then
                 If InStr(1, CStr(c.caption), "", vbTextCompare) > 0 _
                    Or InStr(1, CStr(c.name), "walk", vbTextCompare) > 0 Then
                     Set GetWalkRootFrame = c
@@ -6776,7 +6776,7 @@ Public Function GetCogRootFrame() As MSForms.Frame
     If host Is Nothing Then Exit Function
 
     For Each c In host.Controls
-        If TypeName(c) = "Frame" Then
+        If typeName(c) = "Frame" Then
             If firstFrame Is Nothing Then Set firstFrame = c
             If StrComp(CStr(c.name), "Frame30", vbTextCompare) = 0 Then
                 Set frame30 = c
@@ -6801,7 +6801,7 @@ Public Function GetCogTabs() As MSForms.MultiPage
     If f Is Nothing Then Exit Function
 
     For Each c In f.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             If InStr(1, CStr(c.name), "Cog", vbTextCompare) > 0 Or InStr(1, CStr(c.name), "Mental", vbTextCompare) > 0 Then
                 Set GetCogTabs = c
                 Exit Function
@@ -6809,7 +6809,7 @@ Public Function GetCogTabs() As MSForms.MultiPage
         End If
     Next
     For Each c In f.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             Set GetCogTabs = c
             Exit Function
         End If
@@ -7004,7 +7004,7 @@ Private Function GetPageRootFrame(ByVal pageIndex As Long) As MSForms.Frame
 
     ' そのページ内の「一番大きな Frame = ルートフレーム」とみなす
     For Each c In pg.Controls
-        If TypeName(c) = "Frame" And TypeName(c.parent) = "Page" Then
+        If typeName(c) = "Frame" And typeName(c.parent) = "Page" Then
             Set f = c
             area = f.Width * f.Height
             If best Is Nothing Or area > bestArea Then
@@ -7647,7 +7647,7 @@ End Sub
 
 Private Sub frHeader_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
     On Error Resume Next
-    If TypeName(Me.ActiveControl) = "CommandButton" Then
+    If typeName(Me.ActiveControl) = "CommandButton" Then
         If Me.ActiveControl.name = "cmdArchiveDelete" Then
             ArchiveAndDelete_EvalData_ByName
         End If
@@ -7981,7 +7981,7 @@ Private Function ResolveBasicInfoText(ByVal ctrlName As String) As MSForms.TextB
 
     Set c = SafeGetControl(Me, ctrlName)
     If c Is Nothing Then Exit Function
-    If TypeName(c) <> "TextBox" Then Exit Function
+    If typeName(c) <> "TextBox" Then Exit Function
 
     Set ResolveBasicInfoText = c
 End Function

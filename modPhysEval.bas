@@ -602,7 +602,7 @@ Private Function FindMultiPageRecursive(parent As Object) As MSForms.MultiPage
     Dim c As Control
     For Each c In parent.Controls
         If TypeOf c Is MSForms.MultiPage Then
-            Debug.Print "  [hit] MP Name=" & c.name & " (Parent=" & TypeName(parent) & ")"
+            Debug.Print "  [hit] MP Name=" & c.name & " (Parent=" & typeName(parent) & ")"
             If Not IsKnownMpADL(c) Then
                 Set FindMultiPageRecursive = c
                 Debug.Print "  [use] as root"
@@ -823,7 +823,7 @@ Public Sub EnsurePhysicalFunctionTabs_Under(owner As frmEval, root As MSForms.Mu
 
         ' Normalize direct host frames under each page.
         For Each ctlFit In pgFit.Controls
-            If TypeName(ctlFit) = "Frame" Then
+            If typeName(ctlFit) = "Frame" Then
                 With ctlFit
                     .Left = PAD_X
                     .top = PAD_Y
@@ -1226,7 +1226,7 @@ Private Sub NormalizeRomColumns(host As MSForms.Frame)
 
     Dim c As Control
     For Each c In host.Controls
-        Select Case TypeName(c)
+        Select Case typeName(c)
             Case "TextBox"
                 ' タグに「右」「左」が入るようにしておく（③参照）
                 If InStr(c.tag, "右") > 0 Then c.Left = xR: c.Width = w

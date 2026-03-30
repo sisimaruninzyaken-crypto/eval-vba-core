@@ -71,7 +71,7 @@ Public Sub ROM_AlignFix_Set20()
 
     ' --- ROMページ特定 ---
     For Each c In frmEval.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             For i = 0 To c.Pages.count - 1
                 If InStr(1, CStr(c.Pages(i).caption), "ROM", vbTextCompare) > 0 _
                 Or InStr(1, CStr(c.Pages(i).caption), "主要関節", vbTextCompare) > 0 Then
@@ -89,7 +89,7 @@ Public Sub ROM_AlignFix_Set20()
     Dim adjSmall As Long, adjNote As Long, skip As Long
 
     For Each ctrl In pg.Controls
-        If TypeName(ctrl) = "TextBox" Then
+        If typeName(ctrl) = "TextBox" Then
             Set txt = ctrl
 
             ' --- 備考候補の判定 ---
@@ -103,14 +103,14 @@ Public Sub ROM_AlignFix_Set20()
             If isBig Then
                 ' ① 親内の「備考」ラベル
                 For Each tmp In txt.parent.Controls
-                    If TypeName(tmp) = "Label" Then
+                    If typeName(tmp) = "Label" Then
                         If InStr(1, CStr(tmp.caption), "備考", vbTextCompare) > 0 Then Set lbl = tmp: Exit For
                     End If
                 Next tmp
                 ' ② 見つからなければページ全体の「備考」ラベル
                 If lbl Is Nothing Then
                     For Each tmpZ In pg.Controls
-                        If TypeName(tmpZ) = "Label" Then
+                        If typeName(tmpZ) = "Label" Then
                             If InStr(1, CStr(tmpZ.caption), "備考", vbTextCompare) > 0 Then Set lbl = tmpZ: Exit For
                         End If
                     Next tmpZ
@@ -121,7 +121,7 @@ If lbl Is Nothing Then
     bestGap = 1E+20
     Dim d As Double   ' ← ②で説明する d の宣言。既に上で宣言していれば不要
     For Each tmp In txt.parent.Controls
-        If TypeName(tmp) = "Label" Then
+        If typeName(tmp) = "Label" Then
             If tmp.Left <= txt.Left And tmp.Width <= 120 _
                And (LenB(CStr(tmp.caption)) >= 2 Or tmp.Width >= 12) Then
 
@@ -173,7 +173,7 @@ Public Sub ROM_NoteFix_Once()
 
     ' ROMページ特定
     For Each c In frmEval.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             Set mp = c
             For i = 0 To mp.Pages.count - 1
                 If InStr(1, CStr(mp.Pages(i).caption), "ROM", vbTextCompare) > 0 _
@@ -188,7 +188,7 @@ Public Sub ROM_NoteFix_Once()
 
     ' 「備考」ラベル
     For Each ctrl In pg.Controls
-        If TypeName(ctrl) = "Label" Then
+        If typeName(ctrl) = "Label" Then
             If InStr(1, CStr(ctrl.caption), "備考", vbTextCompare) > 0 Then Set lbl = ctrl: Exit For
         End If
     Next
@@ -196,7 +196,7 @@ Public Sub ROM_NoteFix_Once()
 
     ' 最大サイズのMultiLineテキスト（備考本体）
     For Each ctrl In pg.Controls
-        If TypeName(ctrl) = "TextBox" Then
+        If typeName(ctrl) = "TextBox" Then
             ml = False: On Error Resume Next: ml = ctrl.multiline: On Error GoTo 0
             If ml Or ctrl.Height >= 80 Or ctrl.Width >= 400 Then
                 If tb Is Nothing Then
@@ -275,7 +275,7 @@ Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
 
     ' ?? ROMページを特定（Captionに ROM / ＲＯＭ / 主要関節 / 関節可動域 を含む）??
     For Each mp In frmEval.Controls
-        If TypeName(mp) = "MultiPage" Then
+        If typeName(mp) = "MultiPage" Then
             For i = 0 To mp.Pages.count - 1
                 Set pg = mp.Pages(i)
                 If (InStr(1, CStr(pg.caption), "ROM", vbTextCompare) > 0) _
@@ -300,7 +300,7 @@ Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
         On Error Resume Next
         For Each c In cont.Controls
             ' 子コンテナはスタックに積む
-            Select Case TypeName(c)
+            Select Case typeName(c)
                 Case "Frame", "Page"
                     stk.Add c
                 Case "MultiPage"
@@ -310,7 +310,7 @@ Public Sub ROM_CheckBoxes_Up12_OnROM_Recursive_Once_V2()
             End Select
 
             ' CheckBoxだけ Top を「元Top?12」に（非累積／高さは触らない）
-            If TypeName(c) = "CheckBox" Then
+            If typeName(c) = "CheckBox" Then
                 With c
                     pos = InStr(1, .tag, tagKey, vbTextCompare)
                     If pos > 0 Then
@@ -344,7 +344,7 @@ Public Sub ROM_VerifyOnce()
 
     ' ROMページ特定
     For Each mp In frmEval.Controls
-        If TypeName(mp) = "MultiPage" Then
+        If typeName(mp) = "MultiPage" Then
             For i = 0 To mp.Pages.count - 1
                 cap = CStr(mp.Pages(i).caption)
                 If InStr(1, cap, "ROM", vbTextCompare) > 0 Or _
@@ -361,9 +361,9 @@ Public Sub ROM_VerifyOnce()
 
     ' 検証
     For Each c In pg.Controls
-        If TypeName(c) = "TextBox" Then
+        If typeName(c) = "TextBox" Then
             If c.multiline = False And c.Height <> 15 Then ngTB = ngTB + 1
-        ElseIf TypeName(c) = "CheckBox" Then
+        ElseIf typeName(c) = "CheckBox" Then
             pos = InStr(1, c.tag, "CBBase=", vbTextCompare)
             If pos > 0 Then
                 base = val(Mid$(c.tag, pos + 7))
@@ -387,7 +387,7 @@ Public Sub ROM_Fix_TextBoxHeight_Recursive_OnROM_Once()
 
     ' ROMページを特定
     For Each mp In frmEval.Controls
-        If TypeName(mp) = "MultiPage" Then
+        If typeName(mp) = "MultiPage" Then
             For i = 0 To mp.Pages.count - 1
                 Set pg = mp.Pages(i)
                 If InStr(1, CStr(pg.caption), "ROM", vbTextCompare) > 0 _
@@ -410,7 +410,7 @@ Private Sub FixTextBoxHeightRecursive(cont As Object, h As Single)
     Dim c As Control, j As Long
     On Error Resume Next
     For Each c In cont.Controls
-        Select Case TypeName(c)
+        Select Case typeName(c)
             Case "Frame", "Page"
                 Call FixTextBoxHeightRecursive(c, h)
             Case "MultiPage"
@@ -431,7 +431,7 @@ End Sub
 Private Function GetMMTPage() As Object
     Dim c As Object, mp As Object, i As Long
     For Each c In frmEval.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             Set mp = c
             For i = 0 To mp.Pages.count - 1
                 Dim cap As String
@@ -536,7 +536,7 @@ End Sub
 Private Function FindMMT_MultiPage(ByRef mp As Object, ByRef idx As Long) As Boolean
     Dim c As Object, i As Long
     For Each c In frmEval.Controls
-        If TypeName(c) = "MultiPage" Then
+        If typeName(c) = "MultiPage" Then
             For i = 0 To c.Pages.count - 1
                 Dim cap$: cap = c.Pages(i).caption
                 If InStr(cap, "MMT") > 0 Or InStr(cap, "筋力") > 0 Then

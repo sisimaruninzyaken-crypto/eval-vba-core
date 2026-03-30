@@ -62,10 +62,10 @@ Private Sub DumpControl_Safe(ByVal ws As Object, ByVal parent As Object, ByVal d
         If (c.parent Is parent) Then
             DumpOne ws, c, depth + 1
 
-            If TypeName(c) = "Frame" Then
+            If typeName(c) = "Frame" Then
                 DumpControl_Safe ws, c, depth + 1, visited
 
-            ElseIf TypeName(c) = "MultiPage" Then
+            ElseIf typeName(c) = "MultiPage" Then
                 DumpMultiPage_Safe ws, c, depth + 1, visited
 
             Else
@@ -78,7 +78,7 @@ Private Sub DumpControl_Safe(ByVal ws As Object, ByVal parent As Object, ByVal d
 
 ErrH:
 #If APP_DEBUG Then
-    Debug.Print "[DumpControl_Safe] ERR " & Err.Number & " " & Err.Description & " Parent=" & TypeName(parent)
+    Debug.Print "[DumpControl_Safe] ERR " & Err.Number & " " & Err.Description & " Parent=" & typeName(parent)
 #End If
 End Sub
 
@@ -116,9 +116,9 @@ Private Sub DumpPageChildren_Safe(ByVal ws As Object, ByVal pg As MSForms.page, 
             DumpOne ws, c, depth
 
             ' Page配下は Frame だけ再帰OK（必要ならMultiPageもOK）
-            If TypeName(c) = "Frame" Then
+            If typeName(c) = "Frame" Then
                 DumpControl_Safe ws, c, depth, visited
-            ElseIf TypeName(c) = "MultiPage" Then
+            ElseIf typeName(c) = "MultiPage" Then
                 DumpMultiPage_Safe ws, c, depth, visited
             End If
         End If
@@ -136,7 +136,7 @@ Private Sub DumpOne(ByVal ws As Object, ByVal c As MSForms.Control, ByVal depth 
     On Error Resume Next
 
     Dim s As String
-    s = Indent(depth) & TypeName(c) & " " & SafeStr(c, "Name")
+    s = Indent(depth) & typeName(c) & " " & SafeStr(c, "Name")
 
     ' 座標はControlのみ（Pageは触らない）
     Dim L As Variant, t As Variant, w As Variant, h As Variant
@@ -159,7 +159,7 @@ End Function
 
 Private Function ObjKey(ByVal o As Object) As String
     On Error Resume Next
-    ObjKey = TypeName(o) & ":" & SafeStr(o, "Name")
+    ObjKey = typeName(o) & ":" & SafeStr(o, "Name")
 End Function
 
 Private Function SafeStr(ByVal o As Object, ByVal propName As String) As String

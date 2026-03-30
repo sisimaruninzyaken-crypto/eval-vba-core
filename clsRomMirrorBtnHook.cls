@@ -19,7 +19,7 @@ Private Sub btn_Click()
 
     Dim c As Object
     For Each c In btn.parent.Controls
-        If TypeName(c) = "TextBox" Then
+        If typeName(c) = "TextBox" Then
             Dim nm As String
             nm = CStr(c.name)
             If Right$(nm, 2) = "_R" Then

@@ -14,14 +14,14 @@ Public Sub RunHdrProbe()
 
     Debug.Print "[Form] Controls.Count=" & frmEval.Controls.count
 
-    Debug.Print "[frHeader] Type=" & TypeName(frmEval.Controls("frHeader"))
+    Debug.Print "[frHeader] Type=" & typeName(frmEval.Controls("frHeader"))
     Debug.Print "[frHeader] InsideW=" & frmEval.Controls("frHeader").InsideWidth & _
                 " Left=" & frmEval.Controls("frHeader").Left & _
                 " Top=" & frmEval.Controls("frHeader").top & _
                 " W=" & frmEval.Controls("frHeader").Width & _
                 " H=" & frmEval.Controls("frHeader").Height
 
-    Debug.Print "[txtHdrKana] Type=" & TypeName(frmEval.Controls("frHeader").Controls("txtHdrKana")) & _
+    Debug.Print "[txtHdrKana] Type=" & typeName(frmEval.Controls("frHeader").Controls("txtHdrKana")) & _
                 " Left=" & frmEval.Controls("frHeader").Controls("txtHdrKana").Left & _
                 " Top=" & frmEval.Controls("frHeader").Controls("txtHdrKana").top & _
                 " W=" & frmEval.Controls("frHeader").Controls("txtHdrKana").Width & _
