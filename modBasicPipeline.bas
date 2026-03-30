@@ -40,6 +40,7 @@ Public Sub RunBasicPlan()
         On Error GoTo 0
     End If
     Set result = GenerateBasicPlan(patientName)
+    Debug.Print "[RunBasicPlan] patientName=[" & patientName & "]"
 
     Set prevSnap = GetPreviousEvalSnapshot(frm)
     If Not prevSnap Is Nothing Then
@@ -56,6 +57,11 @@ Public Sub ReflectBasicPlanToReport(ByVal result As Object, ByVal patientName As
     If Not result.exists("AIDraft") Then Debug.Print "[Reflect] AIDraft key missing": Exit Sub
     If owner Is Nothing Then Set owner = TryGetOwnerForm()
     Set planData = BuildPlanDataFromResult(result)
+    If planData Is Nothing Then
+        Debug.Print "[Reflect] planDataCount=-1"
+    Else
+        Debug.Print "[Reflect] planDataCount=" & planData.count
+    End If
     ExportPlanAsXlsx patientName, owner, planData
 End Sub
 
@@ -83,7 +89,7 @@ Private Sub ExportPlanAsXlsx(ByVal patientName As String, ByVal owner As Object,
     Dim dateStr As String
     Dim fileName As String
     Dim savePath As String
-    Const TEMPLATE_NAME As String = "ŒÂ•Ê‹@”\ŒP—ûŒv‰æ‘"
+    Const TEMPLATE_NAME As String = "ï¿½Â•Ê‹@ï¿½\ï¿½Pï¿½ï¿½ï¿½vï¿½æ‘""
     On Error GoTo EH
 
     Set fso = CreateObject("Scripting.FileSystemObject")
@@ -102,14 +108,16 @@ Private Sub ExportPlanAsXlsx(ByVal patientName As String, ByVal owner As Object,
 
     outputDir = baseDir & "\" & SafeName
     If Not fso.FolderExists(outputDir) Then fso.CreateFolder outputDir
+    
+    
+    Debug.Print "[WB] name=" & ThisWorkbook.name & " | sheets=" & ThisWorkbook.Worksheets.count & " | hasTemplate=" & CStr(Not ThisWorkbook.Worksheets("ŒÂ•Ê‹@”\ŒP—ûŒv‰æ‘") Is Nothing)
 
-    On Error Resume Next
-    Set tmpl = ThisWorkbook.Worksheets(TEMPLATE_NAME)
-    On Error GoTo EH
+    Set tmpl = ThisWorkbook.Worksheets("ŒÂ•Ê‹@”\ŒP—ûŒv‰æ‘")
     If tmpl Is Nothing Then
-        Debug.Print "[ExportPlan] template not found: " & TEMPLATE_NAME
+        Debug.Print "[ExportPlan] template not found"
         Exit Sub
     End If
+    Debug.Print "[ExportPlan] template=" & tmpl.name
 
     tmpl.Copy
     Set newWb = ActiveWorkbook
@@ -134,6 +142,40 @@ EH:
     On Error Resume Next
     If Not newWb Is Nothing Then newWb.Close SaveChanges:=False
 End Sub
+
+
+Private Function ResolvePlanTemplateSheet(ByVal wb As Workbook, ByVal primaryName As String) As Worksheet
+    Dim ws As Worksheet
+    Dim candidates As Variant
+    Dim i As Long
+
+    If wb Is Nothing Then Exit Function
+
+    candidates = Array(primaryName, "å€‹åˆ¥æ©Ÿèƒ½è¨“ç·´è¨ˆç”»æ›¸", "kojinkinokunren")
+
+    On Error Resume Next
+    For i = LBound(candidates) To UBound(candidates)
+        Set ws = Nothing
+        Set ws = wb.Worksheets(CStr(candidates(i)))
+        If Not ws Is Nothing Then
+            Set ResolvePlanTemplateSheet = ws
+            On Error GoTo 0
+            Exit Function
+        End If
+    Next i
+    On Error GoTo 0
+
+    For Each ws In wb.Worksheets
+        If InStr(1, ws.name, "å€‹åˆ¥æ©Ÿèƒ½è¨“ç·´è¨ˆç”»æ›¸", vbTextCompare) > 0 Then
+            Set ResolvePlanTemplateSheet = ws
+            Exit Function
+        End If
+        If InStr(1, ws.name, "è¨ˆç”»æ›¸", vbTextCompare) > 0 Then
+            Set ResolvePlanTemplateSheet = ws
+            Exit Function
+        End If
+    Next ws
+End Function
 
 Private Function BuildPlanDataFromResult(ByVal result As Object) As Object
     Dim d As Object
