@@ -41,7 +41,7 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     Dim dbgTx As String: dbgTx = GetCtrlTextSafe(owner, "txtTxCourse")
     Dim dbgCp As String: dbgCp = GetCtrlTextSafe(owner, "txtComplications")
     Dim dbgLv As String: dbgLv = GetCtrlTextSafe(owner, "txtLiving")
-    Debug.Print "[WriteEvalPlanSheet] owner=" & typeName(owner) & _
+    Debug.Print "[WriteEvalPlanSheet] owner=" & TypeName(owner) & _
         " | txtLiving=[" & dbgLv & "]" & _
         " | txtTxCourse=[" & dbgTx & "]" & _
         " | txtComplications=[" & dbgCp & "]"
@@ -203,7 +203,7 @@ Private Function GetIndexValue(ByVal src As Variant, ByVal idx As Long) As Varia
     On Error GoTo EH
     If IsObject(src) Then
         Dim t As String
-        t = typeName(src)
+        t = TypeName(src)
         If StrComp(t, "Collection", vbTextCompare) = 0 Then
             If idx >= 1 And idx <= CLng(CallByName(src, "Count", VbGet)) Then
                 GetIndexValue = CallByName(src, "Item", VbGet, idx)
@@ -382,7 +382,7 @@ End Sub
 
 Private Function IsHomeEnvCheckControl(ByVal ctl As Object) As Boolean
     If ObjectIsNothingSafe(ctl) Then Exit Function
-    If StrComp(typeName(ctl), "CheckBox", vbTextCompare) <> 0 Then Exit Function
+    If StrComp(TypeName(ctl), "CheckBox", vbTextCompare) <> 0 Then Exit Function
 
     Dim tagText As String
     tagText = GetControlTagSafe(ctl)

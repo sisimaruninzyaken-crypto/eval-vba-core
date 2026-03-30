@@ -7,12 +7,12 @@ Private Function GetRightComboByLabelCaptionIn(p As MSForms.page, ByVal cap As S
     Dim dy As Double, bestDx As Double: bestDx = 1E+30
     ' 1) Captionˆê’vƒ‰ƒxƒ‹‚ğ’T‚·
     For i = 0 To p.Controls.count - 1
-        If typeName(p.Controls(i)) = "Label" Then
+        If TypeName(p.Controls(i)) = "Label" Then
             Set lb = p.Controls(i)
             If lb.caption = cap Then
                 ' 2) “¯‚¶s(}6pt)‚Å‰E‘¤‚É‚ ‚éÅ’Z‹——£‚ÌComboBox
                 For Each c In p.Controls
-                    If typeName(c) = "ComboBox" Then
+                    If TypeName(c) = "ComboBox" Then
                         dy = Abs(c.top - lb.top)
                         If dy <= 6 And c.Left > lb.Left Then
                             If (c.Left - lb.Left) < bestDx Then
@@ -38,7 +38,7 @@ Private Sub ResolveKyoUnnamedCombos(ByRef cmbStandUp As MSForms.ComboBox, ByRef 
     Dim mp As MSForms.MultiPage, p As MSForms.page, c As Control
     ' mpADL æ“¾
     For Each c In frmEval.Controls
-        If typeName(c) = "MultiPage" Then
+        If TypeName(c) = "MultiPage" Then
             If c.name = "mpADL" Then Set mp = c: Exit For
         End If
     Next c
@@ -56,7 +56,7 @@ Public Sub Snapshot_ADL_Once()
 
     ' mpADL æ“¾
     For Each ctl In frmEval.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             If ctl.name = "mpADL" Then Set mp = ctl: Exit For
         End If
     Next ctl
@@ -152,7 +152,7 @@ Public Function Build_ADL_IO() As String
 
     ' mpADL æ“¾
     For Each ctl In frmEval.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             If ctl.name = "mpADL" Then Set mp = ctl: Exit For
         End If
     Next ctl
@@ -261,7 +261,7 @@ Public Sub Save_ADL_Once()
 
     ' IO¶¬ ¨ ‘‚«‚İ
     s = Build_ADL_IO()
-    Debug.Print "[Chk]"; typeName(ws); r; c; typeName(ws.Cells(r, c))
+    Debug.Print "[Chk]"; TypeName(ws); r; c; TypeName(ws.Cells(r, c))
 
 ws.Cells(r, c).Value2 = CStr(s)
 
@@ -309,7 +309,7 @@ Public Sub Load_ADL_Latest()
 
     ' mpADL æ“¾
     For Each ctl In frmEval.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             If ctl.name = "mpADL" Then Set mp = ctl: Exit For
         End If
     Next ctl
@@ -423,7 +423,7 @@ End Sub
 Private Sub WalkCtrlPaths(host As Object, ByVal path As String)
 
     ' MultiPage ‚Í Controls ‚Å‚Í‚È‚­ Pages ‚ğ‘–¸
-If typeName(host) = "MultiPage" Then
+If TypeName(host) = "MultiPage" Then
     Dim pg As MSForms.page
     For Each pg In host.Pages
         WalkCtrlPaths pg, path & "/" & pg.caption & ":Page"
@@ -434,7 +434,7 @@ End If
 
     Dim c As Control, t As String, p As String
     For Each c In host.Controls
-        t = typeName(c)
+        t = TypeName(c)
         p = path & "/" & c.name & ":" & t
         If c.name = "Frame33" Then Debug.Print "[HIT] "; p
         Select Case t
@@ -527,7 +527,7 @@ Public Function FindADLControlByKey(ByVal key As String) As Control
 
     For Each pg In p.Pages
         For Each ctl In pg.Controls
-            t = typeName(ctl)
+            t = TypeName(ctl)
             If t = "TextBox" Or t = "ComboBox" Or t = "CheckBox" Then
                 On Error Resume Next
                 tag = ctl.tag
@@ -596,7 +596,7 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, r As Long, owner As Object)
 
     ' mpADL æ“¾iowner‚©‚çj
     For Each ctl In owner.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             If ctl.name = "mpADL" Then Set mp = ctl: Exit For
         End If
     Next ctl

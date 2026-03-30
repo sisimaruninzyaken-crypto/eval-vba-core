@@ -101,7 +101,7 @@ Set listBoxes = New Collection
 CollectListBoxesRecursive pg, listBoxes
 
 For Each c In listBoxes
-    If typeName(c) = "ListBox" Then
+    If TypeName(c) = "ListBox" Then
         sel = ""
         For j = 0 To c.ListCount - 1
             If c.Selected(j) Then
@@ -195,7 +195,7 @@ End Function
 Private Function FindTargetMultiPage(ByVal owner As Object, ByVal hint As String, ByRef outPage As Object) As Object
     Dim ctl As Object, mp As Object, i As Long
     For Each ctl In owner.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For i = 0 To mp.Pages.count - 1
                 If InStr(1, mp.Pages(i).caption, hint, vbTextCompare) > 0 Then
@@ -214,7 +214,7 @@ End Function
 Private Sub CollectCombos(ByVal container As Object, ByRef bag As Collection)
     Dim ctl As Object
     For Each ctl In container.Controls
-        Select Case typeName(ctl)
+        Select Case TypeName(ctl)
             Case "ComboBox": bag.Add ctl
             Case "Frame":    CollectCombos ctl, bag
         End Select
@@ -225,7 +225,7 @@ End Sub
 Private Sub CollectListBoxesRecursive(ByVal container As Object, ByRef bag As Collection)
     Dim ctl As Object
     For Each ctl In container.Controls
-        Select Case typeName(ctl)
+        Select Case TypeName(ctl)
             Case "ListBox"
                 bag.Add ctl
             Case "Frame", "Page"
@@ -285,10 +285,10 @@ End Function
 Private Function LargestTextBoxValue(ByVal container As Object) As String
     Dim ctl As Object, area As Double, maxArea As Double, best As Object
     For Each ctl In container.Controls
-        If typeName(ctl) = "TextBox" Then
+        If TypeName(ctl) = "TextBox" Then
             area = ctl.Width * ctl.Height
             If area > maxArea Then maxArea = area: Set best = ctl
-        ElseIf typeName(ctl) = "Frame" Then
+        ElseIf TypeName(ctl) = "Frame" Then
             Dim s As String: s = LargestTextBoxValue(ctl)
             If LenB(s) > 0 And area = 0 Then LargestTextBoxValue = s ' ネスト側で決まったら採用
         End If
@@ -322,13 +322,13 @@ End Function
 Private Sub CollectChecksRecursive(parent As Object, colL As Collection)
     Dim c As Object, nm2 As String
     For Each c In parent.Controls
-        If typeName(c) = "CheckBox" Then
+        If TypeName(c) = "CheckBox" Then
             If c.value = True Then
                 nm2 = c.name
                 If LCase$(Left$(nm2, 3)) = "chk" Then nm2 = Mid$(nm2, 4)
                 colL.Add nm2
             End If
-        ElseIf typeName(c) = "Frame" Or typeName(c) = "Page" Then
+        ElseIf TypeName(c) = "Frame" Or TypeName(c) = "Page" Then
             CollectChecksRecursive c, colL
         End If
     Next
@@ -343,11 +343,11 @@ Set pg = uf.mpPhys.Pages(4)
 
     Debug.Print "[Page]", pg.caption
     For Each f In pg.Controls
-        If typeName(f) = "Frame" Then
+        If TypeName(f) = "Frame" Then
             Debug.Print "[Frame]", f.name, "count", f.Controls.count
             For Each c In f.Controls
-                If typeName(c) = "CheckBox" Then Debug.Print "  [Chk]", c.name, c.value
-                If typeName(c) = "Frame" Then Debug.Print "  [SubFrame]", c.name, "count", c.Controls.count
+                If TypeName(c) = "CheckBox" Then Debug.Print "  [Chk]", c.name, c.value
+                If TypeName(c) = "Frame" Then Debug.Print "  [SubFrame]", c.name, "count", c.Controls.count
             Next
         End If
     Next

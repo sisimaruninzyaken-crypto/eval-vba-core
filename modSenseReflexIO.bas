@@ -38,7 +38,7 @@ Public Function SerializeRL(container As Object) As String
             Err.Clear
             
             ' ComboBox のみ対象
-            If typeName(ch) = "ComboBox" Then
+            If TypeName(ch) = "ComboBox" Then
                 nm = ch.name: side = "": base = ""
                 ' 先頭プレフィクス
                 If LCase$(Left$(nm, 5)) = "cbor_" Then side = "R": base = Mid$(nm, 6)
@@ -142,7 +142,7 @@ Public Sub SaveSensoryToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owne
     ' ① MultiPage 内から Caption に「感覚」を含む Page を特定（例：感覚（表在・深部））
     On Error Resume Next
     For Each ctl In owner.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
                 If InStr(pg.caption, "感覚") > 0 Then
@@ -167,7 +167,7 @@ Public Sub SaveSensoryToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owne
             If Err.Number = 0 Then q.Add ch
             Err.Clear
 
-            If typeName(ch) = "ComboBox" Then
+            If TypeName(ch) = "ComboBox" Then
                 combos.Add ch
             End If
         Next ch
@@ -258,13 +258,13 @@ Dim note As String
 On Error Resume Next
 ' ページ内で MultiLine または最も背の高い TextBox を選ぶ（＝読み込みと同じ基準）
 For Each box In target.Controls
-    If typeName(box) = "TextBox" Then
+    If TypeName(box) = "TextBox" Then
         If box.multiline Or box.Height > bestH Then
             Set noteCtl = box: bestH = box.Height
         End If
-    ElseIf typeName(box) = "Frame" Then
+    ElseIf TypeName(box) = "Frame" Then
         For Each subCtl In box.Controls
-            If typeName(subCtl) = "TextBox" Then
+            If TypeName(subCtl) = "TextBox" Then
                 If subCtl.multiline Or subCtl.Height > bestH Then
                     Set noteCtl = subCtl: bestH = subCtl.Height
                 End If
@@ -280,7 +280,7 @@ Dim cNote As Long
 cNote = EnsureHeaderCol(ws, "SENSE_NOTE")
 ws.Cells(r, cNote).value = note
 Debug.Print "[SENSE][SAVE][NOTE] row=" & r & " col=" & cNote & " len=" & Len(note) & _
-            " <- " & IIf(noteCtl Is Nothing, "(not found)", typeName(noteCtl) & ":" & noteCtl.name & " H=" & bestH)
+            " <- " & IIf(noteCtl Is Nothing, "(not found)", TypeName(noteCtl) & ":" & noteCtl.name & " H=" & bestH)
 
 End Sub
 
@@ -322,7 +322,7 @@ Public Sub TraceSensoryComboNames(owner As Object)
 
     ' MultiPage内で Caption に「感覚」を含むページだけ特定
     For Each ctl In owner.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
                 If InStr(pg.caption, "感覚") > 0 Then
@@ -337,11 +337,11 @@ Public Sub TraceSensoryComboNames(owner As Object)
 
     ' 1階層＋Frame内のComboBoxだけを列挙（再帰なし、.Pagesにも触れない）
     For Each ctl In target.Controls
-        If typeName(ctl) = "ComboBox" Then
+        If TypeName(ctl) = "ComboBox" Then
             Debug.Print "[SENSE][CB] "; ctl.name
-        ElseIf typeName(ctl) = "Frame" Then
+        ElseIf TypeName(ctl) = "Frame" Then
             For Each subCtl In ctl.Controls
-                If typeName(subCtl) = "ComboBox" Then
+                If TypeName(subCtl) = "ComboBox" Then
                     Debug.Print "[SENSE][CB] "; subCtl.name
                 End If
             Next subCtl
@@ -367,7 +367,7 @@ End If
     ' 1) 「感覚」を含むタブを特定（例：感覚（表在・深部））
     On Error Resume Next
     For Each ctl In owner.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
                 If InStr(pg.caption, "感覚") > 0 Then Set target = pg: Exit For
@@ -406,7 +406,7 @@ cont:
             Set tmp = ch.Controls
             If Err.Number = 0 Then q.Add ch  ' 子を掘る
             Err.Clear
-            If typeName(ch) = "ComboBox" Then combos.Add ch
+            If TypeName(ch) = "ComboBox" Then combos.Add ch
         Next ch
         On Error GoTo 0
     Loop
@@ -490,13 +490,13 @@ note = CStr(ws.Cells(r, cNote).value)
 On Error Resume Next
 ' ページ内で MultiLine または最も背の高い TextBox を選ぶ
 For Each box In target.Controls
-    If typeName(box) = "TextBox" Then
+    If TypeName(box) = "TextBox" Then
         If box.multiline Or box.Height > bestH Then
             Set noteCtl = box: bestH = box.Height
         End If
-    ElseIf typeName(box) = "Frame" Then
+    ElseIf TypeName(box) = "Frame" Then
         For Each subCtl In box.Controls
-            If typeName(subCtl) = "TextBox" Then
+            If TypeName(subCtl) = "TextBox" Then
                 If subCtl.multiline Or subCtl.Height > bestH Then
                     Set noteCtl = subCtl: bestH = subCtl.Height
                 End If

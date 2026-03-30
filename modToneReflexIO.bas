@@ -19,7 +19,7 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal o
     ' 1) 「筋緊張」 or 「反射」を含むページを特定
     On Error Resume Next
     For Each ctl In owner.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
                 If InStr(pg.caption, "筋緊張") > 0 Or InStr(pg.caption, "反射") > 0 Then
@@ -42,7 +42,7 @@ Public Sub SaveToneReflexToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal o
             Set tmp = ch.Controls
             If Err.Number = 0 Then q.Add ch     ' 子あり
             Err.Clear
-            If typeName(ch) = "ComboBox" Then combos.Add ch
+            If TypeName(ch) = "ComboBox" Then combos.Add ch
         Next ch
         On Error GoTo 0
     Loop
@@ -106,11 +106,11 @@ vL = CStr(arr(pos + 1).value): If Len(vL) = 0 Then vL = CStr(arr(pos + 1).text)
 
     On Error Resume Next
     For Each box In target.Controls
-        If typeName(box) = "TextBox" Then
+        If TypeName(box) = "TextBox" Then
             If box.multiline Or box.Height > bestH Then Set noteCtl = box: bestH = box.Height
-        ElseIf typeName(box) = "Frame" Then
+        ElseIf TypeName(box) = "Frame" Then
             For Each subCtl In box.Controls
-                If typeName(subCtl) = "TextBox" Then
+                If TypeName(subCtl) = "TextBox" Then
                     If subCtl.multiline Or subCtl.Height > bestH Then Set noteCtl = subCtl: bestH = subCtl.Height
                 End If
             Next subCtl
@@ -135,7 +135,7 @@ Public Sub LoadToneReflexFromSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal
     ' 1) 「筋緊張」or「反射」を含むページを特定
     On Error Resume Next
     For Each ctl In owner.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
             For Each pg In mp.Pages
                 If InStr(pg.caption, "筋緊張") > 0 Or InStr(pg.caption, "反射") > 0 Then
@@ -183,7 +183,7 @@ cont:
             Set tmp = ch.Controls
             If Err.Number = 0 Then q.Add ch
             Err.Clear
-            If typeName(ch) = "ComboBox" Then combos.Add ch
+            If TypeName(ch) = "ComboBox" Then combos.Add ch
         Next ch
         On Error GoTo 0
     Loop
@@ -279,11 +279,11 @@ On Error GoTo 0
 
     On Error Resume Next
     For Each box In target.Controls
-        If typeName(box) = "TextBox" Then
+        If TypeName(box) = "TextBox" Then
             If box.multiline Or box.Height > bestH Then Set noteCtl = box: bestH = box.Height
-        ElseIf typeName(box) = "Frame" Then
+        ElseIf TypeName(box) = "Frame" Then
             For Each subCtl In box.Controls
-                If typeName(subCtl) = "TextBox" Then
+                If TypeName(subCtl) = "TextBox" Then
                     If subCtl.multiline Or subCtl.Height > bestH Then Set noteCtl = subCtl: bestH = subCtl.Height
                 End If
             Next subCtl

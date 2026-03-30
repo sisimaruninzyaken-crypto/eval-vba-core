@@ -146,68 +146,110 @@ Private Function BuildPlanDataFromResult(ByVal result As Object) As Object
     Dim ci As Object
     Dim monitoring As Object
     Dim medical As Object
-    
 
     Set d = CreateObject("Scripting.Dictionary")
     Set monitoring = CreateObject("Scripting.Dictionary")
 
+    '========================
+    ' StructureŽæ‚èž‚Ý
+    '========================
     If result.exists("Structure") Then
         Set structure = result("Structure")
         If Not structure Is Nothing Then
             For Each k In Array("Activity_Long", "Activity_Short", "Function_Long", "Function_Short", "Participation_Long", "Participation_Short", "MainCause")
                 If structure.exists(CStr(k)) Then d(CStr(k)) = structure(CStr(k))
             Next k
+
             If structure.exists("Medical") Then
-                If IsObject(structure("Medical")) Then Set d("Medical") = structure("Medical")
+                If IsObject(structure("Medical")) Then
+                    Set d("Medical") = structure("Medical")
+                End If
             End If
         End If
     End If
 
+    '========================
+    ' AIDraftŽæ‚èž‚Ý
+    '========================
     If result.exists("AIDraft") Then
         Set aiDraft = result("AIDraft")
         If Not aiDraft Is Nothing Then
-            If aiDraft.exists("MonitoringText") Then monitoring("Change") = aiDraft("MonitoringText")
+
+            If aiDraft.exists("MonitoringText") Then
+                monitoring("Change") = aiDraft("MonitoringText")
+            End If
+
             If aiDraft.exists("TrainingPrecaution") Then
                 d("TrainingPrecaution") = aiDraft("TrainingPrecaution")
-                If d.exists("Medical") And IsObject(d("Medical")) Then
-                    Set medical = d("Medical")
+
+                '========================
+                ' Medical ˆÀ‘SŽæ“¾išC³ƒ|ƒCƒ“ƒgj
+                '========================
+                If d.exists("Medical") Then
+                    If IsObject(d("Medical")) Then
+                        Set medical = d("Medical")
+                    Else
+                        Set medical = CreateObject("Scripting.Dictionary")
+                        Set d("Medical") = medical
+                    End If
                 Else
                     Set medical = CreateObject("Scripting.Dictionary")
-                    d("Medical") = medical
+                    Set d("Medical") = medical
                 End If
+
                 medical("TrainingPrecaution") = aiDraft("TrainingPrecaution")
-                  d("‹@”\ŒP—ûŽÀŽ{ã‚Ì—¯ˆÓŽ–€") = aiDraft("TrainingPrecaution")
+
+                ' ƒtƒ‰ƒbƒgƒL[
+                d("‹@”\ŒP—ûŽÀŽ{ã‚Ì—¯ˆÓŽ–€") = aiDraft("TrainingPrecaution")
             End If
-            If aiDraft.exists("HomeExercise") Then d("HomeExercise") = aiDraft("HomeExercise")
+
+            If aiDraft.exists("HomeExercise") Then
+                d("HomeExercise") = aiDraft("HomeExercise")
+            End If
+
             For pi = 1 To 5
                 pKey = "Program" & pi & "Content"
                 If aiDraft.exists(pKey) Then
-                    If Len(Trim$(CStr(aiDraft(pKey)))) > 0 Then d(pKey) = aiDraft(pKey)
+                    If Len(Trim$(CStr(aiDraft(pKey)))) > 0 Then
+                        d(pKey) = aiDraft(pKey)
+                    End If
                 End If
             Next pi
+
             For Each goalKey In Array("Function_Long", "Function_Short", "Activity_Long", "Activity_Short", "Participation_Long", "Participation_Short")
                 If aiDraft.exists(CStr(goalKey)) Then
-                    If Len(Trim$(CStr(aiDraft(CStr(goalKey))))) > 0 Then d(CStr(goalKey)) = aiDraft(CStr(goalKey))
+                    If Len(Trim$(CStr(aiDraft(CStr(goalKey))))) > 0 Then
+                        d(CStr(goalKey)) = aiDraft(CStr(goalKey))
+                    End If
                 End If
             Next goalKey
+
         End If
     End If
 
+    '========================
+    ' Change / Issue
+    '========================
     If result.exists("ChangeIssue") Then
         Set ci = result("ChangeIssue")
         If Not ci Is Nothing Then
-           If ci.exists("Change") Then monitoring("Change") = ci("Change")
+            If ci.exists("Change") Then monitoring("Change") = ci("Change")
             If ci.exists("Issue") Then monitoring("Issue") = ci("Issue")
         End If
     End If
 
+    '========================
+    ' MonitoringŠi”[
+    '========================
     If monitoring.count > 0 Then
-        d("Monitoring") = monitoring
+        Set d("Monitoring") = monitoring
+
         If monitoring.exists("Change") Then
             d("Monitoring.Change") = monitoring("Change")
             d("MonitoringChange") = monitoring("Change")
             d("changeText") = monitoring("Change")
         End If
+
         If monitoring.exists("Issue") Then
             d("Monitoring.Issue") = monitoring("Issue")
             d("MonitoringIssue") = monitoring("Issue")

@@ -179,16 +179,16 @@ Private Sub RestorePainFactors(ByVal container As Object, ByVal slash As String)
     Dim c As Object, base As String
     ' いったん全解除
     For Each c In container.Controls
-        If typeName(c) = "CheckBox" Then c.value = False
+        If TypeName(c) = "CheckBox" Then c.value = False
     Next
     ' 該当のみ True
     For Each c In container.Controls
-        If typeName(c) = "CheckBox" Then
+        If TypeName(c) = "CheckBox" Then
             base = c.name
             If LCase$(Left$(base, 3)) = "chk" Then base = Mid$(base, 4)
             If want.exists(base) Then c.value = True
         End If
-        If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then
+        If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
             RestorePainFactors c, slash
         End If
     Next
@@ -232,7 +232,7 @@ Private Function FindByNameRecursive(container As Object, ByVal target As String
     Dim c As Object, r As Object
     For Each c In container.Controls
         If StrComp(CStr(c.name), target, vbBinaryCompare) = 0 Then Set FindByNameRecursive = c: Exit Function
-        If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then
+        If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
             Set r = FindByNameRecursive(c, target)
             If Not r Is Nothing Then Set FindByNameRecursive = r: Exit Function
         End If
@@ -245,14 +245,14 @@ End Function
 Private Function FindLargestTextBoxOnPage(pg As Object) As MSForms.TextBox
     Dim c As Object, area As Double, bestArea As Double
     For Each c In pg.Controls
-        If typeName(c) = "TextBox" Then
+        If TypeName(c) = "TextBox" Then
             area = c.Width * c.Height
             If area > bestArea Then
                 bestArea = area
                 Set FindLargestTextBoxOnPage = c
             End If
         End If
-        If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then
+        If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
             Dim r As MSForms.TextBox
             Set r = FindLargestTextBoxOnPage(c)
             If Not r Is Nothing Then
@@ -279,14 +279,14 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
 
     ' 再帰探索
     For Each c In pg.Controls
-        If typeName(c) = "TextBox" Then
+        If TypeName(c) = "TextBox" Then
             If InStr(1, c.name, "Memo", vbTextCompare) > 0 Then
                 Set FindNoteTextBox = c
                 Exit Function
             End If
         End If
 
-        If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then
+        If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
             Dim r As MSForms.TextBox
             Set r = FindNoteTextBox(c)
             If Not r Is Nothing Then Set FindNoteTextBox = r: Exit Function
@@ -295,13 +295,13 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
 
     ' MultiLine 優先（VAS配下は除外）
     For Each c In pg.Controls
-        If typeName(c) = "TextBox" Then
+        If TypeName(c) = "TextBox" Then
             If SafeIsMultiLine(c) And Not IsUnderVAS(c) Then
                 Set FindNoteTextBox = c
                 Exit Function
             End If
         End If
-        If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then
+        If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
             Dim r2 As MSForms.TextBox
             Set r2 = FindNoteTextBox(c)
             If Not r2 Is Nothing Then Set FindNoteTextBox = r2: Exit Function
@@ -311,7 +311,7 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
     ' 最大面積（VAS配下除外）
     bestArea = -1
     For Each c In pg.Controls
-        If typeName(c) = "TextBox" Then
+        If TypeName(c) = "TextBox" Then
             If Not IsUnderVAS(c) Then
                 If c.Width * c.Height > bestArea Then
                     bestArea = c.Width * c.Height
@@ -319,7 +319,7 @@ Private Function FindNoteTextBox(pg As Object) As MSForms.TextBox
                 End If
             End If
         End If
-        If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then
+        If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
             Dim r3 As MSForms.TextBox
             Set r3 = FindNoteTextBox(c)
             If Not r3 Is Nothing Then
@@ -353,7 +353,7 @@ Private Function IsDescendantOf(container As Object, target As Object) As Boolea
     Dim c As Object
     For Each c In container.Controls
         If c Is target Then IsDescendantOf = True: Exit Function
-        If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then
+        If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then
             If IsDescendantOf(c, target) Then IsDescendantOf = True: Exit Function
         End If
     Next
@@ -504,8 +504,8 @@ End Sub
 Private Sub ClearChecksRecursive(container As Object)
     Dim c As Object
     For Each c In container.Controls
-        If typeName(c) = "CheckBox" Then c.value = False
-        If typeName(c) = "Frame" Or typeName(c) = "MultiPage" Then ClearChecksRecursive c
+        If TypeName(c) = "CheckBox" Then c.value = False
+        If TypeName(c) = "Frame" Or TypeName(c) = "MultiPage" Then ClearChecksRecursive c
     Next
 End Sub
 '======================================================================

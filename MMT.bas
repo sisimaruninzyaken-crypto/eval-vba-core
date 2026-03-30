@@ -231,11 +231,11 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
 
     ' mpPhys-host first
     On Error Resume Next
-    If typeName(pg.parent) = "MultiPage" Then
+    If TypeName(pg.parent) = "MultiPage" Then
         If LCase$(CStr(pg.parent.name)) = "mpphys" Then
             For i = 0 To pg.Controls.count - 1
                 Set c = pg.Controls(i)
-                If typeName(c) = "Frame" Then
+                If TypeName(c) = "Frame" Then
                     Set GetMMTHost = c
                     Exit Function
                 End If
@@ -246,11 +246,11 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
     
     For i = 0 To pg.Controls.count - 1
         Set c = pg.Controls(i)
-        If typeName(c) = "Frame" Then
+        If TypeName(c) = "Frame" Then
             Set mpProbe = Nothing
             On Error Resume Next
             For j = 0 To c.Controls.count - 1
-                If typeName(c.Controls(j)) = "MultiPage" Then
+                If TypeName(c.Controls(j)) = "MultiPage" Then
                     Set mpProbe = c.Controls(j)
                     Exit For
                 End If
@@ -276,7 +276,7 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
         On Error GoTo 0
         
         If Not host Is Nothing Then
-            If typeName(host) = "Frame" Then
+            If TypeName(host) = "Frame" Then
 
                 Set GetMMTHost = host
                 Exit Function
@@ -298,7 +298,7 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
     If host Is Nothing Then Exit Function
     
     Set mp = Nothing
-    If typeName(host) = "MultiPage" Then
+    If TypeName(host) = "MultiPage" Then
         If LCase$(CStr(host.name)) = "mpmmtchildgen" _
            Or InStr(1, CStr(host.tag), "MMTGEN", vbTextCompare) > 0 Then
             Set mp = host
@@ -306,7 +306,7 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
     Else
         On Error Resume Next
         For i = 0 To host.Controls.count - 1
-            If typeName(host.Controls(i)) = "MultiPage" Then
+            If TypeName(host.Controls(i)) = "MultiPage" Then
                 If LCase$(CStr(host.Controls(i).name)) = "mpmmtchildgen" _
                    Or InStr(1, CStr(host.Controls(i).tag), "MMTGEN", vbTextCompare) > 0 Then
                     Set mp = host.Controls(i)
@@ -363,7 +363,7 @@ Public Function GetMMTPage(ByVal frm As Object) As Object
     End If
 
     For Each ctl In frm.Controls
-        If typeName(ctl) = "MultiPage" Then
+        If TypeName(ctl) = "MultiPage" Then
             Dim i As Long
             For i = 0 To ctl.Pages.count - 1
                 Set pg = ctl.Pages(i)
@@ -506,7 +506,7 @@ Private Sub MMT_ClearMMTCombos(ByVal mp As MSForms.MultiPage)
 
     For Each pg In mp.Pages
         For Each c In pg.Controls
-            If typeName(c) = "ComboBox" Then
+            If TypeName(c) = "ComboBox" Then
                 On Error Resume Next
                 c.ListIndex = -1   '選択解除（DropDownListでも有効）
                 c.value = ""       '念のため空文字
@@ -553,7 +553,7 @@ Private Function MMT_SaveToString() As String
 
     For p = 0 To mp.Pages.count - 1
         For Each c In mp.Pages(p).Controls
-            If typeName(c) = "ComboBox" Then
+            If TypeName(c) = "ComboBox" Then
                 Dim nm As String, side As String
                 If Left$(c.name, 5) = "cboR_" Then
                     nm = Mid$(c.name, 6): side = "R"
@@ -602,14 +602,14 @@ Public Sub LoadMMTFromSheet(ws As Worksheet, r As Long, owner As Object)
     ' MMTページ
     Debug.Print "[MMT] before GetMMTPage"
     Set pg = GetMMTPage(owner)
-    Debug.Print "[MMT] after GetMMTPage", typeName(pg)
+    Debug.Print "[MMT] after GetMMTPage", TypeName(pg)
 
     If pg Is Nothing Then Exit Sub
 
     ' 子タブの存在確認
     Debug.Print "[MMT] before GetMMTChildTabs"
     Set mp = GetMMTChildTabs(pg)
-    Debug.Print "[MMT] after GetMMTChildTabs", typeName(mp)
+    Debug.Print "[MMT] after GetMMTChildTabs", TypeName(mp)
 
     If mp Is Nothing Then Exit Sub
 
@@ -777,7 +777,7 @@ Public Sub MMT_DebugSurvey_Page14LegacyNames()
 
     For i = 0 To pg.Controls.count - 1
         Set ctl = pg.Controls(i)
-        tp = typeName(ctl)
+        tp = TypeName(ctl)
         scanned = scanned + 1
 
         If tp = "Label" Or tp = "ComboBox" Then

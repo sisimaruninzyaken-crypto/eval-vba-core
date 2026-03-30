@@ -215,7 +215,7 @@ Public Sub FindNamesForBasics()
     For Each k In keys
         For Each c In frmEval.Controls
             If InStr(1, c.name, CStr(k), vbTextCompare) > 0 Then
-                Debug.Print k, typeName(c), c.name
+                Debug.Print k, TypeName(c), c.name
             End If
         Next c
     Next k
