@@ -83,7 +83,7 @@ Private Sub ExportPlanAsXlsx(ByVal patientName As String, ByVal owner As Object,
     Dim dateStr As String
     Dim fileName As String
     Dim savePath As String
-    Const TEMPLATE_NAME As String = "kojinkinokunren"
+    Set tmpl = ThisWorkbook.Worksheets("個別機能訓練計画書")
     On Error GoTo EH
 
     Set fso = CreateObject("Scripting.FileSystemObject")
@@ -104,10 +104,10 @@ Private Sub ExportPlanAsXlsx(ByVal patientName As String, ByVal owner As Object,
     If Not fso.FolderExists(outputDir) Then fso.CreateFolder outputDir
 
     On Error Resume Next
-    Set tmpl = ThisWorkbook.Worksheets(TEMPLATE_NAME)
+    Set tmpl = ThisWorkbook.Worksheets("個別機能訓練計画書")
     On Error GoTo EH
     If tmpl Is Nothing Then
-        Debug.Print "[ExportPlan] template not found: " & TEMPLATE_NAME
+        Debug.Print "[ExportPlan] template not found: " & "個別機能訓練計画書"
         Exit Sub
     End If
 
