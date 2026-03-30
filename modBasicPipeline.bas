@@ -83,7 +83,7 @@ Private Sub ExportPlanAsXlsx(ByVal patientName As String, ByVal owner As Object,
     Dim dateStr As String
     Dim fileName As String
     Dim savePath As String
-    Const TEMPLATE_NAME As String = "ŒÂ•Ê‹@”\ŒP—ûŒv‰æ‘"
+    Const TEMPLATE_NAME As String = "kojinkinokunren"
     On Error GoTo EH
 
     Set fso = CreateObject("Scripting.FileSystemObject")
@@ -144,8 +144,12 @@ Private Function BuildPlanDataFromResult(ByVal result As Object) As Object
     Dim pKey As String
     Dim goalKey As Variant
     Dim ci As Object
+    Dim monitoring As Object
+    Dim medical As Object
+    
 
     Set d = CreateObject("Scripting.Dictionary")
+    Set monitoring = CreateObject("Scripting.Dictionary")
 
     If result.exists("Structure") Then
         Set structure = result("Structure")
@@ -153,13 +157,27 @@ Private Function BuildPlanDataFromResult(ByVal result As Object) As Object
             For Each k In Array("Activity_Long", "Activity_Short", "Function_Long", "Function_Short", "Participation_Long", "Participation_Short", "MainCause")
                 If structure.exists(CStr(k)) Then d(CStr(k)) = structure(CStr(k))
             Next k
+            If structure.exists("Medical") Then
+                If IsObject(structure("Medical")) Then Set d("Medical") = structure("Medical")
+            End If
         End If
     End If
 
     If result.exists("AIDraft") Then
         Set aiDraft = result("AIDraft")
         If Not aiDraft Is Nothing Then
-            If aiDraft.exists("MonitoringText") Then d("Monitoring.Change") = aiDraft("MonitoringText")
+            If aiDraft.exists("MonitoringText") Then monitoring("Change") = aiDraft("MonitoringText")
+            If aiDraft.exists("TrainingPrecaution") Then
+                d("TrainingPrecaution") = aiDraft("TrainingPrecaution")
+                If d.exists("Medical") And IsObject(d("Medical")) Then
+                    Set medical = d("Medical")
+                Else
+                    Set medical = CreateObject("Scripting.Dictionary")
+                    d("Medical") = medical
+                End If
+                medical("TrainingPrecaution") = aiDraft("TrainingPrecaution")
+                  d("‹@”\ŒP—ûŽÀŽ{ã‚Ì—¯ˆÓŽ–€") = aiDraft("TrainingPrecaution")
+            End If
             If aiDraft.exists("HomeExercise") Then d("HomeExercise") = aiDraft("HomeExercise")
             For pi = 1 To 5
                 pKey = "Program" & pi & "Content"
@@ -178,8 +196,22 @@ Private Function BuildPlanDataFromResult(ByVal result As Object) As Object
     If result.exists("ChangeIssue") Then
         Set ci = result("ChangeIssue")
         If Not ci Is Nothing Then
-            If ci.exists("Change") Then d("Monitoring.Change") = ci("Change")
-            If ci.exists("Issue") Then d("Monitoring.Issue") = ci("Issue")
+           If ci.exists("Change") Then monitoring("Change") = ci("Change")
+            If ci.exists("Issue") Then monitoring("Issue") = ci("Issue")
+        End If
+    End If
+
+    If monitoring.count > 0 Then
+        d("Monitoring") = monitoring
+        If monitoring.exists("Change") Then
+            d("Monitoring.Change") = monitoring("Change")
+            d("MonitoringChange") = monitoring("Change")
+            d("changeText") = monitoring("Change")
+        End If
+        If monitoring.exists("Issue") Then
+            d("Monitoring.Issue") = monitoring("Issue")
+            d("MonitoringIssue") = monitoring("Issue")
+            d("issueText") = monitoring("Issue")
         End If
     End If
 

@@ -162,6 +162,8 @@ Private Function BuildChangeAndIssueSystemPrompt() As String
         "【専門用語の禁止】MMT・ROM・TUG等の医療用語は使わず平易な表現で記述する。" & _
         "【制約】提供されたデータにない情報は一切追加しない。" & _
         "【言語】日本語のみ。箇条書き不可。"
+    
+    s = s & "Output format strictly as 2 lines only:" & vbLf & "Change: (text)" & vbLf & "Issue: (text)"
     BuildChangeAndIssueSystemPrompt = s
 End Function
 
@@ -213,10 +215,11 @@ Private Function ParseChangeAndIssueLines(ByVal raw As String) As Object
         Dim lbl As String: lbl = Trim$(Left$(ln, cp - 1))
         Dim val As String: val = Trim$(Mid$(ln, cp + 2))
         If LenB(val) = 0 Then GoTo NextCILine
-        Select Case lbl
-            Case "変化": d("Change") = val
-            Case "課題": d("Issue") = val
-        End Select
+        Select Case LCase$(lbl)
+    Case "change", "変化": d("Change") = val
+    Case "issue", "課題": d("Issue") = val
+End Select
+      
 NextCILine:
     Next i
     Set ParseChangeAndIssueLines = d
@@ -253,6 +256,7 @@ Public Function GenerateBasicPlanNarrative(ByVal planStructure As Object) As Obj
 
     ' 利用者本人・家族が実施することをAI生成して追加
     draft("HomeExercise") = OpenAI_BuildDraft(BuildHomeExerciseSystemPrompt(), userInput)
+    draft("TrainingPrecaution") = OpenAI_BuildDraft(BuildPlanTextSystemPrompt(), userInput)
 
     Set GenerateBasicPlanNarrative = draft
 End Function
@@ -272,7 +276,6 @@ Private Function BuildGoalSystemPrompt() As String
         "活動短期: （文）" & vbLf & _
         "参加長期: （文）" & vbLf & _
         "参加短期: （文）" & vbLf
-
     ' ブロック2：文構造・専門用語禁止
     s = s & _
         "【文の構造（全項目共通・最重要）】" & _
