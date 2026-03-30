@@ -83,7 +83,7 @@ Private Sub ExportPlanAsXlsx(ByVal patientName As String, ByVal owner As Object,
     Dim dateStr As String
     Dim fileName As String
     Dim savePath As String
-    Const TEMPLATE_NAME As String = "kojinkinokunren"
+    Const TEMPLATE_NAME As String = "ŒÂ•Ê‹@”\ŒP—ûŒv‰æ‘"
     On Error GoTo EH
 
     Set fso = CreateObject("Scripting.FileSystemObject")
