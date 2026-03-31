@@ -428,7 +428,7 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
     text = JoinCollection(labels, BuildWordDot())
 
     Dim note As String
-    note = GetControlTextSafeAny(owner, "txtBIHomeEnvNote", "txtHomeNote")
+    note = GetControlTextSafeAnyDeep(owner, "txtBIHomeEnvNote", "txtHomeNote")
     If LenB(note) > 0 Then
         If LenB(text) > 0 Then
             text = text & BuildWordKuten() & BuildWordBikoLabel() & note
@@ -442,6 +442,15 @@ End Function
 
 Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal labels As Collection)
     If container Is Nothing Then Exit Sub
+    
+    Dim pagesObj As Object
+    Set pagesObj = GetPagesSafe(container)
+    If Not pagesObj Is Nothing Then
+        Dim pg As Object
+        For Each pg In pagesObj
+            CollectHomeEnvCheckedCaptions pg, labels
+        Next pg
+    End If
 
     Dim controlsObj As Object
     Set controlsObj = GetControlsSafe(container)
@@ -492,6 +501,69 @@ End Function
 Private Function GetControlsSafe(ByVal obj As Object) As Object
     On Error GoTo EH
     Set GetControlsSafe = obj.Controls
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function GetPagesSafe(ByVal obj As Object) As Object
+    On Error GoTo EH
+    Set GetPagesSafe = obj.Pages
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function GetControlTextSafeAnyDeep(ByVal owner As Object, ParamArray names() As Variant) As String
+    Dim i As Long
+    For i = LBound(names) To UBound(names)
+        Dim ctl As Object
+        Set ctl = FindControlByNameDeep(owner, CStr(names(i)))
+        If Not ctl Is Nothing Then
+            On Error Resume Next
+            GetControlTextSafeAnyDeep = Trim$(CStr(ctl.value))
+            Err.Clear
+            On Error GoTo 0
+            If LenB(GetControlTextSafeAnyDeep) > 0 Then Exit Function
+        End If
+    Next i
+End Function
+
+Private Function FindControlByNameDeep(ByVal container As Object, ByVal ctrlName As String) As Object
+    On Error GoTo EH
+    If container Is Nothing Then Exit Function
+
+    Dim thisName As String
+    On Error Resume Next
+    thisName = CStr(container.name)
+    Err.Clear
+    On Error GoTo EH
+    If LenB(thisName) > 0 Then
+        If StrComp(thisName, ctrlName, vbTextCompare) = 0 Then
+            Set FindControlByNameDeep = container
+            Exit Function
+        End If
+    End If
+
+    Dim pagesObj As Object
+    Set pagesObj = GetPagesSafe(container)
+    If Not pagesObj Is Nothing Then
+        Dim pg As Object
+        For Each pg In pagesObj
+            Set FindControlByNameDeep = FindControlByNameDeep(pg, ctrlName)
+            If Not FindControlByNameDeep Is Nothing Then Exit Function
+        Next pg
+    End If
+
+    Dim controlsObj As Object
+    Set controlsObj = GetControlsSafe(container)
+    If controlsObj Is Nothing Then Exit Function
+
+    Dim ctl As Object
+    For Each ctl In controlsObj
+        Set FindControlByNameDeep = FindControlByNameDeep(ctl, ctrlName)
+        If Not FindControlByNameDeep Is Nothing Then Exit Function
+    Next ctl
     Exit Function
 EH:
     Err.Clear
