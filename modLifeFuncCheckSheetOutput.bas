@@ -460,6 +460,76 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
     
 End Function
 
+
+Private Sub TraceHomeEnvCheckSnapshot(ByVal owner As Object)
+    On Error GoTo EH
+    If owner Is Nothing Then Exit Sub
+
+    Debug.Print "[EnvTrace] TraceHomeEnvCheckSnapshot start"
+    TraceHomeEnvCheckSnapshotCore owner
+    Debug.Print "[EnvTrace] TraceHomeEnvCheckSnapshot end"
+    Exit Sub
+EH:
+    Debug.Print "[EnvTrace] TraceHomeEnvCheckSnapshot error " & Err.Number & ": " & Err.Description
+    Err.Clear
+End Sub
+
+Private Sub TraceHomeEnvCheckSnapshotCore(ByVal container As Object)
+    On Error GoTo EH
+    If container Is Nothing Then Exit Sub
+
+    Dim pagesObj As Object
+    Set pagesObj = GetPagesSafe(container)
+    If Not pagesObj Is Nothing Then
+        Dim pg As Object
+        For Each pg In pagesObj
+            TraceHomeEnvCheckSnapshotCore pg
+        Next pg
+    End If
+
+    Dim controlsObj As Object
+    Set controlsObj = GetControlsSafe(container)
+    If controlsObj Is Nothing Then Exit Sub
+
+    Dim ctl As Object
+    For Each ctl In controlsObj
+        If IsHomeEnvCheckControl(ctl) Then
+            Debug.Print "[EnvTrace] check tag=[" & GetControlTagSafe(ctl) & _
+                        "] name=[" & GetControlNameSafe(ctl) & _
+                        "] parent=[" & GetParentNameSafe(ctl) & _
+                        "] value=[" & GetControlValueAsTextSafe(ctl) & _
+                        "] caption=[" & GetControlCaptionSafe(ctl) & "]"
+        End If
+        TraceHomeEnvCheckSnapshotCore ctl
+    Next ctl
+    Exit Sub
+EH:
+    Err.Clear
+End Sub
+
+Private Sub TraceHomeEnvNoteSnapshot(ByVal owner As Object)
+    On Error GoTo EH
+    Dim noteCtl As Object
+
+    Set noteCtl = FindControlByNameDeep(owner, "txtBIHomeEnvNote")
+    If noteCtl Is Nothing Then Set noteCtl = FindControlByNameDeep(owner, "txtHomeNote")
+
+    If noteCtl Is Nothing Then
+        Debug.Print "[EnvTrace] note control not found (txtBIHomeEnvNote/txtHomeNote)"
+    Else
+        Debug.Print "[EnvTrace] note control name=[" & GetControlNameSafe(noteCtl) & _
+                    "] parent=[" & GetParentNameSafe(noteCtl) & _
+                    "] value=[" & GetControlValueAsTextSafe(noteCtl) & "]"
+    End If
+    Exit Sub
+EH:
+    Debug.Print "[EnvTrace] TraceHomeEnvNoteSnapshot error " & Err.Number & ": " & Err.Description
+    Err.Clear
+End Sub
+
+
+
+
 Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal labels As Collection)
     If container Is Nothing Then Exit Sub
     
@@ -532,6 +602,35 @@ Private Function GetControlsSafe(ByVal obj As Object) As Object
 EH:
     Err.Clear
 End Function
+
+
+Private Function GetControlNameSafe(ByVal ctl As Object) As String
+    On Error GoTo EH
+    GetControlNameSafe = CStr(ctl.name)
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function GetParentNameSafe(ByVal ctl As Object) As String
+    On Error GoTo EH
+    If ctl Is Nothing Then Exit Function
+    If ctl.parent Is Nothing Then Exit Function
+    GetParentNameSafe = CStr(ctl.parent.name)
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function GetControlValueAsTextSafe(ByVal ctl As Object) As String
+    On Error GoTo EH
+    If ctl Is Nothing Then Exit Function
+    GetControlValueAsTextSafe = Trim$(CStr(ctl.value))
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
 
 Private Function GetPagesSafe(ByVal obj As Object) As Object
     On Error GoTo EH
