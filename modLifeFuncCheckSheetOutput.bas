@@ -2,17 +2,21 @@ Attribute VB_Name = "modLifeFuncCheckSheetOutput"
 
 Option Explicit
 
-Private Const LIFE_FUNC_TEMPLATE_FILE As String = "生活機能チェックシート.xlsx"
+Private Const LIFE_FUNC_TEMPLATE_SHEET As String = "生活機能チェックシート"
 Private Const LIFE_FUNC_OUTPUT_DIR As String = "LifeFuncCheckSheet"
 Private Const UNKNOWN_NAME As String = "unknown"
 
 Public Sub ExportLifeFuncCheckSheet(ByVal owner As Object)
     On Error GoTo EH
+    Debug.Print "[LifeFunc] ExportLifeFuncCheckSheet entered"
 
-    Dim templatePath As String
-    templatePath = BuildTemplatePath()
-    If LenB(Dir$(templatePath, vbNormal)) = 0 Then
-        MsgBox "生活機能チェックシートの原本が見つかりません。" & vbCrLf & templatePath, vbExclamation
+    Dim templateWs As Worksheet
+    On Error Resume Next
+    Set templateWs = ThisWorkbook.Worksheets(LIFE_FUNC_TEMPLATE_SHEET)
+    On Error GoTo EH
+    If templateWs Is Nothing Then
+        MsgBox "生活機能チェックシートのテンプレシートが見つかりません。", vbExclamation
+        Exit Sub
         Exit Sub
     End If
 
@@ -31,14 +35,58 @@ Public Sub ExportLifeFuncCheckSheet(ByVal owner As Object)
     Dim outputPath As String
     outputPath = BuildUniquePath(outputDir, fileBaseName, "xlsx")
 
-    FileCopy templatePath, outputPath
-    WriteLifeFuncCheckSheetContent outputPath, owner
+    Dim newWb As Workbook
+    Dim newWs As Worksheet
+
+    templateWs.Copy
+    Set newWb = ActiveWorkbook
+    Set newWs = newWb.Worksheets(1)
+
+    WriteLifeFuncCheckSheetContent newWs, owner
+
+    Application.DisplayAlerts = False
+    newWb.SaveAs fileName:=outputPath, FileFormat:=xlOpenXMLWorkbook
+    Application.DisplayAlerts = True
+    newWb.Close SaveChanges:=False
 
     MsgBox "生活機能チェックシートを保存しました:" & vbCrLf & outputPath, vbInformation
     Exit Sub
 EH:
+    On Error Resume Next
+    Application.DisplayAlerts = True
+    If Not newWb Is Nothing Then newWb.Close SaveChanges:=False
     MsgBox "生活機能チェックシート保存エラー " & Err.Number & ": " & Err.Description, vbExclamation
 End Sub
+
+
+Public Function CopyLifeFuncTemplateSheetToWorkbook(ByVal destWb As Workbook) As Worksheet
+    On Error GoTo EH
+    If destWb Is Nothing Then Exit Function
+
+    Dim templatePath As String
+    templatePath = BuildTemplatePath()
+    If LenB(Dir$(templatePath, vbNormal)) = 0 Then Exit Function
+
+    Dim srcWb As Workbook
+    Set srcWb = Workbooks.Open(fileName:=templatePath, UpdateLinks:=0, ReadOnly:=True)
+    srcWb.Worksheets(1).Copy After:=destWb.Worksheets(destWb.Worksheets.count)
+    Set CopyLifeFuncTemplateSheetToWorkbook = destWb.Worksheets(destWb.Worksheets.count)
+
+    srcWb.Close SaveChanges:=False
+    Exit Function
+EH:
+    On Error Resume Next
+    If Not srcWb Is Nothing Then srcWb.Close SaveChanges:=False
+    Err.Clear
+End Function
+
+Public Sub WriteLifeFuncCheckSheet(ByVal ws As Worksheet, ByVal owner As Object)
+    If ws Is Nothing Then Exit Sub
+    WriteBasicInfo ws, owner
+    WriteLevelTaskComment ws, owner
+End Sub
+
+
 
 Public Function BuildLifeFuncCheckSheetPathPreview(ByVal owner As Object) As String
     On Error GoTo EH
@@ -58,9 +106,7 @@ EH:
     Err.Clear
 End Function
 
-Private Function BuildTemplatePath() As String
-    BuildTemplatePath = ThisWorkbook.path & Application.PathSeparator & LIFE_FUNC_TEMPLATE_FILE
-End Function
+
 
 Private Function EnsureOutputDirectory(ByVal patientName As String) As String
     Dim rootDir As String
@@ -141,30 +187,14 @@ End Function
 
 
 
-Private Sub WriteLifeFuncCheckSheetContent(ByVal outputPath As String, ByVal owner As Object)
+Private Sub WriteLifeFuncCheckSheetContent(ByVal ws As Worksheet, ByVal owner As Object)
     On Error GoTo EH
-
-    Dim wb As Workbook
-    Dim ws As Worksheet
-
-    Application.ScreenUpdating = False
-    Application.DisplayAlerts = False
-    Set wb = Workbooks.Open(fileName:=outputPath, UpdateLinks:=0, ReadOnly:=False)
-    Set ws = wb.Worksheets(1)
 
     WriteBasicInfo ws, owner
     WriteLevelTaskComment ws, owner
 
-    wb.Save
-    wb.Close SaveChanges:=False
-    Application.DisplayAlerts = True
-    Application.ScreenUpdating = True
     Exit Sub
 EH:
-    On Error Resume Next
-    If Not wb Is Nothing Then wb.Close SaveChanges:=False
-    Application.DisplayAlerts = True
-    Application.ScreenUpdating = True
     MsgBox "LifeFuncCheckSheet write error " & Err.Number & ": " & Err.Description, vbExclamation
 End Sub
 

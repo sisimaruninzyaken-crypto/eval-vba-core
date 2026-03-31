@@ -58,6 +58,65 @@ EH:
     If Not newWb Is Nothing Then newWb.Close SaveChanges:=False
 End Sub
 
+Public Sub ExportUnifiedPlanAndLifeFuncWorkbook(ByVal owner As Object, ByVal planData As Object, Optional ByVal patientName As String = "")
+    On Error GoTo EH
+
+    Dim planTemplateWs As Worksheet
+    On Error Resume Next
+    Set planTemplateWs = ThisWorkbook.Worksheets(PLAN_TEMPLATE_SHEET)
+    On Error GoTo EH
+    If planTemplateWs Is Nothing Then
+        MsgBox "個別機能訓練計画書のテンプレシートが見つかりません。", vbExclamation
+        Exit Sub
+    End If
+
+    If LenB(Trim$(patientName)) = 0 Then
+        patientName = GetControlTextSafe(owner, "txtName")
+    End If
+
+    Dim safePatientName As String
+    safePatientName = SanitizeFileToken(patientName, UNKNOWN_NAME)
+
+    Dim evalDateToken As String
+    evalDateToken = BuildEvalDateToken(owner)
+
+    Dim outputDir As String
+    outputDir = EnsureOutputDirectory(safePatientName)
+
+    Dim outputPath As String
+    outputPath = BuildUniquePath(outputDir, safePatientName & "_" & evalDateToken, "xlsx")
+
+    Dim newWb As Workbook
+    Dim planWs As Worksheet
+    Dim lifeWs As Worksheet
+
+    planTemplateWs.Copy
+    Set newWb = ActiveWorkbook
+    Set planWs = newWb.Worksheets(1)
+
+    Set lifeWs = modLifeFuncCheckSheetOutput.CopyLifeFuncTemplateSheetToWorkbook(newWb)
+    If lifeWs Is Nothing Then
+        Err.Raise 53, "ExportUnifiedPlanAndLifeFuncWorkbook", "@\`FbNV[g?ev[g??B"
+    End If
+
+    modEvalPlanSheetOutput.WriteEvalPlanSheet planWs, owner, planData
+    modLifeFuncCheckSheetOutput.WriteLifeFuncCheckSheet lifeWs, owner
+
+    Application.DisplayAlerts = False
+    newWb.SaveAs fileName:=outputPath, FileFormat:=xlOpenXMLWorkbook
+    Application.DisplayAlerts = True
+    newWb.Close SaveChanges:=False
+
+    MsgBox "saved: " & outputPath, vbInformation, "done"
+    Exit Sub
+EH:
+    Application.DisplayAlerts = True
+    MsgBox "Error " & Err.Number & ": " & Err.Description, vbExclamation, "error"
+    On Error Resume Next
+    If Not newWb Is Nothing Then newWb.Close SaveChanges:=False
+End Sub
+
+
 Public Function BuildEvalPlanSheetPathPreview(ByVal owner As Object) As String
     On Error GoTo EH
 

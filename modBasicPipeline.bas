@@ -296,17 +296,15 @@ Public Sub ExportAllSheets(ByVal owner As Object)
     Err.Clear
     On Error GoTo EH
 
-    stepName = "EvalPlanSheet"
+    stepName = "EvalPlan+LifeFunc"
     Set result = GenerateBasicPlan(patientName)
     Set prevSnap = GetPreviousEvalSnapshot(owner)
     If Not prevSnap Is Nothing Then
         Set changeIssue = GenerateChangeAndIssue(result("Structure"), prevSnap)
         If Not changeIssue Is Nothing Then Set result("ChangeIssue") = changeIssue
     End If
-    ReflectBasicPlanToReport result, patientName, owner
-
-    stepName = "LifeFuncCheckSheet"
-    modLifeFuncCheckSheetOutput.ExportLifeFuncCheckSheet owner
+    Set planData = BuildPlanDataFromResult(result)
+    ExportUnifiedPlanAndLifeFuncWorkbook owner, planData, patientName
     Exit Sub
 EH:
     MsgBox "Export error (" & stepName & "): " & Err.Number & " - " & Err.Description, vbExclamation

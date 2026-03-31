@@ -2410,7 +2410,7 @@ Me.Repaint
 End Sub
 
 Private Sub btnGeneratePlanCtl_Click()
-    modBasicPipeline.RunBasicPlan
+    modBasicPipeline.ExportAllSheets Me
 End Sub
 
 Public Sub HandleHdrLoadPrevClick()
