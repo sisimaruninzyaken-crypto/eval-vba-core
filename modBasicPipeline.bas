@@ -56,7 +56,7 @@ Public Sub ReflectBasicPlanToReport(ByVal result As Object, ByVal patientName As
     If Not result.exists("AIDraft") Then Debug.Print "[Reflect] AIDraft key missing": Exit Sub
     If owner Is Nothing Then Set owner = TryGetOwnerForm()
     Set planData = BuildPlanDataFromResult(result)
-    modEvalPlanSheetFileOutput.ExportEvalPlanSheet owner, planData, patientName
+    ExportEvalPlanSheet owner, planData, patientName
 End Sub
 
 Private Function TryGetOwnerForm() As Object
@@ -276,3 +276,39 @@ Private Function FindSheetColByHeader(ByVal ws As Worksheet, ByVal header As Str
         End If
     Next c
 End Function
+
+
+
+Public Sub ExportAllSheets(ByVal owner As Object)
+    On Error GoTo EH
+
+    Dim patientName As String
+    Dim result As Object
+    Dim prevSnap As Object
+    Dim changeIssue As Object
+    Dim stepName As String
+
+    If owner Is Nothing Then Set owner = TryGetOwnerForm()
+    If owner Is Nothing Then Err.Raise 5, "ExportAllSheets", "owner is Nothing"
+
+    On Error Resume Next
+    patientName = Trim$(CStr(owner.Controls("txtName").value))
+    Err.Clear
+    On Error GoTo EH
+
+    stepName = "EvalPlanSheet"
+    Set result = GenerateBasicPlan(patientName)
+    Set prevSnap = GetPreviousEvalSnapshot(owner)
+    If Not prevSnap Is Nothing Then
+        Set changeIssue = GenerateChangeAndIssue(result("Structure"), prevSnap)
+        If Not changeIssue Is Nothing Then Set result("ChangeIssue") = changeIssue
+    End If
+    ReflectBasicPlanToReport result, patientName, owner
+
+    stepName = "LifeFuncCheckSheet"
+    modLifeFuncCheckSheetOutput.ExportLifeFuncCheckSheet owner
+    Exit Sub
+EH:
+    MsgBox "Export error (" & stepName & "): " & Err.Number & " - " & Err.Description, vbExclamation
+End Sub
+
