@@ -239,9 +239,9 @@ Private Function ResolveLevelText(ByVal owner As Object, ByVal srcKey As String)
         Case "Kyo_SitHold"
             ResolveLevelText = GetControlTextSafe(owner, "cmbKyo_SitHold")
         Case "Kyo_StandUp"
-            ResolveLevelText = GetControlTextSafeAny(owner, "cmbKyo_StandUp")
+            ResolveLevelText = ResolveKyoUnnamedComboText(owner, BuildWordKyoStandUpLabel())
         Case "Kyo_StandHold"
-            ResolveLevelText = GetControlTextSafeAny(owner, "cmbKyo_StandHold")
+            ResolveLevelText = ResolveKyoUnnamedComboText(owner, BuildWordKyoStandHoldLabel())
     End Select
 End Function
 
@@ -345,4 +345,85 @@ Private Function BuildWordYu() As String
     BuildWordYu = ChrW$(26377)
 End Function
 
+
+Private Function BuildWordKyoStandUpLabel() As String
+    BuildWordKyoStandUpLabel = ChrW$(31435) & ChrW$(12385) & ChrW$(19978) & ChrW$(12364) & ChrW$(12426)
+End Function
+
+Private Function BuildWordKyoStandHoldLabel() As String
+    BuildWordKyoStandHoldLabel = ChrW$(31435) & ChrW$(20301) & ChrW$(20445) & ChrW$(25345)
+End Function
+
+Private Function ResolveKyoUnnamedComboText(ByVal owner As Object, ByVal labelCaption As String) As String
+    Dim cmb As Object
+    Set cmb = FindRightComboByLabelCaptionDeep(owner, labelCaption)
+    If Not cmb Is Nothing Then ResolveKyoUnnamedComboText = Trim$(CStr(cmb.value))
+End Function
+
+Private Function FindRightComboByLabelCaptionDeep(ByVal container As Object, ByVal labelCaption As String) As Object
+    Dim targetLabel As Object
+    Set targetLabel = FindLabelByCaptionDeep(container, labelCaption)
+    If targetLabel Is Nothing Then Exit Function
+    Set FindRightComboByLabelCaptionDeep = FindNearestRightComboOnSameRow(targetLabel.parent, targetLabel)
+End Function
+
+Private Function FindLabelByCaptionDeep(ByVal container As Object, ByVal labelCaption As String) As Object
+    On Error GoTo EH
+
+    Dim c As Object
+    For Each c In container.Controls
+        If TypeName(c) = "Label" Then
+            If StrComp(Trim$(CStr(c.caption)), labelCaption, vbBinaryCompare) = 0 Then
+                Set FindLabelByCaptionDeep = c
+                Exit Function
+            End If
+        End If
+        If HasControls(c) Then
+            Set FindLabelByCaptionDeep = FindLabelByCaptionDeep(c, labelCaption)
+            If Not FindLabelByCaptionDeep Is Nothing Then Exit Function
+        End If
+    Next c
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function FindNearestRightComboOnSameRow(ByVal container As Object, ByVal targetLabel As Object) As Object
+    On Error GoTo EH
+
+    Dim best As Object
+    Dim bestDx As Double
+    bestDx = 1E+30
+
+    Dim c As Object
+    For Each c In container.Controls
+        If TypeName(c) = "ComboBox" Then
+            Dim dy As Double
+            Dim dx As Double
+            dy = Abs(CDbl(c.top) - CDbl(targetLabel.top))
+            dx = CDbl(c.Left) - CDbl(targetLabel.Left)
+            If dy <= 6 And dx > 0 Then
+                If dx < bestDx Then
+                    bestDx = dx
+                    Set best = c
+                End If
+            End If
+        End If
+    Next c
+
+    Set FindNearestRightComboOnSameRow = best
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function HasControls(ByVal obj As Object) As Boolean
+    On Error GoTo EH
+    Dim n As Long
+    n = obj.Controls.count
+    HasControls = (n >= 0)
+    Exit Function
+EH:
+    Err.Clear
+End Function
 
