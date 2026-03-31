@@ -367,6 +367,15 @@ End Sub
 Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal labels As Collection)
     If ObjectIsNothingSafe(container) Then Exit Sub
     
+    Dim pagesObj As Object
+    Set pagesObj = GetPagesSafe(container)
+    If Not pagesObj Is Nothing Then
+        Dim pg As Object
+        For Each pg In pagesObj
+            CollectHomeEnvCheckedCaptions pg, labels
+        Next pg
+    End If
+    
     Dim controlsObj As Object
     Set controlsObj = GetControlsSafe(container)
     If controlsObj Is Nothing Then Exit Sub
@@ -374,6 +383,10 @@ Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal label
     Dim ctl As Object
     For Each ctl In controlsObj
         If IsHomeEnvCheckControl(ctl) Then
+        
+            Debug.Print "[EnvTrace] CollectHomeEnvCheckedCaptions hit name=[" & GetControlNameSafe(ctl) & "] caption=[" & GetControlCaptionSafe(ctl) & "] tag=[" & GetControlTagSafe(ctl) & "] value=[" & CStr(GetCheckValueSafe(ctl)) & "] parent=[" & GetParentNameSafe(ctl) & "]"
+        
+        
             If GetCheckValueSafe(ctl) Then AddUniqueText labels, GetControlCaptionSafe(ctl)
         End If
         CollectHomeEnvCheckedCaptions ctl, labels

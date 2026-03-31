@@ -410,11 +410,21 @@ End Function
 Private Sub WriteEnvironment(ByVal ws As Worksheet, ByVal owner As Object)
     Dim envText As String
     envText = BuildHomeEnvText(owner)
-    If LenB(envText) = 0 Then Exit Sub
+    Debug.Print "[EnvTrace] WriteEnvironment envText=[" & envText & "]"
+    If LenB(envText) = 0 Then
+        Debug.Print "[EnvTrace] WriteEnvironment skip: envText is empty"
+        Exit Sub
+    End If
 
     Dim envAddress As String
     envAddress = ResolveEnvironmentAddress(ws)
-    If LenB(envAddress) = 0 Then Exit Sub
+    Debug.Print "[EnvTrace] WriteEnvironment envAddress=[" & envAddress & "]"
+    If LenB(envAddress) = 0 Then
+        Debug.Print "[EnvTrace] WriteEnvironment skip: envAddress is empty"
+        Exit Sub
+    End If
+
+    Debug.Print "[EnvTrace] WriteEnvironment before WriteMerged address=[" & envAddress & "] text=[" & envText & "]"
 
     WriteMerged ws, envAddress, envText
 End Sub
@@ -422,6 +432,9 @@ End Sub
 Private Function BuildHomeEnvText(ByVal owner As Object) As String
     Dim labels As Collection
     Set labels = New Collection
+    
+
+    TraceHomeEnvCheckSnapshot owner
     CollectHomeEnvCheckedCaptions owner, labels
 
     Dim text As String
@@ -429,6 +442,11 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
 
     Dim note As String
     note = GetControlTextSafeAnyDeep(owner, "txtBIHomeEnvNote", "txtHomeNote")
+    TraceHomeEnvNoteSnapshot owner
+
+    Debug.Print "[EnvTrace] BuildHomeEnvText checkedCaptions=[" & JoinCollection(labels, "|") & "]"
+    Debug.Print "[EnvTrace] BuildHomeEnvText note=[" & note & "]"
+
     If LenB(note) > 0 Then
         If LenB(text) > 0 Then
             text = text & BuildWordKuten() & BuildWordBikoLabel() & note
@@ -438,6 +456,8 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
     End If
 
     BuildHomeEnvText = text
+    Debug.Print "[EnvTrace] BuildHomeEnvText result=[" & BuildHomeEnvText & "]"
+    
 End Function
 
 Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal labels As Collection)
@@ -480,13 +500,20 @@ Private Function ResolveEnvironmentAddress(ByVal ws As Worksheet) As String
 
     Dim found As Range
     Set found = ws.Cells.Find(What:=BuildWordEnvironmentHeader(), LookIn:=xlValues, LookAt:=xlPart, MatchCase:=False)
-    If found Is Nothing Then Exit Function
-
+    If found Is Nothing Then
+        Debug.Print "[EnvTrace] ResolveEnvironmentAddress header not found"
+        Exit Function
+    End If
+    
     Dim baseArea As Range
     Set baseArea = found.MergeArea
 
     Dim probe As Range
     Set probe = ws.Cells(baseArea.row + baseArea.rows.count, baseArea.Column)
+    
+    Debug.Print "[EnvTrace] ResolveEnvironmentAddress foundCell=[" & found.Address(False, False) & "]"
+    Debug.Print "[EnvTrace] ResolveEnvironmentAddress headerMergeArea=[" & baseArea.Address(False, False) & "]"
+    
 
     If probe.MergeCells Then
         ResolveEnvironmentAddress = probe.MergeArea.Address(False, False)
