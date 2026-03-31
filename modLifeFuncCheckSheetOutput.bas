@@ -32,6 +32,7 @@ Public Sub ExportLifeFuncCheckSheet(ByVal owner As Object)
     outputPath = BuildUniquePath(outputDir, fileBaseName, "xlsx")
 
     FileCopy templatePath, outputPath
+    WriteLifeFuncCheckSheetContent outputPath, owner
 
     MsgBox "生活機能チェックシートを保存しました:" & vbCrLf & outputPath, vbInformation
     Exit Sub
@@ -136,6 +137,212 @@ Private Function GetControlTextSafe(ByVal owner As Object, ByVal controlName As 
     Exit Function
 EH:
     Err.Clear
+End Function
+
+
+
+Private Sub WriteLifeFuncCheckSheetContent(ByVal outputPath As String, ByVal owner As Object)
+    On Error GoTo EH
+
+    Dim wb As Workbook
+    Dim ws As Worksheet
+
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    Set wb = Workbooks.Open(fileName:=outputPath, UpdateLinks:=0, ReadOnly:=False)
+    Set ws = wb.Worksheets(1)
+
+    WriteBasicInfo ws, owner
+    WriteLevelTaskComment ws, owner
+
+    wb.Save
+    wb.Close SaveChanges:=False
+    Application.DisplayAlerts = True
+    Application.ScreenUpdating = True
+    Exit Sub
+EH:
+    On Error Resume Next
+    If Not wb Is Nothing Then wb.Close SaveChanges:=False
+    Application.DisplayAlerts = True
+    Application.ScreenUpdating = True
+    MsgBox "LifeFuncCheckSheet write error " & Err.Number & ": " & Err.Description, vbExclamation
+End Sub
+
+Private Sub WriteBasicInfo(ByVal ws As Worksheet, ByVal owner As Object)
+    WriteMerged ws, "E3:N3", GetControlTextSafe(owner, "txtName")
+    WriteMerged ws, "R3:W3", GetControlTextSafe(owner, "txtBirth")
+    WriteMerged ws, "Y3:Z3", GetControlTextSafe(owner, "cboSex")
+    WriteMerged ws, "E4:R4", BuildEvalDateWithFixedTime(owner)
+    WriteMerged ws, "V4:Z4", GetControlTextSafe(owner, "cboCare")
+    WriteMerged ws, "E5:N5", GetControlTextSafe(owner, "txtEvaluator")
+    WriteMerged ws, "R5:Z5", GetControlTextSafe(owner, "txtEvaluatorJob")
+    WriteMerged ws, "I6:Z6", GetControlTextSafe(owner, "cboElder")
+    WriteMerged ws, "I7:Z7", GetControlTextSafe(owner, "cboDementia")
+End Sub
+
+Private Sub WriteLevelTaskComment(ByVal ws As Worksheet, ByVal owner As Object)
+    Dim rows As Variant
+    rows = BuildLifeFuncRowMap()
+
+    Dim i As Long
+    For i = LBound(rows) To UBound(rows)
+        Dim srcKey As String
+        Dim levelText As String
+        Dim commentText As String
+        Dim needsTask As Boolean
+
+        srcKey = CStr(rows(i)(0))
+        levelText = ResolveLevelText(owner, srcKey)
+        levelText = NormalizeLevelDisplayText(levelText)
+        needsTask = NeedTaskFlag(levelText)
+        commentText = ResolveCommentText(owner, srcKey)
+
+        WriteMerged ws, CStr(rows(i)(1)), levelText
+        WriteMerged ws, CStr(rows(i)(2)), IIf(needsTask, BuildWordYu(), vbNullString)
+        WriteMerged ws, CStr(rows(i)(3)), commentText
+    Next i
+End Sub
+
+Private Function BuildLifeFuncRowMap() As Variant
+    BuildLifeFuncRowMap = Array( _
+        Array("BI_0", "G13:N14", "O13:P14", "Q13:Z14"), _
+        Array("BI_1", "G15:N16", "O15:P16", "Q15:Z16"), _
+        Array("BI_2", "G17:N18", "O17:P18", "Q17:Z18"), _
+        Array("BI_3", "G19:N20", "O19:P20", "Q19:Z20"), _
+        Array("BI_4", "G21:N22", "O21:P22", "Q21:Z22"), _
+        Array("BI_5", "G23:N24", "O23:P24", "Q23:Z24"), _
+        Array("BI_6", "G25:N26", "O25:P26", "Q25:Z26"), _
+        Array("BI_7", "G27:N28", "O27:P28", "Q27:Z28"), _
+        Array("BI_8", "G29:N30", "O29:P30", "Q29:Z30"), _
+        Array("BI_9", "G31:N32", "O31:P32", "Q31:Z32"), _
+        Array("IADL_0", "G33:N34", "O33:P34", "Q33:Z34"), _
+        Array("IADL_1", "G35:N36", "O35:P36", "Q35:Z36"), _
+        Array("IADL_2", "G37:N38", "O37:P38", "Q37:Z38"), _
+        Array("Kyo_Roll", "G40:N41", "O40:P41", "Q40:Z41"), _
+        Array("Kyo_SitUp", "G42:N43", "O42:P43", "Q42:Z43"), _
+        Array("Kyo_SitHold", "G44:N45", "O44:P45", "Q44:Z45"), _
+        Array("Kyo_StandUp", "G46:N47", "O46:P47", "Q46:Z47"), _
+        Array("Kyo_StandHold", "G48:N49", "O48:P49", "Q48:Z49") _
+    )
+End Function
+
+Private Function ResolveLevelText(ByVal owner As Object, ByVal srcKey As String) As String
+    Select Case srcKey
+        Case "BI_0", "BI_1", "BI_2", "BI_3", "BI_4", "BI_5", "BI_6", "BI_7", "BI_8", "BI_9"
+            ResolveLevelText = LFM_BIWordLevel(srcKey, GetControlTextSafe(owner, Replace$(srcKey, "BI_", "cmbBI_")), vbNullString)
+        Case "IADL_0", "IADL_1", "IADL_2"
+            ResolveLevelText = GetControlTextSafe(owner, Replace$(srcKey, "IADL_", "cmbIADL_"))
+        Case "Kyo_Roll"
+            ResolveLevelText = GetControlTextSafe(owner, "cmbKyo_Roll")
+        Case "Kyo_SitUp"
+            ResolveLevelText = GetControlTextSafe(owner, "cmbKyo_SitUp")
+        Case "Kyo_SitHold"
+            ResolveLevelText = GetControlTextSafe(owner, "cmbKyo_SitHold")
+        Case "Kyo_StandUp"
+            ResolveLevelText = GetControlTextSafeAny(owner, "cmbKyo_StandUp")
+        Case "Kyo_StandHold"
+            ResolveLevelText = GetControlTextSafeAny(owner, "cmbKyo_StandHold")
+    End Select
+End Function
+
+Private Function ResolveCommentText(ByVal owner As Object, ByVal srcKey As String) As String
+    If Left$(srcKey, 3) = "BI_" Then
+        ResolveCommentText = JoinNonEmpty( _
+            GetControlTextSafeAny(owner, "txtBICheck_" & Mid$(srcKey, 4), "txtBIChk_" & Mid$(srcKey, 4)), _
+            GetControlTextSafeAny(owner, "txtBIRemark_" & Mid$(srcKey, 4), "txtBINote_" & Mid$(srcKey, 4)), _
+            " / ")
+        Exit Function
+    End If
+
+    If Left$(srcKey, 5) = "IADL_" Then
+        ResolveCommentText = GetControlTextSafeAny(owner, "txtIADLNote")
+        Exit Function
+    End If
+
+    ResolveCommentText = GetControlTextSafeAny(owner, "txtKyoNote")
+End Function
+
+Private Function NeedTaskFlag(ByVal levelText As String) As Boolean
+    Dim normalized As Long
+    normalized = LFM_NormalizeAssistLevel(levelText, -1)
+    If normalized = 1 Or normalized = 0 Then NeedTaskFlag = True
+End Function
+
+Private Function NormalizeLevelDisplayText(ByVal src As String) As String
+    Dim s As String
+    s = Trim$(src)
+    If LenB(s) = 0 Then Exit Function
+
+    s = Replace$(s, BuildWordMimamoriKanshika(), BuildWordMimamori())
+    s = Replace$(s, BuildWordZaiiHoji(), BuildWordZaii())
+    s = Replace$(s, BuildWordRitsuiHoji(), BuildWordRitsui())
+    NormalizeLevelDisplayText = s
+End Function
+
+Private Function BuildEvalDateWithFixedTime(ByVal owner As Object) As String
+    Dim d As String
+    d = Trim$(GetControlTextSafe(owner, "txtEDate"))
+    If LenB(d) = 0 Then Exit Function
+    BuildEvalDateWithFixedTime = d & " " & "13:00" & ChrW$(65374) & "15:00"
+End Function
+
+Private Function GetControlTextSafeAny(ByVal owner As Object, ParamArray names() As Variant) As String
+    Dim i As Long
+    For i = LBound(names) To UBound(names)
+        GetControlTextSafeAny = GetControlTextSafe(owner, CStr(names(i)))
+        If LenB(GetControlTextSafeAny) > 0 Then Exit Function
+    Next i
+End Function
+
+Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVal textValue As String)
+    On Error GoTo EH
+    Dim rng As Range
+    Set rng = ws.Range(addressText)
+    rng.Cells(1, 1).value = textValue
+    Exit Sub
+EH:
+    Err.Clear
+End Sub
+
+Private Function JoinNonEmpty(ByVal leftText As String, ByVal rightText As String, ByVal sep As String) As String
+    leftText = Trim$(leftText)
+    rightText = Trim$(rightText)
+
+    If LenB(leftText) = 0 Then
+        JoinNonEmpty = rightText
+    ElseIf LenB(rightText) = 0 Then
+        JoinNonEmpty = leftText
+    Else
+        JoinNonEmpty = leftText & sep & rightText
+    End If
+End Function
+
+Private Function BuildWordMimamoriKanshika() As String
+    BuildWordMimamoriKanshika = ChrW$(35211) & ChrW$(23432) & ChrW$(12426) & ChrW$(65288) & ChrW$(30435) & ChrW$(35222) & ChrW$(19979) & ChrW$(65289)
+End Function
+
+Private Function BuildWordMimamori() As String
+    BuildWordMimamori = ChrW$(35211) & ChrW$(23432) & ChrW$(12426)
+End Function
+
+Private Function BuildWordZaiiHoji() As String
+    BuildWordZaiiHoji = ChrW$(24231) & ChrW$(20301) & ChrW$(20445) & ChrW$(25345)
+End Function
+
+Private Function BuildWordZaii() As String
+    BuildWordZaii = ChrW$(24231) & ChrW$(20301)
+End Function
+
+Private Function BuildWordRitsuiHoji() As String
+    BuildWordRitsuiHoji = ChrW$(31435) & ChrW$(20301) & ChrW$(20445) & ChrW$(25345)
+End Function
+
+Private Function BuildWordRitsui() As String
+    BuildWordRitsui = ChrW$(31435) & ChrW$(20301)
+End Function
+
+Private Function BuildWordYu() As String
+    BuildWordYu = ChrW$(26377)
 End Function
 
 
