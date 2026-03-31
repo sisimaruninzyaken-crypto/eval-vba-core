@@ -63,20 +63,15 @@ Public Function CopyLifeFuncTemplateSheetToWorkbook(ByVal destWb As Workbook) As
     On Error GoTo EH
     If destWb Is Nothing Then Exit Function
 
-    Dim templatePath As String
-    templatePath = BuildTemplatePath()
-    If LenB(Dir$(templatePath, vbNormal)) = 0 Then Exit Function
-
-    Dim srcWb As Workbook
-    Set srcWb = Workbooks.Open(fileName:=templatePath, UpdateLinks:=0, ReadOnly:=True)
-    srcWb.Worksheets(1).Copy After:=destWb.Worksheets(destWb.Worksheets.count)
+    Dim templateWs As Worksheet
+    Set templateWs = ThisWorkbook.Worksheets("生活機能チェックシート")
+    templateWs.Copy After:=destWb.Worksheets(destWb.Worksheets.count)
     Set CopyLifeFuncTemplateSheetToWorkbook = destWb.Worksheets(destWb.Worksheets.count)
 
-    srcWb.Close SaveChanges:=False
     Exit Function
 EH:
     On Error Resume Next
-    If Not srcWb Is Nothing Then srcWb.Close SaveChanges:=False
+
     Err.Clear
 End Function
 

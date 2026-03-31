@@ -286,6 +286,7 @@ Public Sub ExportAllSheets(ByVal owner As Object)
     Dim result As Object
     Dim prevSnap As Object
     Dim changeIssue As Object
+    Dim planData As Object
     Dim stepName As String
 
     If owner Is Nothing Then Set owner = TryGetOwnerForm()

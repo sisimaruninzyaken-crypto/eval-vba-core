@@ -26,8 +26,6 @@ Public Function OpenAI_BuildDraft(ByVal systemInstructions As String, ByVal user
     http.SetRequestHeader "Authorization", "Bearer " & apiKey
     http.Send body
 
-   Debug.Print "[AI RAW]", http.ResponseText
-
 
     If http.Status < 200 Or http.Status >= 300 Then
         Err.Raise vbObjectError + 513, "OpenAI_BuildDraft", "HTTP " & http.Status & ": " & Left$(http.ResponseText, 500)
