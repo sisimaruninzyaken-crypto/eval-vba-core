@@ -383,8 +383,7 @@ Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal label
     Dim ctl As Object
     For Each ctl In controlsObj
         If IsHomeEnvCheckControl(ctl) Then
-        
-            Debug.Print "[EnvTrace] CollectHomeEnvCheckedCaptions hit name=[" & GetControlNameSafe(ctl) & "] caption=[" & GetControlCaptionSafe(ctl) & "] tag=[" & GetControlTagSafe(ctl) & "] value=[" & CStr(GetCheckValueSafe(ctl)) & "] parent=[" & GetParentNameSafe(ctl) & "]"
+    
         
         
             If GetCheckValueSafe(ctl) Then AddUniqueText labels, GetControlCaptionSafe(ctl)

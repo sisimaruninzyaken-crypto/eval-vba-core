@@ -442,7 +442,7 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
 
     Dim note As String
     note = GetControlTextSafeAnyDeep(owner, "txtBIHomeEnvNote", "txtHomeNote")
-    TraceHomeEnvNoteSnapshot owner
+
 
     Debug.Print "[EnvTrace] BuildHomeEnvText checkedCaptions=[" & JoinCollection(labels, "|") & "]"
     Debug.Print "[EnvTrace] BuildHomeEnvText note=[" & note & "]"
@@ -479,7 +479,7 @@ Private Sub TraceHomeEnvCheckSnapshotCore(ByVal container As Object)
     If container Is Nothing Then Exit Sub
 
     Dim pagesObj As Object
-    Set pagesObj = GetPagesSafe(container)
+    Set pagesObj = TryGetObjectMember(container, "Pages")
     If Not pagesObj Is Nothing Then
         Dim pg As Object
         For Each pg In pagesObj
@@ -488,7 +488,7 @@ Private Sub TraceHomeEnvCheckSnapshotCore(ByVal container As Object)
     End If
 
     Dim controlsObj As Object
-    Set controlsObj = GetControlsSafe(container)
+    Set controlsObj = TryGetObjectMember(container, "Controls")
     If controlsObj Is Nothing Then Exit Sub
 
     Dim ctl As Object
@@ -507,34 +507,18 @@ EH:
     Err.Clear
 End Sub
 
-Private Sub TraceHomeEnvNoteSnapshot(ByVal owner As Object)
-    On Error GoTo EH
-    Dim noteCtl As Object
 
-    Set noteCtl = FindControlByNameDeep(owner, "txtBIHomeEnvNote")
-    If noteCtl Is Nothing Then Set noteCtl = FindControlByNameDeep(owner, "txtHomeNote")
-
-    If noteCtl Is Nothing Then
-        Debug.Print "[EnvTrace] note control not found (txtBIHomeEnvNote/txtHomeNote)"
-    Else
-        Debug.Print "[EnvTrace] note control name=[" & GetControlNameSafe(noteCtl) & _
-                    "] parent=[" & GetParentNameSafe(noteCtl) & _
-                    "] value=[" & GetControlValueAsTextSafe(noteCtl) & "]"
-    End If
-    Exit Sub
-EH:
-    Debug.Print "[EnvTrace] TraceHomeEnvNoteSnapshot error " & Err.Number & ": " & Err.Description
-    Err.Clear
-End Sub
 
 
 
 
 Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal labels As Collection)
+    
+    On Error GoTo EH
     If container Is Nothing Then Exit Sub
     
     Dim pagesObj As Object
-    Set pagesObj = GetPagesSafe(container)
+    Set pagesObj = TryGetObjectMember(container, "Pages")
     If Not pagesObj Is Nothing Then
         Dim pg As Object
         For Each pg In pagesObj
@@ -543,7 +527,7 @@ Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal label
     End If
 
     Dim controlsObj As Object
-    Set controlsObj = GetControlsSafe(container)
+    Set controlsObj = TryGetObjectMember(container, "Controls")
     If controlsObj Is Nothing Then Exit Sub
 
     Dim ctl As Object
@@ -553,6 +537,10 @@ Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal label
         End If
         CollectHomeEnvCheckedCaptions ctl, labels
     Next ctl
+    Exit Sub
+EH:
+    Err.Clear
+    
 End Sub
 
 Private Function IsHomeEnvCheckControl(ByVal ctl As Object) As Boolean
@@ -566,38 +554,21 @@ Private Function IsHomeEnvCheckControl(ByVal ctl As Object) As Boolean
 End Function
 
 Private Function ResolveEnvironmentAddress(ByVal ws As Worksheet) As String
-    On Error GoTo EH
+    Dim fixedAddress As String
+    fixedAddress = "Q13:U32"
 
-    Dim found As Range
-    Set found = ws.Cells.Find(What:=BuildWordEnvironmentHeader(), LookIn:=xlValues, LookAt:=xlPart, MatchCase:=False)
-    If found Is Nothing Then
-        Debug.Print "[EnvTrace] ResolveEnvironmentAddress header not found"
-        Exit Function
-    End If
-    
-    Dim baseArea As Range
-    Set baseArea = found.MergeArea
-
-    Dim probe As Range
-    Set probe = ws.Cells(baseArea.row + baseArea.rows.count, baseArea.Column)
-    
-    Debug.Print "[EnvTrace] ResolveEnvironmentAddress foundCell=[" & found.Address(False, False) & "]"
-    Debug.Print "[EnvTrace] ResolveEnvironmentAddress headerMergeArea=[" & baseArea.Address(False, False) & "]"
-    
-
-    If probe.MergeCells Then
-        ResolveEnvironmentAddress = probe.MergeArea.Address(False, False)
-    Else
-        ResolveEnvironmentAddress = probe.Address(False, False)
-    End If
-    Exit Function
-EH:
-    Err.Clear
+    ResolveEnvironmentAddress = fixedAddress
+    Debug.Print "[EnvTrace] ResolveEnvironmentAddress fixedAddress=[" & fixedAddress & "]"
 End Function
 
-Private Function GetControlsSafe(ByVal obj As Object) As Object
+Private Function TryGetObjectMember(ByVal obj As Object, ByVal memberName As String) As Object
     On Error GoTo EH
-    Set GetControlsSafe = obj.Controls
+    Select Case memberName
+        Case "Controls"
+            Set TryGetObjectMember = obj.Controls
+        Case "Pages"
+            Set TryGetObjectMember = obj.Pages
+    End Select
     Exit Function
 EH:
     Err.Clear
@@ -632,13 +603,7 @@ EH:
 End Function
 
 
-Private Function GetPagesSafe(ByVal obj As Object) As Object
-    On Error GoTo EH
-    Set GetPagesSafe = obj.Pages
-    Exit Function
-EH:
-    Err.Clear
-End Function
+
 
 Private Function GetControlTextSafeAnyDeep(ByVal owner As Object, ParamArray names() As Variant) As String
     Dim i As Long
@@ -672,7 +637,7 @@ Private Function FindControlByNameDeep(ByVal container As Object, ByVal ctrlName
     End If
 
     Dim pagesObj As Object
-    Set pagesObj = GetPagesSafe(container)
+    Set pagesObj = TryGetObjectMember(container, "Pages")
     If Not pagesObj Is Nothing Then
         Dim pg As Object
         For Each pg In pagesObj
@@ -682,7 +647,7 @@ Private Function FindControlByNameDeep(ByVal container As Object, ByVal ctrlName
     End If
 
     Dim controlsObj As Object
-    Set controlsObj = GetControlsSafe(container)
+    Set controlsObj = TryGetObjectMember(container, "Controls")
     If controlsObj Is Nothing Then Exit Function
 
     Dim ctl As Object
