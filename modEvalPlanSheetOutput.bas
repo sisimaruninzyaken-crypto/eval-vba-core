@@ -812,19 +812,19 @@ Private Sub DebugScanGoalMerge(ByVal ws As Worksheet)
     On Error GoTo 0
 End Sub
 
-Private Function NzTextSafe(ByVal v As Variant, Optional ByVal Fallback As String = vbNullString) As String
+Private Function NzTextSafe(ByVal v As Variant, Optional ByVal fallback As String = vbNullString) As String
     On Error GoTo EH
     If IsError(v) Then
-        NzTextSafe = Fallback
+        NzTextSafe = fallback
     ElseIf IsNull(v) Then
-        NzTextSafe = Fallback
+        NzTextSafe = fallback
     ElseIf IsEmpty(v) Then
-        NzTextSafe = Fallback
+        NzTextSafe = fallback
     ElseIf IsObject(v) Then
         If ObjectIsNothingSafe(v) Then
-            NzTextSafe = Fallback
+            NzTextSafe = fallback
         Else
-            NzTextSafe = Fallback
+            NzTextSafe = fallback
         End If
     Else
 
@@ -832,7 +832,7 @@ Private Function NzTextSafe(ByVal v As Variant, Optional ByVal Fallback As Strin
     End If
     Exit Function
 EH:
-    NzTextSafe = Fallback
+    NzTextSafe = fallback
     Err.Clear
 End Function
 
