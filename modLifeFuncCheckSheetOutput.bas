@@ -78,6 +78,7 @@ End Function
 Public Sub WriteLifeFuncCheckSheet(ByVal ws As Worksheet, ByVal owner As Object)
     If ws Is Nothing Then Exit Sub
     WriteBasicInfo ws, owner
+    WriteEnvironment ws, owner
     WriteLevelTaskComment ws, owner
 End Sub
 
@@ -186,6 +187,7 @@ Private Sub WriteLifeFuncCheckSheetContent(ByVal ws As Worksheet, ByVal owner As
     On Error GoTo EH
 
     WriteBasicInfo ws, owner
+    WriteEnvironment ws, owner
     WriteLevelTaskComment ws, owner
 
     Exit Sub
@@ -213,17 +215,19 @@ Private Sub WriteLevelTaskComment(ByVal ws As Worksheet, ByVal owner As Object)
     For i = LBound(rows) To UBound(rows)
         Dim srcKey As String
         Dim levelText As String
+        Dim scoreText As String
         Dim commentText As String
-        Dim needsTask As Boolean
+        Dim taskText As String
 
         srcKey = CStr(rows(i)(0))
         levelText = ResolveLevelText(owner, srcKey)
-        levelText = NormalizeLevelDisplayText(levelText)
-        needsTask = NeedTaskFlag(levelText)
+        scoreText = GetControlTextSafe(owner, Replace$(srcKey, "BI_", "cmbBI_"))
+        taskText = BuildTaskText(levelText)
+        levelText = FormatLevelDisplayText(srcKey, levelText, scoreText)
         commentText = ResolveCommentText(owner, srcKey)
 
         WriteMerged ws, CStr(rows(i)(1)), levelText
-        WriteMerged ws, CStr(rows(i)(2)), IIf(needsTask, BuildWordYu(), vbNullString)
+        WriteMerged ws, CStr(rows(i)(2)), taskText
         WriteMerged ws, CStr(rows(i)(3)), commentText
     Next i
 End Sub
@@ -287,10 +291,31 @@ Private Function ResolveCommentText(ByVal owner As Object, ByVal srcKey As Strin
     ResolveCommentText = GetControlTextSafeAny(owner, "txtKyoNote")
 End Function
 
-Private Function NeedTaskFlag(ByVal levelText As String) As Boolean
+Private Function BuildTaskText(ByVal levelText As String) As String
     Dim normalized As Long
     normalized = LFM_NormalizeAssistLevel(levelText, -1)
-    If normalized = 1 Or normalized = 0 Then NeedTaskFlag = True
+    If normalized = 2 Then
+        BuildTaskText = BuildWordMu()
+    ElseIf LenB(Trim$(levelText)) > 0 Then
+        BuildTaskText = BuildWordYu()
+    End If
+End Function
+
+Private Function FormatLevelDisplayText(ByVal srcKey As String, ByVal levelText As String, ByVal biScoreText As String) As String
+    Dim s As String
+    s = NormalizeLevelDisplayText(levelText)
+
+    If Left$(srcKey, 3) <> "BI_" Then
+        FormatLevelDisplayText = s
+        Exit Function
+    End If
+
+    biScoreText = Trim$(biScoreText)
+    If LenB(s) = 0 Or LenB(biScoreText) = 0 Then
+        FormatLevelDisplayText = s
+    Else
+        FormatLevelDisplayText = s & BuildWordParenOpen() & biScoreText & BuildWordParenClose()
+    End If
 End Function
 
 Private Function NormalizeLevelDisplayText(ByVal src As String) As String
@@ -370,6 +395,165 @@ Private Function BuildWordYu() As String
     BuildWordYu = ChrW$(26377)
 End Function
 
+Private Function BuildWordMu() As String
+    BuildWordMu = ChrW$(28961)
+End Function
+
+Private Function BuildWordParenOpen() As String
+    BuildWordParenOpen = ChrW$(65288)
+End Function
+
+Private Function BuildWordParenClose() As String
+    BuildWordParenClose = ChrW$(65289)
+End Function
+
+Private Sub WriteEnvironment(ByVal ws As Worksheet, ByVal owner As Object)
+    Dim envText As String
+    envText = BuildHomeEnvText(owner)
+    If LenB(envText) = 0 Then Exit Sub
+
+    Dim envAddress As String
+    envAddress = ResolveEnvironmentAddress(ws)
+    If LenB(envAddress) = 0 Then Exit Sub
+
+    WriteMerged ws, envAddress, envText
+End Sub
+
+Private Function BuildHomeEnvText(ByVal owner As Object) As String
+    Dim labels As Collection
+    Set labels = New Collection
+    CollectHomeEnvCheckedCaptions owner, labels
+
+    Dim text As String
+    text = JoinCollection(labels, BuildWordDot())
+
+    Dim note As String
+    note = GetControlTextSafeAny(owner, "txtBIHomeEnvNote", "txtHomeNote")
+    If LenB(note) > 0 Then
+        If LenB(text) > 0 Then
+            text = text & BuildWordKuten() & BuildWordBikoLabel() & note
+        Else
+            text = BuildWordBikoLabel() & note
+        End If
+    End If
+
+    BuildHomeEnvText = text
+End Function
+
+Private Sub CollectHomeEnvCheckedCaptions(ByVal container As Object, ByVal labels As Collection)
+    If container Is Nothing Then Exit Sub
+
+    Dim controlsObj As Object
+    Set controlsObj = GetControlsSafe(container)
+    If controlsObj Is Nothing Then Exit Sub
+
+    Dim ctl As Object
+    For Each ctl In controlsObj
+        If IsHomeEnvCheckControl(ctl) Then
+            If GetCheckValueSafe(ctl) Then AddUniqueText labels, GetControlCaptionSafe(ctl)
+        End If
+        CollectHomeEnvCheckedCaptions ctl, labels
+    Next ctl
+End Sub
+
+Private Function IsHomeEnvCheckControl(ByVal ctl As Object) As Boolean
+    If ctl Is Nothing Then Exit Function
+    If StrComp(TypeName(ctl), "CheckBox", vbTextCompare) <> 0 Then Exit Function
+
+    Dim tagText As String
+    tagText = GetControlTagSafe(ctl)
+    If Len(tagText) < Len("BI.HomeEnv.") Then Exit Function
+    IsHomeEnvCheckControl = (StrComp(Left$(tagText, Len("BI.HomeEnv.")), "BI.HomeEnv.", vbTextCompare) = 0)
+End Function
+
+Private Function ResolveEnvironmentAddress(ByVal ws As Worksheet) As String
+    On Error GoTo EH
+
+    Dim found As Range
+    Set found = ws.Cells.Find(What:=BuildWordEnvironmentHeader(), LookIn:=xlValues, LookAt:=xlPart, MatchCase:=False)
+    If found Is Nothing Then Exit Function
+
+    Dim baseArea As Range
+    Set baseArea = found.MergeArea
+
+    Dim probe As Range
+    Set probe = ws.Cells(baseArea.row + baseArea.rows.count, baseArea.Column)
+
+    If probe.MergeCells Then
+        ResolveEnvironmentAddress = probe.MergeArea.Address(False, False)
+    Else
+        ResolveEnvironmentAddress = probe.Address(False, False)
+    End If
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function GetControlsSafe(ByVal obj As Object) As Object
+    On Error GoTo EH
+    Set GetControlsSafe = obj.Controls
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function GetCheckValueSafe(ByVal ctl As Object) As Boolean
+    On Error GoTo EH
+    GetCheckValueSafe = CBool(ctl.value)
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function GetControlCaptionSafe(ByVal ctl As Object) As String
+    On Error GoTo EH
+    GetControlCaptionSafe = Trim$(CStr(ctl.caption))
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function GetControlTagSafe(ByVal ctl As Object) As String
+    On Error GoTo EH
+    GetControlTagSafe = Trim$(CStr(ctl.tag))
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Sub AddUniqueText(ByVal col As Collection, ByVal textValue As String)
+    textValue = Trim$(textValue)
+    If LenB(textValue) = 0 Then Exit Sub
+
+    On Error Resume Next
+    col.Add textValue, textValue
+    Err.Clear
+    On Error GoTo 0
+End Sub
+
+Private Function JoinCollection(ByVal col As Collection, ByVal sep As String) As String
+    Dim i As Long
+    For i = 1 To col.count
+        If i > 1 Then JoinCollection = JoinCollection & sep
+        JoinCollection = JoinCollection & CStr(col(i))
+    Next i
+End Function
+
+Private Function BuildWordEnvironmentHeader() As String
+    BuildWordEnvironmentHeader = ChrW$(29872) & ChrW$(22659) & ChrW$(65288) & ChrW$(23455) & ChrW$(26045) & ChrW$(22580) & ChrW$(25152) & ChrW$(12539) & ChrW$(35036) & ChrW$(21161) & ChrW$(20855) & ChrW$(31561) & ChrW$(65289)
+End Function
+
+Private Function BuildWordDot() As String
+    BuildWordDot = ChrW$(12539)
+End Function
+
+Private Function BuildWordKuten() As String
+    BuildWordKuten = ChrW$(12290)
+End Function
+
+Private Function BuildWordBikoLabel() As String
+    BuildWordBikoLabel = ChrW$(20633) & ChrW$(32771) & ChrW$(65306)
+End Function
 
 Private Function BuildWordKyoStandUpLabel() As String
     BuildWordKyoStandUpLabel = ChrW$(31435) & ChrW$(12385) & ChrW$(19978) & ChrW$(12364) & ChrW$(12426)
