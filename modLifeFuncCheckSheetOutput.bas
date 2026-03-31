@@ -1,0 +1,141 @@
+Attribute VB_Name = "modLifeFuncCheckSheetOutput"
+
+Option Explicit
+
+Private Const LIFE_FUNC_TEMPLATE_FILE As String = "生活機能チェックシート.xlsx"
+Private Const LIFE_FUNC_OUTPUT_DIR As String = "LifeFuncCheckSheet"
+Private Const UNKNOWN_NAME As String = "unknown"
+
+Public Sub ExportLifeFuncCheckSheet(ByVal owner As Object)
+    On Error GoTo EH
+
+    Dim templatePath As String
+    templatePath = BuildTemplatePath()
+    If LenB(Dir$(templatePath, vbNormal)) = 0 Then
+        MsgBox "生活機能チェックシートの原本が見つかりません。" & vbCrLf & templatePath, vbExclamation
+        Exit Sub
+    End If
+
+    Dim patientName As String
+    patientName = SanitizeFileToken(GetControlTextSafe(owner, "txtName"), UNKNOWN_NAME)
+
+    Dim evalDateToken As String
+    evalDateToken = BuildEvalDateToken(owner)
+
+    Dim outputDir As String
+    outputDir = EnsureOutputDirectory(patientName)
+
+    Dim fileBaseName As String
+    fileBaseName = patientName & "_" & evalDateToken
+
+    Dim outputPath As String
+    outputPath = BuildUniquePath(outputDir, fileBaseName, "xlsx")
+
+    FileCopy templatePath, outputPath
+
+    MsgBox "生活機能チェックシートを保存しました:" & vbCrLf & outputPath, vbInformation
+    Exit Sub
+EH:
+    MsgBox "生活機能チェックシート保存エラー " & Err.Number & ": " & Err.Description, vbExclamation
+End Sub
+
+Public Function BuildLifeFuncCheckSheetPathPreview(ByVal owner As Object) As String
+    On Error GoTo EH
+
+    Dim patientName As String
+    patientName = SanitizeFileToken(GetControlTextSafe(owner, "txtName"), UNKNOWN_NAME)
+
+    Dim evalDateToken As String
+    evalDateToken = BuildEvalDateToken(owner)
+
+    BuildLifeFuncCheckSheetPathPreview = ThisWorkbook.path & Application.PathSeparator & _
+                                         LIFE_FUNC_OUTPUT_DIR & Application.PathSeparator & _
+                                         patientName & Application.PathSeparator & _
+                                         patientName & "_" & evalDateToken & "_01.xlsx"
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function BuildTemplatePath() As String
+    BuildTemplatePath = ThisWorkbook.path & Application.PathSeparator & LIFE_FUNC_TEMPLATE_FILE
+End Function
+
+Private Function EnsureOutputDirectory(ByVal patientName As String) As String
+    Dim rootDir As String
+    rootDir = ThisWorkbook.path & Application.PathSeparator & LIFE_FUNC_OUTPUT_DIR
+    EnsureFolderExists rootDir
+
+    Dim patientDir As String
+    patientDir = rootDir & Application.PathSeparator & patientName
+    EnsureFolderExists patientDir
+
+    EnsureOutputDirectory = patientDir
+End Function
+
+Private Sub EnsureFolderExists(ByVal folderPath As String)
+    If LenB(Dir$(folderPath, vbDirectory)) = 0 Then MkDir folderPath
+End Sub
+
+Private Function BuildUniquePath(ByVal folderPath As String, ByVal fileBaseName As String, ByVal ext As String) As String
+    Dim seq As Long
+    Dim candidate As String
+
+    seq = 1
+    Do
+        candidate = folderPath & Application.PathSeparator & fileBaseName & "_" & Format$(seq, "00") & "." & ext
+        If LenB(Dir$(candidate, vbNormal)) = 0 Then
+            BuildUniquePath = candidate
+            Exit Function
+        End If
+        seq = seq + 1
+    Loop
+End Function
+
+Private Function BuildEvalDateToken(ByVal owner As Object) As String
+    Dim rawDate As String
+    rawDate = Trim$(GetControlTextSafe(owner, "txtEDate"))
+
+    If LenB(rawDate) = 0 Then
+        BuildEvalDateToken = Format$(Date, "yyyymmdd")
+        Exit Function
+    End If
+
+    If IsDate(rawDate) Then
+        BuildEvalDateToken = Format$(CDate(rawDate), "yyyymmdd")
+        Exit Function
+    End If
+
+    BuildEvalDateToken = SanitizeFileToken(rawDate, Format$(Date, "yyyymmdd"))
+End Function
+
+Private Function SanitizeFileToken(ByVal src As String, ByVal fallbackValue As String) As String
+    Dim token As String
+    token = Trim$(src)
+
+    Dim ng As Variant
+    For Each ng In Array("\", "/", ":", "*", "?", """", "<", ">", "|", "[", "]")
+        token = Replace$(token, CStr(ng), "_")
+    Next ng
+
+    token = Replace$(token, vbTab, " ")
+    Do While InStr(token, "  ") > 0
+        token = Replace$(token, "  ", " ")
+    Loop
+
+    token = Trim$(token)
+    If LenB(token) = 0 Then token = fallbackValue
+
+    SanitizeFileToken = token
+End Function
+
+Private Function GetControlTextSafe(ByVal owner As Object, ByVal controlName As String) As String
+    On Error GoTo EH
+    If owner Is Nothing Then Exit Function
+    GetControlTextSafe = Trim$(CStr(owner.Controls(controlName).value))
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+

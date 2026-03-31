@@ -8194,3 +8194,8 @@ Public Sub Align_BIHomeEnv_Once()
     End If
 
 End Sub
+
+
+Public Sub ExportLifeFuncCheckSheetOnly()
+    modLifeFuncCheckSheetOutput.ExportLifeFuncCheckSheet Me
+End Sub
