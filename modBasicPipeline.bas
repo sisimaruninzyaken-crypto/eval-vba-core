@@ -56,7 +56,7 @@ Public Sub ReflectBasicPlanToReport(ByVal result As Object, ByVal patientName As
     If Not result.exists("AIDraft") Then Debug.Print "[Reflect] AIDraft key missing": Exit Sub
     If owner Is Nothing Then Set owner = TryGetOwnerForm()
     Set planData = BuildPlanDataFromResult(result)
-    ExportPlanAsXlsx patientName, owner, planData
+    modEvalPlanSheetFileOutput.ExportEvalPlanSheet owner, planData, patientName
 End Sub
 
 Private Function TryGetOwnerForm() As Object
@@ -72,68 +72,7 @@ Private Function TryGetOwnerForm() As Object
     On Error GoTo 0
 End Function
 
-Private Sub ExportPlanAsXlsx(ByVal patientName As String, ByVal owner As Object, ByVal planData As Object)
-    Dim fso As Object
-    Dim baseDir As String
-    Dim SafeName As String
-    Dim outputDir As String
-    Dim tmpl As Worksheet
-    Dim newWb As Workbook
-    Dim newWs As Worksheet
-    Dim dateStr As String
-    Dim fileName As String
-    Dim savePath As String
-    Set tmpl = ThisWorkbook.Worksheets("個別機能訓練計画書")
-    On Error GoTo EH
 
-    Set fso = CreateObject("Scripting.FileSystemObject")
-    baseDir = ThisWorkbook.path & "\KojinPlan"
-    If Not fso.FolderExists(baseDir) Then fso.CreateFolder baseDir
-
-    SafeName = patientName
-    SafeName = Replace(SafeName, "/", "")
-    SafeName = Replace(SafeName, "\", "")
-    SafeName = Replace(SafeName, "[", "")
-    SafeName = Replace(SafeName, "]", "")
-    SafeName = Replace(SafeName, "*", "")
-    SafeName = Replace(SafeName, "?", "")
-    SafeName = Replace(SafeName, ":", "")
-    If LenB(Trim$(SafeName)) = 0 Then SafeName = "kanja"
-
-    outputDir = baseDir & "\" & SafeName
-    If Not fso.FolderExists(outputDir) Then fso.CreateFolder outputDir
-
-    On Error Resume Next
-    Set tmpl = ThisWorkbook.Worksheets("個別機能訓練計画書")
-    On Error GoTo EH
-    If tmpl Is Nothing Then
-        Debug.Print "[ExportPlan] template not found: " & "個別機能訓練計画書"
-        Exit Sub
-    End If
-
-    tmpl.Copy
-    Set newWb = ActiveWorkbook
-    Set newWs = newWb.Worksheets(1)
-
-    modEvalPlanSheetOutput.WriteEvalPlanSheet newWs, owner, planData
-
-    dateStr = Format$(Now(), "YYYYMMDD")
-    fileName = SafeName & "_" & dateStr
-    savePath = outputDir & "\" & fileName & ".xlsx"
-
-    Application.DisplayAlerts = False
-    newWb.SaveAs fileName:=savePath, FileFormat:=xlOpenXMLWorkbook
-    Application.DisplayAlerts = True
-    newWb.Close SaveChanges:=False
-
-    MsgBox "saved: " & savePath, vbInformation, "done"
-    Exit Sub
-
-EH:
-    MsgBox "Error " & Err.Number & ": " & Err.Description, vbExclamation, "error"
-    On Error Resume Next
-    If Not newWb Is Nothing Then newWb.Close SaveChanges:=False
-End Sub
 
 Private Function BuildPlanDataFromResult(ByVal result As Object) As Object
     Dim d As Object
