@@ -196,15 +196,43 @@ EH:
 End Sub
 
 Private Sub WriteBasicInfo(ByVal ws As Worksheet, ByVal owner As Object)
+    Dim sexValue As String
+    Dim y3AfterWrite As String
+    Dim y3Final As String
+    Dim y3Before As String
+
+    sexValue = GetControlTextSafe(owner, "cboSex")
+    y3Before = CStr(ws.Range("Y3").value)
+    Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] cboSex=[" & sexValue & "] Y3_before=[" & y3Before & "]"
+    
     WriteMerged ws, "E3:N3", GetControlTextSafe(owner, "txtName")
     WriteMerged ws, "R3:W3", GetControlTextSafe(owner, "txtBirth")
+    Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] WriteMerged reached range=[Y3:Z3]"
     WriteMerged ws, "Y3:Z3", GetControlTextSafe(owner, "cboSex")
+    y3AfterWrite = CStr(ws.Range("Y3").value)
+    Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] Y3_after_WriteMerged=[" & y3AfterWrite & "]"
+
+    If LenB(Trim$(sexValue)) > 0 And LenB(Trim$(y3AfterWrite)) = 0 Then
+        If ws.Range("Y3").MergeCells Then
+            ws.Range("Y3").MergeArea.Cells(1, 1).value = sexValue
+            Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] sex fallback applied target=[Y3.MergeArea.LeftTopCell] value=[" & sexValue & "]"
+        Else
+            ws.Range("Y3").value = sexValue
+            Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] sex fallback applied target=[Y3] value=[" & sexValue & "]"
+        End If
+    End If
     WriteMerged ws, "E4:R4", BuildEvalDateWithFixedTime(owner)
     WriteMerged ws, "V4:Z4", GetControlTextSafe(owner, "cboCare")
     WriteMerged ws, "E5:N5", GetControlTextSafe(owner, "txtEvaluator")
     WriteMerged ws, "R5:Z5", GetControlTextSafe(owner, "txtEvaluatorJob")
     WriteMerged ws, "I6:Z6", GetControlTextSafe(owner, "cboElder")
     WriteMerged ws, "I7:Z7", GetControlTextSafe(owner, "cboDementia")
+
+    y3Final = CStr(ws.Range("Y3").value)
+    Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] Y3_final=[" & y3Final & "]"
+    If StrComp(y3AfterWrite, y3Final, vbBinaryCompare) <> 0 Then
+        Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] Y3 overwritten detected after_WriteMerged=[" & y3AfterWrite & "] final=[" & y3Final & "]"
+    End If
 End Sub
 
 Private Sub WriteLevelTaskComment(ByVal ws As Worksheet, ByVal owner As Object)
