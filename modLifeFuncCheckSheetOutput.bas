@@ -228,7 +228,12 @@ Private Sub WriteLevelTaskComment(ByVal ws As Worksheet, ByVal owner As Object)
 
         WriteMerged ws, CStr(rows(i)(1)), levelText
         WriteMerged ws, CStr(rows(i)(2)), taskText
-        WriteMerged ws, CStr(rows(i)(3)), commentText
+
+        If LenB(Trim$(commentText)) = 0 Then
+            Debug.Print "[EnvTrace] WriteLevelTaskComment skip comment WriteMerged srcKey=[" & srcKey & "] address=[" & CStr(rows(i)(3)) & "]"
+        Else
+            WriteMerged ws, CStr(rows(i)(3)), commentText
+        End If
     Next i
 End Sub
 
