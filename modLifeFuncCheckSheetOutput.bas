@@ -6,9 +6,18 @@ Private Const LIFE_FUNC_TEMPLATE_SHEET As String = "生活機能チェックシート"
 Private Const LIFE_FUNC_OUTPUT_DIR As String = "LifeFuncCheckSheet"
 Private Const UNKNOWN_NAME As String = "unknown"
 
+Private Const LIFE_FUNC_TRACE_TAG As String = "[LifeFuncTrace]"
+
+Private Sub TraceLifeFunc(ByVal message As String)
+#If APP_DEBUG Then
+    Debug.Print LIFE_FUNC_TRACE_TAG & " " & message
+#End If
+End Sub
+
+
 Public Sub ExportLifeFuncCheckSheet(ByVal owner As Object)
     On Error GoTo EH
-    Debug.Print "[LifeFunc] ExportLifeFuncCheckSheet entered"
+    TraceLifeFunc "ExportLifeFuncCheckSheet entered"
 
     Dim templateWs As Worksheet
     On Error Resume Next
@@ -198,27 +207,22 @@ End Sub
 Private Sub WriteBasicInfo(ByVal ws As Worksheet, ByVal owner As Object)
     Dim sexValue As String
     Dim y3AfterWrite As String
-    Dim y3Final As String
-    Dim y3Before As String
 
     sexValue = GetControlTextSafe(owner, "cboSex")
-    y3Before = CStr(ws.Range("Y3").value)
-    Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] cboSex=[" & sexValue & "] Y3_before=[" & y3Before & "]"
     
     WriteMerged ws, "E3:N3", GetControlTextSafe(owner, "txtName")
     WriteMerged ws, "R3:W3", GetControlTextSafe(owner, "txtBirth")
-    Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] WriteMerged reached range=[Y3:Z3]"
     WriteMerged ws, "Y3:Z3", GetControlTextSafe(owner, "cboSex")
     y3AfterWrite = CStr(ws.Range("Y3").value)
-    Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] Y3_after_WriteMerged=[" & y3AfterWrite & "]"
+ 
 
     If LenB(Trim$(sexValue)) > 0 And LenB(Trim$(y3AfterWrite)) = 0 Then
         If ws.Range("Y3").MergeCells Then
             ws.Range("Y3").MergeArea.Cells(1, 1).value = sexValue
-            Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] sex fallback applied target=[Y3.MergeArea.LeftTopCell] value=[" & sexValue & "]"
+            TraceLifeFunc "WriteBasicInfo sex fallback applied target=[Y3.MergeArea.LeftTopCell] value=[" & sexValue & "]"
         Else
             ws.Range("Y3").value = sexValue
-            Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] sex fallback applied target=[Y3] value=[" & sexValue & "]"
+            TraceLifeFunc "WriteBasicInfo sex fallback applied target=[Y3] value=[" & sexValue & "]"
         End If
     End If
     WriteMerged ws, "E4:R4", BuildEvalDateWithFixedTime(owner)
@@ -228,11 +232,6 @@ Private Sub WriteBasicInfo(ByVal ws As Worksheet, ByVal owner As Object)
     WriteMerged ws, "I6:Z6", GetControlTextSafe(owner, "cboElder")
     WriteMerged ws, "I7:Z7", GetControlTextSafe(owner, "cboDementia")
 
-    y3Final = CStr(ws.Range("Y3").value)
-    Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] Y3_final=[" & y3Final & "]"
-    If StrComp(y3AfterWrite, y3Final, vbBinaryCompare) <> 0 Then
-        Debug.Print "[EnvTrace] WriteBasicInfo ws=[" & ws.name & "] Y3 overwritten detected after_WriteMerged=[" & y3AfterWrite & "] final=[" & y3Final & "]"
-    End If
 End Sub
 
 Private Sub WriteLevelTaskComment(ByVal ws As Worksheet, ByVal owner As Object)
@@ -258,7 +257,7 @@ Private Sub WriteLevelTaskComment(ByVal ws As Worksheet, ByVal owner As Object)
         WriteMerged ws, CStr(rows(i)(2)), taskText
 
         If LenB(Trim$(commentText)) = 0 Then
-            Debug.Print "[EnvTrace] WriteLevelTaskComment skip comment WriteMerged srcKey=[" & srcKey & "] address=[" & CStr(rows(i)(3)) & "]"
+            TraceLifeFunc "WriteLevelTaskComment skip comment srcKey=[" & srcKey & "] address=[" & CStr(rows(i)(3)) & "]"
         Else
             WriteMerged ws, CStr(rows(i)(3)), commentText
         End If
@@ -382,17 +381,17 @@ Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVa
     Dim rng As Range
     Set rng = ws.Range(addressText)
     If ShouldTraceEnvRange(rng) Then
-        Debug.Print "[EnvTrace] WriteMerged ws=[" & ws.name & "] range=[" & rng.Address(False, False) & "] before=[" & CStr(rng.Cells(1, 1).value) & "] mergeArea=[" & rng.Cells(1, 1).MergeArea.Address(False, False) & "]"
+        TraceLifeFunc "WriteMerged before ws=[" & ws.name & "] range=[" & rng.Address(False, False) & "] value=[" & CStr(rng.Cells(1, 1).value) & "] mergeArea=[" & rng.Cells(1, 1).MergeArea.Address(False, False) & "]"
     End If
 
     rng.Cells(1, 1).value = textValue
 
     If ShouldTraceEnvRange(rng) Then
-        Debug.Print "[EnvTrace] WriteMerged ws=[" & ws.name & "] range=[" & rng.Address(False, False) & "] after=[" & CStr(rng.Cells(1, 1).value) & "] mergeArea=[" & rng.Cells(1, 1).MergeArea.Address(False, False) & "]"
+        TraceLifeFunc "WriteMerged after ws=[" & ws.name & "] range=[" & rng.Address(False, False) & "] value=[" & CStr(rng.Cells(1, 1).value) & "] mergeArea=[" & rng.Cells(1, 1).MergeArea.Address(False, False) & "]"
     End If
     Exit Sub
 EH:
-    Debug.Print "[EnvTrace] WriteMerged error ws=[" & IIf(ws Is Nothing, "", ws.name) & "] range=[" & addressText & "] err=" & Err.Number & ": " & Err.Description
+    TraceLifeFunc "WriteMerged error ws=[" & IIf(ws Is Nothing, "", ws.name) & "] range=[" & addressText & "] err=" & Err.Number & ": " & Err.Description
     Err.Clear
 End Sub
 
@@ -462,21 +461,19 @@ End Function
 Private Sub WriteEnvironment(ByVal ws As Worksheet, ByVal owner As Object)
     Dim envText As String
     envText = BuildHomeEnvText(owner)
-    Debug.Print "[EnvTrace] WriteEnvironment envText=[" & envText & "]"
     If LenB(envText) = 0 Then
-        Debug.Print "[EnvTrace] WriteEnvironment skip: envText is empty"
+        TraceLifeFunc "WriteEnvironment skipped: envText is empty"
         Exit Sub
     End If
 
     Dim envAddress As String
     envAddress = ResolveEnvironmentAddress(ws)
-    Debug.Print "[EnvTrace] WriteEnvironment envAddress=[" & envAddress & "]"
     If LenB(envAddress) = 0 Then
-        Debug.Print "[EnvTrace] WriteEnvironment skip: envAddress is empty"
+        TraceLifeFunc "WriteEnvironment skipped: envAddress is empty"
         Exit Sub
     End If
 
-    Debug.Print "[EnvTrace] WriteEnvironment before WriteMerged address=[" & envAddress & "] text=[" & envText & "]"
+    TraceLifeFunc "WriteEnvironment write address=[" & envAddress & "]"
 
     WriteMerged ws, envAddress, envText
 End Sub
@@ -486,7 +483,6 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
     Set labels = New Collection
     
 
-    TraceHomeEnvCheckSnapshot owner
     CollectHomeEnvCheckedCaptions owner, labels
 
     Dim text As String
@@ -495,9 +491,6 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
     Dim note As String
     note = GetControlTextSafeAnyDeep(owner, "txtBIHomeEnvNote", "txtHomeNote")
 
-
-    Debug.Print "[EnvTrace] BuildHomeEnvText checkedCaptions=[" & JoinCollection(labels, "|") & "]"
-    Debug.Print "[EnvTrace] BuildHomeEnvText note=[" & note & "]"
 
     If LenB(note) > 0 Then
         If LenB(text) > 0 Then
@@ -508,59 +501,9 @@ Private Function BuildHomeEnvText(ByVal owner As Object) As String
     End If
 
     BuildHomeEnvText = text
-    Debug.Print "[EnvTrace] BuildHomeEnvText result=[" & BuildHomeEnvText & "]"
+ 
     
 End Function
-
-
-Private Sub TraceHomeEnvCheckSnapshot(ByVal owner As Object)
-    On Error GoTo EH
-    If owner Is Nothing Then Exit Sub
-
-    Debug.Print "[EnvTrace] TraceHomeEnvCheckSnapshot start"
-    TraceHomeEnvCheckSnapshotCore owner
-    Debug.Print "[EnvTrace] TraceHomeEnvCheckSnapshot end"
-    Exit Sub
-EH:
-    Debug.Print "[EnvTrace] TraceHomeEnvCheckSnapshot error " & Err.Number & ": " & Err.Description
-    Err.Clear
-End Sub
-
-Private Sub TraceHomeEnvCheckSnapshotCore(ByVal container As Object)
-    On Error GoTo EH
-    If container Is Nothing Then Exit Sub
-
-    Dim pagesObj As Object
-    Set pagesObj = TryGetObjectMember(container, "Pages")
-    If Not pagesObj Is Nothing Then
-        Dim pg As Object
-        For Each pg In pagesObj
-            TraceHomeEnvCheckSnapshotCore pg
-        Next pg
-    End If
-
-    Dim controlsObj As Object
-    Set controlsObj = TryGetObjectMember(container, "Controls")
-    If controlsObj Is Nothing Then Exit Sub
-
-    Dim ctl As Object
-    For Each ctl In controlsObj
-        If IsHomeEnvCheckControl(ctl) Then
-            Debug.Print "[EnvTrace] check tag=[" & GetControlTagSafe(ctl) & _
-                        "] name=[" & GetControlNameSafe(ctl) & _
-                        "] parent=[" & GetParentNameSafe(ctl) & _
-                        "] value=[" & GetControlValueAsTextSafe(ctl) & _
-                        "] caption=[" & GetControlCaptionSafe(ctl) & "]"
-        End If
-        TraceHomeEnvCheckSnapshotCore ctl
-    Next ctl
-    Exit Sub
-EH:
-    Err.Clear
-End Sub
-
-
-
 
 
 
@@ -610,7 +553,6 @@ Private Function ResolveEnvironmentAddress(ByVal ws As Worksheet) As String
     fixedAddress = "Q13:U32"
 
     ResolveEnvironmentAddress = fixedAddress
-    Debug.Print "[EnvTrace] ResolveEnvironmentAddress fixedAddress=[" & fixedAddress & "]"
 End Function
 
 Private Function TryGetObjectMember(ByVal obj As Object, ByVal memberName As String) As Object
