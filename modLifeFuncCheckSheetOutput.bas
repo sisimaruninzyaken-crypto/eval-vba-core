@@ -348,11 +348,30 @@ Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVa
     On Error GoTo EH
     Dim rng As Range
     Set rng = ws.Range(addressText)
+    If ShouldTraceEnvRange(rng) Then
+        Debug.Print "[EnvTrace] WriteMerged ws=[" & ws.name & "] range=[" & rng.Address(False, False) & "] before=[" & CStr(rng.Cells(1, 1).value) & "] mergeArea=[" & rng.Cells(1, 1).MergeArea.Address(False, False) & "]"
+    End If
+
     rng.Cells(1, 1).value = textValue
+
+    If ShouldTraceEnvRange(rng) Then
+        Debug.Print "[EnvTrace] WriteMerged ws=[" & ws.name & "] range=[" & rng.Address(False, False) & "] after=[" & CStr(rng.Cells(1, 1).value) & "] mergeArea=[" & rng.Cells(1, 1).MergeArea.Address(False, False) & "]"
+    End If
     Exit Sub
 EH:
+    Debug.Print "[EnvTrace] WriteMerged error ws=[" & IIf(ws Is Nothing, "", ws.name) & "] range=[" & addressText & "] err=" & Err.Number & ": " & Err.Description
     Err.Clear
 End Sub
+
+Private Function ShouldTraceEnvRange(ByVal rng As Range) As Boolean
+    On Error GoTo EH
+    If rng Is Nothing Then Exit Function
+    ShouldTraceEnvRange = Not Intersect(rng, rng.Worksheet.Range("Q13:U32")) Is Nothing
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
 
 Private Function JoinNonEmpty(ByVal leftText As String, ByVal rightText As String, ByVal sep As String) As String
     leftText = Trim$(leftText)
