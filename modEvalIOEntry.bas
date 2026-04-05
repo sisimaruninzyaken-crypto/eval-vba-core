@@ -46,9 +46,7 @@ Public Sub LoadEvaluation_CurrentRow()
     MsgBox "この入口は廃止しました。読み込みは「名前→直近候補から選択」に統一しています。", vbInformation
 End Sub
 
-' ★ここを退避名にして必ず閉じる
-Private Sub LoadEvaluation_fromLastRow_OBSOLETE()
-End Sub
+
 
 
 
@@ -106,21 +104,7 @@ Public Sub SaveEvaluation_Append()
 End Sub
 
 
-' ★[OBSOLETE] 直接呼ばない。読み込みは LoadEvaluation_ByName_From に一本化。
-Private Sub LoadEvaluation_LastRow_OBSOLETE(owner As Object)
 
-    MsgBox "この入口は廃止しました。読み込みは『名前→直近候補から選択』に統一しています。", vbInformation
-End Sub
-
-
-Private Sub SaveEvaluation_CurrentRow_OBSOLETE()
-    MsgBox "この入口は廃止しました。保存は『追加保存（Append）』に統一しています。", vbInformation
-End Sub
-Private Sub LoadEvaluation_CurrentRow_OBSOLETE()
-    ' OBSOLETE: this procedure must not be used.
-    Debug.Assert False
-    Exit Sub
-End Sub
 
 '======================== 実体：全部まとめて呼ぶ ========================
 
@@ -1191,9 +1175,6 @@ End Function
 
 
 
-Private Sub LoadEvaluation_LastRow_From_OBSOLETE(owner As Object)
-    MsgBox "この入口は廃止しました。読み込みは『名前→直近候補から選択』に統一しています。", vbInformation
-End Sub
 
 
 
@@ -1338,19 +1319,6 @@ Private Sub SetHdrKanaText(owner As Object, ByVal v As Variant)
     On Error GoTo 0
 End Sub
 
-' 汎用：コンボを安全にセット（リストにある時だけ選択）
-Private Sub SetComboSafe_Basic(owner As Object, ctlName As String, ByVal v As Variant)
-    Dim cb As MSForms.ComboBox
-    Dim s As String, i As Long, hit As Long
-    s = CStr(v)
-    Set cb = FindCtlDeep(owner, ctlName)
-    If cb Is Nothing Then Exit Sub
-    hit = -1
-    For i = 0 To cb.ListCount - 1
-        If CStr(cb.List(i)) = s Then hit = i: Exit For
-    Next
-    If hit >= 0 Then cb.ListIndex = hit Else cb.ListIndex = -1
-End Sub
 
 Private Sub SyncAgeBeforeBasicSave(ByVal owner As Object)
     On Error GoTo EH
