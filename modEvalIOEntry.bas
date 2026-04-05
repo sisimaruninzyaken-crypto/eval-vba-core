@@ -1401,7 +1401,6 @@ Public Sub SaveBasicInfoToSheet_FromMe(ws As Worksheet, r As Long, owner As Obje
     '--- 単一値のマッピング（最後の要素に _ を付けない） ---
     Dim map As Variant
 map = Array( _
-    Array("評価日", "txtEDate"), _
     Array("年齢", "txtAge"), _
     Array("生年月日", "txtBirth"), _
     Array("性別", "cboSex"), _
@@ -1572,15 +1571,7 @@ map = Array( _
         End If
     End If
 
-    ' --- 後方互換フォールバック: 評価日が空の場合は Basic.EvalDate 列で再試行 ---
-    Dim cED As Long: cED = FindHeaderCol(ws, "評価日")
-    If cED = 0 Or Len(Trim$(CStr(ws.Cells(r, cED).value))) = 0 Then
-        Dim cEDNew As Long: cEDNew = FindHeaderCol(ws, "Basic.EvalDate")
-        If cEDNew > 0 And Len(Trim$(CStr(ws.Cells(r, cEDNew).value))) > 0 Then
-            Dim oEDate As Object: Set oEDate = FindCtlDeep(owner, "txtEDate")
-            If Not oEDate Is Nothing Then oEDate.value = ws.Cells(r, cEDNew).value
-        End If
-    End If
+ 
 
     c = FindHeaderCol(ws, "住宅状況")
     If c > 0 Then DeserializeNamedChecks owner, HomeEnvControlNames(), CStr(ws.Cells(r, c).value)
