@@ -577,6 +577,14 @@ End Function
 ' ymKey —á: "2026-02" ‚È‚ÇiŒŽ’PˆÊ‚ÅˆêˆÓ‚É‚È‚é•¶Žš—ñj
 Public Sub ExportMonitoring_ToMonthlyWorkbook(ByVal dailyDate As Date, ByVal clientName As String, ByVal bodyText As String)
     
+    Dim reportEvalDate As Date
+    Dim reportPeriodText As String
+
+    reportEvalDate = ResolveMonitoringReportEvalDate()
+    reportPeriodText = BuildMonitoringPeriodText(reportEvalDate)
+    bodyText = ReplaceFirstDateRangeText(bodyText, reportPeriodText)
+    
+    
     If Len(Trim$(clientName)) = 0 Then
         clientName = frmEval.Controls("frHeader").Controls("txtHdrName").text
     End If
@@ -788,4 +796,49 @@ wbNew.Close SaveChanges:=True
 End Sub
 
 
+
+Private Function ResolveMonitoringReportEvalDate() As Date
+    On Error GoTo Fallback
+
+    Dim s As String
+    s = Trim$(CStr(frmEval.Controls("frHeader").Controls("txtEDate").value))
+
+    If Len(s) > 0 And IsDate(s) Then
+        ResolveMonitoringReportEvalDate = CDate(s)
+        Exit Function
+    End If
+
+Fallback:
+    ResolveMonitoringReportEvalDate = Date
+End Function
+
+Private Function BuildMonitoringPeriodText(ByVal baseDate As Date) As String
+    BuildMonitoringPeriodText = _
+        Format$(DateSerial(Year(baseDate), Month(baseDate), 1), "yyyy/mm/dd") & _
+        " - " & _
+        Format$(DateSerial(Year(baseDate), Month(baseDate) + 1, 0), "yyyy/mm/dd")
+End Function
+
+Private Function ReplaceFirstDateRangeText(ByVal sourceText As String, ByVal replacementText As String) As String
+    On Error GoTo Fallback
+
+    Dim re As Object
+    Set re = CreateObject("VBScript.RegExp")
+
+    With re
+        .Global = False
+        .IgnoreCase = True
+        .Pattern = "\d{4}/\d{1,2}/\d{1,2}\s*-\s*\d{4}/\d{1,2}/\d{1,2}"
+    End With
+
+    If re.Test(sourceText) Then
+        ReplaceFirstDateRangeText = re.Replace(sourceText, replacementText)
+    Else
+        ReplaceFirstDateRangeText = sourceText
+    End If
+    Exit Function
+
+Fallback:
+    ReplaceFirstDateRangeText = sourceText
+End Function
 

@@ -12,9 +12,11 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
 
     Dim eraName As String
     Dim birthBody As String
-    SplitWarekiBirthParts GetCtrlTextSafe(owner, "txtBirth"), GetCtrlTextSafe(owner, "txtAge"), eraName, birthBody
+    
+    Dim headerEvalDateText As String
+    headerEvalDateText = FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate"))
 
-    WriteMerged ws, "A2:U2", BuildHeaderDate("çÏê¨ì˙", FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate")))
+    WriteMerged ws, "A2:U2", BuildHeaderDate("çÏê¨ì˙", headerEvalDateText)
     WriteMerged ws, "V2:AP2", BuildHeaderDate("ëOâÒçÏê¨ì˙", FormatWarekiFull(GetPreviousCreatedDateText(owner)))
     WriteMerged ws, "AQ2:BJ2", BuildHeaderDate("èââÒçÏê¨", FormatWarekiFull(GetFirstCreatedDateText(owner)))
 
@@ -824,19 +826,19 @@ Private Sub DebugScanGoalMerge(ByVal ws As Worksheet)
     On Error GoTo 0
 End Sub
 
-Private Function NzTextSafe(ByVal v As Variant, Optional ByVal fallback As String = vbNullString) As String
+Private Function NzTextSafe(ByVal v As Variant, Optional ByVal Fallback As String = vbNullString) As String
     On Error GoTo EH
     If IsError(v) Then
-        NzTextSafe = fallback
+        NzTextSafe = Fallback
     ElseIf IsNull(v) Then
-        NzTextSafe = fallback
+        NzTextSafe = Fallback
     ElseIf IsEmpty(v) Then
-        NzTextSafe = fallback
+        NzTextSafe = Fallback
     ElseIf IsObject(v) Then
         If ObjectIsNothingSafe(v) Then
-            NzTextSafe = fallback
+            NzTextSafe = Fallback
         Else
-            NzTextSafe = fallback
+            NzTextSafe = Fallback
         End If
     Else
 
@@ -844,7 +846,7 @@ Private Function NzTextSafe(ByVal v As Variant, Optional ByVal fallback As Strin
     End If
     Exit Function
 EH:
-    NzTextSafe = fallback
+    NzTextSafe = Fallback
     Err.Clear
 End Function
 

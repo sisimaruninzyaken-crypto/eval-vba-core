@@ -678,7 +678,7 @@ Private Function BuildMMTMapFromIO(ByVal mmtIO As String) As Object
     Set m = CreateObject("Scripting.Dictionary")
 
     mmtIO = Trim$(mmtIO)
-    If LenB(mmtIO) = 0 Then GoTo fallback
+    If LenB(mmtIO) = 0 Then GoTo Fallback
 
     Dim records() As String
     records = Split(mmtIO, ";")
@@ -729,11 +729,11 @@ Private Function BuildMMTMapFromIO(ByVal mmtIO As String) As Object
 NextMMTRecord:
     Next i
 
-    If m.count = 0 Then GoTo fallback
+    If m.count = 0 Then GoTo Fallback
     Set BuildMMTMapFromIO = m
     Exit Function
 
-fallback:
+Fallback:
     m("ïGêLìW") = 3
     m("å“äOì]") = 3
     m("í∞çòãÿ") = 3

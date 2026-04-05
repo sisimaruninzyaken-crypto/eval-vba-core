@@ -12,39 +12,39 @@ Private Const FALLBACK_NUM As Long = -1
 ' ==================== Public API: BI ====================
 
 ' BIキー+点数からWordレベル文字列へ変換
-Public Function LFM_BIWordLevel(ByVal biKey As String, ByVal scoreValue As Variant, Optional ByVal fallback As String = FALLBACK_TEXT) As String
+Public Function LFM_BIWordLevel(ByVal biKey As String, ByVal scoreValue As Variant, Optional ByVal Fallback As String = FALLBACK_TEXT) As String
     Dim scoreText As String
     scoreText = Trim$(CStr(scoreValue))
 
     Select Case UCase$(Trim$(biKey))
         Case "BI_0"
-            LFM_BIWordLevel = BILevel_3(scoreText, "全介助", "一部介助", "自立", fallback)
+            LFM_BIWordLevel = BILevel_3(scoreText, "全介助", "一部介助", "自立", Fallback)
         Case "BI_1"
             Select Case scoreText
                 Case "0": LFM_BIWordLevel = "全介助"
                 Case "5": LFM_BIWordLevel = "座れるが移れない"
                 Case "10": LFM_BIWordLevel = "監視下"
                 Case "15": LFM_BIWordLevel = "自立"
-                Case Else: LFM_BIWordLevel = fallback
+                Case Else: LFM_BIWordLevel = Fallback
             End Select
         Case "BI_2"
-            LFM_BIWordLevel = BILevel_2(scoreText, "全介助", "自立", fallback)
+            LFM_BIWordLevel = BILevel_2(scoreText, "全介助", "自立", Fallback)
         Case "BI_3"
-            LFM_BIWordLevel = BILevel_3(scoreText, "全介助", "一部介助", "自立", fallback)
+            LFM_BIWordLevel = BILevel_3(scoreText, "全介助", "一部介助", "自立", Fallback)
         Case "BI_4"
-            LFM_BIWordLevel = BILevel_2(scoreText, "全介助", "自立", fallback)
+            LFM_BIWordLevel = BILevel_2(scoreText, "全介助", "自立", Fallback)
         Case "BI_5"
             Select Case scoreText
                 Case "0": LFM_BIWordLevel = "全介助"
                 Case "5": LFM_BIWordLevel = "車椅子操作が可能"
                 Case "10": LFM_BIWordLevel = "歩行器等"
                 Case "15": LFM_BIWordLevel = "自立"
-                Case Else: LFM_BIWordLevel = fallback
+                Case Else: LFM_BIWordLevel = Fallback
             End Select
         Case "BI_6", "BI_7", "BI_8", "BI_9"
-            LFM_BIWordLevel = BILevel_3(scoreText, "全介助", "一部介助", "自立", fallback)
+            LFM_BIWordLevel = BILevel_3(scoreText, "全介助", "一部介助", "自立", Fallback)
         Case Else
-            LFM_BIWordLevel = fallback
+            LFM_BIWordLevel = Fallback
     End Select
 End Function
 
@@ -103,8 +103,8 @@ End Function
 ' ==================== Public API: IADL ====================
 
 ' IADL文字列を 2 / 1 / 0 へ正規化
-Public Function LFM_NormalizeIADLLevel(ByVal levelText As String, Optional ByVal fallback As Long = FALLBACK_NUM) As Long
-    LFM_NormalizeIADLLevel = NormalizeAssistLevel(levelText, fallback)
+Public Function LFM_NormalizeIADLLevel(ByVal levelText As String, Optional ByVal Fallback As Long = FALLBACK_NUM) As Long
+    LFM_NormalizeIADLLevel = NormalizeAssistLevel(levelText, Fallback)
 End Function
 
 ' Word項目名からIADL情報を返す
@@ -135,10 +135,10 @@ End Function
 ' ==================== Public API: 起居動作 ====================
 
 ' 起居文字列を文言吸収付きで 2 / 1 / 0 へ正規化
-Public Function LFM_NormalizeKyoLevel(ByVal levelText As String, Optional ByVal fallback As Long = FALLBACK_NUM) As Long
+Public Function LFM_NormalizeKyoLevel(ByVal levelText As String, Optional ByVal Fallback As Long = FALLBACK_NUM) As Long
     Dim canon As String
     canon = CanonicalizeLevelText(levelText)
-    LFM_NormalizeKyoLevel = NormalizeAssistLevel(canon, fallback)
+    LFM_NormalizeKyoLevel = NormalizeAssistLevel(canon, Fallback)
 End Function
 
 ' 起居項目名の文言吸収（座位保持→座位、立位保持→立位）
@@ -212,8 +212,8 @@ Public Function LFM_CategoryByWordItem(ByVal wordItem As String) As String
 End Function
 
 ' 共通: 介助レベル正規化（IADL/KYOで共用）
-Public Function LFM_NormalizeAssistLevel(ByVal levelText As String, Optional ByVal fallback As Long = FALLBACK_NUM) As Long
-    LFM_NormalizeAssistLevel = NormalizeAssistLevel(levelText, fallback)
+Public Function LFM_NormalizeAssistLevel(ByVal levelText As String, Optional ByVal Fallback As Long = FALLBACK_NUM) As Long
+    LFM_NormalizeAssistLevel = NormalizeAssistLevel(levelText, Fallback)
 End Function
 
 ' デバッグ: 全テーブルと主要変換を出力
@@ -237,7 +237,7 @@ End Sub
 
 ' ==================== Private ====================
 
-Private Function NormalizeAssistLevel(ByVal levelText As String, ByVal fallback As Long) As Long
+Private Function NormalizeAssistLevel(ByVal levelText As String, ByVal Fallback As Long) As Long
     Dim s As String
     s = CanonicalizeLevelText(levelText)
 
@@ -249,7 +249,7 @@ Private Function NormalizeAssistLevel(ByVal levelText As String, ByVal fallback 
         Case "全介助"
             NormalizeAssistLevel = 0
         Case Else
-            NormalizeAssistLevel = fallback
+            NormalizeAssistLevel = Fallback
     End Select
 End Function
 
@@ -280,20 +280,20 @@ Private Function NormalizeWordItem(ByVal src As String) As String
     NormalizeWordItem = Trim$(s)
 End Function
 
-Private Function BILevel_3(ByVal scoreText As String, ByVal v0 As String, ByVal v5 As String, ByVal v10 As String, ByVal fallback As String) As String
+Private Function BILevel_3(ByVal scoreText As String, ByVal v0 As String, ByVal v5 As String, ByVal v10 As String, ByVal Fallback As String) As String
     Select Case scoreText
         Case "0": BILevel_3 = v0
         Case "5": BILevel_3 = v5
         Case "10": BILevel_3 = v10
-        Case Else: BILevel_3 = fallback
+        Case Else: BILevel_3 = Fallback
     End Select
 End Function
 
-Private Function BILevel_2(ByVal scoreText As String, ByVal v0 As String, ByVal v5 As String, ByVal fallback As String) As String
+Private Function BILevel_2(ByVal scoreText As String, ByVal v0 As String, ByVal v5 As String, ByVal Fallback As String) As String
     Select Case scoreText
         Case "0": BILevel_2 = v0
         Case "5": BILevel_2 = v5
-        Case Else: BILevel_2 = fallback
+        Case Else: BILevel_2 = Fallback
     End Select
 End Function
 
