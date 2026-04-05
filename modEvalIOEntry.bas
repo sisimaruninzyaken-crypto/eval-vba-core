@@ -4271,6 +4271,78 @@ Private Function PickLegacyTransferIndexRow(ByVal indexWs As Worksheet, _
     PickLegacyTransferIndexRow = CLng(rowsByName(n))
 End Function
 
+Private Function BuildDuplicateNameSelectionPrompt(ByVal indexWs As Worksheet, _
+                                                   ByVal rowsByName As Collection) As String
+    Dim lines As String
+    Dim i As Long
+    Dim rowNo As Long
+    Dim idVal As String
+    Dim kanaVal As String
+    Dim latestVal As String
+    Dim sheetName As String
+
+    For i = 1 To rowsByName.count
+        rowNo = CLng(rowsByName(i))
+        idVal = Trim$(CStr(indexWs.Cells(rowNo, 1).value))
+        kanaVal = Trim$(CStr(indexWs.Cells(rowNo, 3).value))
+        latestVal = Trim$(CStr(indexWs.Cells(rowNo, 6).value))
+        sheetName = Trim$(CStr(indexWs.Cells(rowNo, 4).value))
+
+        lines = lines & CStr(i) & ") 最新: "
+        If Len(latestVal) > 0 Then
+            lines = lines & latestVal
+        Else
+            lines = lines & "(履歴なし)"
+        End If
+        If Len(idVal) > 0 Then lines = lines & " / ID: " & idVal
+        If Len(kanaVal) > 0 Then lines = lines & " / : " & kanaVal
+        If Len(sheetName) > 0 Then lines = lines & " / Sheet: " & sheetName
+        If i < rowsByName.count Then lines = lines & vbCrLf
+    Next i
+
+    BuildDuplicateNameSelectionPrompt = _
+        "読み込む候補の番号を入力してください（1～" & CStr(rowsByName.count) & "）。" & vbCrLf & _
+        "キャンセルで中止します。" & vbCrLf & vbCrLf & _
+        lines
+End Function
+
+Private Function PickDuplicateNameIndexRow(ByVal indexWs As Worksheet, _
+                                           ByVal rowsByName As Collection, _
+                                           ByRef reason As String) As Long
+    Dim prompt As String
+    Dim picked As Variant
+    Dim n As Long
+    Dim retryAns As VbMsgBoxResult
+
+    reason = ""
+    If rowsByName Is Nothing Then Exit Function
+    If rowsByName.count = 0 Then Exit Function
+
+    prompt = BuildDuplicateNameSelectionPrompt(indexWs, rowsByName)
+
+    Do
+        picked = Application.InputBox(prompt, "I", Type:=1)
+        If VarType(picked) = vbBoolean Then Exit Function
+
+        If IsError(picked) Or Not IsNumeric(picked) Or Len(CStr(picked)) = 0 Then
+            retryAns = MsgBox("???B???H", vbExclamation + vbRetryCancel)
+            If retryAns = vbCancel Then Exit Function
+        Else
+            n = CLng(picked)
+            If n >= 1 And n <= rowsByName.count Then
+                PickDuplicateNameIndexRow = CLng(rowsByName(n))
+                Exit Function
+            End If
+
+            retryAns = MsgBox("? 1`" & rowsByName.count & " ??????B???H", vbExclamation + vbRetryCancel)
+            If retryAns = vbCancel Then Exit Function
+        End If
+    Loop
+End Function
+
+
+
+
 Private Function WriteUserIDToLegacyHistory(ByVal wsTarget As Worksheet, _
                                             ByVal userID As String, _
                                             ByVal personName As String) As Long
@@ -4475,18 +4547,22 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     End If
     
     If Not forSave Then
-           Dim pickFailureReason As String
+        Dim pickFailureReason As String
 
-           message = "同名の利用者が複数見つかりました。" & vbCrLf & _
-                     "対象を特定するため、IDを入力するか、候補から選択してください。" & vbCrLf & _
-                       BuildDuplicateNameCandidatesMessage(indexWs, rowsByName)
+    MsgBox "同名の利用者が複数存在します。ID未入力のため、候補番号の選択へ進みます。", vbExclamation
 
-        message = "同名の利用者が複数存在します。IDを入力して再実行してください。" & _
-                  BuildDuplicateNameCandidatesMessage(indexWs, rowsByName)
-        If Len(pickFailureReason) > 0 Then
-            message = message & vbCrLf & vbCrLf & pickFailureReason
+        pickedRow = PickDuplicateNameIndexRow(indexWs, rowsByName, pickFailureReason)
+        If pickedRow > 0 Then
+            If TryResolveHistorySheetFromIndexRow(indexWs, pickedRow, nm, wsTarget) Then
+                ResolveUserHistorySheet = True
+                Exit Function
+            End If
+
+            message = "選択した候補の履歴シートを開けませんでした。"
+            Exit Function
         End If
-        
+            
+            message = ""
         Exit Function
     End If
 
@@ -4538,19 +4614,29 @@ Private Function BuildDuplicateNameCandidatesMessage(ByVal indexWs As Worksheet,
     Dim idVal As String
     Dim kanaVal As String
     Dim latestVal As String
+    Dim sheetName As String
 
     For i = 1 To rowsByName.count
         rowNo = CLng(rowsByName(i))
         idVal = Trim$(CStr(indexWs.Cells(rowNo, 1).value))
         kanaVal = Trim$(CStr(indexWs.Cells(rowNo, 3).value))
         latestVal = Trim$(CStr(indexWs.Cells(rowNo, 6).value))
-        lines = lines & "- ID: " & idVal & " / かな: " & kanaVal & " / 最新: " & latestVal
+        sheetName = Trim$(CStr(indexWs.Cells(rowNo, 4).value))
+        lines = lines & CStr(i) & ") 最新: "
+        If Len(latestVal) > 0 Then
+            lines = lines & latestVal
+        Else
+            lines = lines & "（履歴なし）"
+        End If
+        If Len(idVal) > 0 Then lines = lines & " / ID: " & idVal
+        If Len(kanaVal) > 0 Then lines = lines & " / : " & kanaVal
+        If Len(sheetName) > 0 Then lines = lines & " / Sheet: " & sheetName
         If i < rowsByName.count Then lines = lines & vbCrLf
     Next i
 
     If Len(lines) > 0 Then
-                BuildDuplicateNameCandidatesMessage = vbCrLf & vbCrLf & ":" & vbCrLf & lines & _
-            vbCrLf & vbCrLf & "新規の場合は次のIDを使用できます:" & vbCrLf & _
+                BuildDuplicateNameCandidatesMessage = vbCrLf & vbCrLf & "?:" & vbCrLf & lines & _
+            vbCrLf & vbCrLf & "新規の場合は次のIDを利用できます:" & vbCrLf & _
             BuildNextAvailableUserIDCandidate(indexWs)
     End If
 End Function
