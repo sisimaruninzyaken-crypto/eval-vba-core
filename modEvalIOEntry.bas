@@ -4768,14 +4768,67 @@ End Sub
 
 Private Function TryParseEvalDate(ByVal v As Variant, ByRef normalizedDate As Date) As Boolean
     On Error GoTo EH
-    If IsDate(v) Then normalizedDate = DateValue(CDate(v)): TryParseEvalDate = True
+
+    If IsDate(v) Then
+        normalizedDate = DateValue(CDate(v))
+        TryParseEvalDate = True
+        Exit Function
+    End If
+
+    Dim s As String
+    s = NormalizeEvalDateText(CStr(v))
+    If LenB(s) = 0 Then Exit Function
+
+    If IsDate(s) Then
+        normalizedDate = DateValue(CDate(s))
+        TryParseEvalDate = True
+        Exit Function
+    End If
+
     Exit Function
 EH:
     TryParseEvalDate = False
 End Function
 
+Private Function NormalizeEvalDateText(ByVal raw As String) As String
+    Dim s As String
+    s = Trim$(raw)
+    If LenB(s) = 0 Then Exit Function
+
+    On Error Resume Next
+    s = StrConv(s, vbNarrow)
+    On Error GoTo 0
+
+    s = Replace$(s, "”N", "/")
+    s = Replace$(s, "ŒŽ", "/")
+    s = Replace$(s, "“ú", "")
+    s = Replace$(s, ".", "/")
+    s = Replace$(s, "-", "/")
+
+    Do While InStr(s, "//") > 0
+        s = Replace$(s, "//", "/")
+    Loop
+
+    s = Trim$(s)
+    If Right$(s, 1) = "/" Then s = Left$(s, Len(s) - 1)
+
+    NormalizeEvalDateText = s
+End Function
+
+Private Function ResolveEvalDateColumn(ByVal wsTarget As Worksheet) As Long
+    Dim headers As Variant
+    Dim i As Long
+
+    headers = Array("Basic.EvalDate", "•]‰¿“ú", "‹L˜^“ú", "XV“ú", "ì¬“ú", "EvalDate")
+
+    For i = LBound(headers) To UBound(headers)
+        ResolveEvalDateColumn = FindColByHeaderExact(wsTarget, CStr(headers(i)))
+        If ResolveEvalDateColumn > 0 Then Exit Function
+    Next i
+End Function
+
 Private Function GetLatestValidEvalRow(ByVal ws As Worksheet) As Long
-    Dim cEval As Long: cEval = FindColByHeaderExact(ws, "Basic.EvalDate")
+    Dim cEval As Long: cEval = ResolveEvalDateColumn(ws)
     If cEval = 0 Then Exit Function
     Dim lastRow As Long: lastRow = LastDataRow(ws)
     Dim r As Long, d As Date
@@ -4789,7 +4842,7 @@ Public Sub GetUserEvalDateStats(ByVal wsTarget As Worksheet, _
                                 ByRef latestEvalDate As String, _
                                 ByRef previousEvalDate As String, _
                                 ByRef recordCount As Long)
-    Dim cEval As Long: cEval = FindColByHeaderExact(wsTarget, "Basic.EvalDate")
+    Dim cEval As Long: cEval = ResolveEvalDateColumn(wsTarget)
     If cEval = 0 Then Exit Sub
 
     Dim lastRow As Long: lastRow = LastDataRow(wsTarget)
