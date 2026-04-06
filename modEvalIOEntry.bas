@@ -269,7 +269,8 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
     EnsureFormLoaded
     Dim wsTarget As Worksheet
     Dim resolveMessage As String
-    If ResolveUserHistorySheet(owner, False, wsTarget, resolveMessage) Then
+    Dim resolvedIndexRow As Long
+    If ResolveUserHistorySheetEx(owner, False, wsTarget, resolveMessage, resolvedIndexRow) Then
         Dim validRow As Long
         Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
         Dim nameVal As String: nameVal = Trim$(owner.txtName.text)
@@ -303,6 +304,7 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
             Exit Sub
         End If
         LoadAllSectionsFromSheet wsTarget, validRow, owner
+        RestoreHeaderUserIDAfterHistoryLoad owner, resolvedIndexRow, wsTarget, validRow
         Exit Sub
 
     End If
@@ -4366,6 +4368,16 @@ End Function
 
 
 Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boolean, ByRef wsTarget As Worksheet, ByRef message As String) As Boolean
+    ResolveUserHistorySheet = ResolveUserHistorySheetEx(owner, forSave, wsTarget, message)
+End Function
+
+Private Function ResolveUserHistorySheetEx(owner As Object, _
+                                           ByVal forSave As Boolean, _
+                                           ByRef wsTarget As Worksheet, _
+                                           ByRef message As String, _
+                                           Optional ByRef resolvedIndexRow As Long = 0) As Boolean
+    
+    
     Dim nm As String: nm = Trim$(owner.txtName.text)
     If Len(nm) = 0 Then message = "氏名が未入力です": Exit Function
 
@@ -4427,7 +4439,8 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
 
 
         If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
-        ResolveUserHistorySheet = True
+        resolvedIndexRow = indexRow
+        ResolveUserHistorySheetEx = True
         Exit Function
     End If
 
@@ -4456,7 +4469,8 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
             Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(indexRow, 4).value))
 
             EnsureHistorySheetInitialized wsTarget
-            ResolveUserHistorySheet = True
+            resolvedIndexRow = indexRow
+            ResolveUserHistorySheetEx = True
             Exit Function
         End If
         
@@ -4477,7 +4491,8 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
         indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
         Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
         
-        ResolveUserHistorySheet = True
+        resolvedIndexRow = newRow
+        ResolveUserHistorySheetEx = True
         Exit Function
     
     End If
@@ -4487,7 +4502,8 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
         pickedRow = PickLegacyTransferIndexRow(indexWs, rowsByNameWithoutID, idVal, nm, forSave)
         If pickedRow > 0 Then
             If AssignUserIDToHistoryEntry(indexWs, pickedRow, idVal, nm, kanaVal, wsTarget) Then
-                ResolveUserHistorySheet = True
+                resolvedIndexRow = pickedRow
+                ResolveUserHistorySheetEx = True
                 Exit Function
             End If
         End If
@@ -4500,7 +4516,8 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
             indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
             Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
             EnsureHistorySheetInitialized wsTarget
-            ResolveUserHistorySheet = True
+            resolvedIndexRow = newRow
+            ResolveUserHistorySheetEx = True
             Exit Function
         End If
 
@@ -4522,7 +4539,8 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
         pickedRow = PickDuplicateNameIndexRow(indexWs, rowsByName, pickFailureReason)
         If pickedRow > 0 Then
             If TryResolveHistorySheetFromIndexRow(indexWs, pickedRow, nm, wsTarget) Then
-                ResolveUserHistorySheet = True
+                resolvedIndexRow = pickedRow
+                ResolveUserHistorySheetEx = True
                 Exit Function
             End If
 
@@ -4537,6 +4555,30 @@ Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boole
     message = "同姓同名の利用者が複数いるため、IDまたは履歴を選択してください。" & _
           BuildDuplicateNameCandidatesMessage(indexWs, rowsByName)
 End Function
+
+Private Sub RestoreHeaderUserIDAfterHistoryLoad(ByVal owner As Object, _
+                                                ByVal resolvedIndexRow As Long, _
+                                                ByVal wsTarget As Worksheet, _
+                                                ByVal loadedRow As Long)
+    Dim restoredID As String
+    Dim indexWs As Worksheet
+    Dim cID As Long
+
+    If resolvedIndexRow > 1 Then
+        Set indexWs = EnsureEvalIndexSheet()
+        restoredID = Trim$(CStr(indexWs.Cells(resolvedIndexRow, 1).value))
+    End If
+
+    If Len(restoredID) = 0 Then
+        If loadedRow > 1 And Not wsTarget Is Nothing Then
+            cID = FindColByHeaderExact(wsTarget, "Basic.ID")
+            If cID = 0 Then cID = FindColByHeaderExact(wsTarget, "ID")
+            If cID > 0 Then restoredID = Trim$(CStr(wsTarget.Cells(loadedRow, cID).value))
+        End If
+    End If
+
+    If Len(restoredID) > 0 Then SetCtlValueSafe owner, "txtHdrPID", restoredID
+End Sub
 
 
 
