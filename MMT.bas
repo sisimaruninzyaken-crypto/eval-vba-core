@@ -50,8 +50,8 @@ Public Sub MMT_BuildChildTabs_Direct()
     PurgeStrayMMTControls pg, host
 
     '--- 子タブの中身を作り直す（MMTGENだけ消す） ---
-    Set pgUpper = mpMMTChildGen.Pages(0)
-    Set pgLower = mpMMTChildGen.Pages(1)
+    Set pgUpper = mpMMTChildGen.pages(0)
+    Set pgLower = mpMMTChildGen.pages(1)
 MMT_ClearGen pgUpper
 MMT_ClearGen pgLower
 
@@ -87,21 +87,21 @@ Private Sub ClearLegacyMMTOnPage14(ByVal frm As Object)
     If frm Is Nothing Then Exit Sub
 
     On Error Resume Next
-    Set mp1 = frm.Controls("MultiPage1")
+    Set mp1 = frm.controls("MultiPage1")
     If mp1 Is Nothing Then Exit Sub
 
-    Set pgRoot = mp1.Pages(2)
+    Set pgRoot = mp1.pages(2)
     If pgRoot Is Nothing Then Exit Sub
 
-    Set host = pgRoot.Controls("Frame3")
+    Set host = pgRoot.controls("Frame3")
     If host Is Nothing Then Exit Sub
 
-    Set mpPhys = host.Controls("mpPhys")
+    Set mpPhys = host.controls("mpPhys")
     If mpPhys Is Nothing Then Exit Sub
     On Error GoTo 0
 
-    For i = 0 To mpPhys.Pages.count - 1
-        Set pg = mpPhys.Pages(i)
+    For i = 0 To mpPhys.pages.count - 1
+        Set pg = mpPhys.pages(i)
         If LCase$(CStr(pg.name)) = "page14" Then
             RemoveLegacyMMTControlsFromPage pg
             Exit For
@@ -121,16 +121,16 @@ Private Sub RemoveLegacyMMTControlsFromPage(ByVal pg As Object)
     
     If pg Is Nothing Then Exit Sub
 
-    For i = pg.Controls.count - 1 To 0 Step -1
+    For i = pg.controls.count - 1 To 0 Step -1
     
-        Set ctl = pg.Controls(i)
+        Set ctl = pg.controls(i)
         nm = CStr(ctl.name)
     
 
         If IsLegacyMMTControlName(nm) Then
             Err.Clear
             On Error GoTo REMOVE_FAILED
-            pg.Controls.Remove nm
+            pg.controls.Remove nm
             removedCount = removedCount + 1
 #If APP_DEBUG Then
             Debug.Print "[MMT][LEGACY][REMOVE]", nm
@@ -233,8 +233,8 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
     On Error Resume Next
     If TypeName(pg.parent) = "MultiPage" Then
         If LCase$(CStr(pg.parent.name)) = "mpphys" Then
-            For i = 0 To pg.Controls.count - 1
-                Set c = pg.Controls(i)
+            For i = 0 To pg.controls.count - 1
+                Set c = pg.controls(i)
                 If TypeName(c) = "Frame" Then
                     Set GetMMTHost = c
                     Exit Function
@@ -244,14 +244,14 @@ Public Function GetMMTHost(ByVal pg As Object) As Object
     End If
     On Error GoTo 0
     
-    For i = 0 To pg.Controls.count - 1
-        Set c = pg.Controls(i)
+    For i = 0 To pg.controls.count - 1
+        Set c = pg.controls(i)
         If TypeName(c) = "Frame" Then
             Set mpProbe = Nothing
             On Error Resume Next
-            For j = 0 To c.Controls.count - 1
-                If TypeName(c.Controls(j)) = "MultiPage" Then
-                    Set mpProbe = c.Controls(j)
+            For j = 0 To c.controls.count - 1
+                If TypeName(c.controls(j)) = "MultiPage" Then
+                    Set mpProbe = c.controls(j)
                     Exit For
                 End If
             Next j
@@ -305,11 +305,11 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
         End If
     Else
         On Error Resume Next
-        For i = 0 To host.Controls.count - 1
-            If TypeName(host.Controls(i)) = "MultiPage" Then
-                If LCase$(CStr(host.Controls(i).name)) = "mpmmtchildgen" _
-                   Or InStr(1, CStr(host.Controls(i).tag), "MMTGEN", vbTextCompare) > 0 Then
-                    Set mp = host.Controls(i)
+        For i = 0 To host.controls.count - 1
+            If TypeName(host.controls(i)) = "MultiPage" Then
+                If LCase$(CStr(host.controls(i).name)) = "mpmmtchildgen" _
+                   Or InStr(1, CStr(host.controls(i).tag), "MMTGEN", vbTextCompare) > 0 Then
+                    Set mp = host.controls(i)
                     Exit For
                 End If
             End If
@@ -319,7 +319,7 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
     
 
         If mp Is Nothing Then
-            Set mp = host.Controls.Add("Forms.MultiPage.1", "mpMMTChildGen", True)
+            Set mp = host.controls.Add("Forms.MultiPage.1", "mpMMTChildGen", True)
             With mp
                 .Left = 0
                 .top = 0
@@ -332,18 +332,18 @@ Public Function GetMMTChildTabs(ByVal pg As Object, Optional ByVal host As Objec
         End If
     
     
-    If mp.Pages.count < 2 Then
-        Do While mp.Pages.count < 2
-            mp.Pages.Add
+    If mp.pages.count < 2 Then
+        Do While mp.pages.count < 2
+            mp.pages.Add
         Loop
-            ElseIf mp.Pages.count > 2 Then
-        Do While mp.Pages.count > 2
-            mp.Pages.Remove mp.Pages.count - 1
+            ElseIf mp.pages.count > 2 Then
+        Do While mp.pages.count > 2
+            mp.pages.Remove mp.pages.count - 1
         Loop
     End If
     
-    mp.Pages(0).caption = ChrW(&H4E0A) & ChrW(&H80A2)
-    mp.Pages(1).caption = ChrW(&H4E0B) & ChrW(&H80A2)
+    mp.pages(0).caption = ChrW(&H4E0A) & ChrW(&H80A2)
+    mp.pages(1).caption = ChrW(&H4E0B) & ChrW(&H80A2)
     
     Set GetMMTChildTabs = mp
 End Function
@@ -362,11 +362,11 @@ Public Function GetMMTPage(ByVal frm As Object) As Object
         Exit Function
     End If
 
-    For Each ctl In frm.Controls
+    For Each ctl In frm.controls
         If TypeName(ctl) = "MultiPage" Then
             Dim i As Long
-            For i = 0 To ctl.Pages.count - 1
-                Set pg = ctl.Pages(i)
+            For i = 0 To ctl.pages.count - 1
+                Set pg = ctl.pages(i)
                 If PageHasMMTSignature(pg) Then
                     Set GetMMTPage = pg
                     Exit Function
@@ -382,22 +382,22 @@ Private Function GetMMTPage_FromPhys(ByVal frm As Object) As Object
     Dim i As Long, cap As String
 
     On Error Resume Next
-    Set mp1 = frm.Controls("MultiPage1")
+    Set mp1 = frm.controls("MultiPage1")
     If mp1 Is Nothing Then Exit Function
 
-    Set pgPhysRoot = mp1.Pages(2)
+    Set pgPhysRoot = mp1.pages(2)
     If pgPhysRoot Is Nothing Then Exit Function
 
-    Set host = pgPhysRoot.Controls("Frame3")
+    Set host = pgPhysRoot.controls("Frame3")
     If host Is Nothing Then Exit Function
 
-    Set mpPhys = host.Controls("mpPhys")
+    Set mpPhys = host.controls("mpPhys")
     If mpPhys Is Nothing Then Exit Function
 
-    For i = 0 To mpPhys.Pages.count - 1
-        cap = CStr(mpPhys.Pages(i).caption)
+    For i = 0 To mpPhys.pages.count - 1
+        cap = CStr(mpPhys.pages(i).caption)
         If InStr(1, cap, "MMT", vbTextCompare) > 0 Then
-            Set GetMMTPage_FromPhys = mpPhys.Pages(i)
+            Set GetMMTPage_FromPhys = mpPhys.pages(i)
             Exit Function
         End If
     Next i
@@ -411,7 +411,7 @@ Private Function PageHasMMTSignature(ByVal pg As Object) As Boolean
     If pg Is Nothing Then Exit Function
 
     ' 「mpMMTChild」や「Frame9」など、MMTページ固有の痕跡で判定
-    For Each c In pg.Controls
+    For Each c In pg.controls
         If LCase$(c.name) = "mpmmtchild" Then
             PageHasMMTSignature = True
             Exit Function
@@ -431,7 +431,7 @@ End Function
 Private Sub MakeCbo(ByVal pg As Object, ByVal nm As String, _
                     ByVal L As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
     Dim o As MSForms.ComboBox
-    Set o = pg.Controls.Add("Forms.ComboBox.1", nm, True)
+    Set o = pg.controls.Add("Forms.ComboBox.1", nm, True)
     o.Left = L: o.top = t: o.Width = w: o.Height = h
     o.Style = MSForms.fmStyleDropDownList: o.BoundColumn = 1
     o.List = Split("0,1,2,3,4,5", ","): o.tag = "MMTGEN"
@@ -441,7 +441,7 @@ End Sub
 Private Sub MakeLbl(ByVal pg As Object, ByVal nm As String, ByVal cap As String, _
                     ByVal L As Single, ByVal t As Single, ByVal w As Single, ByVal h As Single)
     Dim o As MSForms.label
-    Set o = pg.Controls.Add("Forms.Label.1", nm, True)
+    Set o = pg.controls.Add("Forms.Label.1", nm, True)
     o.caption = cap: o.Left = L: o.top = t: o.Width = w: o.Height = h: o.tag = "MMTGEN"
 End Sub
 
@@ -478,12 +478,12 @@ Private Sub PurgeMMTNamedControlsInContainer(ByVal parent As Object)
     If parent Is Nothing Then Exit Sub
 
     On Error Resume Next
-    For i = parent.Controls.count - 1 To 0 Step -1
-        nm = LCase$(CStr(parent.Controls(i).name))
+    For i = parent.controls.count - 1 To 0 Step -1
+        nm = LCase$(CStr(parent.controls(i).name))
         If Left$(nm, 5) = "cbor_" _
            Or Left$(nm, 5) = "cbol_" _
            Or Left$(nm, 4) = "lbl_" Then
-            parent.Controls.Remove parent.Controls(i).name
+            parent.controls.Remove parent.controls(i).name
         End If
     Next i
     On Error GoTo 0
@@ -492,9 +492,9 @@ End Sub
 
 Private Sub MMT_ClearGen(ByVal pg As Object)
     Dim idx As Long
-    For idx = pg.Controls.count - 1 To 0 Step -1
-        If Left$(pg.Controls(idx).tag & "", 6) = "MMTGEN" Then
-            pg.Controls.Remove pg.Controls(idx).name
+    For idx = pg.controls.count - 1 To 0 Step -1
+        If Left$(pg.controls(idx).tag & "", 6) = "MMTGEN" Then
+            pg.controls.Remove pg.controls(idx).name
         End If
     Next
 End Sub
@@ -504,8 +504,8 @@ Private Sub MMT_ClearMMTCombos(ByVal mp As MSForms.MultiPage)
     Dim pg As MSForms.page
     Dim c As Object  '（ControlでもOK）
 
-    For Each pg In mp.Pages
-        For Each c In pg.Controls
+    For Each pg In mp.pages
+        For Each c In pg.controls
             If TypeName(c) = "ComboBox" Then
                 On Error Resume Next
                 c.ListIndex = -1   '選択解除（DropDownListでも有効）
@@ -551,8 +551,8 @@ Private Function MMT_SaveToString() As String
 
     ReDim parts(0 To 0): n = -1
 
-    For p = 0 To mp.Pages.count - 1
-        For Each c In mp.Pages(p).Controls
+    For p = 0 To mp.pages.count - 1
+        For Each c In mp.pages(p).controls
             If TypeName(c) = "ComboBox" Then
                 Dim nm As String, side As String
                 If Left$(c.name, 5) = "cboR_" Then
@@ -567,7 +567,7 @@ Private Function MMT_SaveToString() As String
                     Dim rVal As String, lVal As String
                     rVal = CStr(c.value)
                     On Error Resume Next
-                    lVal = CStr(mp.Pages(p).Controls("cboL_" & nm).value)
+                    lVal = CStr(mp.pages(p).controls("cboL_" & nm).value)
                     On Error GoTo 0
 
                     n = n + 1
@@ -663,18 +663,18 @@ Private Sub MMT_LoadFromString_Core(ByVal s As String)
         vR = IIf(UBound(f) >= 2, CStr(f(2)), "")
         vL = IIf(UBound(f) >= 3, CStr(f(3)), "")
 
-        If side < 0 Or side > mp.Pages.count - 1 Then
+        If side < 0 Or side > mp.pages.count - 1 Then
             Debug.Print "[LOAD][MMT] side不正: "; side; " / key="; key
             GoTo cont
         End If
 
-        Set p = mp.Pages(side)
+        Set p = mp.pages(side)
 
         ' 名前規則：cboR_ / cboL_ ＋ 項目名
         Set cboR = Nothing: Set cboL = Nothing
         On Error Resume Next
-        Set cboR = p.Controls("cboR_" & key)
-        Set cboL = p.Controls("cboL_" & key)
+        Set cboR = p.controls("cboR_" & key)
+        Set cboL = p.controls("cboL_" & key)
         On Error GoTo 0
 
         foundR = Not cboR Is Nothing
@@ -775,8 +775,8 @@ Public Sub MMT_DebugSurvey_Page14LegacyNames()
 
     Debug.Print "[MMT][SURVEY] START page=" & SafeObjName(pg) & " parent=" & SafeObjName(pg.parent)
 
-    For i = 0 To pg.Controls.count - 1
-        Set ctl = pg.Controls(i)
+    For i = 0 To pg.controls.count - 1
+        Set ctl = pg.controls(i)
         tp = TypeName(ctl)
         scanned = scanned + 1
 
@@ -819,22 +819,22 @@ Private Function GetMMTPageByName_Page14(ByVal frm As Object) As Object
     If frm Is Nothing Then Exit Function
 
     On Error Resume Next
-    Set mp1 = frm.Controls("MultiPage1")
+    Set mp1 = frm.controls("MultiPage1")
     If mp1 Is Nothing Then Exit Function
 
-    Set pgRoot = mp1.Pages(2)
+    Set pgRoot = mp1.pages(2)
     If pgRoot Is Nothing Then Exit Function
 
-    Set host = pgRoot.Controls("Frame3")
+    Set host = pgRoot.controls("Frame3")
     If host Is Nothing Then Exit Function
 
-    Set mpPhys = host.Controls("mpPhys")
+    Set mpPhys = host.controls("mpPhys")
     If mpPhys Is Nothing Then Exit Function
     On Error GoTo 0
 
-    For i = 0 To mpPhys.Pages.count - 1
-        If LCase$(CStr(mpPhys.Pages(i).name)) = "page14" Then
-            Set GetMMTPageByName_Page14 = mpPhys.Pages(i)
+    For i = 0 To mpPhys.pages.count - 1
+        If LCase$(CStr(mpPhys.pages(i).name)) = "page14" Then
+            Set GetMMTPageByName_Page14 = mpPhys.pages(i)
             Exit Function
         End If
     Next i

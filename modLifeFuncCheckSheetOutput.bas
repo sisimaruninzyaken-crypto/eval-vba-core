@@ -185,7 +185,7 @@ End Function
 Private Function GetControlTextSafe(ByVal owner As Object, ByVal controlName As String) As String
     On Error GoTo EH
     If owner Is Nothing Then Exit Function
-    GetControlTextSafe = Trim$(CStr(owner.Controls(controlName).value))
+    GetControlTextSafe = Trim$(CStr(owner.controls(controlName).value))
     Exit Function
 EH:
     Err.Clear
@@ -407,7 +407,7 @@ EH:
 End Function
 
 
-Private Function JoinNonEmpty(ByVal leftText As String, ByVal rightText As String, ByVal sep As String) As String
+Private Function JoinNonEmpty(ByVal leftText As String, ByVal rightText As String, ByVal SEP As String) As String
     leftText = Trim$(leftText)
     rightText = Trim$(rightText)
 
@@ -416,7 +416,7 @@ Private Function JoinNonEmpty(ByVal leftText As String, ByVal rightText As Strin
     ElseIf LenB(rightText) = 0 Then
         JoinNonEmpty = leftText
     Else
-        JoinNonEmpty = leftText & sep & rightText
+        JoinNonEmpty = leftText & SEP & rightText
     End If
 End Function
 
@@ -586,26 +586,15 @@ Private Function BuildInterestOutputText(ByVal owner As Object) As String
     socialText = Replace$(GetInterestJoined(owner, "Social"), "|", "A")
 
     BuildInterestOutputText = _
-        "??F" & nowText & vbCrLf & _
-        "??F" & pastText & vbCrLf & _
-        "??F" & wantText & vbCrLf & _
-        "?QF" & socialText
+        "現在の活動：" & nowText & vbCrLf & _
+        "昔の役割：" & pastText & vbCrLf & _
+        "やりたいこと：" & wantText & vbCrLf & _
+        "社会参加：" & socialText
 End Function
 
 Private Function GetInterestJoined(ByVal owner As Object, ByVal key As String) As String
     Dim labels As Variant
-    Select Case key
-        Case "Now"
-            labels = Array("テレビ・新聞", "家事", "散歩", "趣味", "人と話す")
-        Case "Past"
-            labels = Array("仕事", "家事・役割", "趣味活動", "外出・旅行", "地域活動")
-        Case "Want"
-            labels = Array("散歩・運動", "買い物", "趣味活動", "外出・旅行", "家のこと")
-        Case "Social"
-            labels = Array("買い物", "家族との時間", "友人交流", "地域活動", "外出")
-        Case Else
-            Exit Function
-    End Select
+    labels = InterestLabels(key)
 
     Dim i As Long
     For i = LBound(labels) To UBound(labels)
@@ -617,13 +606,13 @@ Private Function GetInterestJoined(ByVal owner As Object, ByVal key As String) A
     Dim otherText As String
     otherText = Trim$(GetTextByName(owner, "txtInterest_" & key & "_Other"))
     If LenB(otherText) > 0 Then
-        AppendWithSeparator GetInterestJoined, "?:" & otherText, "|"
+        AppendWithSeparator GetInterestJoined, INTEREST_OTHER_PREFIX & otherText, "|"
     End If
 End Function
 
-Private Sub AppendWithSeparator(ByRef dest As String, ByVal itemText As String, ByVal sep As String)
+Private Sub AppendWithSeparator(ByRef dest As String, ByVal itemText As String, ByVal SEP As String)
     If LenB(itemText) = 0 Then Exit Sub
-    If LenB(dest) > 0 Then dest = dest & sep
+    If LenB(dest) > 0 Then dest = dest & SEP
     dest = dest & itemText
 End Sub
 
@@ -655,9 +644,9 @@ Private Function TryGetObjectMember(ByVal obj As Object, ByVal memberName As Str
     On Error GoTo EH
     Select Case memberName
         Case "Controls"
-            Set TryGetObjectMember = obj.Controls
+            Set TryGetObjectMember = obj.controls
         Case "Pages"
-            Set TryGetObjectMember = obj.Pages
+            Set TryGetObjectMember = obj.pages
     End Select
     Exit Function
 EH:
@@ -784,10 +773,10 @@ Private Sub AddUniqueText(ByVal col As Collection, ByVal textValue As String)
     On Error GoTo 0
 End Sub
 
-Private Function JoinCollection(ByVal col As Collection, ByVal sep As String) As String
+Private Function JoinCollection(ByVal col As Collection, ByVal SEP As String) As String
     Dim i As Long
     For i = 1 To col.count
-        If i > 1 Then JoinCollection = JoinCollection & sep
+        If i > 1 Then JoinCollection = JoinCollection & SEP
         JoinCollection = JoinCollection & CStr(col(i))
     Next i
 End Function
@@ -833,7 +822,7 @@ Private Function FindLabelByCaptionDeep(ByVal container As Object, ByVal labelCa
     On Error GoTo EH
 
     Dim c As Object
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "Label" Then
             If StrComp(Trim$(CStr(c.caption)), labelCaption, vbBinaryCompare) = 0 Then
                 Set FindLabelByCaptionDeep = c
@@ -858,7 +847,7 @@ Private Function FindNearestRightComboOnSameRow(ByVal container As Object, ByVal
     bestDx = 1E+30
 
     Dim c As Object
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "ComboBox" Then
             Dim dy As Double
             Dim dx As Double
@@ -882,7 +871,7 @@ End Function
 Private Function HasControls(ByVal obj As Object) As Boolean
     On Error GoTo EH
     Dim n As Long
-    n = obj.Controls.count
+    n = obj.controls.count
     HasControls = (n >= 0)
     Exit Function
 EH:

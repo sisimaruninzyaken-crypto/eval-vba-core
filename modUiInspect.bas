@@ -16,8 +16,8 @@ End Sub
 Private Sub DumpChildren(ByVal parent As Object, ByVal path As String)
     Dim i As Long, c As Object
     On Error Resume Next
-    For i = 0 To parent.Controls.count - 1
-        Set c = parent.Controls(i)
+    For i = 0 To parent.controls.count - 1
+        Set c = parent.controls(i)
         If Not c Is Nothing Then
             Dim tp$, nm$, cap$
             tp = TypeName(c): nm = GetSafeName(c): cap = GetSafeCaption(c)
@@ -27,8 +27,8 @@ Private Sub DumpChildren(ByVal parent As Object, ByVal path As String)
                 DumpChildren c, path & "." & nm
             ElseIf tp = "MultiPage" Then
                 Dim p As Integer
-                For p = 0 To c.Pages.count - 1
-                    DumpChildren c.Pages(p), path & "." & nm & ".Page(" & p & ")"
+                For p = 0 To c.pages.count - 1
+                    DumpChildren c.pages(p), path & "." & nm & ".Page(" & p & ")"
                 Next
             ElseIf tp = "Page" Then
                 DumpChildren c, path & "." & nm
@@ -58,7 +58,7 @@ Public Sub ListCombosOnActivePage_Safe()
     Dim mp As Object, pg As Object
     Set mp = GetActiveOrFirstMultiPage(frmEval)
     If mp Is Nothing Then Debug.Print "[ERR] MultiPage not found": Exit Sub
-    Set pg = mp.Pages(mp.value)
+    Set pg = mp.pages(mp.value)
     Debug.Print "=== Combos on page:", SafeCaption(pg), "==="
     ListCombosRecursive pg
 End Sub
@@ -68,7 +68,7 @@ End Sub
 Private Function FindFirstByType(container As Object, ByVal t As String) As Object
     Dim c As Object
     On Error Resume Next
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = t Then Set FindFirstByType = c: Exit Function
         If HasControls(c) Then
             Set FindFirstByType = FindFirstByType(c, t)
@@ -80,7 +80,7 @@ End Function
 Private Sub ListCombosRecursive(parent As Object)
     Dim c As Object
     On Error Resume Next
-    For Each c In parent.Controls
+    For Each c In parent.controls
         If TypeName(c) = "ComboBox" Then Debug.Print c.name
         If HasControls(c) Then ListCombosRecursive c
     Next
@@ -94,7 +94,7 @@ Public Sub ListKeyCtrlsOnActivePage_Safe()
     Dim mp As Object, pg As Object
     Set mp = GetActiveOrFirstMultiPage(frmEval)
     If mp Is Nothing Then Debug.Print "[ERR] MultiPage not found": Exit Sub
-    Set pg = mp.Pages(mp.value)
+    Set pg = mp.pages(mp.value)
     
 
     ListByTypeRecursive pg, Array("TextBox", "CheckBox", "OptionButton", "ComboBox")
@@ -114,7 +114,7 @@ End Function
 Private Sub ListByTypeRecursive(parent As Object, wantTypes As Variant, Optional ByVal path As String = "")
     Dim c As Object, t$, nm$, cap$
     On Error Resume Next
-    For Each c In parent.Controls
+    For Each c In parent.controls
         t = TypeName(c)
         If IsWantedType(t, wantTypes) Then
             nm = SafeName(c): cap = SafeCaption(c)
@@ -133,7 +133,7 @@ End Function
 
 Private Function HasControls(obj As Object) As Boolean
     On Error Resume Next
-    HasControls = (obj.Controls.count >= 0)
+    HasControls = (obj.controls.count >= 0)
 End Function
 
 Private Function SafeCaption(o As Object) As String

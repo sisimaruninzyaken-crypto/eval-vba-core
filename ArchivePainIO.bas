@@ -86,7 +86,7 @@ Public Sub SavePainToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner A
         ' === 持続期間（数字：txtPainDuration）を単独キーとして保存 ===
     Dim durText As String
     On Error Resume Next
-    durText = CStr(pg.Controls("txtPainDuration").text)
+    durText = CStr(pg.controls("txtPainDuration").text)
     On Error GoTo 0
     If Len(Trim$(durText)) > 0 Then
         parts.Add "txtPainDuration" & SEP_KV & " " & durText
@@ -139,8 +139,8 @@ End If
 ' === VAS（0 でも保存） ===
 Dim vasText As String
 On Error Resume Next
-vasText = CStr(pg.Controls("fraVAS").Controls("txtVAS").text)   ' TextBox 優先
-If Len(vasText) = 0 Then vasText = CStr(pg.Controls("fraVAS").Controls("sldVAS").value)  ' ScrollBar 代替
+vasText = CStr(pg.controls("fraVAS").controls("txtVAS").text)   ' TextBox 優先
+If Len(vasText) = 0 Then vasText = CStr(pg.controls("fraVAS").controls("sldVAS").value)  ' ScrollBar 代替
 On Error GoTo 0
 
 ' 「0」も有効値として保存する
@@ -176,8 +176,8 @@ Private Function ResolvePainPage(ByVal owner As Object) As Object
     Set mpPhys = modCommonUtil.SafeGetControl(owner, "mpPhys")
     If mpPhys Is Nothing Then Exit Function
 
-    For i = 0 To mpPhys.Pages.count - 1
-        Set pg = mpPhys.Pages(i)
+    For i = 0 To mpPhys.pages.count - 1
+        Set pg = mpPhys.pages(i)
         If Not modCommonUtil.SafeGetControl(pg, "fraPainCourse") Is Nothing Then
             Set ResolvePainPage = pg
             Exit Function
@@ -194,12 +194,12 @@ End Function
 '―― 補助：対象MultiPageとPage探索 ―――――――――――――――――――――――――――――――――
 Private Function FindTargetMultiPage(ByVal owner As Object, ByVal hint As String, ByRef outPage As Object) As Object
     Dim ctl As Object, mp As Object, i As Long
-    For Each ctl In owner.Controls
+    For Each ctl In owner.controls
         If TypeName(ctl) = "MultiPage" Then
             Set mp = ctl
-            For i = 0 To mp.Pages.count - 1
-                If InStr(1, mp.Pages(i).caption, hint, vbTextCompare) > 0 Then
-                    Set outPage = mp.Pages(i)
+            For i = 0 To mp.pages.count - 1
+                If InStr(1, mp.pages(i).caption, hint, vbTextCompare) > 0 Then
+                    Set outPage = mp.pages(i)
                     Set FindTargetMultiPage = mp
                     Exit Function
                 End If
@@ -213,7 +213,7 @@ End Function
 '―― 補助：Page配下のComboBoxを再帰収集（Frame内含む） ―――――――――――――――――――――――――
 Private Sub CollectCombos(ByVal container As Object, ByRef bag As Collection)
     Dim ctl As Object
-    For Each ctl In container.Controls
+    For Each ctl In container.controls
         Select Case TypeName(ctl)
             Case "ComboBox": bag.Add ctl
             Case "Frame":    CollectCombos ctl, bag
@@ -224,7 +224,7 @@ End Sub
 '―― 補助：Combos→配列（Name/Top/Left/Ref） ―――――――――――――――――――――――――――――――
 Private Sub CollectListBoxesRecursive(ByVal container As Object, ByRef bag As Collection)
     Dim ctl As Object
-    For Each ctl In container.Controls
+    For Each ctl In container.controls
         Select Case TypeName(ctl)
             Case "ListBox"
                 bag.Add ctl
@@ -284,7 +284,7 @@ End Function
 '―― 補助：最大TextBoxの値（備考想定） ―――――――――――――――――――――――――――――
 Private Function LargestTextBoxValue(ByVal container As Object) As String
     Dim ctl As Object, area As Double, maxArea As Double, best As Object
-    For Each ctl In container.Controls
+    For Each ctl In container.controls
         If TypeName(ctl) = "TextBox" Then
             area = ctl.Width * ctl.Height
             If area > maxArea Then maxArea = area: Set best = ctl
@@ -301,11 +301,11 @@ Private Function NzS(ByVal dict As Object, ByVal k As String) As String
     If dict.exists(k) Then NzS = CStr(dict(k)) Else NzS = ""
 End Function
 
-Private Function JoinCollection(ByVal c As Collection, ByVal sep As String) As String
+Private Function JoinCollection(ByVal c As Collection, ByVal SEP As String) As String
     Dim i As Long, s() As String
     ReDim s(1 To c.count)
     For i = 1 To c.count: s(i) = CStr(c(i)): Next
-    JoinCollection = Join(s, sep)
+    JoinCollection = Join(s, SEP)
 End Function
 
 Private Function CreateMap4(k1 As String, v1 As Variant, k2 As String, v2 As Variant, k3 As String, v3 As Variant, k4 As String, v4 As Variant) As Variant
@@ -321,7 +321,7 @@ End Function
 
 Private Sub CollectChecksRecursive(parent As Object, colL As Collection)
     Dim c As Object, nm2 As String
-    For Each c In parent.Controls
+    For Each c In parent.controls
         If TypeName(c) = "CheckBox" Then
             If c.value = True Then
                 nm2 = c.name
@@ -339,15 +339,15 @@ End Sub
 Public Sub DumpPainFrames_Once()
     Dim pg As Object, f As Object, c As Object
     Dim uf As Object: Set uf = frmEval
-Set pg = uf.mpPhys.Pages(4)
+Set pg = uf.mpPhys.pages(4)
 
     Debug.Print "[Page]", pg.caption
-    For Each f In pg.Controls
+    For Each f In pg.controls
         If TypeName(f) = "Frame" Then
-            Debug.Print "[Frame]", f.name, "count", f.Controls.count
-            For Each c In f.Controls
+            Debug.Print "[Frame]", f.name, "count", f.controls.count
+            For Each c In f.controls
                 If TypeName(c) = "CheckBox" Then Debug.Print "  [Chk]", c.name, c.value
-                If TypeName(c) = "Frame" Then Debug.Print "  [SubFrame]", c.name, "count", c.Controls.count
+                If TypeName(c) = "Frame" Then Debug.Print "  [SubFrame]", c.name, "count", c.controls.count
             Next
         End If
     Next
@@ -358,7 +358,7 @@ End Sub
 Public Sub SavePain_CheckOnce()
     Dim uf As Object: Set uf = frmEval
     ' チェック1つON（誘因：動作で増悪）
-    uf.Controls("mpPhys").Pages(4).Controls("fraPainFactors").Controls("chkPainProv_Move").value = True
+    uf.controls("mpPhys").pages(4).controls("fraPainFactors").controls("chkPainProv_Move").value = True
     ' 保存（ボタン相当）
     SaveEvaluation_Append_From uf
     ' 直近行のIO/NOTEを数値表示
@@ -376,7 +376,7 @@ Public Sub SavePain_AppendTest_Once()
     Dim uf As Object: Set uf = frmEval
     On Error Resume Next
     uf.txtName.text = "検証Append"
-    uf.Controls("chkDiffOnly").value = False
+    uf.controls("chkDiffOnly").value = False
     On Error GoTo 0
 
     ' 保存（全体保存ルート）
@@ -411,15 +411,15 @@ Public Sub SavePain_FillAndAppend_Once()
     Dim uf As Object: Set uf = frmEval
     On Error Resume Next
     uf.txtName.text = "検証Append3"
-    uf.Controls("chkDiffOnly").value = False
-    With uf.Controls("mpPhys").Pages(4)
-        .Controls("cmbPainOnset").ListIndex = 0
-        .Controls("cmbPainDurationUnit").ListIndex = 0
-        .Controls("cmbPainDayPeriod").ListIndex = 2
+    uf.controls("chkDiffOnly").value = False
+    With uf.controls("mpPhys").pages(4)
+        .controls("cmbPainOnset").ListIndex = 0
+        .controls("cmbPainDurationUnit").ListIndex = 0
+        .controls("cmbPainDayPeriod").ListIndex = 2
         Dim lb As MSForms.ListBox
-        Set lb = .Controls("lstPainQual"): If lb.ListCount > 0 Then lb.Selected(0) = True
-        Set lb = .Controls("lstPainSite"): If lb.ListCount > 0 Then lb.Selected(0) = True
-        .Controls("fraPainFactors").Controls("chkPainProv_Move").value = True
+        Set lb = .controls("lstPainQual"): If lb.ListCount > 0 Then lb.Selected(0) = True
+        Set lb = .controls("lstPainSite"): If lb.ListCount > 0 Then lb.Selected(0) = True
+        .controls("fraPainFactors").controls("chkPainProv_Move").value = True
     End With
     On Error GoTo 0
 

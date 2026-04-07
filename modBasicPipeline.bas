@@ -35,7 +35,7 @@ Public Sub RunBasicPlan()
     Set frm = TryGetOwnerForm()
     If Not frm Is Nothing Then
         On Error Resume Next
-        patientName = Trim$(CStr(frm.Controls("txtName").value))
+        patientName = Trim$(CStr(frm.controls("txtName").value))
         Err.Clear
         On Error GoTo 0
     End If
@@ -293,7 +293,7 @@ Public Sub ExportAllSheets(ByVal owner As Object)
     If owner Is Nothing Then Err.Raise 5, "ExportAllSheets", "owner is Nothing"
 
     On Error Resume Next
-    patientName = Trim$(CStr(owner.Controls("txtName").value))
+    patientName = Trim$(CStr(owner.controls("txtName").value))
     Err.Clear
     On Error GoTo EH
 

@@ -993,8 +993,8 @@ Private Function BuildCurrentMMTCompareValue(owner As Object) As String
     ReDim parts(0 To 0)
     n = -1
 
-    For p = 0 To mp.Pages.count - 1
-        For Each c In mp.Pages(p).Controls
+    For p = 0 To mp.pages.count - 1
+        For Each c In mp.pages(p).controls
             If TypeName(c) = "ComboBox" Then
                 Dim nm As String
                 Dim side As String
@@ -1016,7 +1016,7 @@ Private Function BuildCurrentMMTCompareValue(owner As Object) As String
 
                     rVal = NormalizeCompareValue(CStr(c.value))
                     On Error Resume Next
-                    lVal = NormalizeCompareValue(CStr(mp.Pages(p).Controls("cboL_" & nm).value))
+                    lVal = NormalizeCompareValue(CStr(mp.pages(p).controls("cboL_" & nm).value))
                     On Error GoTo 0
 
                     n = n + 1
@@ -1130,7 +1130,7 @@ End Sub
 
 Private Sub CountTextInputsRecursive(ByVal container As Object, ByVal excludedRoot As Object, ByRef totalCount As Long, ByRef blankCount As Long)
     Dim ctrl As Object
-    For Each ctrl In container.Controls
+    For Each ctrl In container.controls
         If Not excludedRoot Is Nothing Then
             If IsDescendantControl(ctrl, excludedRoot) Then GoTo NextControl
         End If
@@ -1145,7 +1145,7 @@ Private Sub CountTextInputsRecursive(ByVal container As Object, ByVal excludedRo
 
         On Error Resume Next
         Dim childCount As Long
-        childCount = ctrl.Controls.count
+        childCount = ctrl.controls.count
         If Err.Number = 0 And childCount > 0 Then
             On Error GoTo 0
             CountTextInputsRecursive ctrl, excludedRoot, totalCount, blankCount
@@ -1284,12 +1284,12 @@ Private Function GetHdrKanaText(owner As Object) As String
     Dim c As Object
 
     On Error Resume Next
-    Set c = owner.Controls("frHeader").Controls("txtHdrKana")
+    Set c = owner.controls("frHeader").controls("txtHdrKana")
     On Error GoTo 0
 
     If c Is Nothing Then
         On Error Resume Next
-        Set c = owner.Controls("txtHdrKana")
+        Set c = owner.controls("txtHdrKana")
         On Error GoTo 0
     End If
 
@@ -1306,12 +1306,12 @@ Private Sub SetHdrKanaText(owner As Object, ByVal v As Variant)
     Dim c As Object
 
     On Error Resume Next
-    Set c = owner.Controls("frHeader").Controls("txtHdrKana")
+    Set c = owner.controls("frHeader").controls("txtHdrKana")
     On Error GoTo 0
 
     If c Is Nothing Then
         On Error Resume Next
-        Set c = owner.Controls("txtHdrKana")
+        Set c = owner.controls("txtHdrKana")
         On Error GoTo 0
     End If
 
@@ -1662,7 +1662,7 @@ End Function
 ' ラベル「ID」の右にある TextBox から値を取得（コントロール名に依存しない）
 Public Function GetID_FromBasicInfo(ByVal owner As Object) As String
     On Error Resume Next
-    GetID_FromBasicInfo = Trim$(CStr(owner.Controls("frHeader").Controls("txtHdrPID").value))
+    GetID_FromBasicInfo = Trim$(CStr(owner.controls("frHeader").controls("txtHdrPID").value))
     On Error GoTo 0
 End Function
 
@@ -1684,13 +1684,13 @@ Public Function GetTextByLabelInFrame(ByVal frm As Object, ByVal labelCaption As
     If frm Is Nothing Then Exit Function
     On Error Resume Next
     Dim HasControls As Boolean
-    HasControls = Not (frm.Controls Is Nothing)
+    HasControls = Not (frm.controls Is Nothing)
     On Error GoTo 0
     If Not HasControls Then Exit Function
 
     ' --- 以下は今のロジックそのまま ---
     Dim lb As Object, ctl As Object
-    For Each ctl In frm.Controls
+    For Each ctl In frm.controls
         If TypeName(ctl) = "Label" Then
             If InStr(1, CStr(ctl.caption), labelCaption, vbTextCompare) > 0 Then
                 Set lb = ctl: Exit For
@@ -1701,7 +1701,7 @@ Public Function GetTextByLabelInFrame(ByVal frm As Object, ByVal labelCaption As
 
     Dim best As Object, bestScore As Double
     bestScore = 1E+20
-    For Each ctl In frm.Controls
+    For Each ctl In frm.controls
         If TypeName(ctl) = "TextBox" Then
             Dim dy As Double: dy = Abs((ctl.top + ctl.Height / 2) - (lb.top + lb.Height / 2))
             If dy <= lb.Height Then
@@ -1727,17 +1727,17 @@ Private Function FindFrameByCaptionDeep_Walk(ByVal container As Object, ByVal ca
 
     If TypeName(container) = "MultiPage" Then
         Dim pg As Object
-        For Each pg In container.Pages
+        For Each pg In container.pages
             Set FindFrameByCaptionDeep_Walk = FindFrameByCaptionDeep_Walk(pg, captionLike)
             If Not FindFrameByCaptionDeep_Walk Is Nothing Then Exit Function
         Next pg
     End If
 
-    Dim tmp As Object: Set tmp = container.Controls
+    Dim tmp As Object: Set tmp = container.controls
     If Err.Number <> 0 Then Err.Clear: Exit Function
 
     Dim ctl As Object
-    For Each ctl In container.Controls
+    For Each ctl In container.controls
         Select Case TypeName(ctl)
             Case "Frame"
                 If InStr(1, CStr(ctl.caption), captionLike, vbTextCompare) > 0 Then
@@ -1752,7 +1752,7 @@ Private Function FindFrameByCaptionDeep_Walk(ByVal container As Object, ByVal ca
 
             Case Else
                 Err.Clear
-                Set tmp = ctl.Controls
+                Set tmp = ctl.controls
                 If Err.Number = 0 Then
                     Set FindFrameByCaptionDeep_Walk = FindFrameByCaptionDeep_Walk(ctl, captionLike)
                     If Not FindFrameByCaptionDeep_Walk Is Nothing Then Exit Function
@@ -1976,7 +1976,7 @@ Private Function FindControlDeep(ByVal parent As Object, ByVal targetName As Str
     ' 2) MultiPage は Pages を走査
     If TypeName(parent) = "MultiPage" Then
         Dim pg As Object
-        For Each pg In parent.Pages
+        For Each pg In parent.pages
             Set hit = FindControlDeep(pg, targetName)
             If Not hit Is Nothing Then Set FindControlDeep = hit: Exit Function
         Next pg
@@ -1985,13 +1985,13 @@ Private Function FindControlDeep(ByVal parent As Object, ByVal targetName As Str
 
     ' 3) 直下に同名があれば取得（存在しない型でも例外にしない）
     On Error Resume Next
-    Set hit = parent.Controls(targetName)
+    Set hit = parent.controls(targetName)
     On Error GoTo 0
     If Not hit Is Nothing Then Set FindControlDeep = hit: Exit Function
 
     ' 4) 子コントロールを再帰走査（Controls を持たない型はスキップ）
     On Error Resume Next
-    For Each c In parent.Controls
+    For Each c In parent.controls
         Err.Clear
         Set hit = FindControlDeep(c, targetName)
         If Not hit Is Nothing Then Set FindControlDeep = hit: Exit Function
@@ -2003,11 +2003,11 @@ End Function
 ' 代表キャプションから親フレームを推定
 Private Function FindGroupByAnyCaption(frm As Object, captions As Variant) As Object
     Dim cont As Object, c As Object, cap As Variant
-    For Each cont In frm.Controls
+    For Each cont In frm.controls
         On Error Resume Next
         ' コンテナ（Frame/Pageなど）だけ調べる
-        If Not cont.Controls Is Nothing Then
-            For Each c In cont.Controls
+        If Not cont.controls Is Nothing Then
+            For Each c In cont.controls
                 If TypeName(c) = "CheckBox" Then
                     For Each cap In captions
                         If Trim$(c.caption) = CStr(cap) Then
@@ -2024,7 +2024,7 @@ End Function
 ' 名前→無ければ代表キャプションで補助具/リスクのフレームを取得
 Private Function ResolveGroup(frm As Object, targetName As String, isAids As Boolean) As Object
     ' 1) 名前で探す（自前のFindControlDeepを使う）
-    Set ResolveGroup = frm.Controls(targetName)
+    Set ResolveGroup = frm.controls(targetName)
     If Not ResolveGroup Is Nothing Then Exit Function
 
     ' 2) キャプションから推定
@@ -2043,7 +2043,7 @@ Public Function SerializeChecks(frm As Object, targetName As String, Optional is
     If grp Is Nothing Then Exit Function
 
     Dim s As String, c As Object
-    For Each c In grp.Controls
+    For Each c In grp.controls
         If TypeName(c) = "CheckBox" Then
             If c.value = True Then
                 If LenB(s) > 0 Then s = s & ","
@@ -2068,7 +2068,7 @@ Public Sub DeserializeChecks(frm As Object, targetName As String, ByVal csv As S
     End If
 
     Dim c As Object
-    For Each c In grp.Controls
+    For Each c In grp.controls
         If TypeName(c) = "CheckBox" Then
             c.value = dict.exists(Trim$(c.caption))
         End If
@@ -2088,7 +2088,7 @@ End Function
 
 Private Function GetBool(owner As Object, ctlName As String, Optional defaultValue As Boolean = True) As Boolean
     On Error Resume Next
-    GetBool = CBool(owner.Controls(ctlName).value)
+    GetBool = CBool(owner.controls(ctlName).value)
     If Err.Number <> 0 Then GetBool = defaultValue
     On Error GoTo 0
 End Function
@@ -2527,7 +2527,7 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner
     If Len(vLevel) > 0 Then
         ' Tag="WalkIndepLevel" のコンボを探して値を戻す
         Set cLvl = Nothing
-        For Each c In owner.Controls
+        For Each c In owner.controls
             If TypeName(c) = "ComboBox" Then
                 If c.tag = "WalkIndepLevel" Then
                     Set cLvl = c
@@ -2557,7 +2557,7 @@ Public Sub Load_WalkIndepFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner
     If Not cmb Is Nothing Then cmb.value = v
 
     ' --- 安定性チェック（chkWalkStab_*）を一度全部OFF ---
-    For Each c In owner.Controls
+    For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If StrComp(Left$(nm, 12), "chkWalkStab_", vbTextCompare) = 0 Then
@@ -2602,7 +2602,7 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
     If Len(s) = 0 Then Exit Sub
 
     ' まず、RLA 関連のチェック・レベルを全部リセット
-    For Each c In owner.Controls
+    For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If InStr(1, nm, "RLA_", vbTextCompare) = 1 Then
@@ -2640,7 +2640,7 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
                 Dim cap As String
                 cap = Trim$(parts(i))
                 If Len(cap) > 0 Then
-                    For Each c In owner.Controls
+                    For Each c In owner.controls
                         If TypeName(c) = "CheckBox" Then
                             nm = CStr(c.name)
                             If InStr(1, nm, "RLA_" & CStr(phase) & "_", vbTextCompare) = 1 Then
@@ -2656,7 +2656,7 @@ Public Sub Load_WalkRLAFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
 
         ' --- レベル（OptionButton：GroupName=phase & Caption一致でON） ---
         If Len(level) > 0 Then
-            For Each c In owner.Controls
+            For Each c In owner.controls
                 If TypeName(c) = "OptionButton" Then
                     If StrComp(c.groupName, CStr(phase), vbTextCompare) = 0 Then
                         If CStr(c.caption) = level Then
@@ -2685,7 +2685,7 @@ Public Sub Load_WalkAbnFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner A
     If Len(s) = 0 Then Exit Sub
 
     ' 一旦、fraWalkAbn_* の全チェックをOFFにする
-    For Each c In owner.Controls
+    For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If InStr(1, nm, "fraWalkAbn_", vbTextCompare) = 1 Then
@@ -2735,14 +2735,14 @@ End Sub
 
 Private Function FindControlRecursive(parent As Object, name As String) As Object
     Dim ctl As Object
-    For Each ctl In parent.Controls
+    For Each ctl In parent.controls
         If StrComp(ctl.name, name, vbTextCompare) = 0 Then
             Set FindControlRecursive = ctl
             Exit Function
         End If
         ' Frame や MultiPage の場合は再帰検索
         On Error Resume Next
-        If ctl.Controls.count > 0 Then
+        If ctl.controls.count > 0 Then
             Dim subCtl As Object
             Set subCtl = FindControlRecursive(ctl, name)
             If Not subCtl Is Nothing Then
@@ -2756,13 +2756,13 @@ End Function
 
 Private Function FindControlByTagRecursive(parent As Object, tagName As String) As Object
     Dim ctl As Object
-    For Each ctl In parent.Controls
+    For Each ctl In parent.controls
         If StrComp(CStr(ctl.tag), tagName, vbTextCompare) = 0 Then
             Set FindControlByTagRecursive = ctl
             Exit Function
         End If
         On Error Resume Next
-        If ctl.Controls.count > 0 Then
+        If ctl.controls.count > 0 Then
             Dim subCtl As Object
             Set subCtl = FindControlByTagRecursive(ctl, tagName)
             If Not subCtl Is Nothing Then
@@ -2779,7 +2779,7 @@ Private Function SerializeCheckedCaptionsByTag(parent As Object, groupTag As Str
     Dim s As String
     Dim childCsv As String
 
-    For Each ctl In parent.Controls
+    For Each ctl In parent.controls
         If TypeName(ctl) = "CheckBox" Then
             If StrComp(CStr(ctl.tag), groupTag, vbTextCompare) = 0 Then
                 If ctl.value = True Then
@@ -2790,7 +2790,7 @@ Private Function SerializeCheckedCaptionsByTag(parent As Object, groupTag As Str
         End If
 
         On Error Resume Next
-        If ctl.Controls.count > 0 Then
+        If ctl.controls.count > 0 Then
             childCsv = SerializeCheckedCaptionsByTag(ctl, groupTag)
             If LenB(childCsv) > 0 Then
                 If LenB(s) > 0 Then s = s & ","
@@ -2817,7 +2817,7 @@ Private Sub DeserializeCheckedCaptionsByTag(parent As Object, groupTag As String
         Next p
     End If
 
-    For Each ctl In parent.Controls
+    For Each ctl In parent.controls
         If TypeName(ctl) = "CheckBox" Then
             If StrComp(CStr(ctl.tag), groupTag, vbTextCompare) = 0 Then
                 ctl.value = dict.exists(Trim$(ctl.caption))
@@ -2825,7 +2825,7 @@ Private Sub DeserializeCheckedCaptionsByTag(parent As Object, groupTag As String
         End If
 
         On Error Resume Next
-        If ctl.Controls.count > 0 Then
+        If ctl.controls.count > 0 Then
             DeserializeCheckedCaptionsByTag ctl, groupTag, csv
         End If
         On Error GoTo 0
@@ -2852,7 +2852,7 @@ Public Function Build_WalkIndep_IO(owner As Object) As String
 Set cLvl = FindControlRecursive(owner, "cmbWalkIndep")
 If cLvl Is Nothing Then
     ' タグで検索する（今回の正式ルート）
-    For Each c In owner.Controls
+    For Each c In owner.controls
         If TypeName(c) = "ComboBox" Then
             If c.tag = "WalkIndepLevel" Then
                 Set cLvl = c
@@ -2879,7 +2879,7 @@ If Not cLvl Is Nothing Then vLevel = Trim$(cLvl.value)
 
     ' 安定性チェック（chkWalkStab_～ を全部拾う）
     Set hits = New Collection
-    For Each c In owner.Controls
+    For Each c In owner.controls
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
             If StrComp(Left$(nm, 12), "chkWalkStab_", vbTextCompare) = 0 Then
@@ -2920,7 +2920,7 @@ Public Function Build_WalkAbn_IO(owner As Object) As String
     
     Set hits = New Collection
     
-    For Each c In owner.Controls
+    For Each c In owner.controls
         ' fraWalkAbn_?_chk? という名前の CheckBox だけ拾う
         If TypeName(c) = "CheckBox" Then
             nm = CStr(c.name)
@@ -2992,7 +2992,7 @@ Public Function Build_WalkRLA_IO(owner As Object) As String
         level = ""
 
         ' --- チェック（RLA_<phase>_～）を拾う ---
-        For Each c In owner.Controls
+        For Each c In owner.controls
             If TypeName(c) = "CheckBox" Then
                 nm = CStr(c.name)
                 If InStr(1, nm, "RLA_" & CStr(phase) & "_", vbTextCompare) = 1 Then
@@ -3012,7 +3012,7 @@ Public Function Build_WalkRLA_IO(owner As Object) As String
         End If
 
         ' --- レベル（OptionButton, GroupName=phase）を拾う ---
-        For Each c In owner.Controls
+        For Each c In owner.controls
             If TypeName(c) = "OptionButton" Then
                 If StrComp(c.groupName, CStr(phase), vbTextCompare) = 0 Then
                     If c.value = True Then
@@ -3086,8 +3086,8 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     Set frm = owner   ' frmEval を受け取る想定
     Set mpCog = GetCogTabsSafe(frm)
     If mpCog Is Nothing Then Exit Sub
-    Set pgCog = mpCog.Pages("pgCognition")
-    Set pgMental = mpCog.Pages("pgMental")
+    Set pgCog = mpCog.pages("pgCognition")
+    Set pgMental = mpCog.pages("pgMental")
         
     
     '=== 認知：中核6項目 =====================================
@@ -3095,7 +3095,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 記憶
     col = HeaderCol_Compat("IO_Cog_Memory", ws)
     If col > 0 Then
-        v = pgCog.Controls("cmbCogMemory").value
+        v = pgCog.controls("cmbCogMemory").value
 
 
         If IsNull(v) Then v = ""
@@ -3105,7 +3105,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 注意
     col = HeaderCol_Compat("IO_Cog_Attention", ws)
     If col > 0 Then
-        v = pgCog.Controls("cmbCogAttention").value
+        v = pgCog.controls("cmbCogAttention").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3114,7 +3114,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 見当識
     col = HeaderCol_Compat("IO_Cog_Orientation", ws)
     If col > 0 Then
-            v = pgCog.Controls("cmbCogOrientation").value
+            v = pgCog.controls("cmbCogOrientation").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3123,7 +3123,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 判断
     col = HeaderCol_Compat("IO_Cog_Judgment", ws)
     If col > 0 Then
-            v = pgCog.Controls("cmbCogJudgement").value
+            v = pgCog.controls("cmbCogJudgement").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3132,7 +3132,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 遂行機能
     col = HeaderCol_Compat("IO_Cog_Executive", ws)
     If col > 0 Then
-             v = pgCog.Controls("cmbCogExecutive").value
+             v = pgCog.controls("cmbCogExecutive").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3141,7 +3141,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 言語
     col = HeaderCol_Compat("IO_Cog_Language", ws)
     If col > 0 Then
-             v = pgCog.Controls("cmbCogLanguage").value
+             v = pgCog.controls("cmbCogLanguage").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3151,7 +3151,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     
     col = HeaderCol_Compat("IO_Cog_DementiaType", ws)
     If col > 0 Then
-             v = pgCog.Controls("cmbDementiaType").value
+             v = pgCog.controls("cmbDementiaType").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3159,7 +3159,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     
     col = HeaderCol_Compat("IO_Cog_DementiaNote", ws)
     If col > 0 Then
-            v = pgCog.Controls("txtDementiaNote").text
+            v = pgCog.controls("txtDementiaNote").text
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3169,7 +3169,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     
     bpsd = ""
      With pgCog
-        For Each c In .Controls
+        For Each c In .controls
             If TypeName(c) = "CheckBox" Then
                 If c.value = True Then
                     If Len(bpsd) > 0 Then bpsd = bpsd & "|"
@@ -3190,7 +3190,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 気分
     col = HeaderCol_Compat("IO_Mental_Mood", ws)
     If col > 0 Then
-             v = pgMental.Controls("cmbMood").value
+             v = pgMental.controls("cmbMood").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3199,7 +3199,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 意欲
     col = HeaderCol_Compat("IO_Mental_Motivation", ws)
     If col > 0 Then
-            v = pgMental.Controls("cmbMotivation").value
+            v = pgMental.controls("cmbMotivation").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3208,7 +3208,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 不安
     col = HeaderCol_Compat("IO_Mental_Anxiety", ws)
     If col > 0 Then
-            v = pgMental.Controls("cmbAnxiety").value
+            v = pgMental.controls("cmbAnxiety").value
             
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3217,7 +3217,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 対人関係
     col = HeaderCol_Compat("IO_Mental_Relation", ws)
     If col > 0 Then
-            v = pgMental.Controls("cmbRelation").value
+            v = pgMental.controls("cmbRelation").value
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3226,7 +3226,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 睡眠
     col = HeaderCol_Compat("IO_Mental_Sleep", ws)
     If col > 0 Then
-            v = pgMental.Controls("cmbSleep").value
+            v = pgMental.controls("cmbSleep").value
             
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3235,7 +3235,7 @@ Public Sub Save_CognitionMental_AtRow(ws As Worksheet, r As Long, owner As Objec
     ' 精神面・備考
     col = HeaderCol_Compat("IO_Mental_Note", ws)
     If col > 0 Then
-            v = pgMental.Controls("txtMentalNote").text
+            v = pgMental.controls("txtMentalNote").text
 
         If IsNull(v) Then v = ""
         ws.Cells(r, col).value = v
@@ -3262,8 +3262,8 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     '=== UI ルート取得（絶対名を前提）===
     Set mp = GetCogTabsSafe(owner)
     If mp Is Nothing Then Exit Sub
-    Set pgCog = mp.Pages("pgCognition")
-    Set pgMental = mp.Pages("pgMental")
+    Set pgCog = mp.pages("pgCognition")
+    Set pgMental = mp.pages("pgMental")
 
     '=== 認知側 combobox 群 ===
     LoadComboValueByHeader ws, r, "IO_Cog_Memory", pgCog, "cmbCogMemory"
@@ -3275,12 +3275,12 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     LoadComboValueByHeader ws, r, "IO_Cog_DementiaType", pgCog, "cmbDementiaType"
 
     v = ReadValueByCompatHeader(ws, r, "IO_Cog_DementiaNote")
-    pgCog.Controls("txtDementiaNote").text = CStr(v)
+    pgCog.controls("txtDementiaNote").text = CStr(v)
 
     '=== BPSD（chkBPSD0?10）===
     ' 1) 全部一度クリア
     For i = 0 To 10
-        Set chk = pgCog.Controls("chkBPSD" & CStr(i))
+        Set chk = pgCog.controls("chkBPSD" & CStr(i))
         chk.value = False
     Next i
 
@@ -3290,7 +3290,7 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
         arr = Split(s, "|")
         For i = LBound(arr) To UBound(arr)
             For j = 0 To 10
-                Set chk = pgCog.Controls("chkBPSD" & CStr(j))
+                Set chk = pgCog.controls("chkBPSD" & CStr(j))
                 If chk.caption = arr(i) Then
                     chk.value = True
                     Exit For
@@ -3307,7 +3307,7 @@ Public Sub Load_CognitionMental_FromRow(ws As Worksheet, ByVal r As Long, owner 
     LoadComboValueByHeader ws, r, "IO_Mental_Sleep", pgMental, "cmbSleep"
 
     v = ReadValueByCompatHeader(ws, r, "IO_Mental_Note")
-    pgMental.Controls("txtMentalNote").text = CStr(v)
+    pgMental.controls("txtMentalNote").text = CStr(v)
 End Sub
 
 
@@ -3316,7 +3316,7 @@ Private Sub LoadComboValueByHeader(ByVal ws As Worksheet, ByVal r As Long, ByVal
     Dim cmb As MSForms.ComboBox
     Dim v As String
 
-    Set cmb = parent.Controls(comboName)
+    Set cmb = parent.controls(comboName)
     v = CStr(ReadValueByCompatHeader(ws, r, headerName))
 
     If Len(v) = 0 Then
@@ -3950,7 +3950,7 @@ End Sub
 
 Private Sub Walk(ByVal parent As Object)
     Dim c As Object
-    For Each c In parent.Controls
+    For Each c In parent.controls
         DumpIfIDLike c
         If HasControls(c) Then Walk c
     Next
@@ -3959,7 +3959,7 @@ End Sub
 Private Function HasControls(ByVal o As Object) As Boolean
     On Error Resume Next
     Dim n As Long
-    n = o.Controls.count
+    n = o.controls.count
     HasControls = (Err.Number = 0 And n > 0)
     Err.Clear
     On Error GoTo 0

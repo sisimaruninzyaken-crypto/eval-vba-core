@@ -6,12 +6,12 @@ Private Function GetRightComboByLabelCaptionIn(p As MSForms.page, ByVal cap As S
     Dim i As Long, lb As MSForms.label, c As Control, best As MSForms.ComboBox
     Dim dy As Double, bestDx As Double: bestDx = 1E+30
     ' 1) Caption一致ラベルを探す
-    For i = 0 To p.Controls.count - 1
-        If TypeName(p.Controls(i)) = "Label" Then
-            Set lb = p.Controls(i)
+    For i = 0 To p.controls.count - 1
+        If TypeName(p.controls(i)) = "Label" Then
+            Set lb = p.controls(i)
             If lb.caption = cap Then
                 ' 2) 同じ行(±6pt)で右側にある最短距離のComboBox
-                For Each c In p.Controls
+                For Each c In p.controls
                     If TypeName(c) = "ComboBox" Then
                         dy = Abs(c.top - lb.top)
                         If dy <= 6 And c.Left > lb.Left Then
@@ -37,13 +37,13 @@ End Function
 Private Sub ResolveKyoUnnamedCombos(ByRef cmbStandUp As MSForms.ComboBox, ByRef cmbStandHold As MSForms.ComboBox)
     Dim mp As MSForms.MultiPage, p As MSForms.page, c As Control
     ' mpADL 取得
-    For Each c In frmEval.Controls
+    For Each c In frmEval.controls
         If TypeName(c) = "MultiPage" Then
             If c.name = "mpADL" Then Set mp = c: Exit For
         End If
     Next c
     If mp Is Nothing Then Exit Sub
-    Set p = mp.Pages(2) ' 起居動作
+    Set p = mp.pages(2) ' 起居動作
     Set cmbStandUp = GetRightComboByLabelCaptionIn(p, "立ち上がり")
     Set cmbStandHold = GetRightComboByLabelCaptionIn(p, "立位保持")
 End Sub
@@ -55,7 +55,7 @@ Public Sub Snapshot_ADL_Once()
     Dim cmbSU As MSForms.ComboBox, cmbSH As MSForms.ComboBox
 
     ' mpADL 取得
-    For Each ctl In frmEval.Controls
+    For Each ctl In frmEval.controls
         If TypeName(ctl) = "MultiPage" Then
             If ctl.name = "mpADL" Then Set mp = ctl: Exit For
         End If
@@ -63,79 +63,79 @@ Public Sub Snapshot_ADL_Once()
     If mp Is Nothing Then Debug.Print "[ERR] mpADL not found": Exit Sub
 
     ' --- BI (#0) ---
-    Set p = mp.Pages(0)
+    Set p = mp.pages(0)
     s = ""
-    v = p.Controls("txtBITotal").text: s = s & "BITotal=" & v & "|"
+    v = p.controls("txtBITotal").text: s = s & "BITotal=" & v & "|"
     For i = 0 To 9
-        v = p.Controls("cmbBI_" & i).text
+        v = p.controls("cmbBI_" & i).text
         s = s & "BI_" & i & "=" & v & "|"
     Next i
     
 
-If mp.Pages(0).Controls("chkBIHomeEnv_Entrance").value Then
+If mp.pages(0).controls("chkBIHomeEnv_Entrance").value Then
     s = s & "BI_HomeEnv_0=1|"
 Else
     s = s & "BI_HomeEnv_0=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_Genkan").value Then
+If mp.pages(0).controls("chkBIHomeEnv_Genkan").value Then
     s = s & "BI_HomeEnv_1=1|"
 Else
     s = s & "BI_HomeEnv_1=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_IndoorStep").value Then
+If mp.pages(0).controls("chkBIHomeEnv_IndoorStep").value Then
     s = s & "BI_HomeEnv_2=1|"
 Else
     s = s & "BI_HomeEnv_2=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_Stairs").value Then
+If mp.pages(0).controls("chkBIHomeEnv_Stairs").value Then
     s = s & "BI_HomeEnv_3=1|"
 Else
     s = s & "BI_HomeEnv_3=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_Handrail").value Then
+If mp.pages(0).controls("chkBIHomeEnv_Handrail").value Then
     s = s & "BI_HomeEnv_4=1|"
 Else
     s = s & "BI_HomeEnv_4=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_Slope").value Then
+If mp.pages(0).controls("chkBIHomeEnv_Slope").value Then
     s = s & "BI_HomeEnv_5=1|"
 Else
     s = s & "BI_HomeEnv_5=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_NarrowPath").value Then
+If mp.pages(0).controls("chkBIHomeEnv_NarrowPath").value Then
     s = s & "BI_HomeEnv_6=1|"
 Else
     s = s & "BI_HomeEnv_6=0|"
 End If
 
-s = s & "BI_HomeEnv_Note=" & mp.Pages(0).Controls("txtBIHomeEnvNote").text & "|"
+s = s & "BI_HomeEnv_Note=" & mp.pages(0).controls("txtBIHomeEnvNote").text & "|"
 
     ' --- IADL (#1) ---
-    Set p = mp.Pages(1)
+    Set p = mp.pages(1)
     For i = 0 To 8
-        v = p.Controls("cmbIADL_" & i).text
+        v = p.controls("cmbIADL_" & i).text
         s = s & "IADL_" & i & "=" & v & "|"
     Next i
-    v = p.Controls("txtIADLNote").text
+    v = p.controls("txtIADLNote").text
     s = s & "IADLNote=" & v & "|"
 
     ' --- 起居動作 (#2) ---
-    Set p = mp.Pages(2)
-    s = s & "Kyo_Roll=" & p.Controls("cmbKyo_Roll").text & "|"
-    s = s & "Kyo_SitUp=" & p.Controls("cmbKyo_SitUp").text & "|"
-    s = s & "Kyo_SitHold=" & p.Controls("cmbKyo_SitHold").text & "|"
+    Set p = mp.pages(2)
+    s = s & "Kyo_Roll=" & p.controls("cmbKyo_Roll").text & "|"
+    s = s & "Kyo_SitUp=" & p.controls("cmbKyo_SitUp").text & "|"
+    s = s & "Kyo_SitHold=" & p.controls("cmbKyo_SitHold").text & "|"
 
     Call ResolveKyoUnnamedCombos(cmbSU, cmbSH)
     If Not cmbSU Is Nothing Then s = s & "Kyo_StandUp=" & cmbSU.text & "|" Else Debug.Print "[WARN] 立ち上がり 未解決"
     If Not cmbSH Is Nothing Then s = s & "Kyo_StandHold=" & cmbSH.text & "|" Else Debug.Print "[WARN] 立位保持 未解決"
 
-    s = s & "Kyo_Note=" & p.Controls("txtKyoNote").text
+    s = s & "Kyo_Note=" & p.controls("txtKyoNote").text
 
     Debug.Print "[ADL.IO] "; s
     Debug.Print "[ADL.IO.Len] "; Len(s)
@@ -151,7 +151,7 @@ Public Function Build_ADL_IO() As String
     Dim cmbSU As MSForms.ComboBox, cmbSH As MSForms.ComboBox
 
     ' mpADL 取得
-    For Each ctl In frmEval.Controls
+    For Each ctl In frmEval.controls
         If TypeName(ctl) = "MultiPage" Then
             If ctl.name = "mpADL" Then Set mp = ctl: Exit For
         End If
@@ -159,74 +159,74 @@ Public Function Build_ADL_IO() As String
     If mp Is Nothing Then Exit Function
 
     ' --- BI (#0) ---
-    Set p = mp.Pages(0)
+    Set p = mp.pages(0)
     s = ""
-    v = p.Controls("txtBITotal").text: s = s & "BITotal=" & v & "|"
+    v = p.controls("txtBITotal").text: s = s & "BITotal=" & v & "|"
     For i = 0 To 9
-        v = p.Controls("cmbBI_" & i).text
+        v = p.controls("cmbBI_" & i).text
         s = s & "BI_" & i & "=" & v & "|"
     Next i
     
 
-If mp.Pages(0).Controls("chkBIHomeEnv_Entrance").value Then
+If mp.pages(0).controls("chkBIHomeEnv_Entrance").value Then
     s = s & "BI_HomeEnv_0=1|"
 Else
     s = s & "BI_HomeEnv_0=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_Genkan").value Then
+If mp.pages(0).controls("chkBIHomeEnv_Genkan").value Then
     s = s & "BI_HomeEnv_1=1|"
 Else
     s = s & "BI_HomeEnv_1=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_IndoorStep").value Then
+If mp.pages(0).controls("chkBIHomeEnv_IndoorStep").value Then
     s = s & "BI_HomeEnv_2=1|"
 Else
     s = s & "BI_HomeEnv_2=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_Stairs").value Then
+If mp.pages(0).controls("chkBIHomeEnv_Stairs").value Then
     s = s & "BI_HomeEnv_3=1|"
 Else
     s = s & "BI_HomeEnv_3=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_Handrail").value Then
+If mp.pages(0).controls("chkBIHomeEnv_Handrail").value Then
     s = s & "BI_HomeEnv_4=1|"
 Else
     s = s & "BI_HomeEnv_4=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_Slope").value Then
+If mp.pages(0).controls("chkBIHomeEnv_Slope").value Then
     s = s & "BI_HomeEnv_5=1|"
 Else
     s = s & "BI_HomeEnv_5=0|"
 End If
 
-If mp.Pages(0).Controls("chkBIHomeEnv_NarrowPath").value Then
+If mp.pages(0).controls("chkBIHomeEnv_NarrowPath").value Then
     s = s & "BI_HomeEnv_6=1|"
 Else
     s = s & "BI_HomeEnv_6=0|"
 End If
 
-s = s & "BI_HomeEnv_Note=" & mp.Pages(0).Controls("txtBIHomeEnvNote").text & "|"
+s = s & "BI_HomeEnv_Note=" & mp.pages(0).controls("txtBIHomeEnvNote").text & "|"
 
 
     ' --- IADL (#1) ---
-    Set p = mp.Pages(1)
+    Set p = mp.pages(1)
     For i = 0 To 8
-        v = p.Controls("cmbIADL_" & i).text
+        v = p.controls("cmbIADL_" & i).text
         s = s & "IADL_" & i & "=" & v & "|"
     Next i
-    v = p.Controls("txtIADLNote").text
+    v = p.controls("txtIADLNote").text
     s = s & "IADLNote=" & v & "|"
 
     ' --- 起居動作 (#2) ---
-    Set p = mp.Pages(2)
-    s = s & "Kyo_Roll=" & p.Controls("cmbKyo_Roll").text & "|"
-    s = s & "Kyo_SitUp=" & p.Controls("cmbKyo_SitUp").text & "|"
-    s = s & "Kyo_SitHold=" & p.Controls("cmbKyo_SitHold").text & "|"
+    Set p = mp.pages(2)
+    s = s & "Kyo_Roll=" & p.controls("cmbKyo_Roll").text & "|"
+    s = s & "Kyo_SitUp=" & p.controls("cmbKyo_SitUp").text & "|"
+    s = s & "Kyo_SitHold=" & p.controls("cmbKyo_SitHold").text & "|"
 
     ' 無名コンボ解決（立ち上がり／立位保持）
     Set cmbSU = GetRightComboByLabelCaptionIn(p, "立ち上がり")
@@ -234,7 +234,7 @@ s = s & "BI_HomeEnv_Note=" & mp.Pages(0).Controls("txtBIHomeEnvNote").text & "|"
     If Not cmbSU Is Nothing Then s = s & "Kyo_StandUp=" & cmbSU.text & "|"
     If Not cmbSH Is Nothing Then s = s & "Kyo_StandHold=" & cmbSH.text & "|"
 
-    s = s & "Kyo_Note=" & p.Controls("txtKyoNote").text
+    s = s & "Kyo_Note=" & p.controls("txtKyoNote").text
 
     Build_ADL_IO = s
 End Function
@@ -308,7 +308,7 @@ Public Sub Load_ADL_Latest()
     parts = Split(s, "|")
 
     ' mpADL 取得
-    For Each ctl In frmEval.Controls
+    For Each ctl In frmEval.controls
         If TypeName(ctl) = "MultiPage" Then
             If ctl.name = "mpADL" Then Set mp = ctl: Exit For
         End If
@@ -316,7 +316,7 @@ Public Sub Load_ADL_Latest()
     If mp Is Nothing Then Exit Sub
 
     ' 無名コンボ（起居：立ち上がり／立位保持）を解決
-    Set p = mp.Pages(2) ' 起居動作
+    Set p = mp.pages(2) ' 起居動作
     Set cmbSU = GetRightComboByLabelCaptionIn(p, "立ち上がり")
     Set cmbSH = GetRightComboByLabelCaptionIn(p, "立位保持")
 
@@ -330,47 +330,47 @@ Public Sub Load_ADL_Latest()
         Select Case k
             
     ' --- BI (#0) ---
-    Case "BITotal":                 mp.Pages(0).Controls("txtBITotal").text = v
-    Case "BI_0":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_0"), v
-    Case "BI_1":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_1"), v
-    Case "BI_2":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_2"), v
-    Case "BI_3":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_3"), v
-    Case "BI_4":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_4"), v
-    Case "BI_5":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_5"), v
-    Case "BI_6":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_6"), v
-    Case "BI_7":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_7"), v
-    Case "BI_8":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_8"), v
-    Case "BI_9":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_9"), v
+    Case "BITotal":                 mp.pages(0).controls("txtBITotal").text = v
+    Case "BI_0":                    SafeSetComboValue mp.pages(0).controls("cmbBI_0"), v
+    Case "BI_1":                    SafeSetComboValue mp.pages(0).controls("cmbBI_1"), v
+    Case "BI_2":                    SafeSetComboValue mp.pages(0).controls("cmbBI_2"), v
+    Case "BI_3":                    SafeSetComboValue mp.pages(0).controls("cmbBI_3"), v
+    Case "BI_4":                    SafeSetComboValue mp.pages(0).controls("cmbBI_4"), v
+    Case "BI_5":                    SafeSetComboValue mp.pages(0).controls("cmbBI_5"), v
+    Case "BI_6":                    SafeSetComboValue mp.pages(0).controls("cmbBI_6"), v
+    Case "BI_7":                    SafeSetComboValue mp.pages(0).controls("cmbBI_7"), v
+    Case "BI_8":                    SafeSetComboValue mp.pages(0).controls("cmbBI_8"), v
+    Case "BI_9":                    SafeSetComboValue mp.pages(0).controls("cmbBI_9"), v
 
-    Case "BI_HomeEnv_0":            mp.Pages(0).Controls("chkBIHomeEnv_Entrance").value = (v = "1")
-    Case "BI_HomeEnv_1":            mp.Pages(0).Controls("chkBIHomeEnv_Genkan").value = (v = "1")
-    Case "BI_HomeEnv_2":            mp.Pages(0).Controls("chkBIHomeEnv_IndoorStep").value = (v = "1")
-    Case "BI_HomeEnv_3":            mp.Pages(0).Controls("chkBIHomeEnv_Stairs").value = (v = "1")
-    Case "BI_HomeEnv_4":            mp.Pages(0).Controls("chkBIHomeEnv_Handrail").value = (v = "1")
-    Case "BI_HomeEnv_5":            mp.Pages(0).Controls("chkBIHomeEnv_Slope").value = (v = "1")
-    Case "BI_HomeEnv_6":            mp.Pages(0).Controls("chkBIHomeEnv_NarrowPath").value = (v = "1")
-    Case "BI_HomeEnv_Note":         mp.Pages(0).Controls("txtBIHomeEnvNote").text = v
+    Case "BI_HomeEnv_0":            mp.pages(0).controls("chkBIHomeEnv_Entrance").value = (v = "1")
+    Case "BI_HomeEnv_1":            mp.pages(0).controls("chkBIHomeEnv_Genkan").value = (v = "1")
+    Case "BI_HomeEnv_2":            mp.pages(0).controls("chkBIHomeEnv_IndoorStep").value = (v = "1")
+    Case "BI_HomeEnv_3":            mp.pages(0).controls("chkBIHomeEnv_Stairs").value = (v = "1")
+    Case "BI_HomeEnv_4":            mp.pages(0).controls("chkBIHomeEnv_Handrail").value = (v = "1")
+    Case "BI_HomeEnv_5":            mp.pages(0).controls("chkBIHomeEnv_Slope").value = (v = "1")
+    Case "BI_HomeEnv_6":            mp.pages(0).controls("chkBIHomeEnv_NarrowPath").value = (v = "1")
+    Case "BI_HomeEnv_Note":         mp.pages(0).controls("txtBIHomeEnvNote").text = v
 
 
     ' --- IADL (#1) ---
-    Case "IADL_0":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_0"), v
-    Case "IADL_1":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_1"), v
-    Case "IADL_2":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_2"), v
-    Case "IADL_3":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_3"), v
-    Case "IADL_4":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_4"), v
-    Case "IADL_5":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_5"), v
-    Case "IADL_6":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_6"), v
-    Case "IADL_7":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_7"), v
-    Case "IADL_8":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_8"), v
-    Case "IADLNote":                mp.Pages(1).Controls("txtIADLNote").text = v
+    Case "IADL_0":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_0"), v
+    Case "IADL_1":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_1"), v
+    Case "IADL_2":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_2"), v
+    Case "IADL_3":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_3"), v
+    Case "IADL_4":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_4"), v
+    Case "IADL_5":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_5"), v
+    Case "IADL_6":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_6"), v
+    Case "IADL_7":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_7"), v
+    Case "IADL_8":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_8"), v
+    Case "IADLNote":                mp.pages(1).controls("txtIADLNote").text = v
 
     ' --- 起居動作 (#2) ---
-    Case "Kyo_Roll":                SafeSetComboValue mp.Pages(2).Controls("cmbKyo_Roll"), v
-    Case "Kyo_SitUp":               SafeSetComboValue mp.Pages(2).Controls("cmbKyo_SitUp"), v
-    Case "Kyo_SitHold":             SafeSetComboValue mp.Pages(2).Controls("cmbKyo_SitHold"), v
+    Case "Kyo_Roll":                SafeSetComboValue mp.pages(2).controls("cmbKyo_Roll"), v
+    Case "Kyo_SitUp":               SafeSetComboValue mp.pages(2).controls("cmbKyo_SitUp"), v
+    Case "Kyo_SitHold":             SafeSetComboValue mp.pages(2).controls("cmbKyo_SitHold"), v
     Case "Kyo_StandUp":             If Not cmbSU Is Nothing Then SafeSetComboValue cmbSU, v
     Case "Kyo_StandHold":           If Not cmbSH Is Nothing Then SafeSetComboValue cmbSH, v
-    Case "Kyo_Note":                mp.Pages(2).Controls("txtKyoNote").text = v
+    Case "Kyo_Note":                mp.pages(2).controls("txtKyoNote").text = v
 End Select
 
         n = n + 1
@@ -425,7 +425,7 @@ Private Sub WalkCtrlPaths(host As Object, ByVal path As String)
     ' MultiPage は Controls ではなく Pages を走査
 If TypeName(host) = "MultiPage" Then
     Dim pg As MSForms.page
-    For Each pg In host.Pages
+    For Each pg In host.pages
         WalkCtrlPaths pg, path & "/" & pg.caption & ":Page"
     Next pg
     Exit Sub
@@ -433,7 +433,7 @@ End If
 
 
     Dim c As Control, t As String, p As String
-    For Each c In host.Controls
+    For Each c In host.controls
         t = TypeName(c)
         p = path & "/" & c.name & ":" & t
         If c.name = "Frame33" Then Debug.Print "[HIT] "; p
@@ -521,12 +521,12 @@ Public Function FindADLControlByKey(ByVal key As String) As Control
     ' 例：key="BI_0" や "IADL_7" や "BITotal"
     Dim p As Object, pg As Object, ctl As Control, t As String, tag As String
     On Error Resume Next
-    Set p = frmEval.Controls("mpADL")
+    Set p = frmEval.controls("mpADL")
     On Error GoTo 0
     If p Is Nothing Then Exit Function
 
-    For Each pg In p.Pages
-        For Each ctl In pg.Controls
+    For Each pg In p.pages
+        For Each ctl In pg.controls
             t = TypeName(ctl)
             If t = "TextBox" Or t = "ComboBox" Or t = "CheckBox" Then
                 On Error Resume Next
@@ -595,7 +595,7 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, r As Long, owner As Object)
     parts = Split(s, "|")
 
     ' mpADL 取得（ownerから）
-    For Each ctl In owner.Controls
+    For Each ctl In owner.controls
         If TypeName(ctl) = "MultiPage" Then
             If ctl.name = "mpADL" Then Set mp = ctl: Exit For
         End If
@@ -603,7 +603,7 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, r As Long, owner As Object)
     If mp Is Nothing Then Exit Sub
 
     ' 無名コンボ（起居：立ち上がり／立位保持）を解決
-    Set p = mp.Pages(2) ' 起居動作
+    Set p = mp.pages(2) ' 起居動作
     Set cmbSU = GetRightComboByLabelCaptionIn(p, "立ち上がり")
     Set cmbSH = GetRightComboByLabelCaptionIn(p, "立位保持")
 
@@ -616,37 +616,37 @@ Public Sub Load_ADL_FromRow(ws As Worksheet, r As Long, owner As Object)
 
         Select Case k
             ' --- BI (#0) ---
-            Case "BITotal":                 mp.Pages(0).Controls("txtBITotal").text = v
-            Case "BI_0":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_0"), v
-            Case "BI_1":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_1"), v
-            Case "BI_2":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_2"), v
-            Case "BI_3":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_3"), v
-            Case "BI_4":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_4"), v
-            Case "BI_5":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_5"), v
-            Case "BI_6":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_6"), v
-            Case "BI_7":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_7"), v
-            Case "BI_8":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_8"), v
-            Case "BI_9":                    SafeSetComboValue mp.Pages(0).Controls("cmbBI_9"), v
+            Case "BITotal":                 mp.pages(0).controls("txtBITotal").text = v
+            Case "BI_0":                    SafeSetComboValue mp.pages(0).controls("cmbBI_0"), v
+            Case "BI_1":                    SafeSetComboValue mp.pages(0).controls("cmbBI_1"), v
+            Case "BI_2":                    SafeSetComboValue mp.pages(0).controls("cmbBI_2"), v
+            Case "BI_3":                    SafeSetComboValue mp.pages(0).controls("cmbBI_3"), v
+            Case "BI_4":                    SafeSetComboValue mp.pages(0).controls("cmbBI_4"), v
+            Case "BI_5":                    SafeSetComboValue mp.pages(0).controls("cmbBI_5"), v
+            Case "BI_6":                    SafeSetComboValue mp.pages(0).controls("cmbBI_6"), v
+            Case "BI_7":                    SafeSetComboValue mp.pages(0).controls("cmbBI_7"), v
+            Case "BI_8":                    SafeSetComboValue mp.pages(0).controls("cmbBI_8"), v
+            Case "BI_9":                    SafeSetComboValue mp.pages(0).controls("cmbBI_9"), v
 
             ' --- IADL (#1) ---
-            Case "IADL_0":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_0"), v
-            Case "IADL_1":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_1"), v
-            Case "IADL_2":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_2"), v
-            Case "IADL_3":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_3"), v
-            Case "IADL_4":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_4"), v
-            Case "IADL_5":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_5"), v
-            Case "IADL_6":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_6"), v
-            Case "IADL_7":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_7"), v
-            Case "IADL_8":                  SafeSetComboValue mp.Pages(1).Controls("cmbIADL_8"), v
-            Case "IADLNote":                mp.Pages(1).Controls("txtIADLNote").text = v
+            Case "IADL_0":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_0"), v
+            Case "IADL_1":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_1"), v
+            Case "IADL_2":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_2"), v
+            Case "IADL_3":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_3"), v
+            Case "IADL_4":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_4"), v
+            Case "IADL_5":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_5"), v
+            Case "IADL_6":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_6"), v
+            Case "IADL_7":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_7"), v
+            Case "IADL_8":                  SafeSetComboValue mp.pages(1).controls("cmbIADL_8"), v
+            Case "IADLNote":                mp.pages(1).controls("txtIADLNote").text = v
 
             ' --- 起居動作 (#2) ---
-            Case "Kyo_Roll":                SafeSetComboValue mp.Pages(2).Controls("cmbKyo_Roll"), v
-            Case "Kyo_SitUp":               SafeSetComboValue mp.Pages(2).Controls("cmbKyo_SitUp"), v
-            Case "Kyo_SitHold":             SafeSetComboValue mp.Pages(2).Controls("cmbKyo_SitHold"), v
+            Case "Kyo_Roll":                SafeSetComboValue mp.pages(2).controls("cmbKyo_Roll"), v
+            Case "Kyo_SitUp":               SafeSetComboValue mp.pages(2).controls("cmbKyo_SitUp"), v
+            Case "Kyo_SitHold":             SafeSetComboValue mp.pages(2).controls("cmbKyo_SitHold"), v
             Case "Kyo_StandUp":             If Not cmbSU Is Nothing Then SafeSetComboValue cmbSU, v
             Case "Kyo_StandHold":           If Not cmbSH Is Nothing Then SafeSetComboValue cmbSH, v
-            Case "Kyo_Note":                mp.Pages(2).Controls("txtKyoNote").text = v
+            Case "Kyo_Note":                mp.pages(2).controls("txtKyoNote").text = v
         End Select
 
         n = n + 1

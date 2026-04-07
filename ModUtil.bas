@@ -18,7 +18,7 @@ Public Function FindCtlDeep(ByVal container As Object, ByVal ctlName As String) 
     Dim c As Object, pg As MSForms.page
     On Error Resume Next
 
-    For Each c In container.Controls
+    For Each c In container.controls
         If StrComp(c.name, ctlName, vbTextCompare) = 0 Then
             Set FindCtlDeep = c
             Exit Function
@@ -30,7 +30,7 @@ Public Function FindCtlDeep(ByVal container As Object, ByVal ctlName As String) 
         End If
 
         If TypeOf c Is MSForms.MultiPage Then
-            For Each pg In c.Pages
+            For Each pg In c.pages
                 Set FindCtlDeep = FindCtlDeep(pg, ctlName)  ' Å© ctlName Ç…ìùàÍ
                 If Not FindCtlDeep Is Nothing Then Exit Function
             Next

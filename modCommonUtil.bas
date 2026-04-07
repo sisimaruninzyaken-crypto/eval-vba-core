@@ -159,15 +159,15 @@ Public Sub App_Main()
     frmEval.Show vbModeless
 
         Dim yBtn As Single
-    yBtn = frmEval.InsideHeight - frmEval.Controls("btnCloseCtl").Height - 12
+    yBtn = frmEval.InsideHeight - frmEval.controls("btnCloseCtl").Height - 12
 
-    frmEval.Controls("btnCloseCtl").top = yBtn
-    frmEval.Controls("cmdSaveGlobal").top = yBtn
-    frmEval.Controls("cmdClearGlobal").top = yBtn
+    frmEval.controls("btnCloseCtl").top = yBtn
+    frmEval.controls("cmdSaveGlobal").top = yBtn
+    frmEval.controls("cmdClearGlobal").top = yBtn
 
-    frmEval.Controls("mpPhys").Height = yBtn - frmEval.Controls("mpPhys").top - 12
+    frmEval.controls("mpPhys").Height = yBtn - frmEval.controls("mpPhys").top - 12
     
-    Debug.Print "[post-mpPhys] yBtn=" & yBtn & " mpPhysB=" & (frmEval.Controls("mpPhys").top + frmEval.Controls("mpPhys").Height) & " InsideH=" & frmEval.InsideHeight
+    Debug.Print "[post-mpPhys] yBtn=" & yBtn & " mpPhysB=" & (frmEval.controls("mpPhys").top + frmEval.controls("mpPhys").Height) & " InsideH=" & frmEval.InsideHeight
 
     
     
@@ -227,7 +227,7 @@ End Sub
 
 Public Function ControlExists(parent As Object, ctrlName As String) As Boolean
     Dim c As Object
-    For Each c In parent.Controls
+    For Each c In parent.controls
         If c.name = ctrlName Then
             ControlExists = True
             Exit Function
@@ -278,7 +278,7 @@ Private Function FindControlRecursive(ByVal node As Object, ByVal targetName As 
 
     If TypeName(node) = "MultiPage" Then
         On Error Resume Next
-        For Each page In node.Pages
+        For Each page In node.pages
             On Error GoTo 0
             Set found = FindControlRecursive(page, targetName, visited)
             If Not found Is Nothing Then
@@ -297,7 +297,7 @@ Private Function GetChildControls(ByVal parent As Object) As Collection
     
     On Error Resume Next
 
-    For Each c In parent.Controls
+    For Each c In parent.controls
         result.Add c
     Next c
     On Error GoTo 0
@@ -347,15 +347,15 @@ End Function
 Public Sub Tighten_DailyLog_Boxes()
     Dim uf As Object: Set uf = frmEval
 
-    Dim mp As Object: Set mp = uf.Controls("MultiPage1")
-    Dim pg As Object: Set pg = mp.Pages(7) ' 日々の記録
+    Dim mp As Object: Set mp = uf.controls("MultiPage1")
+    Dim pg As Object: Set pg = mp.pages(7) ' 日々の記録
 
-    Dim f As MSForms.Frame: Set f = pg.Controls("fraDailyLog")
-    Dim txtTraining As MSForms.TextBox: Set txtTraining = f.Controls("txtDailyTraining")
-    Dim txtReaction As MSForms.TextBox: Set txtReaction = f.Controls("txtDailyReaction")
-    Dim txtAbnormal As MSForms.TextBox: Set txtAbnormal = f.Controls("txtDailyAbnormal")
-    Dim txtPlan As MSForms.TextBox: Set txtPlan = f.Controls("txtDailyPlan")
-    Dim lst As MSForms.ListBox: Set lst = f.Controls("lstDailyLogList")
+    Dim f As MSForms.Frame: Set f = pg.controls("fraDailyLog")
+    Dim txtTraining As MSForms.TextBox: Set txtTraining = f.controls("txtDailyTraining")
+    Dim txtReaction As MSForms.TextBox: Set txtReaction = f.controls("txtDailyReaction")
+    Dim txtAbnormal As MSForms.TextBox: Set txtAbnormal = f.controls("txtDailyAbnormal")
+    Dim txtPlan As MSForms.TextBox: Set txtPlan = f.controls("txtDailyPlan")
+    Dim lst As MSForms.ListBox: Set lst = f.controls("lstDailyLogList")
 
     Const BOX_H As Single = 95
 
@@ -371,7 +371,7 @@ Public Sub Tighten_DailyLog_Boxes()
 
     ' ラベルを「一覧の直上」に置く
     Dim lbl As MSForms.label
-    Set lbl = f.Controls("lblDailyHistory")
+    Set lbl = f.controls("lblDailyHistory")
 
 
     ' ListBoxは溢れたら自動でスクロールが出る（常時表示は仕様上できない）
@@ -396,10 +396,10 @@ Public Sub Verify_POST_TagUniqueness()
     Dim dup As Long: dup = 0
 
     Dim p As Object, f2 As Object, f35 As Object, f36 As Object
-    Set p = frmEval.Controls("MultiPage1").Pages("Page2")
-    Set f2 = p.Controls("Frame2")
-    Set f35 = f2.Controls("Frame35")
-    Set f36 = f2.Controls("Frame36")
+    Set p = frmEval.controls("MultiPage1").pages("Page2")
+    Set f2 = p.controls("Frame2")
+    Set f35 = f2.controls("Frame35")
+    Set f36 = f2.controls("Frame36")
 
     dup = dup + CountDupTagsInFrame(seen, f35)
     dup = dup + CountDupTagsInFrame(seen, f36)
@@ -411,7 +411,7 @@ Private Function CountDupTagsInFrame(ByVal seen As Object, ByVal fr As Object) A
     Dim c As Object, t As String
     Dim dup As Long: dup = 0
 
-    For Each c In fr.Controls
+    For Each c In fr.controls
         If c.parent Is fr Then
             If TypeName(c) = "CheckBox" Or TypeName(c) = "ComboBox" Or TypeName(c) = "TextBox" Or TypeName(c) = "OptionButton" Then
                 t = ""
@@ -456,10 +456,10 @@ End Sub
 
 Private Function CollectTrueTags(ByVal prefix As String) As String
     Dim p As Object, f2 As Object, f35 As Object, f36 As Object
-    Set p = frmEval.Controls("MultiPage1").Pages("Page2")
-    Set f2 = p.Controls("Frame2")
-    Set f35 = f2.Controls("Frame35")
-    Set f36 = f2.Controls("Frame36")
+    Set p = frmEval.controls("MultiPage1").pages("Page2")
+    Set f2 = p.controls("Frame2")
+    Set f35 = f2.controls("Frame35")
+    Set f36 = f2.controls("Frame36")
 
     Dim res As String
     res = res & CollectInFrame(f35, prefix)
@@ -473,7 +473,7 @@ End Function
 
 Private Function CollectInFrame(ByVal fr As Object, ByVal prefix As String) As String
     Dim c As Object, t As String, s As String
-    For Each c In fr.Controls
+    For Each c In fr.controls
         If c.parent Is fr Then
             If TypeName(c) = "CheckBox" Then
                 t = CStr(c.tag)
@@ -488,12 +488,12 @@ End Function
 
 Private Function GetTagText(ByVal tagName As String) As String
     Dim p As Object, f2 As Object, fr As Object, c As Object
-    Set p = frmEval.Controls("MultiPage1").Pages("Page2")
-    Set f2 = p.Controls("Frame2")
+    Set p = frmEval.controls("MultiPage1").pages("Page2")
+    Set f2 = p.controls("Frame2")
 
     ' Frame35
-    Set fr = f2.Controls("Frame35")
-    For Each c In fr.Controls
+    Set fr = f2.controls("Frame35")
+    For Each c In fr.controls
         If c.parent Is fr Then
             If TypeName(c) = "TextBox" And CStr(c.tag) = tagName Then
                 GetTagText = Replace$(CStr(c.text), vbCrLf, " ")
@@ -503,8 +503,8 @@ Private Function GetTagText(ByVal tagName As String) As String
     Next
 
     ' Frame36
-    Set fr = f2.Controls("Frame36")
-    For Each c In fr.Controls
+    Set fr = f2.controls("Frame36")
+    For Each c In fr.controls
         If c.parent Is fr Then
             If TypeName(c) = "TextBox" And CStr(c.tag) = tagName Then
                 GetTagText = Replace$(CStr(c.text), vbCrLf, " ")
@@ -586,7 +586,7 @@ Public Sub ExportMonitoring_ToMonthlyWorkbook(ByVal dailyDate As Date, ByVal cli
     
     
     If Len(Trim$(clientName)) = 0 Then
-        clientName = frmEval.Controls("frHeader").Controls("txtHdrName").text
+        clientName = frmEval.controls("frHeader").controls("txtHdrName").text
     End If
 
     
@@ -801,7 +801,7 @@ Private Function ResolveMonitoringReportEvalDate() As Date
     On Error GoTo Fallback
 
     Dim s As String
-    s = Trim$(CStr(frmEval.Controls("frHeader").Controls("txtEDate").value))
+    s = Trim$(CStr(frmEval.controls("frHeader").controls("txtEDate").value))
 
     If Len(s) > 0 And IsDate(s) Then
         ResolveMonitoringReportEvalDate = CDate(s)

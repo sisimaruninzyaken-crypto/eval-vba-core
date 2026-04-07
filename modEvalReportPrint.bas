@@ -7,7 +7,7 @@ Private Sub WalkContainer(ByVal cont As Object, ByRef maxBottom As Double)
    '--- MultiPage は Controls を持たない（Pages を掘る）
 If TypeName(cont) = "MultiPage" Then
     Dim p As MSForms.page
-    For Each p In cont.Pages
+    For Each p In cont.pages
         WalkContainer p, maxBottom
     Next p
     Exit Sub
@@ -21,7 +21,7 @@ End If
     Static lastMaxInfo As String
 
 
-    For Each c In cont.Controls
+    For Each c In cont.controls
 
     Dim isContainer As Boolean
     isContainer = (TypeOf c Is MSForms.Frame) _
@@ -61,13 +61,13 @@ Public Sub Fix_Page8_DailyLog_Once()
 
 
     Dim uf As Object: Set uf = frmEval
-    Dim mp As MSForms.MultiPage: Set mp = uf.Controls("MultiPage1")
-    Dim pg As MSForms.page: Set pg = mp.Pages("Page8")
+    Dim mp As MSForms.MultiPage: Set mp = uf.controls("MultiPage1")
+    Dim pg As MSForms.page: Set pg = mp.pages("Page8")
 
     Dim maxBottom As Double
     maxBottom = 0#
     
-    pg.Controls("lstDailyLogList").Height = 140
+    pg.controls("lstDailyLogList").Height = 140
 
     
     WalkContainer pg, maxBottom
@@ -77,10 +77,10 @@ Public Sub Fix_Page8_DailyLog_Once()
 
 
     If needShrink > 0 Then
-        pg.Controls("lstDailyLogList").Height = Application.Max(40, 140 - needShrink)
+        pg.controls("lstDailyLogList").Height = Application.Max(40, 140 - needShrink)
 
     Else
-        pg.Controls("lstDailyLogList").Height = 140
+        pg.controls("lstDailyLogList").Height = 140
     End If
 
     '検証ログ（結果だけ）
@@ -95,17 +95,17 @@ End Sub
 
 Public Sub Fix_Page6_Walk_FrameScroll_Once()
     Dim f As Object
-    Set f = frmEval.Controls("MultiPage1").Pages("Page6").Controls("Frame6")
+    Set f = frmEval.controls("MultiPage1").pages("Page6").controls("Frame6")
 
     '表示枠をMP1に合わせる
-    f.Height = frmEval.Controls("MultiPage1").Height
+    f.Height = frmEval.controls("MultiPage1").Height
     f.ScrollBars = fmScrollBarsVertical
     f.ScrollTop = 0
 
     '中身の最大Bottom → ScrollHeight
     Dim maxBottom As Double: maxBottom = 0#
     Dim c As Object
-    For Each c In f.Controls
+    For Each c In f.controls
         If c.top + c.Height > maxBottom Then maxBottom = c.top + c.Height
     Next c
     f.ScrollHeight = maxBottom + 12
@@ -119,7 +119,7 @@ End Sub
 
 
 Public Sub Temp_SetScroll_Frame3_Page3()
-    With frmEval.Controls("MultiPage1").Pages(2).Controls("Frame3")
+    With frmEval.controls("MultiPage1").pages(2).controls("Frame3")
         .ScrollBars = fmScrollBarsVertical
         .ScrollHeight = 602.35   ' 578.35 + 24
     End With
@@ -128,7 +128,7 @@ End Sub
 
 
 Public Sub Temp_SetScroll_Frame7_Page7()
-    With frmEval.Controls("MultiPage1").Pages(6).Controls("Frame7")
+    With frmEval.controls("MultiPage1").pages(6).controls("Frame7")
         .ScrollBars = fmScrollBarsVertical
         .ScrollHeight = 560.35 + 24
     End With
@@ -137,7 +137,7 @@ End Sub
 
 
 Public Sub Temp_TestScroll_Frame7_Page7()
-    With frmEval.Controls("MultiPage1").Pages(6).Controls("Frame7")
+    With frmEval.controls("MultiPage1").pages(6).controls("Frame7")
         .ScrollBars = fmScrollBarsVertical
         .ScrollHeight = 584.35
         MsgBox "ScrollBars=" & .ScrollBars & vbCrLf & "ScrollHeight=" & .ScrollHeight, vbInformation
@@ -147,10 +147,10 @@ End Sub
 
 
 Public Sub Temp_SetScroll_Frame1_PostureTab()
-    Dim mp As Object: Set mp = frmEval.Controls("MultiPage1")
-    Dim pg As Object: Set pg = mp.Pages(mp.value)
+    Dim mp As Object: Set mp = frmEval.controls("MultiPage1")
+    Dim pg As Object: Set pg = mp.pages(mp.value)
 
-    With pg.Controls("Frame1")
+    With pg.controls("Frame1")
         .Height = mp.Height                '←表示枠に収める（ここが本丸）
         .ScrollBars = fmScrollBarsVertical
         .ScrollHeight = 396 + 24           '←中身Bottom(396) + 余白
@@ -162,8 +162,8 @@ End Sub
 
 
 Public Sub Temp_SetScroll_Frame2_Page2()
-    Dim mp As Object: Set mp = frmEval.Controls("MultiPage1")
-    With mp.Pages(1).Controls("Frame2")
+    Dim mp As Object: Set mp = frmEval.controls("MultiPage1")
+    With mp.pages(1).controls("Frame2")
         .Height = mp.Height
         .ScrollBars = fmScrollBarsVertical
         .ScrollHeight = 464 + 24

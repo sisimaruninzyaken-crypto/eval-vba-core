@@ -160,7 +160,7 @@ End Sub
 Private Function FindCheckByCaptionLike_(container As Object, ByVal needle As String) As Object
     Dim c As Object
     On Error Resume Next
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "CheckBox" Then
             If InStr(1, Trim$(c.caption), Trim$(needle), vbTextCompare) > 0 Then
                 Set FindCheckByCaptionLike_ = c: Exit Function
@@ -188,11 +188,11 @@ End Sub
 Private Function FindTextBoxNearLabel_(container As Object, ByVal labelCap As String) As Object
     Dim c As Object, inner As Object
     On Error Resume Next
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "Label" Then
             If InStr(1, Trim$(c.caption), Trim$(labelCap), vbTextCompare) > 0 Then
                 ' 同じ親内のTextBoxを返す
-                For Each inner In c.parent.Controls
+                For Each inner In c.parent.controls
                     If TypeName(inner) = "TextBox" Then Set FindTextBoxNearLabel_ = inner: Exit Function
                 Next
             End If
@@ -207,7 +207,7 @@ End Function
 ' 子を持つかの判定（安全版）
 Private Function HasControls__(obj As Object) As Boolean
     On Error Resume Next
-    HasControls__ = (obj.Controls.count >= 0)
+    HasControls__ = (obj.controls.count >= 0)
 End Function
 
 ' --- 姿勢用ローカル: 見出し列を確保して列番号を返す ---
@@ -243,9 +243,9 @@ End Sub
 Private Function FindFirstByTypeNearLabel_(container As Object, ByVal labelCap As String, ByVal wantType As String) As Object
     Dim c As Object, inner As Object
     On Error Resume Next
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "Label" And InStr(1, Trim$(c.caption), Trim$(labelCap), vbTextCompare) > 0 Then
-            For Each inner In c.parent.Controls
+            For Each inner In c.parent.controls
                 If TypeName(inner) = wantType Then Set FindFirstByTypeNearLabel_ = inner: Exit Function
             Next
         End If
@@ -271,7 +271,7 @@ Private Function FindSideCheck_OnSameRow_(owner As Object, ByVal rowLabel As Str
 
     Set p = lbl.parent
     bestDy = 1E+20
-    For Each c In p.Controls
+    For Each c In p.controls
         If TypeName(c) = "CheckBox" Then
             If InStr(1, Trim$(c.caption), Trim$(sideCaption), vbTextCompare) > 0 Then
                 dy = Abs(CSng(c.top) - CSng(lbl.top))
@@ -289,7 +289,7 @@ End Function
 Private Function FindLabelByCaptionDeep_(container As Object, ByVal cap As String) As Object
     Dim c As Object, r As Object
     On Error Resume Next
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "Label" Then
             If InStr(1, Trim$(c.caption), Trim$(cap), vbTextCompare) > 0 Then
                 Set FindLabelByCaptionDeep_ = c: Exit Function
@@ -323,7 +323,7 @@ End Sub
 Private Function FindFrameByCaptionDeep_(container As Object, ByVal capLike As String) As Object
     Dim c As Object, r As Object
     On Error Resume Next
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "Frame" Then
             If InStr(1, Trim$(c.caption), Trim$(capLike), vbTextCompare) > 0 Then
                 Set FindFrameByCaptionDeep_ = c: Exit Function
@@ -341,7 +341,7 @@ Private Function GetCheckInFrameByCaptionLike_(owner As Object, ByVal frameCap A
     Dim fr As Object, c As Object
     Set fr = FindFrameByCaptionDeep_(owner, frameCap)
     If fr Is Nothing Then Exit Function
-    For Each c In fr.Controls
+    For Each c In fr.controls
         If TypeName(c) = "CheckBox" Then
             If InStr(1, Trim$(c.caption), Trim$(chkCap), vbTextCompare) > 0 Then
                 GetCheckInFrameByCaptionLike_ = (c.value <> 0)
@@ -355,7 +355,7 @@ Private Sub SetCheckInFrameByCaptionLike_(owner As Object, ByVal frameCap As Str
     Dim fr As Object, c As Object
     Set fr = FindFrameByCaptionDeep_(owner, frameCap)
     If fr Is Nothing Then Exit Sub
-    For Each c In fr.Controls
+    For Each c In fr.controls
         If TypeName(c) = "CheckBox" Then
             If InStr(1, Trim$(c.caption), Trim$(chkCap), vbTextCompare) > 0 Then
                 c.value = v: Exit Sub
@@ -369,10 +369,10 @@ Private Function GetTextInFrameByLabelCaption_(owner As Object, ByVal frameCap A
     Dim fr As Object, c As Object, inner As Object
     Set fr = FindFrameByCaptionDeep_(owner, frameCap)
     If fr Is Nothing Then Exit Function
-    For Each c In fr.Controls
+    For Each c In fr.controls
         If TypeName(c) = "Label" Then
             If InStr(1, Trim$(c.caption), Trim$(labelCap), vbTextCompare) > 0 Then
-                For Each inner In fr.Controls
+                For Each inner In fr.controls
                     If TypeName(inner) = "TextBox" Then GetTextInFrameByLabelCaption_ = CStr(inner.text): Exit Function
                 Next
             End If
@@ -384,10 +384,10 @@ Private Sub SetTextInFrameByLabelCaption_(owner As Object, ByVal frameCap As Str
     Dim fr As Object, c As Object, inner As Object
     Set fr = FindFrameByCaptionDeep_(owner, frameCap)
     If fr Is Nothing Then Exit Sub
-    For Each c In fr.Controls
+    For Each c In fr.controls
         If TypeName(c) = "Label" Then
             If InStr(1, Trim$(c.caption), Trim$(labelCap), vbTextCompare) > 0 Then
-                For Each inner In fr.Controls
+                For Each inner In fr.controls
                     If TypeName(inner) = "TextBox" Then inner.text = s: Exit Sub
                 Next
             End If
@@ -404,7 +404,7 @@ Private Function GetComboInFrameByLabelCaption_(owner As Object, ByVal frameCap 
     If fr Is Nothing Then Exit Function
 
     ' ラベルを見つける
-    For Each c In fr.Controls
+    For Each c In fr.controls
         If TypeName(c) = "Label" Then
             If InStr(1, Trim$(c.caption), Trim$(labelCap), vbTextCompare) > 0 Then
                 Set targetLbl = c: Exit For
@@ -415,7 +415,7 @@ Private Function GetComboInFrameByLabelCaption_(owner As Object, ByVal frameCap 
 
     ' ラベルと同じ親内で、横方向に一番近いComboBoxを選ぶ
     bestDx = 1E+20
-    For Each inner In fr.Controls
+    For Each inner In fr.controls
         If TypeName(inner) = "ComboBox" Then
             dx = Abs(CSng(inner.top) - CSng(targetLbl.top)) + Abs(CSng(inner.Left) - CSng(targetLbl.Left))
             If dx < bestDx Then Set best = inner: bestDx = dx
@@ -430,7 +430,7 @@ Private Sub SetComboInFrameByLabelCaption_(owner As Object, ByVal frameCap As St
     Set fr = FindFrameByCaptionDeep_(owner, frameCap)
     If fr Is Nothing Then Exit Sub
 
-    For Each c In fr.Controls
+    For Each c In fr.controls
         If TypeName(c) = "Label" Then
             If InStr(1, Trim$(c.caption), Trim$(labelCap), vbTextCompare) > 0 Then
                 Set targetLbl = c: Exit For
@@ -440,7 +440,7 @@ Private Sub SetComboInFrameByLabelCaption_(owner As Object, ByVal frameCap As St
     If targetLbl Is Nothing Then Exit Sub
 
     bestDx = 1E+20
-    For Each inner In fr.Controls
+    For Each inner In fr.controls
         If TypeName(inner) = "ComboBox" Then
             dx = Abs(CSng(inner.top) - CSng(targetLbl.top)) + Abs(CSng(inner.Left) - CSng(targetLbl.Left))
             If dx < bestDx Then Set best = inner: bestDx = dx
@@ -459,7 +459,7 @@ End Sub
 Public Function FindCheckByCaptionLike(container As Object, ByVal needle As String) As MSForms.CheckBox
     Dim c As Object
     On Error Resume Next
-    For Each c In container.Controls
+    For Each c In container.controls
         If TypeName(c) = "CheckBox" Then
             If InStr(1, Trim$(c.caption), Trim$(needle)) > 0 Then
                 Set FindCheckByCaptionLike = c
@@ -476,6 +476,6 @@ End Function
 
 Private Function HasControls_(obj As Object) As Boolean
     On Error Resume Next
-    HasControls_ = (obj.Controls.count >= 0)
+    HasControls_ = (obj.controls.count >= 0)
 End Function
 

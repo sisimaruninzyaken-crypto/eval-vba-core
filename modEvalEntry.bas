@@ -41,12 +41,12 @@ Dim ws As Worksheet
             Dim d As Object, i As Long
             Set d = comp.Designer
             If Not d Is Nothing Then
-                For i = 0 To d.Controls.count - 1
+                For i = 0 To d.controls.count - 1
                     ws.Cells(r, 2).value = "Ctrl"
-                    ws.Cells(r, 3).value = TypeName(d.Controls(i))
-                    ws.Cells(r, 4).value = d.Controls(i).name
+                    ws.Cells(r, 3).value = TypeName(d.controls(i))
+                    ws.Cells(r, 4).value = d.controls(i).name
                     On Error Resume Next
-                    ws.Cells(r, 5).value = d.Controls(i).caption
+                    ws.Cells(r, 5).value = d.controls(i).caption
                     On Error GoTo 0
                     r = r + 1
                 Next
@@ -86,7 +86,7 @@ Public Sub Validate_App()
     ' 2) hostMove を取得（Frame）
     Dim c As Object
     Dim hostMove As Object: Set hostMove = Nothing
-    For Each c In frm.Controls
+    For Each c In frm.controls
         If TypeName(c) = "Frame" Then
             If StrComp(c.name, HOST_MOVE_NAME, vbTextCompare) = 0 Then
                 Set hostMove = c
@@ -101,7 +101,7 @@ Public Sub Validate_App()
 
     ' 3) mpADL を取得（MultiPage）
     Dim mp As Object: Set mp = Nothing
-    For Each c In hostMove.Controls
+    For Each c In hostMove.controls
         If TypeName(c) = "MultiPage" Then
             If StrComp(c.name, MP_ADL_NAME, vbTextCompare) = 0 Then
                 Set mp = c
@@ -115,10 +115,10 @@ Public Sub Validate_App()
         ok = False
         Debug.Print "[NG] mpADL がありません"
     Else
-        If mp.Pages.count < 3 Then ok = False: Debug.Print "[NG] mpADL Pages.Count < 3"
-        If mp.Pages.count >= 1 Then If mp.Pages(0).caption <> CAP_BI Then ok = False: Debug.Print "[NG] Page0 Caption≠" & CAP_BI
-        If mp.Pages.count >= 2 Then If mp.Pages(1).caption <> CAP_IADL Then ok = False: Debug.Print "[NG] Page1 Caption≠" & CAP_IADL
-        If mp.Pages.count >= 3 Then If mp.Pages(2).caption <> CAP_KYO Then ok = False: Debug.Print "[NG] Page2 Caption≠" & CAP_KYO
+        If mp.pages.count < 3 Then ok = False: Debug.Print "[NG] mpADL Pages.Count < 3"
+        If mp.pages.count >= 1 Then If mp.pages(0).caption <> CAP_BI Then ok = False: Debug.Print "[NG] Page0 Caption≠" & CAP_BI
+        If mp.pages.count >= 2 Then If mp.pages(1).caption <> CAP_IADL Then ok = False: Debug.Print "[NG] Page1 Caption≠" & CAP_IADL
+        If mp.pages.count >= 3 Then If mp.pages(2).caption <> CAP_KYO Then ok = False: Debug.Print "[NG] Page2 Caption≠" & CAP_KYO
     End If
 
     MsgBox IIf(ok, "Validate OK：構成は想定どおりです。", _

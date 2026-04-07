@@ -206,7 +206,7 @@ End Function
 Private Function GetControlTextSafe(ByVal owner As Object, ByVal controlName As String) As String
     On Error GoTo EH
     If owner Is Nothing Then Exit Function
-    GetControlTextSafe = Trim$(CStr(owner.Controls(controlName).value))
+    GetControlTextSafe = Trim$(CStr(owner.controls(controlName).value))
     Exit Function
 EH:
     Err.Clear

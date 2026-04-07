@@ -20,8 +20,8 @@ Private Sub lb_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
     If lb.ListIndex < 0 Then Exit Sub
 
     ' Ž–¼‚¾‚¯”½‰fiƒwƒbƒ_{— Œûj
-    frmEval.Controls("frHeader").Controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
-    frmEval.Controls("txtName").text = frmEval.Controls("frHeader").Controls("txtHdrName").text
+    frmEval.controls("frHeader").controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
+    frmEval.controls("txtName").text = frmEval.controls("frHeader").controls("txtHdrName").text
 
     lb.Visible = False
 End Sub

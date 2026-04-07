@@ -2,23 +2,60 @@ Attribute VB_Name = "modInterestIO"
 
 Option Explicit
 
-Private Const sep As String = "|"
+Private Const SEP As String = "|"
+Private Const SEP_SAFE As String = "｜"
+Public Const INTEREST_OTHER_PREFIX As String = "その他:"
 
 Public Sub SaveInterestToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
-    SaveInterestCategory ws, r, owner, "Now", "Interest_Now", Array("テレビ・新聞", "家事", "散歩", "趣味", "人と話す", "その他")
-    SaveInterestCategory ws, r, owner, "Past", "Interest_Past", Array("仕事", "家事・役割", "趣味活動", "外出・旅行", "地域活動", "その他")
-    SaveInterestCategory ws, r, owner, "Want", "Interest_Want", Array("散歩・運動", "買い物", "趣味活動", "外出・旅行", "家のこと", "その他")
-    SaveInterestCategory ws, r, owner, "Social", "Interest_Social", Array("買い物", "家族との時間", "友人交流", "地域活動", "外出", "その他")
+    Dim key As Variant
+    For Each key In InterestCategoryKeys()
+        SaveInterestCategory ws, r, owner, CStr(key)
+    Next key
 End Sub
 
 Public Sub LoadInterestFromSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
-    LoadInterestCategory ws, r, owner, "Now", "Interest_Now", Array("テレビ・新聞", "家事", "散歩", "趣味", "人と話す", "その他")
-    LoadInterestCategory ws, r, owner, "Past", "Interest_Past", Array("仕事", "家事・役割", "趣味活動", "外出・旅行", "地域活動", "その他")
-    LoadInterestCategory ws, r, owner, "Want", "Interest_Want", Array("散歩・運動", "買い物", "趣味活動", "外出・旅行", "家のこと", "その他")
-    LoadInterestCategory ws, r, owner, "Social", "Interest_Social", Array("買い物", "家族との時間", "友人交流", "地域活動", "外出", "その他")
+    Dim key As Variant
+    For Each key In InterestCategoryKeys()
+        LoadInterestCategory ws, r, owner, CStr(key)
+    Next key
 End Sub
 
-Private Sub SaveInterestCategory(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object, ByVal key As String, ByVal headerName As String, ByVal labels As Variant)
+Public Function InterestCategoryKeys() As Variant
+    InterestCategoryKeys = Array("Now", "Past", "Want", "Social")
+End Function
+
+Public Function InterestHeaderName(ByVal key As String) As String
+    InterestHeaderName = "Interest_" & key
+End Function
+
+Public Function InterestCategoryTitle(ByVal key As String) As String
+    Select Case key
+        Case "Now": InterestCategoryTitle = "現在の関心"
+        Case "Past": InterestCategoryTitle = "過去の関心"
+        Case "Want": InterestCategoryTitle = "やりたいこと"
+        Case "Social": InterestCategoryTitle = "社会参加"
+    End Select
+End Function
+
+Public Function InterestLabels(ByVal key As String) As Variant
+    Select Case key
+        Case "Now"
+            InterestLabels = Array("テレビ・新聞", "家事", "散歩", "趣味", "人と話す")
+        Case "Past"
+            InterestLabels = Array("仕事", "家事・役割", "趣味活動", "外出・旅行", "地域活動")
+        Case "Want"
+            InterestLabels = Array("散歩・運動", "買い物", "趣味活動", "外出・旅行", "家のこと")
+        Case "Social"
+            InterestLabels = Array("買い物", "家族との時間", "友人交流", "地域活動", "外出")
+        Case Else
+            InterestLabels = Array()
+    End Select
+End Function
+
+Private Sub SaveInterestCategory(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object, ByVal key As String)
+    Dim labels As Variant
+    labels = InterestLabels(key)
+
     Dim picks As Collection
     Set picks = New Collection
 
@@ -32,15 +69,22 @@ Private Sub SaveInterestCategory(ByVal ws As Worksheet, ByVal r As Long, ByVal o
     Dim otherText As String
     otherText = SanitizeFreeText(GetTextboxText(owner, "txtInterest_" & key & "_Other"))
     If LenB(otherText) > 0 Then
-        picks.Add "その他:" & otherText
+        picks.Add INTEREST_OTHER_PREFIX & otherText
     End If
 
-    ws.Cells(r, EnsureHeaderCol(ws, headerName)).value = JoinCollection(picks, sep)
+    ws.Cells(r, EnsureHeaderColLocal(ws, InterestHeaderName(key))).value = JoinCollection(picks, SEP)
 End Sub
 
-Private Sub LoadInterestCategory(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object, ByVal key As String, ByVal headerName As String, ByVal labels As Variant)
+Private Sub LoadInterestCategory(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object, ByVal key As String)
+    Dim labels As Variant
+    labels = InterestLabels(key)
+
+    Dim col As Long
+    col = FindHeaderColLocal(ws, InterestHeaderName(key))
+    If col = 0 Then Exit Sub
+
     Dim raw As String
-    raw = Trim$(CStr(ws.Cells(r, EnsureHeaderCol(ws, headerName)).value))
+    raw = Trim$(CStr(ws.Cells(r, col).value))
 
     Dim i As Long
     For i = LBound(labels) To UBound(labels)
@@ -52,7 +96,7 @@ Private Sub LoadInterestCategory(ByVal ws As Worksheet, ByVal r As Long, ByVal o
     If LenB(raw) = 0 Then Exit Sub
 
     Dim tokens As Variant
-    tokens = Split(raw, sep)
+    tokens = Split(raw, SEP)
 
     Dim token As Variant
     For Each token In tokens
@@ -63,9 +107,9 @@ End Sub
 Private Sub ApplyInterestToken(ByVal owner As Object, ByVal key As String, ByVal labels As Variant, ByVal token As String)
     If LenB(token) = 0 Then Exit Sub
 
-    If Left$(token, 4) = "その他:" Then
+    If StrComp(Left$(token, Len(INTEREST_OTHER_PREFIX)), INTEREST_OTHER_PREFIX, vbTextCompare) = 0 Then
         SetCheckboxValue owner, "chkInterest_" & key & "_Other", True
-        SetTextboxText owner, "txtInterest_" & key & "_Other", Mid$(token, 5)
+        SetTextboxText owner, "txtInterest_" & key & "_Other", Mid$(token, Len(INTEREST_OTHER_PREFIX) + 1)
         Exit Sub
     End If
 
@@ -77,6 +121,33 @@ Private Sub ApplyInterestToken(ByVal owner As Object, ByVal key As String, ByVal
         End If
     Next i
 End Sub
+
+Private Function EnsureHeaderColLocal(ByVal ws As Worksheet, ByVal header As String) As Long
+    Dim c As Long
+    c = FindHeaderColLocal(ws, header)
+    If c > 0 Then
+        EnsureHeaderColLocal = c
+        Exit Function
+    End If
+
+    c = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column + 1
+    ws.Cells(1, c).value = header
+    EnsureHeaderColLocal = c
+End Function
+
+Private Function FindHeaderColLocal(ByVal ws As Worksheet, ByVal header As String) As Long
+    Dim lastCol As Long
+    lastCol = ws.Cells(1, ws.Columns.count).End(xlToLeft).Column
+
+    Dim c As Long
+    For c = 1 To lastCol
+        If StrComp(Trim$(CStr(ws.Cells(1, c).value)), header, vbTextCompare) = 0 Then
+            FindHeaderColLocal = c
+            Exit Function
+        End If
+    Next c
+End Function
+
 
 Private Function GetCheckboxValue(ByVal owner As Object, ByVal controlName As String) As Boolean
     Dim ctl As Object
@@ -122,43 +193,36 @@ Private Sub SetTextboxText(ByVal owner As Object, ByVal controlName As String, B
     Err.Clear
 End Sub
 
-Private Function FindControlByNameDeep(ByVal owner As Object, ByVal controlName As String) As Object
-    If owner Is Nothing Then Exit Function
+Private Function FindControlByNameDeep(ByVal container As Object, ByVal controlName As String) As Object
+    On Error GoTo EH
+    If container Is Nothing Then Exit Function
 
-    Dim direct As Object
-    Set direct = TryGetControlFromContainer(owner, controlName)
-    If Not direct Is Nothing Then
-        Set FindControlByNameDeep = direct
+    If StrComp(GetObjectName(container), controlName, vbTextCompare) = 0 Then
+        Set FindControlByNameDeep = container
         Exit Function
     End If
 
-    Set FindControlByNameDeep = FindControlInChildren(owner, controlName)
-End Function
+    Dim pages As Object
+    Set pages = TryGetObjectMember(container, "Pages")
+    If Not pages Is Nothing Then
+        Dim pg As Object
+        For Each pg In pages
+            Set FindControlByNameDeep = FindControlByNameDeep(pg, controlName)
+            If Not FindControlByNameDeep Is Nothing Then Exit Function
+        Next pg
+    End If
 
-Private Function FindControlInChildren(ByVal container As Object, ByVal controlName As String) As Object
-    Dim children As Object
-    Set children = TryGetObjectMember(container, "Controls")
-    If children Is Nothing Then Exit Function
+    Dim controls As Object
+    Set controls = TryGetObjectMember(container, "Controls")
+    If controls Is Nothing Then Exit Function
 
     Dim child As Object
-    For Each child In children
-        If StrComp(GetObjectName(child), controlName, vbTextCompare) = 0 Then
-            Set FindControlInChildren = child
-            Exit Function
-        End If
+    For Each child In controls
+        Set FindControlByNameDeep = FindControlByNameDeep(child, controlName)
+        If Not FindControlByNameDeep Is Nothing Then Exit Function
 
-        Dim nested As Object
-        Set nested = FindControlInChildren(child, controlName)
-        If Not nested Is Nothing Then
-            Set FindControlInChildren = nested
-            Exit Function
-        End If
     Next child
-End Function
 
-Private Function TryGetControlFromContainer(ByVal container As Object, ByVal controlName As String) As Object
-    On Error GoTo EH
-    Set TryGetControlFromContainer = container.Controls(controlName)
     Exit Function
 EH:
     Err.Clear
@@ -166,9 +230,12 @@ End Function
 
 Private Function TryGetObjectMember(ByVal target As Object, ByVal memberName As String) As Object
     On Error GoTo EH
-    If StrComp(memberName, "Controls", vbTextCompare) = 0 Then
-        Set TryGetObjectMember = target.Controls
-    End If
+    Select Case memberName
+        Case "Controls"
+            Set TryGetObjectMember = target.controls
+        Case "Pages"
+            Set TryGetObjectMember = target.pages
+    End Select
     Exit Function
 EH:
     Err.Clear
@@ -183,7 +250,7 @@ EH:
 End Function
 
 Private Function SanitizeFreeText(ByVal src As String) As String
-    SanitizeFreeText = Replace$(src, sep, "｜")
+    SanitizeFreeText = Replace$(src, SEP, SEP_SAFE)
 End Function
 
 Private Function JoinCollection(ByVal values As Collection, ByVal delimiter As String) As String

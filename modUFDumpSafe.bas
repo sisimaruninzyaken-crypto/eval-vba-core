@@ -58,7 +58,7 @@ Private Sub DumpControl_Safe(ByVal ws As Object, ByVal parent As Object, ByVal d
 
     ' parentの直下だけ列挙（Parent一致でフィルタ）
     Dim c As MSForms.Control
-    For Each c In parent.Controls
+    For Each c In parent.controls
         If (c.parent Is parent) Then
             DumpOne ws, c, depth + 1
 
@@ -86,11 +86,11 @@ Private Sub DumpMultiPage_Safe(ByVal ws As Object, ByVal mp As MSForms.MultiPage
     On Error GoTo ErrH
 
     Dim i As Long
-    ws.WriteLine Indent(depth) & "(Pages.Count=" & mp.Pages.count & ")"
+    ws.WriteLine Indent(depth) & "(Pages.Count=" & mp.pages.count & ")"
 
-    For i = 0 To mp.Pages.count - 1
+    For i = 0 To mp.pages.count - 1
         Dim pg As MSForms.page
-        Set pg = mp.Pages(i)
+        Set pg = mp.pages(i)
 
         ' Pageは位置情報に触れない（438回避）。Name/Captionだけ
         ws.WriteLine Indent(depth) & "[Page " & i & "] Name=" & SafeStr(pg, "Name") & " Caption=" & SafeStr(pg, "Caption")
@@ -111,7 +111,7 @@ Private Sub DumpPageChildren_Safe(ByVal ws As Object, ByVal pg As MSForms.page, 
     On Error GoTo ErrH
 
     Dim c As MSForms.Control
-    For Each c In pg.Controls
+    For Each c In pg.controls
         If (c.parent Is pg) Then
             DumpOne ws, c, depth
 
