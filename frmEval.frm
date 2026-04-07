@@ -1266,11 +1266,15 @@ frHomeEnv.Height = txtHomeNote.top + txtHomeNote.Height + 12
     Call BuildInterestSection(pIADL, txtINote.top + txtINote.Height + 18, mpADL.Width - 24)
 
     '---- çÇÇ≥çXêV ----
-    Dim bottomI As Single: bottomI = GetBottomMostOfPage(pIADL) + 18
-    pIADL.ScrollBars = fmScrollBarsNone
-    pIADL.ScrollHeight = bottomI
+   Dim bottomI As Single
+   bottomI = GetBottomMostOfPage(pIADL) + 18
 
-    If mpADL.Height < bottomI + 42 Then mpADL.Height = bottomI + 42
+   pIADL.ScrollBars = fmScrollBarsVertical
+   pIADL.KeepScrollBarsVisible = fmScrollBarsVertical
+   pIADL.ScrollHeight = bottomI
+
+   If mpADL.Height < 520 Then mpADL.Height = 520
+   
     
    
     nextTop = mpADL.top + mpADL.Height + 10
@@ -1306,7 +1310,7 @@ Private Sub BuildInterestSection(ByVal pIADL As MSForms.page, ByVal topY As Sing
     BuildInterestCategory fra, "Want", InterestCategoryTitle("Want"), InterestLabels("Want"), 198
     BuildInterestCategory fra, "Social", InterestCategoryTitle("Social"), InterestLabels("Social"), 288
    
-    fra.Height = GetBottomMostOfFrame(fra) + 12
+    fra.Height = GetBottomMostOfFrame(fra) + 24
 End Sub
 
 Private Sub BuildInterestCategory(ByVal parent As MSForms.Frame, ByVal key As String, ByVal title As String, ByVal labels As Variant, ByVal topY As Single)
