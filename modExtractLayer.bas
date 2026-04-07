@@ -15,6 +15,10 @@ Public Function ExtractBasicSourceData(ByVal patientName As String) As Object
     data("MMT_IO_Raw") = ReadLatestEvalTextByHeader(patientName, "MMT_IO")
     data("TrunkROMRaw") = ReadTrunkROMRaw(patientName)
     data("EvalTestNoteRaw") = ReadLatestEvalTextByHeader(patientName, "TestEval_Note")
+    data("InterestNowRaw") = ReadLatestEvalTextByHeader(patientName, "Interest_Now")
+    data("InterestPastRaw") = ReadLatestEvalTextByHeader(patientName, "Interest_Past")
+    data("InterestWantRaw") = ReadLatestEvalTextByHeader(patientName, "Interest_Want")
+    data("InterestSocialRaw") = ReadLatestEvalTextByHeader(patientName, "Interest_Social")
 
     Set ExtractBasicSourceData = data
 End Function

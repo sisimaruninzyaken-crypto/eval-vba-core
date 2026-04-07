@@ -12,7 +12,7 @@ Public Function GenerateBasicPlan(ByVal patientName As String) As Object
     Set extracted = ExtractBasicSourceData(patientName)
     Set normalized = NormalizeBasicSourceData(extracted)
     Set judged = JudgeBasicPlanInputs(normalized)
-    Set planStructure = BuildBasicPlanStructureFromJudge(judged)
+    Set planStructure = BuildBasicPlanStructureFromJudge(judged, normalized)
     Set aiDraft = GenerateBasicPlanNarrative(planStructure)
 
     Set output = CreateObject("Scripting.Dictionary")

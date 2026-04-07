@@ -17,9 +17,44 @@ Public Function NormalizeBasicSourceData(ByVal extracted As Object) As Object
     normalized("TrunkROMRaw") = TrimValue(extracted, "TrunkROMRaw")
     normalized("EvalTestNoteRaw") = TrimValue(extracted, "EvalTestNoteRaw")
     normalized("EvalTestCriticalFindings") = ExtractImportantEvalFindings(normalized("EvalTestNoteRaw"))
+    normalized("InterestNow") = NormalizeInterestValue(TrimValue(extracted, "InterestNowRaw"))
+    normalized("InterestPast") = NormalizeInterestValue(TrimValue(extracted, "InterestPastRaw"))
+    normalized("InterestWant") = NormalizeInterestValue(TrimValue(extracted, "InterestWantRaw"))
+    normalized("InterestSocial") = NormalizeInterestValue(TrimValue(extracted, "InterestSocialRaw"))
 
     Set NormalizeBasicSourceData = normalized
 End Function
+
+Private Function NormalizeInterestValue(ByVal value As String) As String
+    Dim tokens() As String
+    Dim i As Long
+    Dim cleaned As String
+    Dim out As Collection
+    Dim arr() As String
+
+    value = Trim$(value)
+    If LenB(value) = 0 Then Exit Function
+
+    tokens = Split(value, "|")
+    Set out = New Collection
+
+    On Error Resume Next
+    For i = LBound(tokens) To UBound(tokens)
+        cleaned = Trim$(CStr(tokens(i)))
+        If LenB(cleaned) > 0 Then out.Add cleaned, LCase$(cleaned)
+    Next i
+    On Error GoTo 0
+
+    If out.count = 0 Then Exit Function
+
+    ReDim arr(1 To out.count)
+    For i = 1 To out.count
+        arr(i) = CStr(out(i))
+    Next i
+
+    NormalizeInterestValue = Join(arr, " | ")
+End Function
+
 
 Private Function NormalizeTrunkROMLimitTags(ByVal trunkRomRaw As String) As String
     Dim parts() As String

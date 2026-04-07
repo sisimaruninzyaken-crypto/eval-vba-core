@@ -647,7 +647,7 @@ EH:
 End Function
 
 
-Public Function BuildBasicPlanStructureFromJudge(ByVal judged As Object) As Object
+Public Function BuildBasicPlanStructureFromJudge(ByVal judged As Object, Optional ByVal normalized As Object = Nothing) As Object
     Dim mainCause As String
     Dim needSelf As String
     Dim needFamily As String
@@ -667,9 +667,49 @@ Public Function BuildBasicPlanStructureFromJudge(ByVal judged As Object) As Obje
     result("TrunkROM_LimitedValues") = FormatLimitedROMValues(CStr(judged("TrunkROMRaw")))
     result("EvalTestCriticalFindings") = CStr(judged("EvalTestCriticalFindings"))
     result("EvalTestNoteRaw") = CStr(judged("EvalTestNoteRaw"))
+    
+        If Not normalized Is Nothing Then
+        result("InterestNow") = GetDictText(normalized, "InterestNow")
+        result("InterestPast") = GetDictText(normalized, "InterestPast")
+        result("InterestWant") = GetDictText(normalized, "InterestWant")
+        result("InterestSocial") = GetDictText(normalized, "InterestSocial")
+        result("InterestSummary") = BuildInterestSummary( _
+            result("InterestNow"), _
+            result("InterestPast"), _
+            result("InterestWant"), _
+            result("InterestSocial"))
+    End If
 
     Set BuildBasicPlanStructureFromJudge = result
 End Function
+
+Private Function GetDictText(ByVal data As Object, ByVal key As String) As String
+    If data Is Nothing Then Exit Function
+    If Not data.exists(key) Then Exit Function
+    GetDictText = Trim$(CStr(data(key)))
+End Function
+
+Private Function BuildInterestSummary(ByVal nowText As String, ByVal pastText As String, ByVal wantText As String, ByVal socialText As String) As String
+    Dim lines As Collection
+    Dim arr() As String
+    Dim i As Long
+
+    Set lines = New Collection
+    If LenB(Trim$(nowText)) > 0 Then lines.Add "InterestNow: " & Trim$(nowText)
+    If LenB(Trim$(pastText)) > 0 Then lines.Add "InterestPast: " & Trim$(pastText)
+    If LenB(Trim$(wantText)) > 0 Then lines.Add "InterestWant: " & Trim$(wantText)
+    If LenB(Trim$(socialText)) > 0 Then lines.Add "InterestSocial: " & Trim$(socialText)
+
+    If lines.count = 0 Then Exit Function
+
+    ReDim arr(1 To lines.count)
+    For i = 1 To lines.count
+        arr(i) = CStr(lines(i))
+    Next i
+
+    BuildInterestSummary = Join(arr, "; ")
+End Function
+
 
 Private Function BuildMMTMapFromIO(ByVal mmtIO As String) As Object
     ' フォーマット: side|筋名|右値|左値;side|筋名|右値|左値;...

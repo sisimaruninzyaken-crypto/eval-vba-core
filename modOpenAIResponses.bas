@@ -463,6 +463,7 @@ Private Function BuildBasicUserPrompt(ByVal planStructure As Object) As String
 
     Set lines = New Collection
     lines.Add "【VBA判定済みデータ（追加判断禁止）】"
+    lines.Add "InterestContextRule: Use interests only to add life context to Activity/Participation goals, never to override clinical feasibility."
 
     ' 臨床的に意味のあるキーのみ渡す（VBA内部概念語・生成済み目標文は除外）
     Dim clinicalKeys As Variant
@@ -474,9 +475,14 @@ Private Function BuildBasicUserPrompt(ByVal planStructure As Object) As String
         "NeedPatient", _
         "NeedFamily", _
         "TrunkROM_LimitedValues", _
-        "EvalTestCriticalFindings" _
+        "EvalTestCriticalFindings", _
+        "InterestSummary", _
+        "InterestNow", _
+        "InterestPast", _
+        "InterestWant", _
+        "InterestSocial" _
     )
-
+    
     Dim k As Variant
     For Each k In clinicalKeys
         If planStructure.exists(CStr(k)) Then

@@ -12,9 +12,15 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
 
     Dim eraName As String
     Dim birthBody As String
+    Dim birthText As String
+    Dim ageText As String
     
     Dim headerEvalDateText As String
     headerEvalDateText = FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate"))
+    
+    birthText = GetCtrlTextSafe(owner, "txtBirth")
+    ageText = GetCtrlTextSafe(owner, "txtAge")
+    SplitWarekiBirthParts birthText, ageText, eraName, birthBody
 
     WriteMerged ws, "A2:U2", BuildHeaderDate("ì¬“ú", headerEvalDateText)
     WriteMerged ws, "V2:AP2", BuildHeaderDate("‘O‰ñì¬“ú", FormatWarekiFull(GetPreviousCreatedDateText(owner)))
