@@ -1295,6 +1295,9 @@ End Function
 
 Private Sub BuildInterestSection(ByVal pIADL As MSForms.page, ByVal topY As Single, ByVal sectionWidth As Single)
     Dim fra As MSForms.Frame
+    Dim lblGuide As MSForms.label
+    Dim categoryTop As Single
+
     Set fra = pIADL.controls.Add("Forms.Frame.1", "fraInterest")
     With fra
         .caption = "興味・関心"
@@ -1305,10 +1308,26 @@ Private Sub BuildInterestSection(ByVal pIADL As MSForms.page, ByVal topY As Sing
     End With
 
 
-    BuildInterestCategory fra, "Now", InterestCategoryTitle("Now"), InterestLabels("Now"), 18
-    BuildInterestCategory fra, "Past", InterestCategoryTitle("Past"), InterestLabels("Past"), 108
-    BuildInterestCategory fra, "Want", InterestCategoryTitle("Want"), InterestLabels("Want"), 198
-    BuildInterestCategory fra, "Social", InterestCategoryTitle("Social"), InterestLabels("Social"), 288
+    Set lblGuide = fra.controls.Add("Forms.Label.1", "lblInterestGuide")
+    With lblGuide
+                .caption = "・普段の生活でよくしていることはどれですか？" & vbCrLf & _
+                   "・昔はやっていたけど今はしていないことはありますか？" & vbCrLf & _
+                   "・できたらやってみたいことはありますか？" & vbCrLf & _
+                   "・外出や人との関わりで好きなことはありますか？"
+        .Left = 10
+        .top = 18
+        .Width = fra.InsideWidth - 20
+        .Height = 60
+        .WordWrap = True
+        .Font.Size = 11
+    End With
+
+    categoryTop = lblGuide.top + lblGuide.Height + 10
+   
+    BuildInterestCategory fra, "Now", InterestCategoryTitle("Now"), InterestLabels("Now"), categoryTop
+    BuildInterestCategory fra, "Past", InterestCategoryTitle("Past"), InterestLabels("Past"), categoryTop + 90
+    BuildInterestCategory fra, "Want", InterestCategoryTitle("Want"), InterestLabels("Want"), categoryTop + 180
+    BuildInterestCategory fra, "Social", InterestCategoryTitle("Social"), InterestLabels("Social"), categoryTop + 270
    
     fra.Height = GetBottomMostOfFrame(fra) + 24
 End Sub
