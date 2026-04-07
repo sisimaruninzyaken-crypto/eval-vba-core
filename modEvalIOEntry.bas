@@ -152,8 +152,8 @@ Public Sub SaveAllSectionsToSheet(ws As Worksheet, r As Long, owner As Object)
 
 
 
-Call Save_ADL_AtRow(ws, r)
-
+     Call Save_ADL_AtRow(ws, r)
+     Call SaveInterestToSheet(ws, r, owner)
 
 
 
@@ -233,6 +233,7 @@ End If
    
 
     IO_SafeRunLoad "LoadPainFromSheet", ws, r, owner
+    Call LoadInterestFromSheet(ws, r, owner)
     
     ' ï‚èïãÔ
 Dim cA As Long

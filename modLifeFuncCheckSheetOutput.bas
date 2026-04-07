@@ -88,6 +88,7 @@ Public Sub WriteLifeFuncCheckSheet(ByVal ws As Worksheet, ByVal owner As Object)
     If ws Is Nothing Then Exit Sub
     WriteBasicInfo ws, owner
     WriteEnvironment ws, owner
+    WriteInterestSection ws, owner
     WriteLevelTaskComment ws, owner
 End Sub
 
@@ -197,6 +198,7 @@ Private Sub WriteLifeFuncCheckSheetContent(ByVal ws As Worksheet, ByVal owner As
 
     WriteBasicInfo ws, owner
     WriteEnvironment ws, owner
+    WriteInterestSection ws, owner
     WriteLevelTaskComment ws, owner
 
     Exit Sub
@@ -554,6 +556,100 @@ Private Function ResolveEnvironmentAddress(ByVal ws As Worksheet) As String
 
     ResolveEnvironmentAddress = fixedAddress
 End Function
+
+Private Sub WriteInterestSection(ByVal ws As Worksheet, ByVal owner As Object)
+    Dim body As String
+    body = BuildInterestOutputText(owner)
+    If LenB(body) = 0 Then Exit Sub
+
+    Dim outText As String
+    outText = "興味・関心" & vbCrLf & body
+
+    Dim envAddress As String
+    envAddress = ResolveEnvironmentAddress(ws)
+
+    Dim currentText As String
+    currentText = CStr(ws.Range("Q13").value)
+
+    If LenB(Trim$(currentText)) > 0 Then
+        WriteMerged ws, envAddress, currentText & vbCrLf & vbCrLf & outText
+    Else
+        WriteMerged ws, envAddress, outText
+    End If
+End Sub
+
+Private Function BuildInterestOutputText(ByVal owner As Object) As String
+    Dim nowText As String, pastText As String, wantText As String, socialText As String
+    nowText = Replace$(GetInterestJoined(owner, "Now"), "|", "A")
+    pastText = Replace$(GetInterestJoined(owner, "Past"), "|", "A")
+    wantText = Replace$(GetInterestJoined(owner, "Want"), "|", "A")
+    socialText = Replace$(GetInterestJoined(owner, "Social"), "|", "A")
+
+    BuildInterestOutputText = _
+        "??F" & nowText & vbCrLf & _
+        "??F" & pastText & vbCrLf & _
+        "??F" & wantText & vbCrLf & _
+        "?QF" & socialText
+End Function
+
+Private Function GetInterestJoined(ByVal owner As Object, ByVal key As String) As String
+    Dim labels As Variant
+    Select Case key
+        Case "Now"
+            labels = Array("テレビ・新聞", "家事", "散歩", "趣味", "人と話す")
+        Case "Past"
+            labels = Array("仕事", "家事・役割", "趣味活動", "外出・旅行", "地域活動")
+        Case "Want"
+            labels = Array("散歩・運動", "買い物", "趣味活動", "外出・旅行", "家のこと")
+        Case "Social"
+            labels = Array("買い物", "家族との時間", "友人交流", "地域活動", "外出")
+        Case Else
+            Exit Function
+    End Select
+
+    Dim i As Long
+    For i = LBound(labels) To UBound(labels)
+        If GetCheckValueByName(owner, "chkInterest_" & key & "_" & CStr(i)) Then
+            AppendWithSeparator GetInterestJoined, CStr(labels(i)), "|"
+        End If
+    Next i
+
+    Dim otherText As String
+    otherText = Trim$(GetTextByName(owner, "txtInterest_" & key & "_Other"))
+    If LenB(otherText) > 0 Then
+        AppendWithSeparator GetInterestJoined, "?:" & otherText, "|"
+    End If
+End Function
+
+Private Sub AppendWithSeparator(ByRef dest As String, ByVal itemText As String, ByVal sep As String)
+    If LenB(itemText) = 0 Then Exit Sub
+    If LenB(dest) > 0 Then dest = dest & sep
+    dest = dest & itemText
+End Sub
+
+Private Function GetCheckValueByName(ByVal owner As Object, ByVal controlName As String) As Boolean
+    On Error GoTo EH
+    Dim ctl As Object
+    Set ctl = FindControlByNameDeep(owner, controlName)
+    If ctl Is Nothing Then Exit Function
+    GetCheckValueByName = CBool(ctl.value)
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function GetTextByName(ByVal owner As Object, ByVal controlName As String) As String
+    On Error GoTo EH
+    Dim ctl As Object
+    Set ctl = FindControlByNameDeep(owner, controlName)
+    If ctl Is Nothing Then Exit Function
+    GetTextByName = CStr(ctl.text)
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+
 
 Private Function TryGetObjectMember(ByVal obj As Object, ByVal memberName As String) As Object
     On Error GoTo EH

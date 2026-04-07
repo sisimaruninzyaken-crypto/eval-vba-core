@@ -1263,8 +1263,10 @@ frHomeEnv.Height = txtHomeNote.top + txtHomeNote.Height + 12
         .EnterKeyBehavior = True
     End With
 
+    Call BuildInterestSection(pIADL, txtINote.top + txtINote.Height + 18, mpADL.Width - 24)
+
     '---- 高さ更新 ----
-    Dim bottomI As Single: bottomI = txtINote.top + txtINote.Height + 18
+    Dim bottomI As Single: bottomI = GetBottomMostOfPage(pIADL) + 18
     pIADL.ScrollBars = fmScrollBarsNone
     pIADL.ScrollHeight = bottomI
 
@@ -1285,6 +1287,89 @@ On Error GoTo 0
     Set EnsureBI_IADL = mpADL
 End Function
 '=================================================================
+
+
+Private Sub BuildInterestSection(ByVal pIADL As MSForms.page, ByVal topY As Single, ByVal sectionWidth As Single)
+    Dim fra As MSForms.Frame
+    Set fra = pIADL.Controls.Add("Forms.Frame.1", "fraInterest")
+    With fra
+        .caption = "興味・関心"
+        .Left = 12
+        .top = topY
+        .Width = sectionWidth
+        .Height = 380
+    End With
+
+    BuildInterestCategory fra, "Now", "現在の活動", Array("テレビ・新聞", "家事", "散歩", "趣味", "人と話す"), 18
+    BuildInterestCategory fra, "Past", "昔の役割", Array("仕事", "家事・役割", "趣味活動", "外出・旅行", "地域活動"), 108
+    BuildInterestCategory fra, "Want", "やりたいこと", Array("散歩・運動", "買い物", "趣味活動", "外出・旅行", "家のこと"), 198
+    BuildInterestCategory fra, "Social", "社会参加", Array("買い物", "家族との時間", "友人交流", "地域活動", "外出"), 288
+
+    fra.Height = GetBottomMostOfFrame(fra) + 12
+End Sub
+
+Private Sub BuildInterestCategory(ByVal parent As MSForms.Frame, ByVal key As String, ByVal title As String, ByVal labels As Variant, ByVal topY As Single)
+    Dim lbl As MSForms.label
+    Set lbl = parent.Controls.Add("Forms.Label.1", "lblInterest_" & key)
+    With lbl
+        .caption = title
+        .Left = 10
+        .top = topY + 2
+        .Width = 90
+    End With
+
+    Dim i As Long
+    For i = LBound(labels) To UBound(labels)
+        Dim ck As MSForms.CheckBox
+        Set ck = parent.Controls.Add("Forms.CheckBox.1", "chkInterest_" & key & "_" & CStr(i))
+        With ck
+            .caption = CStr(labels(i))
+            .Left = 110 + (i Mod 3) * 150
+            .top = topY + (i \ 3) * 22
+            .Width = 140
+            .value = False
+        End With
+    Next i
+
+    Dim ckOther As MSForms.CheckBox
+    Set ckOther = parent.Controls.Add("Forms.CheckBox.1", "chkInterest_" & key & "_Other")
+    With ckOther
+        .caption = "?"
+        .Left = 110
+        .top = topY + 44
+        .Width = 70
+        .value = False
+    End With
+
+    Dim txtOther As MSForms.TextBox
+    Set txtOther = parent.Controls.Add("Forms.TextBox.1", "txtInterest_" & key & "_Other")
+    With txtOther
+        .Left = 190
+        .top = topY + 42
+        .Width = parent.InsideWidth - 205
+        .Height = 18
+        .text = ""
+    End With
+End Sub
+
+Private Function GetBottomMostOfPage(ByVal p As MSForms.page) As Single
+    Dim ctl As Object, maxBottom As Single
+    For Each ctl In p.Controls
+        If ctl.top + ctl.Height > maxBottom Then maxBottom = ctl.top + ctl.Height
+    Next ctl
+    GetBottomMostOfPage = maxBottom
+End Function
+
+Private Function GetBottomMostOfFrame(ByVal f As MSForms.Frame) As Single
+    Dim ctl As Object, maxBottom As Single
+    For Each ctl In f.Controls
+        If ctl.top + ctl.Height > maxBottom Then maxBottom = ctl.top + ctl.Height
+    Next ctl
+    GetBottomMostOfFrame = maxBottom
+End Function
+
+'=================================================================
+
 
 '=== BIコンボにイベントフックを張る ===
 Private Sub AttachBIHook(ByRef cb As MSForms.ComboBox)
