@@ -1295,7 +1295,12 @@ End Function
 
 Private Sub BuildInterestSection(ByVal pIADL As MSForms.page, ByVal topY As Single, ByVal sectionWidth As Single)
     Dim fra As MSForms.Frame
-    Dim lblGuide As MSForms.label
+    Dim lblGuideTitle As MSForms.label
+    Dim lblGuide1 As MSForms.label
+    Dim lblGuide2 As MSForms.label
+    Dim lblGuide3 As MSForms.label
+    Dim lblGuide4 As MSForms.label
+    Dim guideBottom As Single
     Dim categoryTop As Single
 
     Set fra = pIADL.controls.Add("Forms.Frame.1", "fraInterest")
@@ -1307,22 +1312,64 @@ Private Sub BuildInterestSection(ByVal pIADL As MSForms.page, ByVal topY As Sing
         .Height = 380
     End With
 
-
-    Set lblGuide = fra.controls.Add("Forms.Label.1", "lblInterestGuide")
-    With lblGuide
-                .caption = "・普段の生活でよくしていることはどれですか？" & vbCrLf & _
-                   "・昔はやっていたけど今はしていないことはありますか？" & vbCrLf & _
-                   "・できたらやってみたいことはありますか？" & vbCrLf & _
-                   "・外出や人との関わりで好きなことはありますか？"
+    Set lblGuideTitle = fra.controls.Add("Forms.Label.1", "lblInterestGuideTitle")
+    With lblGuideTitle
+        .caption = "質問項目"
         .Left = 10
-        .top = 18
+        .top = 14
         .Width = fra.InsideWidth - 20
-        .Height = 60
-        .WordWrap = True
+        .Height = 16
         .Font.Size = 11
+        .Font.Bold = True
     End With
 
-    categoryTop = lblGuide.top + lblGuide.Height + 10
+    Set lblGuide1 = fra.controls.Add("Forms.Label.1", "lblInterestGuide1")
+    With lblGuide1
+        .caption = "・普段の生活でよくしていることはどれですか？"
+        .Left = 10
+        .top = lblGuideTitle.top + lblGuideTitle.Height + 4
+        .Width = fra.InsideWidth - 20
+        .Height = 14
+        .Font.Size = 10
+        .Font.Bold = True
+    End With
+
+    Set lblGuide2 = fra.controls.Add("Forms.Label.1", "lblInterestGuide2")
+    With lblGuide2
+        .caption = "・昔はやっていたけど今はしていないことはありますか？"
+        .Left = 10
+        .top = lblGuide1.top + lblGuide1.Height + 3
+        .Width = fra.InsideWidth - 20
+        .Height = 14
+        .Font.Size = 10
+        .Font.Bold = True
+    End With
+
+    Set lblGuide3 = fra.controls.Add("Forms.Label.1", "lblInterestGuide3")
+    With lblGuide3
+        .caption = "・できたらやってみたいことはありますか？"
+        .Left = 10
+        .top = lblGuide2.top + lblGuide2.Height + 3
+        .Width = fra.InsideWidth - 20
+        .Height = 14
+        .Font.Size = 10
+        .Font.Bold = True
+    End With
+
+    Set lblGuide4 = fra.controls.Add("Forms.Label.1", "lblInterestGuide4")
+    With lblGuide4
+        .caption = "・外出や人との関わりで好きなことはありますか？"
+        .Left = 10
+        .top = lblGuide3.top + lblGuide3.Height + 3
+        .Width = fra.InsideWidth - 20
+        .Height = 14
+        .Font.Size = 10
+        .Font.Bold = True
+    End With
+
+    guideBottom = lblGuide4.top + lblGuide4.Height
+    categoryTop = guideBottom + 20
+
    
     BuildInterestCategory fra, "Now", InterestCategoryTitle("Now"), InterestLabels("Now"), categoryTop
     BuildInterestCategory fra, "Past", InterestCategoryTitle("Past"), InterestLabels("Past"), categoryTop + 90
