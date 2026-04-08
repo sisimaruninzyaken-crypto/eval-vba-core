@@ -13,28 +13,43 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+
 Option Explicit
 
 Private mSaved As Boolean
 Private mButtonHooks As Collection
+Private mMode As modAppConfig.FacilityDialogMode
+Private mConfirmedFacilityName As String
 
 Private txtFacilityName As MSForms.TextBox
 Private txtFacilityNo As MSForms.TextBox
 Private txtFacilityAddress As MSForms.TextBox
 Private txtFacilityPhone As MSForms.TextBox
 
+Public Sub ConfigureMode(ByVal mode As modAppConfig.FacilityDialogMode)
+    mMode = mode
+End Sub
+
 Public Property Get IsSaved() As Boolean
     IsSaved = mSaved
 End Property
 
+Public Property Get ConfirmedFacilityName() As String
+    ConfirmedFacilityName = Trim$(mConfirmedFacilityName)
+End Property
+
 Private Sub UserForm_Initialize()
-    Me.caption = "事業所設定（初回のみ）"
+    If mMode = 0 Then
+        mMode = modAppConfig.FacilityDialogModeInitialSetup
+    End If
+    
     Me.Width = 380
     Me.Height = 260
 
     Set mButtonHooks = New Collection
     BuildFormControls
     LoadExistingValues
+    ApplyModeLayout
 End Sub
 
 Private Sub BuildFormControls()
@@ -62,7 +77,7 @@ Private Sub BuildFormControls()
 
     Dim btnSave As MSForms.CommandButton
     Set btnSave = Me.controls.Add("Forms.CommandButton.1", "btnSave", True)
-    btnSave.caption = "保存"
+    btnSave.caption = "OK"
     btnSave.Left = 208
     btnSave.top = topPos + 40
     btnSave.Width = 68
@@ -84,6 +99,32 @@ Private Sub BuildFormControls()
     cancelHook.Init Me, btnCancel, "cancel"
     mButtonHooks.Add cancelHook
 End Sub
+
+Private Sub ApplyModeLayout()
+    Select Case mMode
+        Case modAppConfig.FacilityDialogModeInitialSetup
+            Me.caption = "事業所設定（初回のみ）"
+            txtFacilityNo.Locked = False
+            txtFacilityAddress.Locked = False
+            txtFacilityPhone.Locked = False
+            txtFacilityNo.TabStop = True
+            txtFacilityAddress.TabStop = True
+            txtFacilityPhone.TabStop = True
+
+        Case modAppConfig.FacilityDialogModeConfirmOnly
+            Me.caption = "事業所確認"
+            txtFacilityNo.Locked = True
+            txtFacilityAddress.Locked = True
+            txtFacilityPhone.Locked = True
+            txtFacilityNo.TabStop = False
+            txtFacilityAddress.TabStop = False
+            txtFacilityPhone.TabStop = False
+
+        Case Else
+            Me.caption = "事業所設定"
+    End Select
+End Sub
+
 
 Private Sub LoadExistingValues()
     Dim facilityName As String
@@ -111,13 +152,18 @@ End Sub
 Private Sub SaveAndClose()
     If Not ValidateRequired() Then Exit Sub
 
-    modAppConfig.SaveFacilitySettings txtFacilityName.text, txtFacilityNo.text, txtFacilityAddress.text, txtFacilityPhone.text
+     mConfirmedFacilityName = Trim$(txtFacilityName.text)
+
+    If mMode = modAppConfig.FacilityDialogModeInitialSetup Then
+        modAppConfig.SaveFacilitySettings mConfirmedFacilityName, txtFacilityNo.text, txtFacilityAddress.text, txtFacilityPhone.text
+    End If
     mSaved = True
     Me.Hide
 End Sub
 
 Private Sub CancelAndClose()
     mSaved = False
+    mConfirmedFacilityName = vbNullString
     Me.Hide
 End Sub
 
@@ -128,22 +174,24 @@ Private Function ValidateRequired() As Boolean
         Exit Function
     End If
 
-    If Len(Trim$(txtFacilityNo.text)) = 0 Then
-        MsgBox "事業所Noを入力してください。", vbExclamation
-        txtFacilityNo.SetFocus
-        Exit Function
-    End If
+    If mMode = modAppConfig.FacilityDialogModeInitialSetup Then
+        If Len(Trim$(txtFacilityNo.text)) = 0 Then
+            MsgBox "事業所Noを入力してください。", vbExclamation
+            txtFacilityNo.SetFocus
+            Exit Function
+        End If
 
-    If Len(Trim$(txtFacilityAddress.text)) = 0 Then
-        MsgBox "住所を入力してください。", vbExclamation
-        txtFacilityAddress.SetFocus
-        Exit Function
-    End If
+        If Len(Trim$(txtFacilityAddress.text)) = 0 Then
+            MsgBox "住所を入力してください。", vbExclamation
+            txtFacilityAddress.SetFocus
+            Exit Function
+        End If
 
-    If Len(Trim$(txtFacilityPhone.text)) = 0 Then
-        MsgBox "電話番号を入力してください。", vbExclamation
-        txtFacilityPhone.SetFocus
-        Exit Function
+        If Len(Trim$(txtFacilityPhone.text)) = 0 Then
+            MsgBox "電話番号を入力してください。", vbExclamation
+            txtFacilityPhone.SetFocus
+            Exit Function
+        End If
     End If
 
     ValidateRequired = True
@@ -175,6 +223,7 @@ End Sub
 Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
     If CloseMode = 0 Then
         mSaved = False
+        mConfirmedFacilityName = vbNullString
     End If
 End Sub
 

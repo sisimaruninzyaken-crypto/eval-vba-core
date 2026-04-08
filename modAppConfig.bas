@@ -12,20 +12,59 @@ Private Const KEY_IS_INITIALIZED As String = "IsInitialized"
 Private Const COL_KEY As Long = 1
 Private Const COL_VALUE As Long = 2
 
-Public Function EnsureFacilitySetupOnStartup() As Boolean
+Private mSessionFacilityName As String
+
+Public Enum FacilityDialogMode
+    FacilityDialogModeInitialSetup = 1
+    FacilityDialogModeConfirmOnly = 2
+End Enum
+
+Public Function ShowFacilityDialogOnStartup() As Boolean
+    Dim mode As FacilityDialogMode
+    Dim frm As frmFacilitySettings
     If IsFacilityInitialized() Then
-        EnsureFacilitySetupOnStartup = True
-        Exit Function
+        mode = FacilityDialogModeConfirmOnly
+    Else
+        mode = FacilityDialogModeInitialSetup
     End If
 
-    Dim frm As frmFacilitySettings
     Set frm = New frmFacilitySettings
+    frm.ConfigureMode mode
     frm.Show vbModal
 
-    EnsureFacilitySetupOnStartup = frm.IsSaved
+    ShowFacilityDialogOnStartup = frm.IsSaved
+    If frm.IsSaved Then
+        mSessionFacilityName = frm.ConfirmedFacilityName
+    Else
+        mSessionFacilityName = vbNullString
+    End If
     Unload frm
     Set frm = Nothing
 End Function
+
+Public Function EnsureFacilitySetupOnStartup() As Boolean
+    EnsureFacilitySetupOnStartup = ShowFacilityDialogOnStartup()
+End Function
+
+Public Function GetSessionFacilityName() As String
+    GetSessionFacilityName = Trim$(mSessionFacilityName)
+End Function
+
+Public Function ResolveFacilityNameForOutput() As String
+    Dim configuredName As String
+    Dim facilityNo As String
+    Dim facilityAddress As String
+    Dim facilityPhone As String
+
+    LoadFacilitySettings configuredName, facilityNo, facilityAddress, facilityPhone
+
+    If LenB(Trim$(mSessionFacilityName)) > 0 Then
+        ResolveFacilityNameForOutput = Trim$(mSessionFacilityName)
+    Else
+        ResolveFacilityNameForOutput = Trim$(configuredName)
+    End If
+End Function
+
 
 Public Function IsFacilityInitialized() As Boolean
     Dim flagValue As String

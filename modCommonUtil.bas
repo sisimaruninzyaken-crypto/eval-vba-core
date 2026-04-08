@@ -140,7 +140,7 @@ End Function
 
 Public Sub App_Main()
 
-    If Not modAppConfig.EnsureFacilitySetupOnStartup() Then Exit Sub
+    If Not modAppConfig.ShowFacilityDialogOnStartup() Then Exit Sub
 
     ActiveWindow.Zoom = 100
     Application.WindowState = xlMaximized
