@@ -92,6 +92,7 @@ Private Sub LoadExistingValues()
     Dim facilityPhone As String
 
     modAppConfig.LoadFacilitySettings facilityName, facilityNo, facilityAddress, facilityPhone
+    facilityName = ResolveFacilityNameForOutput(owner, facilityName)
 
     txtFacilityName.text = facilityName
     txtFacilityNo.text = facilityNo

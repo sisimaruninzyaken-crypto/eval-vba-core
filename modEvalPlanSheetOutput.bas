@@ -107,11 +107,36 @@ Private Sub WriteFacilityInfoBlock(ByVal ws As Worksheet, ByVal owner As Object)
     explainDateText = FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate"))
     explainerText = GetCtrlTextSafe(owner, "txtEvaluator")
 
-WriteMerged ws, "A52:AI52", "通所介護:" & facilityName & "　事業所No." & facilityNo
-WriteMerged ws, "A53:AI53", "住所:" & facilityAddress & "　電話番号:" & facilityPhone
+    WriteMerged ws, "A52:AI52", "通所介護:" & facilityName & "　事業所No." & facilityNo
+    WriteMerged ws, "A53:AI53", "住所:" & facilityAddress & "　電話番号:" & facilityPhone
     WriteMerged ws, "AJ52:BJ52", "説明日：" & explainDateText
     WriteMerged ws, "AJ53:BJ53", "説明者：" & explainerText
 End Sub
+
+Private Function ResolveFacilityNameForOutput(ByVal owner As Object, ByVal defaultFacilityName As String) As String
+    Dim valueText As String
+
+    valueText = Trim$(defaultFacilityName)
+
+    If owner Is Nothing Then
+        ResolveFacilityNameForOutput = valueText
+        Exit Function
+    End If
+
+    On Error Resume Next
+    valueText = Trim$(CStr(CallByName(owner, "GetFacilityNameInputValue", VbMethod)))
+    On Error GoTo 0
+
+    If LenB(valueText) = 0 Then
+        On Error Resume Next
+        valueText = Trim$(CStr(owner.controls("frHeader").controls("txtFacilityDisplay").text))
+        On Error GoTo 0
+    End If
+
+    If LenB(valueText) = 0 Then valueText = Trim$(defaultFacilityName)
+
+    ResolveFacilityNameForOutput = valueText
+End Function
 
 
 ' デバッグ用：テンプレートシートのラベル位置を Immediate に出力

@@ -125,6 +125,8 @@ Attribute mBIEnter_txtTxCourse.VB_VarHelpID = -1
 Private WithEvents btnGeneratePlanCtl As MSForms.CommandButton
 Attribute btnGeneratePlanCtl.VB_VarHelpID = -1
 Private mFacilityDisplayText As String
+Private mFacilityNameInputText As String
+
 
 
 Public Sub SyncAgeFromBirth()
@@ -3391,23 +3393,29 @@ Private Sub UpdateFacilityDisplayCaption()
     Dim facilityNo As String
     Dim facilityAddress As String
     Dim facilityPhone As String
-    Dim lbl As Object
-    Dim displayText As String
+    Dim txt As Object
 
     modAppConfig.LoadFacilitySettings facilityName, facilityNo, facilityAddress, facilityPhone
 
     facilityName = Trim$(facilityName)
-    If LenB(facilityName) = 0 Then
-        displayText = "éñã∆èäÅFñ¢ê›íË"
-    Else
-        displayText = "éñã∆èäÅF" & facilityName
-    End If
-    mFacilityDisplayText = displayText
+    mFacilityNameInputText = facilityName
 
-    Set lbl = EnsureFacilityDisplayLabel()
-    If lbl Is Nothing Then Exit Sub
-    lbl.caption = displayText
+    Set txt = EnsureFacilityNameTextBox()
+    If txt Is Nothing Then Exit Sub
+    txt.text = mFacilityNameInputText
 End Sub
+
+Public Function GetFacilityNameInputValue() As String
+    Dim txt As Object
+
+    Set txt = EnsureFacilityNameTextBox()
+    If Not txt Is Nothing Then
+        mFacilityNameInputText = Trim$(CStr(txt.text))
+    End If
+
+    GetFacilityNameInputValue = mFacilityNameInputText
+End Function
+
 
 Private Function EnsureFacilityDisplayLabel() As Object
     Dim f As Object
@@ -3419,18 +3427,35 @@ Private Function EnsureFacilityDisplayLabel() As Object
     Set lbl = SafeGetControl(f, "lblFacilityDisplay")
     If lbl Is Nothing Then
         Set lbl = f.controls.Add("Forms.Label.1", "lblFacilityDisplay", True)
-        lbl.AutoSize = False
-        lbl.BackStyle = fmBackStyleTransparent
-        lbl.TextAlign = fmTextAlignLeft
-        lbl.BorderStyle = fmBorderStyleNone
-        lbl.WordWrap = False
     End If
+    
+    lbl.caption = "éñã∆èäñº"
+    lbl.AutoSize = True
+    lbl.BackStyle = fmBackStyleTransparent
+    lbl.TextAlign = fmTextAlignLeft
+    lbl.BorderStyle = fmBorderStyleNone
+    lbl.WordWrap = False
 
     lbl.Visible = True
     Set EnsureFacilityDisplayLabel = lbl
 End Function
 
+Private Function EnsureFacilityNameTextBox() As Object
+    Dim f As Object
+    Dim txt As Object
 
+    Set f = SafeGetControl(Me, "frHeader")
+    If f Is Nothing Then Exit Function
+
+    Set txt = SafeGetControl(f, "txtFacilityDisplay")
+    If txt Is Nothing Then
+        Set txt = f.controls.Add("Forms.TextBox.1", "txtFacilityDisplay", True)
+        txt.SpecialEffect = fmSpecialEffectSunken
+    End If
+
+    txt.Visible = True
+    Set EnsureFacilityNameTextBox = txt
+End Function
 
 
 Private Sub ApplyDailyLogImeSettings()
@@ -7580,6 +7605,7 @@ Private Sub RearrangeHeaderTopAreaLayout()
     Dim btnArchive As Object
     Dim btnClear As Object, btnSave As Object, btnClose As Object, btnLoadPrev As Object
     Dim lblFacility As Object
+    Dim txtFacility As Object
     Dim lblPID As Object, lblName As Object, lblKana As Object
     Dim txtPID As Object, txtName As Object, txtKana As Object
     Dim leftX As Single, midLeft As Single, midRight As Single
@@ -7595,6 +7621,7 @@ Private Sub RearrangeHeaderTopAreaLayout()
     Set btnClose = SafeGetControl(f, "cmdCloseHeader")
     Set btnLoadPrev = SafeGetControl(f, "cmdHdrLoadPrev")
     Set lblFacility = EnsureFacilityDisplayLabel()
+    Set txtFacility = EnsureFacilityNameTextBox()
 
     Set txtPID = SafeGetControl(f, "txtHdrPID")
     Set txtName = SafeGetControl(f, "txtHdrName")
@@ -7648,13 +7675,21 @@ Private Sub RearrangeHeaderTopAreaLayout()
 
     If txtPID Is Nothing Or txtName Is Nothing Or txtKana Is Nothing Then Exit Sub
     
-        If Not lblFacility Is Nothing Then
-        If LenB(mFacilityDisplayText) = 0 Then mFacilityDisplayText = "éñã∆èäÅFñ¢ê›íË"
-        lblFacility.caption = mFacilityDisplayText
+
+    If Not lblFacility Is Nothing Then
         lblFacility.Left = midLeft
-        lblFacility.top = rowTop1 + 2
-        lblFacility.Width = midRight - midLeft
-        lblFacility.Height = 14
+        lblFacility.top = rowTop1 + 4
+    End If
+
+    If Not txtFacility Is Nothing Then
+        txtFacility.Left = midLeft + IIf(lblFacility Is Nothing, 0, lblFacility.Width + 4)
+        txtFacility.top = rowTop1 + 1
+        txtFacility.Height = 18
+        txtFacility.Width = midRight - txtFacility.Left
+        If txtFacility.Width < 120 Then txtFacility.Width = 120
+        If LenB(Trim$(CStr(txtFacility.text))) = 0 Then
+            txtFacility.text = mFacilityNameInputText
+        End If
     End If
 
     rowTop2 = rowTop1 + txtPID.Height + rowGap
