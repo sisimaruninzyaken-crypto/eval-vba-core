@@ -2438,7 +2438,9 @@ End Sub
 
 
 Public Sub Load_TestEvalFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner As Object)
-      Dim s As String
+    Dim s As String
+    Dim memoTUG As String
+    Dim evalNoteRaw As String
     s = ReadStr_Compat("IO_TestEval", r, ws)
 
     If Len(s) > 0 Then s = Replace(s, "=", ": ")
@@ -2451,6 +2453,17 @@ Public Sub Load_TestEvalFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner 
     owner.txtGripL.value = IO_GetVal(s, "Test_Grip_L_kg")
     owner.txtSemi.value = IO_GetVal(s, "Test_SemiTandem_sec")
     LoadTestEvalMemoColumns ws, r, owner
+    
+
+    memoTUG = Trim$(GetCtlTextGeneric(owner, "txtMemo_TUG"))
+    If LenB(memoTUG) = 0 Then
+        evalNoteRaw = IO_GetVal(s, "TestEval_Note")
+        memoTUG = ExtractTestEvalMemoByLabel(evalNoteRaw, "TUG")
+        If LenB(memoTUG) > 0 Then
+            SetCtlValueSafe owner, "txtMemo_TUG", memoTUG
+        End If
+    End If
+    
 
     ' TODO: Ç±Ç±Ç©ÇÁâ∫ÇÕå„Ç≈é¿ëïÅiç°ÇÕêGÇÁÇ»Ç¢Åj
     ' IO_TestEval Çï™âÇµÇƒ
@@ -2461,6 +2474,38 @@ Public Sub Load_TestEvalFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner 
     ws.Cells(r, 181).value = val(owner.txtTUG.value)
    
 End Sub
+
+Private Function ExtractTestEvalMemoByLabel(ByVal evalNote As String, ByVal label As String) As String
+    Dim chunks() As String
+    Dim i As Long
+    Dim chunk As String
+    Dim p As Long
+    Dim k As String
+    Dim v As String
+
+    evalNote = Trim$(evalNote)
+    label = Trim$(label)
+    If LenB(evalNote) = 0 Or LenB(label) = 0 Then Exit Function
+
+    chunks = Split(evalNote, "/")
+    For i = LBound(chunks) To UBound(chunks)
+        chunk = Trim$(CStr(chunks(i)))
+        If LenB(chunk) = 0 Then GoTo NextChunk
+
+        p = InStr(1, chunk, ":", vbTextCompare)
+        If p <= 0 Then GoTo NextChunk
+
+        k = Trim$(Left$(chunk, p - 1))
+        v = Trim$(Mid$(chunk, p + 1))
+        If StrComp(k, label, vbTextCompare) = 0 Then
+            ExtractTestEvalMemoByLabel = v
+            Exit Function
+        End If
+NextChunk:
+    Next i
+End Function
+
+
 
 Private Sub SaveTestEvalMemoColumns(ByVal ws As Worksheet, ByVal r As Long, ByVal owner As Object)
     SaveTestEvalMemoColumn ws, r, owner, "TestEval_Memo_10mWalk", "txtMemo_10mWalk"

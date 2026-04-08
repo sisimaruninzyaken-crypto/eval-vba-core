@@ -7,6 +7,8 @@ Private Const LIFE_FUNC_OUTPUT_DIR As String = "LifeFuncCheckSheet"
 Private Const UNKNOWN_NAME As String = "unknown"
 
 Private Const LIFE_FUNC_TRACE_TAG As String = "[LifeFuncTrace]"
+Private Const LIFE_FUNC_INCLUDE_INTEREST As Boolean = False
+
 
 Private Sub TraceLifeFunc(ByVal message As String)
 #If APP_DEBUG Then
@@ -88,7 +90,9 @@ Public Sub WriteLifeFuncCheckSheet(ByVal ws As Worksheet, ByVal owner As Object)
     If ws Is Nothing Then Exit Sub
     WriteBasicInfo ws, owner
     WriteEnvironment ws, owner
-    WriteInterestSection ws, owner
+    If LIFE_FUNC_INCLUDE_INTEREST Then
+        WriteInterestSection ws, owner
+    End If
     WriteLevelTaskComment ws, owner
 End Sub
 
@@ -198,7 +202,9 @@ Private Sub WriteLifeFuncCheckSheetContent(ByVal ws As Worksheet, ByVal owner As
 
     WriteBasicInfo ws, owner
     WriteEnvironment ws, owner
-    WriteInterestSection ws, owner
+    If LIFE_FUNC_INCLUDE_INTEREST Then
+        WriteInterestSection ws, owner
+    End If
     WriteLevelTaskComment ws, owner
 
     Exit Sub
