@@ -3,6 +3,11 @@ Attribute VB_Name = "modEvalPlanSheetOutput"
 
 
 Option Explicit
+Private Const PLAN_SHEET_FACILITY_NAME As String = "通所介護 ○○○"
+Private Const PLAN_SHEET_FACILITY_NO As String = "事業所No.000000000"
+Private Const PLAN_SHEET_FACILITY_ADDRESS As String = "住所○○○"
+Private Const PLAN_SHEET_FACILITY_PHONE As String = "電話番号○○○"
+
 
 Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Optional ByVal planData As Object = Nothing)
     
@@ -80,6 +85,8 @@ Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Opti
     Debug.Print "[WES] step 40 A50 Monitoring"
     WriteMerged ws, "A50:AE51", GetPlanText(planData, Array("Monitoring.Change", "monitoring.change", "MonitoringChange", "changeText"))
     WriteMerged ws, "AF50:BJ51", GetPlanText(planData, Array("Monitoring.Issue", "monitoring.issue", "MonitoringIssue", "issueText"))
+    Debug.Print "[WES] step 45 FacilityInfo"
+    WriteFacilityInfoBlock ws, owner
     Debug.Print "[WES] step 50 done"
 
 
@@ -90,6 +97,22 @@ EH:
 
 
 End Sub
+
+Private Sub WriteFacilityInfoBlock(ByVal ws As Worksheet, ByVal owner As Object)
+    Dim explainDateText As String
+    Dim explainerText As String
+
+    explainDateText = FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate"))
+    explainerText = GetCtrlTextSafe(owner, "txtEvaluator")
+
+    WriteMerged ws, "A53:BJ53", PLAN_SHEET_FACILITY_NAME
+    WriteMerged ws, "A54:BJ54", PLAN_SHEET_FACILITY_NO
+    WriteMerged ws, "A55:BJ55", PLAN_SHEET_FACILITY_ADDRESS
+    WriteMerged ws, "A56:BJ56", PLAN_SHEET_FACILITY_PHONE
+    WriteMerged ws, "A57:AJ57", "F" & explainDateText
+    WriteMerged ws, "AK57:BJ57", "?F" & explainerText
+End Sub
+
 
 ' デバッグ用：テンプレートシートのラベル位置を Immediate に出力
 Public Sub DebugScanPlanSheetLabels(ByVal ws As Worksheet)

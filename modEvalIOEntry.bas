@@ -306,6 +306,7 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
         End If
         LoadAllSectionsFromSheet wsTarget, validRow, owner
         RestoreHeaderUserIDAfterHistoryLoad owner, resolvedIndexRow, wsTarget, validRow
+             MsgBox "前回値の読み込みが完了しました。", vbInformation
         Exit Sub
 
     End If
@@ -2428,7 +2429,6 @@ Public Sub Save_TestEvalToSheet(ByVal ws As Worksheet, ByVal r As Long, ByVal ow
     ws.Cells(r, c).Value2 = CStr(s)
     SaveTestEvalMemoColumns ws, r, owner
     SaveTestEvalCriticalFindingsColumn ws, r, evalNote
-    ws.Cells(r, 181).value = val(owner.txtTUG.value)
 
 
 End Sub
@@ -2457,8 +2457,6 @@ Public Sub Load_TestEvalFromSheet(ws As Worksheet, ByVal r As Long, ByVal owner 
     ' owner（frmEval）の txtTenMWalk / txtTUG / txtFiveSts /
     ' txtGripR / txtGripL / txtSemi に流し込む
     
-    
-    ws.Cells(r, 181).value = val(owner.txtTUG.value)
    
 End Sub
 
