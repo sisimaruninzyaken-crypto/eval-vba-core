@@ -3,10 +3,7 @@ Attribute VB_Name = "modEvalPlanSheetOutput"
 
 
 Option Explicit
-Private Const PLAN_SHEET_FACILITY_NAME As String = "通所介護 ○○○"
-Private Const PLAN_SHEET_FACILITY_NO As String = "事業所No.000000000"
-Private Const PLAN_SHEET_FACILITY_ADDRESS As String = "住所○○○"
-Private Const PLAN_SHEET_FACILITY_PHONE As String = "電話番号○○○"
+
 
 
 Public Sub WriteEvalPlanSheet(ByVal ws As Worksheet, ByVal owner As Object, Optional ByVal planData As Object = Nothing)
@@ -99,14 +96,19 @@ EH:
 End Sub
 
 Private Sub WriteFacilityInfoBlock(ByVal ws As Worksheet, ByVal owner As Object)
+    Dim facilityName As String
+    Dim facilityNo As String
+    Dim facilityAddress As String
+    Dim facilityPhone As String
     Dim explainDateText As String
     Dim explainerText As String
 
+    modAppConfig.LoadFacilitySettings facilityName, facilityNo, facilityAddress, facilityPhone
     explainDateText = FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate"))
     explainerText = GetCtrlTextSafe(owner, "txtEvaluator")
 
-    WriteMerged ws, "A52:AF52", PLAN_SHEET_FACILITY_NAME & "@" & PLAN_SHEET_FACILITY_NO
-    WriteMerged ws, "A5:AF53", PLAN_SHEET_FACILITY_ADDRESS & "@" & PLAN_SHEET_FACILITY_PHONE
+WriteMerged ws, "A52:AI52", "通所介護:" & facilityName & "　事業所No." & facilityNo
+WriteMerged ws, "A53:AI53", "住所:" & facilityAddress & "　電話番号:" & facilityPhone
     WriteMerged ws, "AJ52:BJ52", "説明日：" & explainDateText
     WriteMerged ws, "AJ53:BJ53", "説明者：" & explainerText
 End Sub
