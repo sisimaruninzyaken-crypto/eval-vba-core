@@ -45,6 +45,7 @@ Private Sub BuildFormControls()
 
     AddLabel "lblFacilityName", "éñã∆èäñº", labelLeft, topPos
     Set txtFacilityName = AddTextBox("txtFacilityName", inputLeft, topPos - 2, 250)
+    SetImeToJapanese txtFacilityName
 
     topPos = topPos + rowHeight
     AddLabel "lblFacilityNo", "éñã∆èäNo", labelLeft, topPos
@@ -53,6 +54,7 @@ Private Sub BuildFormControls()
     topPos = topPos + rowHeight
     AddLabel "lblFacilityAddress", "èZèä", labelLeft, topPos
     Set txtFacilityAddress = AddTextBox("txtFacilityAddress", inputLeft, topPos - 2, 250)
+    SetImeToJapanese txtFacilityAddress
 
     topPos = topPos + rowHeight
     AddLabel "lblFacilityPhone", "ìdòbî‘çÜ", labelLeft, topPos
@@ -165,6 +167,10 @@ Private Function AddTextBox(ByVal controlName As String, ByVal leftPos As Single
     txt.Width = widthValue
     Set AddTextBox = txt
 End Function
+
+Private Sub SetImeToJapanese(ByVal targetTextBox As MSForms.TextBox)
+    targetTextBox.IMEMode = fmIMEModeHiragana
+End Sub
 
 Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
     If CloseMode = 0 Then
