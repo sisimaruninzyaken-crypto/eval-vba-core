@@ -124,7 +124,7 @@ Private WithEvents mBIEnter_txtTxCourse As MSForms.TextBox
 Attribute mBIEnter_txtTxCourse.VB_VarHelpID = -1
 Private WithEvents btnGeneratePlanCtl As MSForms.CommandButton
 Attribute btnGeneratePlanCtl.VB_VarHelpID = -1
-
+Private mFacilityDisplayText As String
 
 
 Public Sub SyncAgeFromBirth()
@@ -3323,6 +3323,7 @@ On Error GoTo 0
 
 
     Call BuildEvalShell_Once
+    UpdateFacilityDisplayCaption
     
     Call CreateHeaderButtons_Once
 
@@ -3384,6 +3385,53 @@ DoEvents
   Call Fix_InnerScrollBars
  
 End Sub
+
+Private Sub UpdateFacilityDisplayCaption()
+    Dim facilityName As String
+    Dim facilityNo As String
+    Dim facilityAddress As String
+    Dim facilityPhone As String
+    Dim lbl As Object
+    Dim displayText As String
+
+    modAppConfig.LoadFacilitySettings facilityName, facilityNo, facilityAddress, facilityPhone
+
+    facilityName = Trim$(facilityName)
+    If LenB(facilityName) = 0 Then
+        displayText = "éñã∆èäÅFñ¢ê›íË"
+    Else
+        displayText = "éñã∆èäÅF" & facilityName
+    End If
+    mFacilityDisplayText = displayText
+
+    Set lbl = EnsureFacilityDisplayLabel()
+    If lbl Is Nothing Then Exit Sub
+    lbl.caption = displayText
+End Sub
+
+Private Function EnsureFacilityDisplayLabel() As Object
+    Dim f As Object
+    Dim lbl As Object
+
+    Set f = SafeGetControl(Me, "frHeader")
+    If f Is Nothing Then Exit Function
+
+    Set lbl = SafeGetControl(f, "lblFacilityDisplay")
+    If lbl Is Nothing Then
+        Set lbl = f.controls.Add("Forms.Label.1", "lblFacilityDisplay", True)
+        lbl.AutoSize = False
+        lbl.BackStyle = fmBackStyleTransparent
+        lbl.TextAlign = fmTextAlignLeft
+        lbl.BorderStyle = fmBorderStyleNone
+        lbl.WordWrap = False
+    End If
+
+    lbl.Visible = True
+    Set EnsureFacilityDisplayLabel = lbl
+End Function
+
+
+
 
 Private Sub ApplyDailyLogImeSettings()
     Dim dailyFra As Object
@@ -7531,6 +7579,7 @@ Private Sub RearrangeHeaderTopAreaLayout()
     Dim f As Object
     Dim btnArchive As Object
     Dim btnClear As Object, btnSave As Object, btnClose As Object, btnLoadPrev As Object
+    Dim lblFacility As Object
     Dim lblPID As Object, lblName As Object, lblKana As Object
     Dim txtPID As Object, txtName As Object, txtKana As Object
     Dim leftX As Single, midLeft As Single, midRight As Single
@@ -7545,6 +7594,7 @@ Private Sub RearrangeHeaderTopAreaLayout()
     Set btnSave = SafeGetControl(f, "cmdSaveHeader")
     Set btnClose = SafeGetControl(f, "cmdCloseHeader")
     Set btnLoadPrev = SafeGetControl(f, "cmdHdrLoadPrev")
+    Set lblFacility = EnsureFacilityDisplayLabel()
 
     Set txtPID = SafeGetControl(f, "txtHdrPID")
     Set txtName = SafeGetControl(f, "txtHdrName")
@@ -7597,28 +7647,37 @@ Private Sub RearrangeHeaderTopAreaLayout()
     If midRight <= midLeft Then Exit Sub
 
     If txtPID Is Nothing Or txtName Is Nothing Or txtKana Is Nothing Then Exit Sub
+    
+        If Not lblFacility Is Nothing Then
+        If LenB(mFacilityDisplayText) = 0 Then mFacilityDisplayText = "éñã∆èäÅFñ¢ê›íË"
+        lblFacility.caption = mFacilityDisplayText
+        lblFacility.Left = midLeft
+        lblFacility.top = rowTop1 + 2
+        lblFacility.Width = midRight - midLeft
+        lblFacility.Height = 14
+    End If
 
     rowTop2 = rowTop1 + txtPID.Height + rowGap
 
     If Not lblPID Is Nothing Then
         lblPID.AutoSize = True
         lblPID.Left = midLeft
-        lblPID.top = rowTop1 + 2
+        lblPID.top = rowTop1 + 18
     End If
 
     txtPID.Left = midLeft + IIf(lblPID Is Nothing, 0, lblPID.Width + 4)
-    txtPID.top = rowTop1
+    txtPID.top = rowTop1 + 16
     idW = 72
     txtPID.Width = idW
 
     If Not lblName Is Nothing Then
         lblName.AutoSize = True
         lblName.Left = txtPID.Left + txtPID.Width + 10
-        lblName.top = rowTop1 + 2
+        lblName.top = rowTop1 + 18
     End If
 
     txtName.Left = IIf(lblName Is Nothing, txtPID.Left + txtPID.Width + 10, lblName.Left + lblName.Width + 4)
-    txtName.top = rowTop1
+    txtName.top = rowTop1 + 16
     nameW = midRight - txtName.Left
     If nameW < 140 Then nameW = 140
     txtName.Width = nameW
@@ -7626,11 +7685,11 @@ Private Sub RearrangeHeaderTopAreaLayout()
     If Not lblKana Is Nothing Then
         lblKana.AutoSize = True
         lblKana.Left = IIf(lblName Is Nothing, txtName.Left - 32, lblName.Left)
-        lblKana.top = rowTop2 + 2
+        lblKana.top = rowTop2 + 18
     End If
 
     txtKana.Left = txtName.Left
-    txtKana.top = rowTop2
+    txtKana.top = rowTop2 + 16
     txtKana.Width = txtName.Width
 End Sub
 
