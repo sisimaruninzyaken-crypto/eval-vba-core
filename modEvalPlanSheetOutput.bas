@@ -105,12 +105,12 @@ Private Sub WriteFacilityInfoBlock(ByVal ws As Worksheet, ByVal owner As Object)
     explainDateText = FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate"))
     explainerText = GetCtrlTextSafe(owner, "txtEvaluator")
 
-    WriteMerged ws, "A53:BJ53", PLAN_SHEET_FACILITY_NAME
-    WriteMerged ws, "A54:BJ54", PLAN_SHEET_FACILITY_NO
-    WriteMerged ws, "A55:BJ55", PLAN_SHEET_FACILITY_ADDRESS
-    WriteMerged ws, "A56:BJ56", PLAN_SHEET_FACILITY_PHONE
-    WriteMerged ws, "A57:AJ57", "F" & explainDateText
-    WriteMerged ws, "AK57:BJ57", "?F" & explainerText
+    WriteMerged ws, "A53:AI53", PLAN_SHEET_FACILITY_NAME
+    WriteMerged ws, "A54:AI54", PLAN_SHEET_FACILITY_NO
+    WriteMerged ws, "A55:AI55", PLAN_SHEET_FACILITY_ADDRESS
+    WriteMerged ws, "A56:AI56", PLAN_SHEET_FACILITY_PHONE
+    WriteMerged ws, "AJ56:BJ56", "ê‡ñæì˙ÅF" & explainDateText
+    WriteMerged ws, "AJ57:BJ57", "ê‡ñæé“ÅF" & explainerText
 End Sub
 
 
