@@ -7537,8 +7537,9 @@ Private Sub RearrangeHeaderTopAreaLayout()
     Dim lblPID As Object, lblName As Object, lblKana As Object
     Dim txtPID As Object, txtName As Object, txtKana As Object
     Dim leftX As Single, midLeft As Single, midRight As Single
-    Dim btnGap As Single, rowTop1 As Single, rowTop2 As Single, rowGap As Single
-    Dim idW As Single, nameW As Single
+    Dim btnGap As Single, rowTop1 As Single, rowGap As Single, headerTop As Single
+    Dim idW As Single, nameW As Single, kanaW As Single
+    Dim x As Single, remainW As Single, kanaReserve As Single
 
     Set f = SafeGetControl(Me, "frHeader")
     If f Is Nothing Then Exit Sub
@@ -7559,13 +7560,6 @@ Private Sub RearrangeHeaderTopAreaLayout()
     rowTop1 = 6
     rowGap = 4
 
-    If Not btnArchive Is Nothing Then
-        btnArchive.Left = 8
-        btnArchive.top = (f.Height - btnArchive.Height) / 2
-        leftX = btnArchive.Left + btnArchive.Width + 14
-    Else
-        leftX = 8
-    End If
 
     btnGap = 6
 
@@ -7588,6 +7582,17 @@ Private Sub RearrangeHeaderTopAreaLayout()
         End If
     End If
 
+    headerTop = rowTop1
+
+    If Not btnArchive Is Nothing Then
+        btnArchive.Left = 8
+        btnArchive.top = headerTop
+        leftX = btnArchive.Left + btnArchive.Width + 14
+    Else
+        leftX = 8
+    End If
+
+
     If Not btnLoadPrev Is Nothing And Not btnClear Is Nothing And Not btnClose Is Nothing Then
         btnLoadPrev.top = rowTop1 + btnClose.Height + rowGap
         btnLoadPrev.Left = btnClear.Left
@@ -7602,40 +7607,53 @@ Private Sub RearrangeHeaderTopAreaLayout()
     If txtPID Is Nothing Or txtName Is Nothing Or txtKana Is Nothing Then Exit Sub
     
 
-    rowTop2 = rowTop1 + txtPID.Height + rowGap
-
     If Not lblPID Is Nothing Then
         lblPID.AutoSize = True
         lblPID.Left = midLeft
-        lblPID.top = rowTop1 + 18
+        lblPID.top = headerTop + 2
     End If
 
-    txtPID.Left = midLeft + IIf(lblPID Is Nothing, 0, lblPID.Width + 4)
-    txtPID.top = rowTop1 + 16
+    x = midLeft
+    If Not lblPID Is Nothing Then x = lblPID.Left + lblPID.Width + 4
+
+    txtPID.Left = x
+    txtPID.top = headerTop
     idW = 72
     txtPID.Width = idW
 
     If Not lblName Is Nothing Then
         lblName.AutoSize = True
         lblName.Left = txtPID.Left + txtPID.Width + 10
-        lblName.top = rowTop1 + 18
+        lblName.top = headerTop + 2
     End If
 
-    txtName.Left = IIf(lblName Is Nothing, txtPID.Left + txtPID.Width + 10, lblName.Left + lblName.Width + 4)
-    txtName.top = rowTop1 + 16
-    nameW = midRight - txtName.Left
-    If nameW < 140 Then nameW = 140
-    txtName.Width = nameW
+    x = txtPID.Left + txtPID.Width + 10
+    If Not lblName Is Nothing Then x = lblName.Left + lblName.Width + 4
+    txtName.Left = x
+    txtName.top = headerTop
 
     If Not lblKana Is Nothing Then
         lblKana.AutoSize = True
-        lblKana.Left = IIf(lblName Is Nothing, txtName.Left - 32, lblName.Left)
-        lblKana.top = rowTop2 + 18
+        lblKana.top = headerTop + 2
     End If
 
-    txtKana.Left = txtName.Left
-    txtKana.top = rowTop2 + 16
-    txtKana.Width = txtName.Width
+    remainW = midRight - txtName.Left
+    kanaReserve = IIf(lblKana Is Nothing, 0, lblKana.Width + 4) + 90
+    nameW = (remainW - kanaReserve - 10) * 0.55
+    If nameW < 120 Then nameW = 120
+    If nameW > remainW - kanaReserve - 10 Then nameW = remainW - kanaReserve - 10
+    If nameW < 80 Then nameW = 80
+    txtName.Width = nameW
+
+    If Not lblKana Is Nothing Then
+        lblKana.Left = txtName.Left + txtName.Width + 10
+    End If
+
+    txtKana.Left = IIf(lblKana Is Nothing, txtName.Left + txtName.Width + 10, lblKana.Left + lblKana.Width + 4)
+    txtKana.top = headerTop
+    kanaW = midRight - txtKana.Left
+    If kanaW < 90 Then kanaW = 90
+    txtKana.Width = kanaW
 End Sub
 
 

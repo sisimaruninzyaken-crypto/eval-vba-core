@@ -18,7 +18,7 @@ Option Explicit
 
 Private mSaved As Boolean
 Private mButtonHooks As Collection
-Private mMode As modAppConfig.FacilityDialogMode
+Private mMode As FacilityDialogMode
 Private mConfirmedFacilityName As String
 
 Private txtFacilityName As MSForms.TextBox
@@ -26,7 +26,7 @@ Private txtFacilityNo As MSForms.TextBox
 Private txtFacilityAddress As MSForms.TextBox
 Private txtFacilityPhone As MSForms.TextBox
 
-Public Sub ConfigureMode(ByVal mode As modAppConfig.FacilityDialogMode)
+Public Sub ConfigureMode(ByVal mode As FacilityDialogMode)
     mMode = mode
 End Sub
 
