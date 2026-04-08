@@ -8,10 +8,10 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
-Public WithEvents btn As MSForms.CommandButton
-Attribute btn.VB_VarHelpID = -1
+Public WithEvents Btn As MSForms.CommandButton
+Attribute Btn.VB_VarHelpID = -1
 
-Private Sub btn_Click()
+Private Sub Btn_Click()
     Run_PrintPack_LatestRow
 End Sub
 

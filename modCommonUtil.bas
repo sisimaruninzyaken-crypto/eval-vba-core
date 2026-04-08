@@ -775,7 +775,7 @@ End With
 
 With ThisWorkbook.Worksheets("Monitoring")
     For r = 1 To lastRow
-        wsNew.rows(r).RowHeight = .rows(r).RowHeight
+        wsNew.rows(r).rowHeight = .rows(r).rowHeight
     Next r
 End With
 

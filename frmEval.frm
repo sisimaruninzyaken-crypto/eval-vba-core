@@ -2066,7 +2066,7 @@ Private Sub HookRomMirrorButtonsInContainer(ByVal container As Object)
             If CStr(c.tag) = "ROM_MIRROR" Then
                 Dim h As clsRomMirrorBtnHook
                 Set h = New clsRomMirrorBtnHook
-                Set h.btn = c
+                Set h.Btn = c
                 mRomMirrorHooks.Add h
             End If
         End If
@@ -3368,7 +3368,7 @@ Call HookRomMirrorButtons_Once
 
 '--- hook header "LoadPrev" button (MUST be after Ensure_LoadPrevButton_Once) ---
 Set mHdrLoadPrevHook = New clsHdrBtnHook
-Set mHdrLoadPrevHook.btn = Me.controls("frHeader").controls("cmdHdrLoadPrev")
+Set mHdrLoadPrevHook.Btn = Me.controls("frHeader").controls("cmdHdrLoadPrev")
 mHdrLoadPrevHook.tag = "LoadPrev"
 Set mHdrLoadPrevHook.owner = Me
 DoEvents
@@ -6717,7 +6717,7 @@ End With
     If mGlobalClear Is Nothing Then
     Set mGlobalClear = New clsGlobalSaveButton
 End If
-Set mGlobalClear.btn = btnClear
+Set mGlobalClear.Btn = btnClear
 
     
     
@@ -6739,7 +6739,7 @@ btnClear.Left = btnSave.Left - btnClear.Width - 12
        If mGlobalSave Is Nothing Then
         Set mGlobalSave = New clsGlobalSaveButton
     End If
-    Set mGlobalSave.btn = btnSave
+    Set mGlobalSave.Btn = btnSave
 
 
 
@@ -7452,15 +7452,15 @@ Public Sub CreateHeaderButtons_Once()
     hClear.Left = hSave.Left - gap - hClear.Width
     
     Set mHdr1 = New clsHeaderBtnEvents
-Set mHdr1.btn = hSave
+Set mHdr1.Btn = hSave
 mHdr1.tag = "Save"
 
 Set mHdr2 = New clsHeaderBtnEvents
-Set mHdr2.btn = hClear
+Set mHdr2.Btn = hClear
 mHdr2.tag = "Clear"
 
 Set mHdr3 = New clsHeaderBtnEvents
-Set mHdr3.btn = hClose
+Set mHdr3.Btn = hClose
 mHdr3.tag = "Close"
 
 
@@ -7499,7 +7499,7 @@ End If
 
 ' Hook（クリックで既存の btnLoadPrevCtl_Click へ流す）
 Set mHdrLoadPrevHook = New clsHdrBtnHook
-Set mHdrLoadPrevHook.btn = hLoadPrev
+Set mHdrLoadPrevHook.Btn = hLoadPrev
 mHdrLoadPrevHook.tag = "LoadPrev"
 Set mHdrLoadPrevHook.owner = Me
 RearrangeHeaderTopAreaLayout
@@ -7817,28 +7817,28 @@ Public Sub AddPrintButton_TestEval()
     Set f = Me.controls("txtTUG").parent
     If f Is Nothing Then Exit Sub
 
-    Dim btn As MSForms.CommandButton
+    Dim Btn As MSForms.CommandButton
     On Error Resume Next
-    Set btn = f.controls("cmdPrintTestEval")
+    Set Btn = f.controls("cmdPrintTestEval")
     On Error GoTo 0
 
-    If btn Is Nothing Then
-        Set btn = f.controls.Add("Forms.CommandButton.1", "cmdPrintTestEval", True)
-        With btn
+    If Btn Is Nothing Then
+        Set Btn = f.controls.Add("Forms.CommandButton.1", "cmdPrintTestEval", True)
+        With Btn
        .caption = "グラフ印刷"
-        btn.Width = 120
-        btn.Height = 28
-        btn.Left = f.InsideWidth - btn.Width - 28.35
-        btn.top = 12
+        Btn.Width = 120
+        Btn.Height = 28
+        Btn.Left = f.InsideWidth - Btn.Width - 28.35
+        Btn.top = 12
 
         End With
     End If
     
-btn.Left = f.InsideWidth - btn.Width - 28.35
+Btn.Left = f.InsideWidth - Btn.Width - 28.35
 
     ' ← ★ここ★（この2行だけ追加）
     Set mPrintBtnHook = New clsPrintBtnHook
-    Set mPrintBtnHook.btn = btn
+    Set mPrintBtnHook.Btn = Btn
     
     
 End Sub
@@ -8049,7 +8049,7 @@ End Function
 Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     Const BTN_NAME As String = "cmdHdrLoadPrev"
 
-    Dim hdr As Object, kana As Object, btn As Object
+    Dim hdr As Object, kana As Object, Btn As Object
     Dim refBtn As Object
 
     Set hdr = SafeGetControl(f, "frHeader")
@@ -8059,16 +8059,16 @@ Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     Set kana = SafeGetControl(hdr, "txtHdrKana")
     If kana Is Nothing Then Exit Sub
 
-    Set btn = SafeGetControl(hdr, BTN_NAME)
-    If btn Is Nothing Then
+    Set Btn = SafeGetControl(hdr, BTN_NAME)
+    If Btn Is Nothing Then
     
     
         ' 無ければ作る（frHeader配下）
-        Set btn = hdr.controls.Add("Forms.CommandButton.1", BTN_NAME, True)
-        btn.caption = "前回の値を読み込む"
-        btn.Accelerator = "L"
-        btn.Width = 180
-        btn.Height = 24
+        Set Btn = hdr.controls.Add("Forms.CommandButton.1", BTN_NAME, True)
+        Btn.caption = "前回の値を読み込む"
+        Btn.Accelerator = "L"
+        Btn.Width = 180
+        Btn.Height = 24
     End If
 
     ' 見た目合わせ用の参照ボタン（あれば）
@@ -8077,8 +8077,8 @@ Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     If refBtn Is Nothing Then Set refBtn = SafeGetControl(hdr, "cmdCloseHeader")
 
     If Not refBtn Is Nothing Then
-        btn.Font.name = refBtn.Font.name
-        btn.Font.Size = refBtn.Font.Size
+        Btn.Font.name = refBtn.Font.name
+        Btn.Font.Size = refBtn.Font.Size
        
     End If
 

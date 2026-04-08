@@ -519,7 +519,7 @@ Private Sub PutBoxOnRange(ByVal sh As Worksheet, ByVal boxName As String, ByVal 
     sh.Shapes(boxName).Delete
     On Error GoTo 0
 
-    Set shp = sh.Shapes.AddTextbox( _
+    Set shp = sh.Shapes.AddTextBox( _
         Orientation:=msoTextOrientationHorizontal, _
         Left:=rg.Left, top:=rg.top, _
         Width:=rg.Width, Height:=rg.Height)

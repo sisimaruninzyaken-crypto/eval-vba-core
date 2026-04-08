@@ -9,11 +9,11 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-Public WithEvents btn As MSForms.CommandButton
-Attribute btn.VB_VarHelpID = -1
+Public WithEvents Btn As MSForms.CommandButton
+Attribute Btn.VB_VarHelpID = -1
 Public Event Clicked()
 
-Private Sub btn_Click()
+Private Sub Btn_Click()
     ' 下段の保存ボタンが押されたら、自分のイベントを発火させるだけ
     RaiseEvent Clicked
 End Sub

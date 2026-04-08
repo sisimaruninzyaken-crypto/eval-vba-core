@@ -105,12 +105,10 @@ Private Sub WriteFacilityInfoBlock(ByVal ws As Worksheet, ByVal owner As Object)
     explainDateText = FormatWarekiFull(GetCtrlTextSafe(owner, "txtEDate"))
     explainerText = GetCtrlTextSafe(owner, "txtEvaluator")
 
-    WriteMerged ws, "A53:AI53", PLAN_SHEET_FACILITY_NAME
-    WriteMerged ws, "A54:AI54", PLAN_SHEET_FACILITY_NO
-    WriteMerged ws, "A55:AI55", PLAN_SHEET_FACILITY_ADDRESS
-    WriteMerged ws, "A56:AI56", PLAN_SHEET_FACILITY_PHONE
-    WriteMerged ws, "AJ56:BJ56", "説明日：" & explainDateText
-    WriteMerged ws, "AJ57:BJ57", "説明者：" & explainerText
+    WriteMerged ws, "A52:AF52", PLAN_SHEET_FACILITY_NAME & "@" & PLAN_SHEET_FACILITY_NO
+    WriteMerged ws, "A5:AF53", PLAN_SHEET_FACILITY_ADDRESS & "@" & PLAN_SHEET_FACILITY_PHONE
+    WriteMerged ws, "AJ52:BJ52", "説明日：" & explainDateText
+    WriteMerged ws, "AJ53:BJ53", "説明者：" & explainerText
 End Sub
 
 
@@ -827,7 +825,7 @@ Private Sub WriteGoalRow(ByVal ws As Worksheet, ByVal rowNum As Long, ByVal left
     Err.Clear
 
     ' 結合セルはAutoFit不可のため最低行高を設定（約3行分）
-    If ws.rows(rowNum).RowHeight < 45 Then ws.rows(rowNum).RowHeight = 45
+    If ws.rows(rowNum).rowHeight < 45 Then ws.rows(rowNum).rowHeight = 45
     If Err.Number <> 0 Then Err.Clear
 
     On Error GoTo 0

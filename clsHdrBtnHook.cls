@@ -9,12 +9,12 @@ Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 Option Explicit
 
-Public WithEvents btn As MSForms.CommandButton
-Attribute btn.VB_VarHelpID = -1
+Public WithEvents Btn As MSForms.CommandButton
+Attribute Btn.VB_VarHelpID = -1
 Public tag As String
 Public owner As frmEval
 
-Private Sub btn_Click()
+Private Sub Btn_Click()
    
     Select Case LCase$(Trim$(tag))
         Case "loadprev"
