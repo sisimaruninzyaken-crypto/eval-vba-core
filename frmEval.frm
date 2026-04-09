@@ -3848,8 +3848,34 @@ RecalcBI
 
     nL y
    
+   
+
+
+
+    ' 行3：主診断 / 発症日
+    CreateLabel fBasic, "主診断", COL_LX, y
+    CreateTextBox fBasic, COL_LX + lblW, y, 260, 0, False, "txtDx", "Basic.PrimaryDx"
+    CreateLabel fBasic, "発症日", COL_RX, y
+    CreateTextBox fBasic, COL_RX + lblW, y, 120, 0, False, "txtOnset", "Basic.OnsetDate"
+    nL y
+
+
+    ' 行5：障害高齢者／認知症高齢者（ラベル個別幅）
+    Dim LBLW_LONG_LEFT As Long:  LBLW_LONG_LEFT = 150
+    Dim LBLW_LONG_RIGHT As Long: LBLW_LONG_RIGHT = 170
+
+    CreateLabel fBasic, "障害高齢者の日常生活自立度", COL_LX, y, LBLW_LONG_LEFT
+    Dim cboEL As MSForms.ComboBox
+    Set cboEL = CreateCombo(fBasic, COL_LX + LBLW_LONG_LEFT + 6, y, 180, "cboElder", "Basic.ElderlyLevel")
+    cboEL.List = MakeList("自立,J1,J2,A1,A2,B1,B2,C1,C2")
+
+    CreateLabel fBasic, "認知症高齢者の日常生活自立度", COL_RX, y, LBLW_LONG_RIGHT
+    Dim cboDL As MSForms.ComboBox
+    Set cboDL = CreateCombo(fBasic, COL_RX + LBLW_LONG_RIGHT + 6, y, 160, "cboDementia", "Basic.DementiaLevel")
+    cboDL.List = MakeList("自立,I,IIa,IIb,IIIa,IIIb,IV,M")
+    nL y, 1
     
-    ' row2.6: use weekdays
+   ' s5Fpj
     CreateLabel fBasic, "pj", COL_LX, y
     Dim useDayLeft As Single: useDayLeft = COL_LX + lblW
     Dim useDayGap As Single: useDayGap = 58
@@ -3866,41 +3892,15 @@ RecalcBI
     Set wkThu = CreateCheck(fBasic, "", useDayLeft + useDayGap * 3, y, "chkUseThu", "Basic.UseWeekday.Thu")
     Set wkFri = CreateCheck(fBasic, "", useDayLeft + useDayGap * 4, y, "chkUseFri", "Basic.UseWeekday.Fri")
     Set wkSat = CreateCheck(fBasic, "y", useDayLeft + useDayGap * 5, y, "chkUseSat", "Basic.UseWeekday.Sat")
-
-    nL y
-   
-
-
-
-    ' 行3：主診断 / 発症日
-    CreateLabel fBasic, "主診断", COL_LX, y
-    CreateTextBox fBasic, COL_LX + lblW, y, 260, 0, False, "txtDx", "Basic.PrimaryDx"
-    CreateLabel fBasic, "発症日", COL_RX, y
-    CreateTextBox fBasic, COL_RX + lblW, y, 120, 0, False, "txtOnset", "Basic.OnsetDate"
     nL y
 
-    ' 行4：生活状況 / 要介護度
-    CreateLabel fBasic, "生活状況", COL_LX, y
+    ' s6F / vx
+    CreateLabel fBasic, "", COL_LX, y
    CreateTextBox fBasic, COL_LX + lblW, y, 220, 50, True, "txtLiving", "Basic.Living"
-    CreateLabel fBasic, "要介護度", COL_RX, y
+    CreateLabel fBasic, "vx", COL_RX, y
     Dim cboLev As MSForms.ComboBox: Set cboLev = CreateCombo(fBasic, COL_RX + lblW, y, 150, "cboCare", "Basic.CareLevel")
-    cboLev.List = MakeList("要支援1,要支援2,要介護1,要介護2,要介護3,要介護4,要介護5")
+    cboLev.List = MakeList("vx1,vx2,v1,v2,v3,v4,v5")
     nL y
-
-    ' 行5：障害高齢者／認知症高齢者（ラベル個別幅）
-    Dim LBLW_LONG_LEFT As Long:  LBLW_LONG_LEFT = 150
-    Dim LBLW_LONG_RIGHT As Long: LBLW_LONG_RIGHT = 170
-
-    CreateLabel fBasic, "障害高齢者の日常生活自立度", COL_LX, y, LBLW_LONG_LEFT
-    Dim cboEL As MSForms.ComboBox
-    Set cboEL = CreateCombo(fBasic, COL_LX + LBLW_LONG_LEFT + 6, y, 180, "cboElder", "Basic.ElderlyLevel")
-    cboEL.List = MakeList("自立,J1,J2,A1,A2,B1,B2,C1,C2")
-
-    CreateLabel fBasic, "認知症高齢者の日常生活自立度", COL_RX, y, LBLW_LONG_RIGHT
-    Dim cboDL As MSForms.ComboBox
-    Set cboDL = CreateCombo(fBasic, COL_RX + LBLW_LONG_RIGHT + 6, y, 160, "cboDementia", "Basic.DementiaLevel")
-    cboDL.List = MakeList("自立,I,IIa,IIb,IIIa,IIIb,IV,M")
-    nL y, 1
 
     ' 補助具／リスク（2列）
     nL y, 1
