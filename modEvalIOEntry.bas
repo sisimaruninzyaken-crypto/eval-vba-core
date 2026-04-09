@@ -785,6 +785,15 @@ Private Function ClientMasterWeekdayMap() As Variant
         Array(HDR_USE_WEEKDAY_SAT, "chkUseSat"))
 End Function
 
+Private Sub ResetUseWeekdayChecks(ByVal owner As Object)
+    Dim map As Variant: map = ClientMasterWeekdayMap()
+    Dim i As Long
+    For i = LBound(map) To UBound(map)
+        SetCtlCheckValue owner, CStr(map(i)(1)), False
+    Next i
+End Sub
+
+
 Private Sub SaveClientMasterWeekdays(ByVal ws As Worksheet, ByVal rowNo As Long, ByVal owner As Object)
     Dim map As Variant: map = ClientMasterWeekdayMap()
     Dim i As Long, colNo As Long, ctlName As String
@@ -1669,6 +1678,8 @@ map = Array( _
 
     c = FindHeaderCol(ws, "Basic.NameKana")
     If c > 0 Then SetHdrKanaText owner, ws.Cells(r, c).value
+    
+    ResetUseWeekdayChecks owner
     
     c = FindHeaderCol(ws, "Basic.UseWeekdays")
     If c > 0 Then
