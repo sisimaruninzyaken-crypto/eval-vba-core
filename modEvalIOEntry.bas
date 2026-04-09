@@ -693,22 +693,32 @@ End Function
 Private Function FindClientMasterRow(ByVal ws As Worksheet, ByVal userID As String, ByVal nameText As String, ByRef shouldSkip As Boolean) As Long
     Dim rowsByName As Collection
     Dim hitByID As Long
+    
+    Debug.Print "[TRACE] FindClientMasterRow userID=" & userID & " name=" & nameText
+    
 
     If Len(Trim$(userID)) > 0 Then
         hitByID = FindClientMasterRowByUserID(ws, userID)
         If hitByID > 0 Then
+            Debug.Print "[TRACE] FindClientMasterRow hit by ID row=" & hitByID
             FindClientMasterRow = hitByID
             Exit Function
         End If
     End If
+    
+        Debug.Print "[TRACE] FindClientMasterRow ID not found, fallback to name"
 
     If Len(Trim$(nameText)) = 0 Then Exit Function
 
     Set rowsByName = FindClientMasterRowsByName(ws, nameText)
     If rowsByName.count = 1 Then
         FindClientMasterRow = CLng(rowsByName(1))
+        Debug.Print "[TRACE] FindClientMasterRow hit by name row=" & FindClientMasterRow
     ElseIf rowsByName.count > 1 Then
         shouldSkip = True
+        Debug.Print "[TRACE] FindClientMasterRow duplicate names count=" & rowsByName.count & " -> skip"
+    Else
+        Debug.Print "[TRACE] FindClientMasterRow no match by name"
     End If
 End Function
 
@@ -734,7 +744,7 @@ Private Sub EnsureClientMasterEntry(ByVal owner As Object)
 
     Dim ws As Worksheet: Set ws = EnsureClientMasterSheet()
     Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
-    Dim nameVal As String: nameVal = Trim$(GetCtlTextGeneric(owner, "txtName"))
+    Dim nameVal As String: nameVal = GetClientMasterLookupName(owner)
     Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
     Dim genderVal As String: genderVal = Trim$(GetCtlTextGeneric(owner, "cboSex"))
     Dim careVal As String: careVal = Trim$(GetCtlTextGeneric(owner, "cboCare"))
@@ -811,6 +821,10 @@ End Sub
 Private Sub LoadClientMasterWeekdaysByRow(ByVal ws As Worksheet, ByVal rowNo As Long, ByVal owner As Object)
     Dim map As Variant: map = ClientMasterWeekdayMap()
     Dim i As Long, colNo As Long, ctlName As String, rawVal As Variant
+    Dim hasExplicit(0 To 5) As Boolean
+    Dim parsedValue(0 To 5) As Boolean
+    Dim hasAnyExplicit As Boolean
+    Dim rawText As String
 
     For i = LBound(map) To UBound(map)
         ctlName = CStr(map(i)(1))
@@ -818,19 +832,51 @@ Private Sub LoadClientMasterWeekdaysByRow(ByVal ws As Worksheet, ByVal rowNo As 
 
         If colNo > 0 Then
             rawVal = ws.Cells(rowNo, colNo).value
-            SetCtlCheckValue owner, ctlName, IsTruthyValue(rawVal)
+            rawText = Trim$(CStr(rawVal))
+            hasExplicit(i) = (Not IsNull(rawVal)) And (Not IsEmpty(rawVal)) And (Len(rawText) > 0)
+            If hasExplicit(i) Then
+                parsedValue(i) = IsTruthyValue(rawVal)
+                hasAnyExplicit = True
+            End If
+            Debug.Print "[TRACE] LoadClientMasterWeekdaysByRow row=" & rowNo & _
+                        " header=" & CStr(map(i)(0)) & " col=" & colNo & _
+                        " raw=[" & CStr(rawVal) & "] hasExplicit=" & hasExplicit(i)
         Else
-            SetCtlCheckValue owner, ctlName, False
+            Debug.Print "[TRACE] LoadClientMasterWeekdaysByRow row=" & rowNo & _
+                        " header=" & CStr(map(i)(0)) & " col missing"
+        End If
+    Next i
+
+    If Not hasAnyExplicit Then
+        Debug.Print "[TRACE] LoadClientMasterWeekdaysByRow row=" & rowNo & " has no explicit weekday data -> keep current checks"
+        Exit Sub
+    End If
+
+    For i = LBound(map) To UBound(map)
+        ctlName = CStr(map(i)(1))
+        If hasExplicit(i) Then
+            SetCtlCheckValue owner, ctlName, parsedValue(i)
+            Debug.Print "[TRACE] LoadClientMasterWeekdaysByRow set " & ctlName & "=" & parsedValue(i)
+        Else
+            Debug.Print "[TRACE] LoadClientMasterWeekdaysByRow keep " & ctlName & " (no explicit value)"
         End If
     Next i
 End Sub
+
+Private Function GetClientMasterLookupName(ByVal owner As Object) As String
+    GetClientMasterLookupName = Trim$(GetCtlTextGeneric(owner, "txtName"))
+    If Len(GetClientMasterLookupName) > 0 Then Exit Function
+    GetClientMasterLookupName = Trim$(GetCtlTextGeneric(owner, "txtHdrName"))
+End Function
+
+
 
 Public Sub LoadClientMasterWeekdaysToForm(ByVal owner As Object)
     On Error GoTo EH
 
     Dim ws As Worksheet: Set ws = EnsureClientMasterSheet()
     Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
-    Dim nameVal As String: nameVal = Trim$(GetCtlTextGeneric(owner, "txtName"))
+    Dim nameVal As String: nameVal = GetClientMasterLookupName(owner)
 
     Dim skipRegistration As Boolean
     Dim rowNo As Long
@@ -860,10 +906,14 @@ End Function
 Private Sub SetCtlCheckValue(ByVal owner As Object, ByVal ctlName As String, ByVal checkValue As Boolean)
     Dim o As Object
     Set o = FindCtlDeep(owner, ctlName)
-    If o Is Nothing Then Exit Sub
+    If o Is Nothing Then
+        Debug.Print "[TRACE] SetCtlCheckValue ctl missing: " & ctlName
+        Exit Sub
+    End If
 
     On Error Resume Next
     o.value = checkValue
+    Debug.Print "[TRACE] SetCtlCheckValue " & ctlName & "=" & checkValue
     On Error GoTo 0
 End Sub
 
@@ -1686,10 +1736,18 @@ map = Array( _
     c = FindHeaderCol(ws, "Basic.NameKana")
     If c > 0 Then SetHdrKanaText owner, ws.Cells(r, c).value
     
+
+    c = FindHeaderColAny(ws, Array("Basic.ID", "ID", "BasicInfo_ID"))
+    If c > 0 Then
+        SetCtlValueSafe owner, "txtHdrPID", ws.Cells(r, c).value
+        Debug.Print "[TRACE] Restored header PID from sheet col=" & c & " value=" & CStr(ws.Cells(r, c).value)
+    End If
+    
     ResetUseWeekdayChecks owner
     
     c = FindHeaderCol(ws, "Basic.UseWeekdays")
     If c > 0 Then
+         Debug.Print "[TRACE] Deserialize Basic.UseWeekdays csv=[" & CStr(ws.Cells(r, c).value) & "]"
         DeserializeNamedChecks owner, Array("chkUseMon", "chkUseTue", "chkUseWed", "chkUseThu", "chkUseFri", "chkUseSat"), CStr(ws.Cells(r, c).value)
     End If
     LoadClientMasterWeekdaysToForm owner
@@ -5077,7 +5135,7 @@ Public Function GetClientMasterCreatedDateText(ByVal owner As Object) As String
 
     Dim ws As Worksheet: Set ws = EnsureClientMasterSheet()
     Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
-    Dim nameVal As String: nameVal = Trim$(GetCtlTextGeneric(owner, "txtName"))
+    Dim nameVal As String: nameVal = GetClientMasterLookupName(owner)
     Dim shouldSkip As Boolean
     Dim rowNo As Long
 
