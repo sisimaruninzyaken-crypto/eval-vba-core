@@ -18,8 +18,10 @@ Public Sub TidyBasicInfo_TwoColumns()
     Dim aCapL As Variant, aCtlL As Variant
     Dim aCapR As Variant, aCtlR As Variant
     Dim useDayLeft As Double
-    Dim useDayGap As Double
+    Dim useDayPairW As Double
     Dim useDayTop As Double
+    Dim useDayBoxW As Double
+    Dim useDayLabelW As Double
 
     Dim c As Object
     Dim txtED As Object
@@ -126,14 +128,22 @@ aCapL = Array( _
 
    Call EnsureLabel(f32, "lblBI_UseWeekday", "óòópójì˙", xL + xLbl, yL, wLbl, rowH)
    useDayLeft = xL + xCtl
-   useDayGap = 48
+   useDayPairW = 34
    useDayTop = yL - 1
-   Call PlaceCtl(f32, "chkUseMon", useDayLeft + useDayGap * 0, useDayTop, 44, rowH + 2)
-   Call PlaceCtl(f32, "chkUseTue", useDayLeft + useDayGap * 1, useDayTop, 44, rowH + 2)
-   Call PlaceCtl(f32, "chkUseWed", useDayLeft + useDayGap * 2, useDayTop, 44, rowH + 2)
-   Call PlaceCtl(f32, "chkUseThu", useDayLeft + useDayGap * 3, useDayTop, 44, rowH + 2)
-   Call PlaceCtl(f32, "chkUseFri", useDayLeft + useDayGap * 4, useDayTop, 44, rowH + 2)
-   Call PlaceCtl(f32, "chkUseSat", useDayLeft + useDayGap * 5, useDayTop, 44, rowH + 2)
+   useDayBoxW = 12
+   useDayLabelW = 14
+   Call PlaceCtl(f32, "chkUseMon", useDayLeft + useDayPairW * 0, useDayTop, useDayBoxW, rowH + 2)
+   Call EnsureLabel(f32, "lblBI_UseDayMon", "åé", useDayLeft + useDayPairW * 0 + useDayBoxW + 2, yL, useDayLabelW, rowH)
+   Call PlaceCtl(f32, "chkUseTue", useDayLeft + useDayPairW * 1, useDayTop, useDayBoxW, rowH + 2)
+   Call EnsureLabel(f32, "lblBI_UseDayTue", "âŒ", useDayLeft + useDayPairW * 1 + useDayBoxW + 2, yL, useDayLabelW, rowH)
+   Call PlaceCtl(f32, "chkUseWed", useDayLeft + useDayPairW * 2, useDayTop, useDayBoxW, rowH + 2)
+   Call EnsureLabel(f32, "lblBI_UseDayWed", "êÖ", useDayLeft + useDayPairW * 2 + useDayBoxW + 2, yL, useDayLabelW, rowH)
+   Call PlaceCtl(f32, "chkUseThu", useDayLeft + useDayPairW * 3, useDayTop, useDayBoxW, rowH + 2)
+   Call EnsureLabel(f32, "lblBI_UseDayThu", "ñÿ", useDayLeft + useDayPairW * 3 + useDayBoxW + 2, yL, useDayLabelW, rowH)
+   Call PlaceCtl(f32, "chkUseFri", useDayLeft + useDayPairW * 4, useDayTop, useDayBoxW, rowH + 2)
+   Call EnsureLabel(f32, "lblBI_UseDayFri", "ã‡", useDayLeft + useDayPairW * 4 + useDayBoxW + 2, yL, useDayLabelW, rowH)
+   Call PlaceCtl(f32, "chkUseSat", useDayLeft + useDayPairW * 5, useDayTop, useDayBoxW, rowH + 2)
+   Call EnsureLabel(f32, "lblBI_UseDaySat", "ìy", useDayLeft + useDayPairW * 5 + useDayBoxW + 2, yL, useDayLabelW, rowH)
    yL = yL + rowH + gapY
 
 ' Left: é–âÔéQâ¡èÛãµ
