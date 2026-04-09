@@ -692,10 +692,14 @@ End Function
 
 Private Function FindClientMasterRow(ByVal ws As Worksheet, ByVal userID As String, ByVal nameText As String, ByRef shouldSkip As Boolean) As Long
     Dim rowsByName As Collection
+    Dim hitByID As Long
 
     If Len(Trim$(userID)) > 0 Then
-        FindClientMasterRow = FindClientMasterRowByUserID(ws, userID)
-        Exit Function
+        hitByID = FindClientMasterRowByUserID(ws, userID)
+        If hitByID > 0 Then
+            FindClientMasterRow = hitByID
+            Exit Function
+        End If
     End If
 
     If Len(Trim$(nameText)) = 0 Then Exit Function
@@ -831,9 +835,12 @@ Public Sub LoadClientMasterWeekdaysToForm(ByVal owner As Object)
     Dim skipRegistration As Boolean
     Dim rowNo As Long
     rowNo = FindClientMasterRow(ws, idVal, nameVal, skipRegistration)
+    Debug.Print "[TRACE] LoadClientMasterWeekdaysToForm id=" & idVal & " name=" & nameVal & " row=" & rowNo & " skip=" & skipRegistration
 
     If rowNo > 0 Then
         LoadClientMasterWeekdaysByRow ws, rowNo, owner
+    Else
+        Debug.Print "[TRACE] LoadClientMasterWeekdaysToForm no matched row"
     End If
     Exit Sub
 EH:

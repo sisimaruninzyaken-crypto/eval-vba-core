@@ -3864,7 +3864,7 @@ RecalcBI
     Dim LBLW_LONG_LEFT As Long:  LBLW_LONG_LEFT = 150
     Dim LBLW_LONG_RIGHT As Long: LBLW_LONG_RIGHT = 170
 
-    CreateLabel fBasic, "障害高齢者の日常生活自立度", COL_LX, y, LBLW_LONG_LEFT
+    CreateLabel fBasic, "要介護/認知症高齢者の日常生活自立度", COL_LX, y, LBLW_LONG_LEFT
     Dim cboEL As MSForms.ComboBox
     Set cboEL = CreateCombo(fBasic, COL_LX + LBLW_LONG_LEFT + 6, y, 180, "cboElder", "Basic.ElderlyLevel")
     cboEL.List = MakeList("自立,J1,J2,A1,A2,B1,B2,C1,C2")
@@ -3876,7 +3876,7 @@ RecalcBI
     nL y, 1
     
    ' s5Fpj
-    CreateLabel fBasic, "pj", COL_LX, y
+    CreateLabel fBasic, "利用曜日", COL_LX, y
     Dim useDayLeft As Single: useDayLeft = COL_LX + lblW
     Dim useDayGap As Single: useDayGap = 58
     Dim wkMon As MSForms.CheckBox
@@ -3895,11 +3895,11 @@ RecalcBI
     nL y
 
     ' s6F / vx
-    CreateLabel fBasic, "", COL_LX, y
-   CreateTextBox fBasic, COL_LX + lblW, y, 220, 50, True, "txtLiving", "Basic.Living"
-    CreateLabel fBasic, "vx", COL_RX, y
+    CreateLabel fBasic, "利用曜日", COL_LX, y
+    CreateTextBox fBasic, COL_LX + lblW, y, 220, 50, True, "txtLiving", "Basic.Living"
+    CreateLabel fBasic, "要介護度", COL_RX, y
     Dim cboLev As MSForms.ComboBox: Set cboLev = CreateCombo(fBasic, COL_RX + lblW, y, 150, "cboCare", "Basic.CareLevel")
-    cboLev.List = MakeList("vx1,vx2,v1,v2,v3,v4,v5")
+    cboLev.List = MakeList("要支援1,要支援2,要介護1,要介護2,要介護3,要介護4,要介護5")
     nL y
 
     ' 補助具／リスク（2列）
