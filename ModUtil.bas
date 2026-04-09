@@ -15,7 +15,15 @@ End Sub
 ' ===== Deep control search & helpers =====
 
 Public Function FindCtlDeep(ByVal container As Object, ByVal ctlName As String) As MSForms.Control
+    Dim hit As Object
     Dim c As Object, pg As MSForms.page
+
+    Set hit = modCommonUtil.SafeGetControl(container, ctlName)
+    If Not hit Is Nothing Then
+        Set FindCtlDeep = hit
+        Exit Function
+    End If
+
     On Error Resume Next
 
     For Each c In container.controls
@@ -25,17 +33,57 @@ Public Function FindCtlDeep(ByVal container As Object, ByVal ctlName As String) 
         End If
 
         If TypeOf c Is MSForms.Frame Or TypeOf c Is MSForms.page Then
-            Set FindCtlDeep = FindCtlDeep(c, ctlName)   ' Å© ctlName Ç…ìùàÍ
+            Set FindCtlDeep = FindCtlDeep(c, ctlName)
             If Not FindCtlDeep Is Nothing Then Exit Function
         End If
 
         If TypeOf c Is MSForms.MultiPage Then
             For Each pg In c.pages
-                Set FindCtlDeep = FindCtlDeep(pg, ctlName)  ' Å© ctlName Ç…ìùàÍ
+                Set FindCtlDeep = FindCtlDeep(pg, ctlName)
                 If Not FindCtlDeep Is Nothing Then Exit Function
             Next
         End If
     Next
+    On Error GoTo 0
+End Function
+
+Public Function FindCtlByTagDeep(ByVal container As Object, ByVal targetTag As String) As MSForms.Control
+    Dim c As Object
+    Dim hit As MSForms.Control
+    Dim pg As MSForms.page
+
+    On Error Resume Next
+
+    If Not container Is Nothing Then
+        If StrComp(CStr(container.tag), targetTag, vbTextCompare) = 0 Then
+            Set FindCtlByTagDeep = container
+            Exit Function
+        End If
+    End If
+
+    For Each c In container.controls
+        If StrComp(CStr(c.tag), targetTag, vbTextCompare) = 0 Then
+            Set FindCtlByTagDeep = c
+            Exit Function
+        End If
+
+        Set hit = FindCtlByTagDeep(c, targetTag)
+        If Not hit Is Nothing Then
+            Set FindCtlByTagDeep = hit
+            Exit Function
+        End If
+    Next
+
+    If TypeName(container) = "MultiPage" Then
+        For Each pg In container.pages
+            Set hit = FindCtlByTagDeep(pg, targetTag)
+            If Not hit Is Nothing Then
+                Set FindCtlByTagDeep = hit
+                Exit Function
+            End If
+        Next
+    End If
+    On Error GoTo 0
 End Function
 
 Public Function GetCtlText(ByVal owner As Object, ByVal ctlName As String) As String

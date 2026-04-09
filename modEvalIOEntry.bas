@@ -895,7 +895,7 @@ End Sub
 
 Private Function GetCtlCheckValue(ByVal owner As Object, ByVal ctlName As String) As Boolean
     Dim o As Object
-    Set o = FindCtlDeep(owner, ctlName)
+    Set o = ResolveCheckControl(owner, ctlName)
     If o Is Nothing Then Exit Function
 
     On Error Resume Next
@@ -905,7 +905,7 @@ End Function
 
 Private Sub SetCtlCheckValue(ByVal owner As Object, ByVal ctlName As String, ByVal checkValue As Boolean)
     Dim o As Object
-    Set o = FindCtlDeep(owner, ctlName)
+    Set o = ResolveCheckControl(owner, ctlName)
     If o Is Nothing Then
         Debug.Print "[TRACE] SetCtlCheckValue ctl missing: " & ctlName
         Exit Sub
@@ -913,9 +913,62 @@ Private Sub SetCtlCheckValue(ByVal owner As Object, ByVal ctlName As String, ByV
 
     On Error Resume Next
     o.value = checkValue
-    Debug.Print "[TRACE] SetCtlCheckValue " & ctlName & "=" & checkValue
+    Debug.Print "[TRACE] SetCtlCheckValue " & ctlName & "=" & checkValue & _
+                " target=" & TypeName(o) & "/" & CStr(o.name) & _
+                " parent=" & ControlParentPath(o)
     On Error GoTo 0
 End Sub
+
+Private Function ResolveCheckControl(ByVal owner As Object, ByVal ctlName As String) As Object
+    Set ResolveCheckControl = FindCtlDeep(owner, ctlName)
+    If Not ResolveCheckControl Is Nothing Then Exit Function
+
+    Dim tagName As String
+    tagName = WeekdayTagFromControlName(ctlName)
+    If Len(tagName) = 0 Then Exit Function
+
+    Set ResolveCheckControl = FindCtlByTagDeep(owner, tagName)
+    If Not ResolveCheckControl Is Nothing Then
+        Debug.Print "[TRACE] ResolveCheckControl tag-hit " & ctlName & " -> " & CStr(ResolveCheckControl.name)
+    End If
+End Function
+
+Private Function WeekdayTagFromControlName(ByVal ctlName As String) As String
+    Select Case LCase$(Trim$(ctlName))
+        Case "chkusemon": WeekdayTagFromControlName = "Basic.UseWeekday.Mon"
+        Case "chkusetue": WeekdayTagFromControlName = "Basic.UseWeekday.Tue"
+        Case "chkusewed": WeekdayTagFromControlName = "Basic.UseWeekday.Wed"
+        Case "chkusethu": WeekdayTagFromControlName = "Basic.UseWeekday.Thu"
+        Case "chkusefri": WeekdayTagFromControlName = "Basic.UseWeekday.Fri"
+        Case "chkusesat": WeekdayTagFromControlName = "Basic.UseWeekday.Sat"
+    End Select
+End Function
+
+Private Function ControlParentPath(ByVal ctl As Object) As String
+    Dim parts As Collection
+    Dim cur As Object
+    Dim s As String
+    Dim i As Long
+
+    Set parts = New Collection
+    Set cur = ctl
+
+    On Error Resume Next
+    Do While Not cur Is Nothing
+        parts.Add TypeName(cur) & ":" & CStr(cur.name)
+        Set cur = cur.parent
+        If Err.Number <> 0 Then Exit Do
+    Loop
+    On Error GoTo 0
+
+    For i = 1 To parts.count
+        If Len(s) > 0 Then s = s & " <= "
+        s = s & CStr(parts(i))
+    Next
+    ControlParentPath = s
+End Function
+
+
 
 Private Function IsTruthyValue(ByVal v As Variant) As Boolean
     Dim s As String
