@@ -3396,6 +3396,7 @@ Private Sub ApplyDailyLogImeSettings()
     If dailyFra Is Nothing Then Exit Sub
 
     SetControlImeHiragana dailyFra, "txtDailyStaff"
+    SetControlImeHiragana dailyFra, "txtDailyCommonRecord"
     SetControlImeHiragana dailyFra, "txtDailyTraining"
     SetControlImeHiragana dailyFra, "txtDailyReaction"
     SetControlImeHiragana dailyFra, "txtDailyAbnormal"
@@ -3847,7 +3848,26 @@ RecalcBI
 
     nL y
    
-      
+    
+    ' row2.6: use weekdays
+    CreateLabel fBasic, "pj", COL_LX, y
+    Dim useDayLeft As Single: useDayLeft = COL_LX + lblW
+    Dim useDayGap As Single: useDayGap = 58
+    Dim wkMon As MSForms.CheckBox
+    Dim wkTue As MSForms.CheckBox
+    Dim wkWed As MSForms.CheckBox
+    Dim wkThu As MSForms.CheckBox
+    Dim wkFri As MSForms.CheckBox
+    Dim wkSat As MSForms.CheckBox
+
+    Set wkMon = CreateCheck(fBasic, "", useDayLeft + useDayGap * 0, y, "chkUseMon", "Basic.UseWeekday.Mon")
+    Set wkTue = CreateCheck(fBasic, "", useDayLeft + useDayGap * 1, y, "chkUseTue", "Basic.UseWeekday.Tue")
+    Set wkWed = CreateCheck(fBasic, "", useDayLeft + useDayGap * 2, y, "chkUseWed", "Basic.UseWeekday.Wed")
+    Set wkThu = CreateCheck(fBasic, "", useDayLeft + useDayGap * 3, y, "chkUseThu", "Basic.UseWeekday.Thu")
+    Set wkFri = CreateCheck(fBasic, "", useDayLeft + useDayGap * 4, y, "chkUseFri", "Basic.UseWeekday.Fri")
+    Set wkSat = CreateCheck(fBasic, "y", useDayLeft + useDayGap * 5, y, "chkUseSat", "Basic.UseWeekday.Sat")
+
+    nL y
    
 
 
@@ -6277,6 +6297,10 @@ Private Sub BuildDailyLogLayout()
     Dim topLabelW As Single
     Dim topInputW As Single
     Dim secondRowTop As Single
+    Dim lblCommon As Object
+    Dim txtCommon As Object
+    Dim commonTop As Single
+    Dim commonH As Single
 
     Set f = GetDailyLogFrame()
     If f Is Nothing Then GoTo ExitHere
@@ -6342,6 +6366,37 @@ Private Sub BuildDailyLogLayout()
         .Width = 100
         .Height = 18
     End With
+    
+    commonTop = 44
+    commonH = 34
+
+    On Error Resume Next
+    Set lblCommon = f.controls("lblDailyCommonRecord")
+    On Error GoTo EH
+    If lblCommon Is Nothing Then Set lblCommon = f.controls.Add("Forms.Label.1", "lblDailyCommonRecord")
+    With lblCommon
+        .caption = "—j“ú‹¤’ÊŽÀŽ{‹L˜^"
+        .Left = leftMargin
+        .top = commonTop
+        .Width = f.Width - leftMargin * 2
+        .Height = 14
+    End With
+
+    On Error Resume Next
+    Set txtCommon = SafeGetControl(f, "txtDailyCommonRecord")
+    On Error GoTo EH
+    If txtCommon Is Nothing Then Set txtCommon = f.controls.Add("Forms.TextBox.1", "txtDailyCommonRecord")
+    With txtCommon
+        .Left = leftMargin
+        .top = lblCommon.top + lblCommon.Height + 2
+        .Width = f.Width - leftMargin * 2
+        .Height = commonH
+        .multiline = True
+        .EnterKeyBehavior = True
+        .ScrollBars = 2
+    End With
+
+    topStart = txtCommon.top + txtCommon.Height + 8
 
     boxH = 95
     secondRowTop = topStart + 18 + boxH + rowGap - 6

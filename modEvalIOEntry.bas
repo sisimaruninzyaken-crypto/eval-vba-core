@@ -19,6 +19,12 @@ Private Const HDR_BIRTH_DATE As String = "BirthDate"
 Private Const HDR_GENDER As String = "Gender"
 Private Const HDR_CARE_LEVEL As String = "CareLevel"
 Private Const HDR_CREATED_DATE As String = "CreatedDate"
+Private Const HDR_USE_WEEKDAY_MON As String = "UseWeekday_Mon"
+Private Const HDR_USE_WEEKDAY_TUE As String = "UseWeekday_Tue"
+Private Const HDR_USE_WEEKDAY_WED As String = "UseWeekday_Wed"
+Private Const HDR_USE_WEEKDAY_THU As String = "UseWeekday_Thu"
+Private Const HDR_USE_WEEKDAY_FRI As String = "UseWeekday_Fri"
+Private Const HDR_USE_WEEKDAY_SAT As String = "UseWeekday_Sat"
 Public mDailyLogManual As Boolean    ' 日々の記録の手動保存フラグ
 
 
@@ -638,7 +644,9 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
 End Sub
 
 Private Function ClientMasterHeaders() As Variant
-    ClientMasterHeaders = Array(HDR_USER_ID, HDR_NAME, HDR_KANA, HDR_BIRTH_DATE, HDR_GENDER, HDR_CARE_LEVEL, HDR_CREATED_DATE)
+    ClientMasterHeaders = Array( _
+        HDR_USER_ID, HDR_NAME, HDR_KANA, HDR_BIRTH_DATE, HDR_GENDER, HDR_CARE_LEVEL, HDR_CREATED_DATE, _
+        HDR_USE_WEEKDAY_MON, HDR_USE_WEEKDAY_TUE, HDR_USE_WEEKDAY_WED, HDR_USE_WEEKDAY_THU, HDR_USE_WEEKDAY_FRI, HDR_USE_WEEKDAY_SAT)
 End Function
 
 Private Function EnsureClientMasterSheet() As Worksheet
@@ -730,12 +738,25 @@ Private Sub EnsureClientMasterEntry(ByVal owner As Object)
     Dim skipRegistration As Boolean
     Dim hitRow As Long
     hitRow = FindClientMasterRow(ws, idVal, nameVal, skipRegistration)
-    If hitRow > 0 Then Exit Sub
-    If skipRegistration Then Exit Sub
-    If Len(nameVal) = 0 Then Exit Sub
+
 
     Dim birthText As String
     Call TryGetBirthDateForClientMaster(owner, birthText)
+    
+    If hitRow > 0 Then
+        If Len(idVal) > 0 Then ws.Cells(hitRow, 1).value = idVal
+        If Len(nameVal) > 0 Then ws.Cells(hitRow, 2).value = nameVal
+        ws.Cells(hitRow, 3).value = kanaVal
+        If Len(birthText) > 0 Then ws.Cells(hitRow, 4).value = birthText
+        If Len(genderVal) > 0 Then ws.Cells(hitRow, 5).value = genderVal
+        If Len(careVal) > 0 Then ws.Cells(hitRow, 6).value = careVal
+        SaveClientMasterWeekdays ws, hitRow, owner
+        Exit Sub
+    End If
+
+    If skipRegistration Then Exit Sub
+    If Len(nameVal) = 0 Then Exit Sub
+    
 
     Dim newRow As Long
     newRow = NextAppendRow(ws)
@@ -747,11 +768,105 @@ Private Sub EnsureClientMasterEntry(ByVal owner As Object)
     ws.Cells(newRow, 5).value = genderVal
     ws.Cells(newRow, 6).value = careVal
     ws.Cells(newRow, 7).value = Format$(Date, "yyyy/mm/dd")
+   SaveClientMasterWeekdays ws, newRow, owner
     Exit Sub
 EH:
     Err.Clear
 End Sub
 
+
+Private Function ClientMasterWeekdayMap() As Variant
+    ClientMasterWeekdayMap = Array( _
+        Array(HDR_USE_WEEKDAY_MON, "chkUseMon"), _
+        Array(HDR_USE_WEEKDAY_TUE, "chkUseTue"), _
+        Array(HDR_USE_WEEKDAY_WED, "chkUseWed"), _
+        Array(HDR_USE_WEEKDAY_THU, "chkUseThu"), _
+        Array(HDR_USE_WEEKDAY_FRI, "chkUseFri"), _
+        Array(HDR_USE_WEEKDAY_SAT, "chkUseSat"))
+End Function
+
+Private Sub SaveClientMasterWeekdays(ByVal ws As Worksheet, ByVal rowNo As Long, ByVal owner As Object)
+    Dim map As Variant: map = ClientMasterWeekdayMap()
+    Dim i As Long, colNo As Long, ctlName As String
+    For i = LBound(map) To UBound(map)
+        ctlName = CStr(map(i)(1))
+        colNo = EnsureHeaderCol(ws, CStr(map(i)(0)))
+        ws.Cells(rowNo, colNo).value = IIf(GetCtlCheckValue(owner, ctlName), 1, 0)
+    Next i
+End Sub
+
+Private Sub LoadClientMasterWeekdaysByRow(ByVal ws As Worksheet, ByVal rowNo As Long, ByVal owner As Object)
+    Dim map As Variant: map = ClientMasterWeekdayMap()
+    Dim i As Long, colNo As Long, ctlName As String, rawVal As Variant
+
+    For i = LBound(map) To UBound(map)
+        ctlName = CStr(map(i)(1))
+        colNo = FindHeaderCol(ws, CStr(map(i)(0)))
+
+        If colNo > 0 Then
+            rawVal = ws.Cells(rowNo, colNo).value
+            SetCtlCheckValue owner, ctlName, IsTruthyValue(rawVal)
+        Else
+            SetCtlCheckValue owner, ctlName, False
+        End If
+    Next i
+End Sub
+
+Public Sub LoadClientMasterWeekdaysToForm(ByVal owner As Object)
+    On Error GoTo EH
+
+    Dim ws As Worksheet: Set ws = EnsureClientMasterSheet()
+    Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
+    Dim nameVal As String: nameVal = Trim$(GetCtlTextGeneric(owner, "txtName"))
+
+    Dim skipRegistration As Boolean
+    Dim rowNo As Long
+    rowNo = FindClientMasterRow(ws, idVal, nameVal, skipRegistration)
+
+    If rowNo > 0 Then
+        LoadClientMasterWeekdaysByRow ws, rowNo, owner
+    End If
+    Exit Sub
+EH:
+    Err.Clear
+End Sub
+
+Private Function GetCtlCheckValue(ByVal owner As Object, ByVal ctlName As String) As Boolean
+    Dim o As Object
+    Set o = FindCtlDeep(owner, ctlName)
+    If o Is Nothing Then Exit Function
+
+    On Error Resume Next
+    GetCtlCheckValue = CBool(o.value)
+    On Error GoTo 0
+End Function
+
+Private Sub SetCtlCheckValue(ByVal owner As Object, ByVal ctlName As String, ByVal checkValue As Boolean)
+    Dim o As Object
+    Set o = FindCtlDeep(owner, ctlName)
+    If o Is Nothing Then Exit Sub
+
+    On Error Resume Next
+    o.value = checkValue
+    On Error GoTo 0
+End Sub
+
+Private Function IsTruthyValue(ByVal v As Variant) As Boolean
+    Dim s As String
+    If IsError(v) Or IsNull(v) Or IsEmpty(v) Then Exit Function
+
+    Select Case VarType(v)
+        Case vbBoolean
+            IsTruthyValue = CBool(v)
+            Exit Function
+        Case vbByte, vbInteger, vbLong, vbSingle, vbDouble, vbCurrency, vbDecimal
+            IsTruthyValue = (CDbl(v) <> 0)
+            Exit Function
+    End Select
+
+    s = LCase$(Trim$(CStr(v)))
+    IsTruthyValue = (s = "1" Or s = "true" Or s = "yes" Or s = "y")
+End Function
 
 Private Function GetSparseMainSaveWarningMessage(ws As Worksheet, ByVal patientName As String, owner As Object) As String
     Dim existingRow As Long
@@ -1421,6 +1536,10 @@ map = Array( _
     ws.Cells(r, c).value = GetHdrKanaText(owner)
     Debug.Print "[BASIC][SAVE] Basic.NameKana ->", CStr(ws.Cells(r, c).value)
     
+
+    c = EnsureHeader(ws, "Basic.UseWeekdays")
+    ws.Cells(r, c).value = SerializeNamedChecks(owner, Array("chkUseMon", "chkUseTue", "chkUseWed", "chkUseThu", "chkUseFri", "chkUseSat"))
+    
     Dim idVal As String: idVal = GetID_FromBasicInfo(owner)
     If Len(idVal) > 0 Then ws.Cells(r, EnsureHeader(ws, "Basic.ID")).value = idVal
     ws.Cells(r, EnsureHeader(ws, "Basic.EvalDate")).value = GetCtlTextGeneric(owner, "txtEDate")
@@ -1550,6 +1669,13 @@ map = Array( _
 
     c = FindHeaderCol(ws, "Basic.NameKana")
     If c > 0 Then SetHdrKanaText owner, ws.Cells(r, c).value
+    
+    c = FindHeaderCol(ws, "Basic.UseWeekdays")
+    If c > 0 Then
+        DeserializeNamedChecks owner, Array("chkUseMon", "chkUseTue", "chkUseWed", "chkUseThu", "chkUseFri", "chkUseSat"), CStr(ws.Cells(r, c).value)
+    End If
+    LoadClientMasterWeekdaysToForm owner
+    
 
     c = FindHeaderCol(ws, "Basic.NameKana")
     If c > 0 Then SetHdrKanaText owner, ws.Cells(r, c).value
@@ -3556,6 +3682,7 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Dim txtReaction As Object
     Dim txtAbnormal As Object
     Dim txtPlan As Object
+    Dim txtCommon As Object
     Dim hdr As Object
     Dim txtHdrPID As Object
     Dim lastRow As Long
@@ -3587,6 +3714,7 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Set txtReaction = ResolveDailyLogControl(owner, "txtDailyReaction")
     Set txtAbnormal = ResolveDailyLogControl(owner, "txtDailyAbnormal")
     Set txtPlan = ResolveDailyLogControl(owner, "txtDailyPlan")
+    Set txtCommon = ResolveDailyLogControl(owner, "txtDailyCommonRecord")
     Set hdr = SafeGetControl(owner, "frHeader")
     Set txtHdrPID = SafeGetControl(hdr, "txtHdrPID")
     If txtDate Is Nothing Or txtStaff Is Nothing Or txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Or txtHdrPID Is Nothing Then Exit Sub
@@ -3677,6 +3805,9 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     txtDate.value = ws.Cells(r, 4).value
     txtStaff.value = ws.Cells(r, 6).value
     FillDailyLogFieldsFromBody body, txtTraining.value, txtReaction.value, txtAbnormal.value, txtPlan.value
+        If Not txtCommon Is Nothing And IsDate(txtDate.value) Then
+        txtCommon.value = GetCommonRecordByWeekday(weekday(CDate(txtDate.value), vbSunday))
+    End If
 
 FinallyExit:
     If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
@@ -3706,6 +3837,8 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Dim reaction As String
     Dim abnormal As String
     Dim plan As String
+    Dim commonRecord As String
+    Dim mergedAbnormal As String
     Dim logDate As Date
     Dim lastRow As Long
     Dim hitRow As Long
@@ -3720,6 +3853,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Dim txtDailyReaction As Object
     Dim txtDailyAbnormal As Object
     Dim txtDailyPlan As Object
+    Dim txtDailyCommonRecord As Object
     Dim hdr As Object
     Dim txtHdrName As Object
     Dim txtHdrPID As Object
@@ -3732,6 +3866,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Set txtDailyReaction = ResolveDailyLogControl(owner, "txtDailyReaction")
     Set txtDailyAbnormal = ResolveDailyLogControl(owner, "txtDailyAbnormal")
     Set txtDailyPlan = ResolveDailyLogControl(owner, "txtDailyPlan")
+    Set txtDailyCommonRecord = ResolveDailyLogControl(owner, "txtDailyCommonRecord")
     Set hdr = SafeGetControl(owner, "frHeader")
     Set txtHdrName = SafeGetControl(hdr, "txtHdrName")
     If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyTraining Is Nothing Or txtDailyReaction Is Nothing Or txtDailyAbnormal Is Nothing Or txtDailyPlan Is Nothing Or txtHdrName Is Nothing Then Exit Sub
@@ -3747,7 +3882,11 @@ Public Sub SaveDailyLog_Append(owner As Object)
     reaction = CStr(txtDailyReaction.value)
     abnormal = CStr(txtDailyAbnormal.value)
     plan = CStr(txtDailyPlan.value)
-    note = ComposeDailyLogBody(training, reaction, abnormal, plan)
+    If Not txtDailyCommonRecord Is Nothing Then
+        commonRecord = CStr(txtDailyCommonRecord.value)
+    Else
+        commonRecord = vbNullString
+    End If
 
 
     '--- 入力チェック ---
@@ -3767,6 +3906,12 @@ Public Sub SaveDailyLog_Append(owner As Object)
  End If
 
     logDate = CDate(dt)
+    
+    Call SaveCommonRecordByWeekday(weekday(logDate, vbSunday), commonRecord)
+    mergedAbnormal = MergeDailyLog(commonRecord, abnormal)
+    note = ComposeDailyLogBody(training, reaction, mergedAbnormal, plan)
+    
+    
     Set ws = GetDailyLogSheetByDate(logDate, True, wb, wbOpenedHere)
     If ws Is Nothing Then Exit Sub
 
