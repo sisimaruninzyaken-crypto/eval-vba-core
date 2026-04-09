@@ -17,6 +17,9 @@ Public Sub TidyBasicInfo_TwoColumns()
     Dim i As Long
     Dim aCapL As Variant, aCtlL As Variant
     Dim aCapR As Variant, aCtlR As Variant
+    Dim useDayLeft As Double
+    Dim useDayGap As Double
+    Dim useDayTop As Double
 
     Dim c As Object
     Dim txtED As Object
@@ -111,21 +114,33 @@ aCapL = Array( _
     "性別", _
     "要介護", _
     "高齢者の日常生活自立度", _
-    "認知症高齢者の日常生活自立度", _
-    "社会参加状況" _
+    "認知症高齢者の日常生活自立度" _
 )
-    aCtlL = Array("txtAge", "txtBirth", "cboSex", "cboCare", "cboElder", "cboDementia", "txtLiving")
+    aCtlL = Array("txtAge", "txtBirth", "cboSex", "cboCare", "cboElder", "cboDementia")
 
     For i = 0 To UBound(aCtlL)
         Call EnsureLabel(f32, "lblBI_L_" & CStr(i + 1), CStr(aCapL(i)), xL + xLbl, yL, wLbl, rowH)
-        If CStr(aCtlL(i)) = "txtLiving" Then
-            Call PlaceCtl(f32, CStr(aCtlL(i)), xL + xCtl, yL - 1, wCtl, socialH)
-            yL = yL + socialH + gapY
-        Else
-            Call PlaceCtl(f32, CStr(aCtlL(i)), xL + xCtl, yL - 1, wCtlShort, rowH + 2)
-            yL = yL + rowH + gapY
-        End If
+        Call PlaceCtl(f32, CStr(aCtlL(i)), xL + xCtl, yL - 1, wCtlShort, rowH + 2)
+        yL = yL + rowH + gapY
     Next i
+
+   Call EnsureLabel(f32, "lblBI_UseWeekday", "利用曜日", xL + xLbl, yL, wLbl, rowH)
+   useDayLeft = xL + xCtl
+   useDayGap = 48
+   useDayTop = yL - 1
+   Call PlaceCtl(f32, "chkUseMon", useDayLeft + useDayGap * 0, useDayTop, 44, rowH + 2)
+   Call PlaceCtl(f32, "chkUseTue", useDayLeft + useDayGap * 1, useDayTop, 44, rowH + 2)
+   Call PlaceCtl(f32, "chkUseWed", useDayLeft + useDayGap * 2, useDayTop, 44, rowH + 2)
+   Call PlaceCtl(f32, "chkUseThu", useDayLeft + useDayGap * 3, useDayTop, 44, rowH + 2)
+   Call PlaceCtl(f32, "chkUseFri", useDayLeft + useDayGap * 4, useDayTop, 44, rowH + 2)
+   Call PlaceCtl(f32, "chkUseSat", useDayLeft + useDayGap * 5, useDayTop, 44, rowH + 2)
+   yL = yL + rowH + gapY
+
+' Left: 社会参加状況
+   Call EnsureLabel(f32, "lblBI_L_7", "社会参加状況", xL + xLbl, yL, wLbl, rowH)
+   Call PlaceCtl(f32, "txtLiving", xL + xCtl, yL - 1, wCtl, socialH)
+   yL = yL + socialH + gapY
+
 
     ' Left: Needs（本人/家族）
     yL = yL + 10
