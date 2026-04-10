@@ -392,7 +392,8 @@ Private Function EnsureCheckBox(parent As MSForms.Frame, caption As String, _
     Dim ck As MSForms.CheckBox
 
     On Error Resume Next
-    Set ck = FindCtlDeep(Me, ctlName)
+    Set ck = parent.controls(ctlName)
+    If ck Is Nothing Then Set ck = FindCtlDeep(Me, ctlName)
     On Error GoTo 0
 
     If ck Is Nothing Then
@@ -1065,7 +1066,6 @@ Set EnsureBI_IADL = mpADL
 
     ' 5) 起居動作タブのUI
     mp.value = 0
-    BuildKyoOnADL mpADL.pages(2)
 
 
     '======================== BI（10項目） ========================
@@ -1709,30 +1709,12 @@ End Sub
 
 '=== どこかに残っている mpADL を全部消す ===
 Private Sub RemoveAllMpADL()
-    Dim i As Long, c As Control
-    ' フォーム直下
-    For i = Me.controls.count - 1 To 0 Step -1
-        If TypeName(Me.controls(i)) = "MultiPage" Then
-            If Me.controls(i).name = "mpADL" Then
-                Me.controls.Remove Me.controls(i).name
-            End If
-        End If
-    Next i
-
-    ' ルート MultiPage（mp）の各ページ内
-    Dim mp As MSForms.MultiPage, p As MSForms.page
-    For Each c In Me.controls
-        If TypeName(c) = "MultiPage" Then Set mp = c: Exit For
-    Next c
-    If Not mp Is Nothing Then
-        For i = 0 To mp.pages.count - 1
-            For Each c In mp.pages(i).controls
-                If TypeName(c) = "MultiPage" Then
-                    If c.name = "mpADL" Then mp.pages(i).controls.Remove c.name
-                End If
-            Next c
-        Next i
-    End If
+    Dim mp As MSForms.MultiPage
+    Dim pgMove As MSForms.page
+    Dim host As MSForms.Frame
+    Dim c As Object, i As Long
+    
+  If Not c Is Nothing Then If c.name = "mpADL" Then mp.pages(i).controls.Remove c.name
 End Sub
 
 
@@ -1905,7 +1887,7 @@ End Function
 '―― 初回だけ“生成”する（Activate から呼ばれる）
 Private Sub BuildPostureUI()
 
-Debug.Print "BuildPostureUI CALLED", Join(PostureItems, " / ")
+
 
     Dim mp As MSForms.MultiPage: Set mp = FindMainMultiPage()
     If mp Is Nothing Then Exit Sub
@@ -2048,7 +2030,6 @@ Private Sub LayoutPosture()
     ' Call UserForm_Resize  ' NOTE: 直呼びすると mpPhys の高さが再計算され「全体が短い」再発源になるため禁止
 
     
-    Debug.Print "[init] call phys root"
     'Call modPhysEval.EnsurePhysicalFunctionTabs_Under(Me, mp)
     
 

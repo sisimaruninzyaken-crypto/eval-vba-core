@@ -697,25 +697,25 @@ Private Function FindClientMasterRow(ByVal ws As Worksheet, ByVal userID As Stri
     If Len(Trim$(userID)) > 0 Then
         hitByID = FindClientMasterRowByUserID(ws, userID)
         If hitByID > 0 Then
-            Debug.Print "[TRACE] FindClientMasterRow hit by ID row=" & hitByID
+      IO_T "[TRACE] FindClientMasterRow userID=" & userID & " name=" & nameText
             FindClientMasterRow = hitByID
             Exit Function
         End If
     End If
     
-        Debug.Print "[TRACE] FindClientMasterRow ID not found, fallback to name"
+                IO_T "[TRACE] FindClientMasterRow ID not found, fallback to name"
 
     If Len(Trim$(nameText)) = 0 Then Exit Function
 
     Set rowsByName = FindClientMasterRowsByName(ws, nameText)
     If rowsByName.count = 1 Then
         FindClientMasterRow = CLng(rowsByName(1))
-        Debug.Print "[TRACE] FindClientMasterRow hit by name row=" & FindClientMasterRow
+        IO_T "[TRACE] FindClientMasterRow hit by name row=" & FindClientMasterRow
     ElseIf rowsByName.count > 1 Then
         shouldSkip = True
-        Debug.Print "[TRACE] FindClientMasterRow duplicate names count=" & rowsByName.count & " -> skip"
+        IO_T "[TRACE] FindClientMasterRow duplicate names count=" & rowsByName.count & " -> skip"
     Else
-        Debug.Print "[TRACE] FindClientMasterRow no match by name"
+        IO_T "[TRACE] FindClientMasterRow no match by name"
     End If
 End Function
 
@@ -878,7 +878,6 @@ Public Sub LoadClientMasterWeekdaysToForm(ByVal owner As Object)
     Dim skipRegistration As Boolean
     Dim rowNo As Long
     rowNo = FindClientMasterRow(ws, idVal, nameVal, skipRegistration)
-            IO_T "[TRACE] LoadClientMasterWeekdaysByRow keep " & ctlName & " (no explicit value)"
 
     If rowNo > 0 Then
         LoadClientMasterWeekdaysByRow ws, rowNo, owner
@@ -976,61 +975,13 @@ Private Sub BuildWeekdayCheckCache(ByVal owner As Object, ByVal ownerPtr As Long
 End Sub
 
 Private Function FindWeekdayCheckControl(ByVal owner As Object, ByVal ctlName As String) As Object
-    Dim mp As Object
-    Dim pg As Object
-    Dim c As Object
-    Dim tagName As String
-
+  
     On Error Resume Next
     Set FindWeekdayCheckControl = owner.EvalCtl(ctlName, "Page1")
     On Error GoTo 0
     If Not FindWeekdayCheckControl Is Nothing Then Exit Function
 
-    On Error Resume Next
-    Set mp = owner.controls("MultiPage1")
-    On Error GoTo 0
-    If mp Is Nothing Then Exit Function
-
-    On Error Resume Next
-    Set pg = mp.pages("Page1")
-    If pg Is Nothing Then Set pg = mp.pages(0)
-    On Error GoTo 0
-    If pg Is Nothing Then Exit Function
-
-    On Error Resume Next
-    Set FindWeekdayCheckControl = pg.controls(ctlName)
-    On Error GoTo 0
-    If Not FindWeekdayCheckControl Is Nothing Then Exit Function
-
-    For Each c In pg.controls
-        If TypeName(c) = "Frame" Then
-            On Error Resume Next
-            Set FindWeekdayCheckControl = c.controls(ctlName)
-            On Error GoTo 0
-            If Not FindWeekdayCheckControl Is Nothing Then Exit Function
-        End If
-    Next c
-
-
-    Dim tagName As String
-    tagName = WeekdayTagFromControlName(ctlName)
-    If Len(tagName) = 0 Then Exit Function
-
-    For Each c In pg.controls
-        If StrComp(CStr(c.tag), tagName, vbTextCompare) = 0 Then
-            Set FindWeekdayCheckControl = c
-            Exit Function
-        End If
-        If TypeName(c) = "Frame" Then
-            Dim child As Object
-            For Each child In c.controls
-                If StrComp(CStr(child.tag), tagName, vbTextCompare) = 0 Then
-                    Set FindWeekdayCheckControl = child
-                    Exit Function
-                End If
-            Next child
-        End If
-    Next c
+       Set FindWeekdayCheckControl = FindCtlDeep(owner, ctlName)
 End Function
 
 Private Function OwnerPointer(ByVal owner As Object) As LongPtr
