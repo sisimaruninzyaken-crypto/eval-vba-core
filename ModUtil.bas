@@ -16,35 +16,12 @@ End Sub
 
 Public Function FindCtlDeep(ByVal container As Object, ByVal ctlName As String) As MSForms.Control
     Dim hit As Object
-    Dim c As Object, pg As MSForms.page
-
+   
     Set hit = modCommonUtil.SafeGetControl(container, ctlName)
     If Not hit Is Nothing Then
         Set FindCtlDeep = hit
-        Exit Function
     End If
 
-    On Error Resume Next
-
-    For Each c In container.controls
-        If StrComp(c.name, ctlName, vbTextCompare) = 0 Then
-            Set FindCtlDeep = c
-            Exit Function
-        End If
-
-        If TypeOf c Is MSForms.Frame Or TypeOf c Is MSForms.page Then
-            Set FindCtlDeep = FindCtlDeep(c, ctlName)
-            If Not FindCtlDeep Is Nothing Then Exit Function
-        End If
-
-        If TypeOf c Is MSForms.MultiPage Then
-            For Each pg In c.pages
-                Set FindCtlDeep = FindCtlDeep(pg, ctlName)
-                If Not FindCtlDeep Is Nothing Then Exit Function
-            Next
-        End If
-    Next
-    On Error GoTo 0
 End Function
 
 Public Function FindCtlByTagDeep(ByVal container As Object, ByVal targetTag As String) As MSForms.Control

@@ -909,9 +909,11 @@ Private Sub SetCtlCheckValue(ByVal owner As Object, ByVal ctlName As String, ByV
 
     On Error Resume Next
     o.value = checkValue
-    IO_T "[TRACE] SetCtlCheckValue " & ctlName & "=" & checkValue & _
-         " target=" & TypeName(o) & "/" & CStr(o.name) & _
-         " parent=" & ControlParentPath(o)
+    If IO_TRACE Then
+        IO_T "[TRACE] SetCtlCheckValue " & ctlName & "=" & checkValue & _
+             " target=" & TypeName(o) & "/" & CStr(o.name) & _
+             " parent=" & ControlParentPath(o)
+    End If
     On Error GoTo 0
 End Sub
 
