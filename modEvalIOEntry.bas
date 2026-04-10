@@ -939,18 +939,10 @@ Private Function ResolveWeekdayCheckControlCached(ByVal owner As Object, ByVal c
         BuildWeekdayCheckCache owner, ownerPtr
     End If
 
-    If Not mWeekdayCheckCache Is Nothing Then
-        If mWeekdayCheckCache.exists(ctlName) Then
-            Set ResolveWeekdayCheckControlCached = mWeekdayCheckCache(ctlName)
-            Exit Function
-        End If
-    End If
-
-    BuildWeekdayCheckCache owner, ownerPtr
-    If Not mWeekdayCheckCache Is Nothing Then
-        If mWeekdayCheckCache.exists(ctlName) Then
-            Set ResolveWeekdayCheckControlCached = mWeekdayCheckCache(ctlName)
-        End If
+    If mWeekdayCheckCache Is Nothing Then Exit Function
+    If mWeekdayCheckCache.exists(ctlName) Then
+        Set ResolveWeekdayCheckControlCached = mWeekdayCheckCache(ctlName)
+    
     End If
 End Function
 
@@ -979,9 +971,7 @@ Private Function FindWeekdayCheckControl(ByVal owner As Object, ByVal ctlName As
     On Error Resume Next
     Set FindWeekdayCheckControl = owner.EvalCtl(ctlName, "Page1")
     On Error GoTo 0
-    If Not FindWeekdayCheckControl Is Nothing Then Exit Function
-
-       Set FindWeekdayCheckControl = FindCtlDeep(owner, ctlName)
+ 
 End Function
 
 Private Function OwnerPointer(ByVal owner As Object) As LongPtr

@@ -998,11 +998,6 @@ End Sub
 Private Function EnsureBI_IADL() As MSForms.MultiPage
     On Error Resume Next
 
-    Trace "EnsureBI_IADL start", "BI/IADL"   ' ←①ここ
-
-
-
-
     
     Dim mpADL As MSForms.MultiPage
     Dim nextTop As Single
@@ -1045,7 +1040,6 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
 
     ' 4) mpADL を作成＆3枚保証（0:BI / 1:IADL / 2:起居動作）
     Set mpADL = host.controls.Add("Forms.MultiPage.1", "mpADL")
-    Trace "mpADL ready; pages=" & mpADL.pages.count, "BI/IADL"
 
     With mpADL
         .Left = 12
@@ -1060,8 +1054,7 @@ Private Function EnsureBI_IADL() As MSForms.MultiPage
     mpADL.pages(1).caption = "IADL"
     mpADL.pages(2).caption = "起居動作"
     
-    
-Trace "EnsureBI_IADL end; pages=" & mpADL.pages.count, "BI/IADL"
+
 Set EnsureBI_IADL = mpADL
 
     ' 5) 起居動作タブのUI
@@ -3138,7 +3131,6 @@ End Sub
 
 ' ========= ここから貼る（cmdLoadPrev_Click 全体）=========
 Private Sub cmdLoadPrev_Click()
-Debug.Print "[ENTER] cmdLoadPrev_Click", Timer
 
     Call modEvalIOEntry.LoadEvaluation_ByName_From(Me)
 
@@ -3201,7 +3193,6 @@ Me.Left = Application.Left + (Application.Width - Me.Width) / 2: Me.top = Applic
     End If
 
     Me.Height = h
-    DoEvents
 
     Call LegacyInit
     EnsureMpPhysChangeHook_Once
@@ -3237,7 +3228,6 @@ Call RemoveLegacyPainUI
 If Not mPainTidyBusy Then
     'TidyPainUI_Once
     Me.Height = h
-    DoEvents
     ClearPainUI Me   ' ← 起動時は空で開始（読み込みは手動で）
 End If
 
@@ -3534,22 +3524,16 @@ Set hostCog = CreateScrollHost(pgCog)
     
     
 ' --- 迷子の mpADL を全消去（保険） ---
-Trace "RemoveAllMpADL()", "Initialize"
 RemoveAllMpADL
-Trace "RemoveAllMpADL() done", "Initialize"
-
 
 ' --- mpADL の器を用意（ページ0と1を作る） ---
-Trace "EnsureBI_IADL() call", "Initialize"
 Dim mpADL As MSForms.MultiPage
 Set mpADL = EnsureBI_IADL()
-Trace "EnsureBI_IADL() returned; pages=" & mpADL.pages.count, "Initialize"
 
 
 ' --- 起居動作ページのUIを作る ---
-Trace "BuildKyoOnADL Page(2) start", "Initialize"
 BuildKyoOnADL mpADL.pages(2)
-Trace "BuildKyoOnADL Page(2) end", "Initialize"
+
 
 
 
@@ -3560,15 +3544,9 @@ mpADL.value = 0
 ' （任意）IADL備考のIME再設定
 ApplyImeToIADLNote
 
-' --- 下に続く nextTop の更新など ---
-Trace "update nextTop start", "Initialize"
 
 nextTop = mpADL.top + mpADL.Height + 10
 hostMove.ScrollHeight = nextTop + 10
-
-Trace "update nextTop done; mpADL.Top=" & mpADL.top & _
-      ", mpADL.Height=" & mpADL.Height & _
-      ", nextTop=" & nextTop, "Initialize"
 
 
 Dim y As Single, cboTmp As MSForms.ComboBox
@@ -3576,7 +3554,6 @@ Dim y As Single, cboTmp As MSForms.ComboBox
 
 
     '================ テスト・評価 ================
-    Trace "TESTS start", "Init"
     
     nextTop = pad
     Dim fTests As MSForms.Frame: Set fTests = CreateFrameP(hostTests, "テスト・評価（秒=小数2桁・握力=小数1桁・0以上）", 150)
@@ -3635,12 +3612,8 @@ CreateTextBox fTests, colR + 58, row3 + 48, memoW, 40, True, "txtMemo_GripL", "M
 
 ResizeFrameToContent fTests, row3 + 112
 
-
-    Trace "TESTS end", "Init"
-
     
     '================ 歩行評価（自立度 / RLA） ================
-Trace "WALK start", "Init"
 
 Set mpWalk = hostWalk.controls.Add("Forms.MultiPage.1")
 
@@ -3742,13 +3715,8 @@ End With
     Build_RLA_ChecksPart fRLA2, "swing": ResizeFrameToContent fRLA2, 260
 
     
-    
-    Trace "WALK end", "Init"
-
-
 
     '================ 認知・精神 ================
-   Trace "COG start", "Init"
     
     nextTop = pad
     Dim fCog As MSForms.Frame: Set fCog = CreateFrameP(hostCog, "認知機能・精神面", 110)
@@ -3762,14 +3730,11 @@ End With
     CreateLabel fCog, "備考", COL_LX, y + 28
     CreateTextBox fCog, COL_LX + lblW, y + 26, 610, 50, True, , "Cognition.備考"
     ResizeFrameToContent fCog, y + 26 + 50
-    
-    Trace "COG end", "Init"
 
 
 
 
     '--- 下部の「閉じる」 ---
-    Trace "CLOSE start", "Init"
 
 Set btnCloseCtl = Me.controls.Add("Forms.CommandButton.1")
 With btnCloseCtl
@@ -3782,9 +3747,6 @@ With btnCloseCtl
 End With
 Me.ScrollBars = fmScrollBarsVertical
 Me.ScrollHeight = nextTop + 120
-
-Trace "CLOSE end", "Init"
-
 
 
 RecalcBI
@@ -4671,12 +4633,9 @@ Public Sub RemoveLegacyPainUI()
     For Each n In Array("Label85", "TextBox1", "Label86", "Label87", "ComboBox39", "TextBox2", "txtPainMemo_lbl", "txtPainMemo", "lblNRS_Move", "cmbNRS_Move")
         On Error Resume Next
         f.controls.Remove CStr(n)
-        If Err.Number = 0 Then Debug.Print "[removed]", n Else Debug.Print "[skip]", n, "err", Err.Number
         Err.Clear
         On Error GoTo 0
     Next n
-
-    Debug.Print "[done] RemoveLegacyPainUI"
    
     
 End Sub
@@ -4747,31 +4706,6 @@ If GetPainHost Is Nothing Then Exit Sub
         .top = 492: .ZOrder 0
     End With
 End Sub
-
-
-
-Sub RemoveLegacyPainUI_Final()
-    Dim fr As MSForms.Frame, c As Control
-    Set fr = GetPainHost()
-    If fr Is Nothing Then Exit Sub
-    
-    For Each c In fr.controls
-        Select Case c.name
-            Case "Label85", "TextBox1", "Label86", "Label87", _
-                 "ComboBox39", "TextBox2", "txtPainMemo_lbl", "txtPainMemo"
-                Debug.Print "[remove]", c.name
-                fr.controls.Remove c.name
-        End Select
-    Next
-    
-    Debug.Print "[done] RemoveLegacyPainUI_Final"
-End Sub
-
-
-
-
-
-
 
 
 
@@ -7269,7 +7203,6 @@ End Sub
 
 Public Sub SetFormHeightSafe(ByVal newH As Single)
     Me.Height = newH
-    DoEvents
     Dim mp As Object
     Set mp = EvalCtl("MultiPage1")
     If Not mp Is Nothing Then mp.Height = Me.InsideHeight - 12
