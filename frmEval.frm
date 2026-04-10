@@ -386,6 +386,28 @@ Private Function CreateCheck(parent As MSForms.Frame, caption As String, _
     Set CreateCheck = ck
 End Function
 
+Private Function EnsureCheckBox(parent As MSForms.Frame, caption As String, _
+                                x As Single, y As Single, ByVal ctlName As String, _
+                                Optional tag As String = "") As MSForms.CheckBox
+    Dim ck As MSForms.CheckBox
+
+    On Error Resume Next
+    Set ck = FindCtlDeep(Me, ctlName)
+    On Error GoTo 0
+
+    If ck Is Nothing Then
+        Set ck = CreateCheck(parent, caption, x, y, ctlName, tag)
+    Else
+        ck.caption = caption
+        ck.Left = x
+        ck.top = y
+        If Len(tag) > 0 Then ck.tag = tag
+    End If
+
+    Set EnsureCheckBox = ck
+End Function
+
+
 Private Function MakeList(csv As String) As Variant
     MakeList = Split(csv, ",")
 End Function
@@ -3886,12 +3908,12 @@ RecalcBI
     Dim wkFri As MSForms.CheckBox
     Dim wkSat As MSForms.CheckBox
 
-    Set wkMon = CreateCheck(fBasic, "", useDayLeft + useDayGap * 0, y, "chkUseMon", "Basic.UseWeekday.Mon")
-    Set wkTue = CreateCheck(fBasic, "", useDayLeft + useDayGap * 1, y, "chkUseTue", "Basic.UseWeekday.Tue")
-    Set wkWed = CreateCheck(fBasic, "", useDayLeft + useDayGap * 2, y, "chkUseWed", "Basic.UseWeekday.Wed")
-    Set wkThu = CreateCheck(fBasic, "", useDayLeft + useDayGap * 3, y, "chkUseThu", "Basic.UseWeekday.Thu")
-    Set wkFri = CreateCheck(fBasic, "", useDayLeft + useDayGap * 4, y, "chkUseFri", "Basic.UseWeekday.Fri")
-    Set wkSat = CreateCheck(fBasic, "y", useDayLeft + useDayGap * 5, y, "chkUseSat", "Basic.UseWeekday.Sat")
+    Set wkMon = EnsureCheckBox(fBasic, "åé", useDayLeft + useDayGap * 0, y, "chkUseMon", "Basic.UseWeekday.Mon")
+    Set wkTue = EnsureCheckBox(fBasic, "âŒ", useDayLeft + useDayGap * 1, y, "chkUseTue", "Basic.UseWeekday.Tue")
+    Set wkWed = EnsureCheckBox(fBasic, "êÖ", useDayLeft + useDayGap * 2, y, "chkUseWed", "Basic.UseWeekday.Wed")
+    Set wkThu = EnsureCheckBox(fBasic, "ñÿ", useDayLeft + useDayGap * 3, y, "chkUseThu", "Basic.UseWeekday.Thu")
+    Set wkFri = EnsureCheckBox(fBasic, "ã‡", useDayLeft + useDayGap * 4, y, "chkUseFri", "Basic.UseWeekday.Fri")
+    Set wkSat = EnsureCheckBox(fBasic, "ìy", useDayLeft + useDayGap * 5, y, "chkUseSat", "Basic.UseWeekday.Sat")
     nL y
 
     ' s6F / vx

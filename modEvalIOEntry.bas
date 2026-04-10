@@ -33,6 +33,8 @@ Public mDailyLogManual As Boolean    ' 日々の記録の手動保存フラグ
 Private Const FRM_AIDS As String = "Frame33"
 Private Const FRM_RISK As String = "Frame34"
 Private Const IO_TRACE As Boolean = False
+Private mWeekdayCheckCache As Object
+Private mWeekdayCacheOwnerPtr As LongPtr
 Private Const MAIN_SAVE_MIN_FILLED_FIELDS As Long = 10
 Private Const MAIN_SAVE_FEW_INPUT_MESSAGE As String = "入力項目が少ない状態です。" & vbCrLf & _
     "既存データを上書きすると元に戻せない可能性があります。" & vbCrLf & _
@@ -51,11 +53,6 @@ Private Const HISTORY_LOAD_DEBUG As Boolean = True
 Public Sub LoadEvaluation_CurrentRow()
     MsgBox "この入口は廃止しました。読み込みは「名前→直近候補から選択」に統一しています。", vbInformation
 End Sub
-
-
-
-
-
 
 Private Sub IO_T(ParamArray a())
     If Not IO_TRACE Then Exit Sub
@@ -838,17 +835,17 @@ Private Sub LoadClientMasterWeekdaysByRow(ByVal ws As Worksheet, ByVal rowNo As 
                 parsedValue(i) = IsTruthyValue(rawVal)
                 hasAnyExplicit = True
             End If
-            Debug.Print "[TRACE] LoadClientMasterWeekdaysByRow row=" & rowNo & _
-                        " header=" & CStr(map(i)(0)) & " col=" & colNo & _
-                        " raw=[" & CStr(rawVal) & "] hasExplicit=" & hasExplicit(i)
+            IO_T "[TRACE] LoadClientMasterWeekdaysByRow row=" & rowNo & _
+                 " header=" & CStr(map(i)(0)) & " col=" & colNo & _
+                 " raw="
         Else
-            Debug.Print "[TRACE] LoadClientMasterWeekdaysByRow row=" & rowNo & _
-                        " header=" & CStr(map(i)(0)) & " col missing"
+            IO_T "[TRACE] LoadClientMasterWeekdaysByRow row=" & rowNo & _
+                 " header=" & CStr(map(i)(0)) & " col missing"
         End If
     Next i
 
     If Not hasAnyExplicit Then
-        Debug.Print "[TRACE] LoadClientMasterWeekdaysByRow row=" & rowNo & " has no explicit weekday data -> keep current checks"
+        IO_T "[TRACE] LoadClientMasterWeekdaysByRow row=" & rowNo & " has no explicit weekday data -> keep current checks"
         Exit Sub
     End If
 
@@ -856,9 +853,9 @@ Private Sub LoadClientMasterWeekdaysByRow(ByVal ws As Worksheet, ByVal rowNo As 
         ctlName = CStr(map(i)(1))
         If hasExplicit(i) Then
             SetCtlCheckValue owner, ctlName, parsedValue(i)
-            Debug.Print "[TRACE] LoadClientMasterWeekdaysByRow set " & ctlName & "=" & parsedValue(i)
+             IO_T "[TRACE] LoadClientMasterWeekdaysByRow set " & ctlName & "=" & parsedValue(i)
         Else
-            Debug.Print "[TRACE] LoadClientMasterWeekdaysByRow keep " & ctlName & " (no explicit value)"
+            IO_T "[TRACE] LoadClientMasterWeekdaysByRow keep " & ctlName & " (no explicit value)"
         End If
     Next i
 End Sub
@@ -881,12 +878,12 @@ Public Sub LoadClientMasterWeekdaysToForm(ByVal owner As Object)
     Dim skipRegistration As Boolean
     Dim rowNo As Long
     rowNo = FindClientMasterRow(ws, idVal, nameVal, skipRegistration)
-    Debug.Print "[TRACE] LoadClientMasterWeekdaysToForm id=" & idVal & " name=" & nameVal & " row=" & rowNo & " skip=" & skipRegistration
+            IO_T "[TRACE] LoadClientMasterWeekdaysByRow keep " & ctlName & " (no explicit value)"
 
     If rowNo > 0 Then
         LoadClientMasterWeekdaysByRow ws, rowNo, owner
     Else
-        Debug.Print "[TRACE] LoadClientMasterWeekdaysToForm no matched row"
+        IO_T "[TRACE] LoadClientMasterWeekdaysToForm no matched row"
     End If
     Exit Sub
 EH:
@@ -907,30 +904,139 @@ Private Sub SetCtlCheckValue(ByVal owner As Object, ByVal ctlName As String, ByV
     Dim o As Object
     Set o = ResolveCheckControl(owner, ctlName)
     If o Is Nothing Then
-        Debug.Print "[TRACE] SetCtlCheckValue ctl missing: " & ctlName
+        IO_T "[TRACE] SetCtlCheckValue ctl missing: " & ctlName
         Exit Sub
     End If
 
     On Error Resume Next
     o.value = checkValue
-    Debug.Print "[TRACE] SetCtlCheckValue " & ctlName & "=" & checkValue & _
-                " target=" & TypeName(o) & "/" & CStr(o.name) & _
-                " parent=" & ControlParentPath(o)
+    IO_T "[TRACE] SetCtlCheckValue " & ctlName & "=" & checkValue & _
+         " target=" & TypeName(o) & "/" & CStr(o.name) & _
+         " parent=" & ControlParentPath(o)
     On Error GoTo 0
 End Sub
 
 Private Function ResolveCheckControl(ByVal owner As Object, ByVal ctlName As String) As Object
+    If IsWeekdayCheckControlName(ctlName) Then
+        Set ResolveCheckControl = ResolveWeekdayCheckControlCached(owner, ctlName)
+        Exit Function
+    End If
+
     Set ResolveCheckControl = FindCtlDeep(owner, ctlName)
-    If Not ResolveCheckControl Is Nothing Then Exit Function
+End Function
+
+Private Function IsWeekdayCheckControlName(ByVal ctlName As String) As Boolean
+    Select Case LCase$(Trim$(ctlName))
+        Case "chkusemon", "chkusetue", "chkusewed", "chkusethu", "chkusefri", "chkusesat"
+            IsWeekdayCheckControlName = True
+    End Select
+End Function
+
+Private Function ResolveWeekdayCheckControlCached(ByVal owner As Object, ByVal ctlName As String) As Object
+    Dim ownerPtr As LongPtr
+    ownerPtr = OwnerPointer(owner)
+
+    If (mWeekdayCheckCache Is Nothing) Or (mWeekdayCacheOwnerPtr <> ownerPtr) Then
+        BuildWeekdayCheckCache owner, ownerPtr
+    End If
+
+    If Not mWeekdayCheckCache Is Nothing Then
+        If mWeekdayCheckCache.exists(ctlName) Then
+            Set ResolveWeekdayCheckControlCached = mWeekdayCheckCache(ctlName)
+            Exit Function
+        End If
+    End If
+
+    BuildWeekdayCheckCache owner, ownerPtr
+    If Not mWeekdayCheckCache Is Nothing Then
+        If mWeekdayCheckCache.exists(ctlName) Then
+            Set ResolveWeekdayCheckControlCached = mWeekdayCheckCache(ctlName)
+        End If
+    End If
+End Function
+
+Private Sub BuildWeekdayCheckCache(ByVal owner As Object, ByVal ownerPtr As LongPtr)
+    Dim dict As Object
+    Dim names As Variant
+    Dim i As Long
+    Dim ctl As Object
+
+    names = Array("chkUseMon", "chkUseTue", "chkUseWed", "chkUseThu", "chkUseFri", "chkUseSat")
+    Set dict = CreateObject("Scripting.Dictionary")
+
+    For i = LBound(names) To UBound(names)
+        Set ctl = FindWeekdayCheckControl(owner, CStr(names(i)))
+        If Not ctl Is Nothing Then
+            Set dict(CStr(names(i))) = ctl
+        End If
+    Next i
+
+    Set mWeekdayCheckCache = dict
+    mWeekdayCacheOwnerPtr = ownerPtr
+End Sub
+
+Private Function FindWeekdayCheckControl(ByVal owner As Object, ByVal ctlName As String) As Object
+    Dim mp As Object
+    Dim pg As Object
+    Dim c As Object
+    Dim tagName As String
+
+    On Error Resume Next
+    Set FindWeekdayCheckControl = owner.EvalCtl(ctlName, "Page1")
+    On Error GoTo 0
+    If Not FindWeekdayCheckControl Is Nothing Then Exit Function
+
+    On Error Resume Next
+    Set mp = owner.controls("MultiPage1")
+    On Error GoTo 0
+    If mp Is Nothing Then Exit Function
+
+    On Error Resume Next
+    Set pg = mp.pages("Page1")
+    If pg Is Nothing Then Set pg = mp.pages(0)
+    On Error GoTo 0
+    If pg Is Nothing Then Exit Function
+
+    On Error Resume Next
+    Set FindWeekdayCheckControl = pg.controls(ctlName)
+    On Error GoTo 0
+    If Not FindWeekdayCheckControl Is Nothing Then Exit Function
+
+    For Each c In pg.controls
+        If TypeName(c) = "Frame" Then
+            On Error Resume Next
+            Set FindWeekdayCheckControl = c.controls(ctlName)
+            On Error GoTo 0
+            If Not FindWeekdayCheckControl Is Nothing Then Exit Function
+        End If
+    Next c
+
 
     Dim tagName As String
     tagName = WeekdayTagFromControlName(ctlName)
     If Len(tagName) = 0 Then Exit Function
 
-    Set ResolveCheckControl = FindCtlByTagDeep(owner, tagName)
-    If Not ResolveCheckControl Is Nothing Then
-        Debug.Print "[TRACE] ResolveCheckControl tag-hit " & ctlName & " -> " & CStr(ResolveCheckControl.name)
-    End If
+    For Each c In pg.controls
+        If StrComp(CStr(c.tag), tagName, vbTextCompare) = 0 Then
+            Set FindWeekdayCheckControl = c
+            Exit Function
+        End If
+        If TypeName(c) = "Frame" Then
+            Dim child As Object
+            For Each child In c.controls
+                If StrComp(CStr(child.tag), tagName, vbTextCompare) = 0 Then
+                    Set FindWeekdayCheckControl = child
+                    Exit Function
+                End If
+            Next child
+        End If
+    Next c
+End Function
+
+Private Function OwnerPointer(ByVal owner As Object) As LongPtr
+    On Error Resume Next
+    OwnerPointer = ObjPtr(owner)
+    On Error GoTo 0
 End Function
 
 Private Function WeekdayTagFromControlName(ByVal ctlName As String) As String

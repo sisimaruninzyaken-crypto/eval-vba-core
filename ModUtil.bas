@@ -1,7 +1,7 @@
 Attribute VB_Name = "ModUtil"
 Option Explicit
 
-Public Const TRACE_ON As Boolean = True
+Public Const TRACE_ON As Boolean = False
 
 Public Sub Trace(ByVal msg As String, Optional ByVal tag As String = "")
     If Not TRACE_ON Then Exit Sub
