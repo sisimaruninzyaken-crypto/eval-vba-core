@@ -393,11 +393,12 @@ Private Function EnsureCheckBox(parent As MSForms.Frame, caption As String, _
 
     On Error Resume Next
     Set ck = parent.controls(ctlName)
-    If ck Is Nothing Then Set ck = FindCtlDeep(Me, ctlName)
+ 
     On Error GoTo 0
 
     If ck Is Nothing Then
         Set ck = CreateCheck(parent, caption, x, y, ctlName, tag)
+    If ck Is Nothing Then Set ck = FindCtlDeep(Me, ctlName)
     Else
         ck.caption = caption
         ck.Left = x

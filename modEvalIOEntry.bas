@@ -2375,7 +2375,13 @@ Public Sub DeserializeChecks(frm As Object, targetName As String, ByVal csv As S
     Dim c As Object
     For Each c In grp.controls
         If TypeName(c) = "CheckBox" Then
-            c.value = dict.exists(Trim$(c.caption))
+            If LCase$(Trim$(targetName)) = "frame34" And IsWeekdayCheckControlName(CStr(c.name)) Then
+                If IO_TRACE Then
+                    IO_T "[TRACE] DeserializeChecks skip weekday control in Frame34: " & CStr(c.name)
+                End If
+            Else
+                c.value = dict.exists(Trim$(c.caption))
+            End If
         End If
     Next
 End Sub
