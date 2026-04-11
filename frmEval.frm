@@ -3391,10 +3391,8 @@ Private Sub ApplyDailyLogImeSettings()
 
     SetControlImeHiragana dailyFra, "txtDailyStaff"
     SetControlImeHiragana dailyFra, "txtDailyCommonRecord"
-    SetControlImeHiragana dailyFra, "txtDailyTraining"
-    SetControlImeHiragana dailyFra, "txtDailyReaction"
     SetControlImeHiragana dailyFra, "txtDailyAbnormal"
-    SetControlImeHiragana dailyFra, "txtDailyPlan"
+
 End Sub
 
 Private Sub SetControlImeHiragana(ByVal owner As Object, ByVal controlName As String)
@@ -6337,12 +6335,7 @@ Private Sub BuildDailyLogLayout()
     topStart = txtCommon.top + txtCommon.Height + 8
 
     boxH = 95
-    secondRowTop = topStart + 18 + boxH + rowGap - 6
-
-    CreateDailyField f, "lblDailyTraining", "txtDailyTraining", "yŽÀŽ{“à—ez", leftMargin, topStart, colW, boxH
-    CreateDailyField f, "lblDailyReaction", "txtDailyReaction", "y—˜—pŽÒ‚Ì”½‰žz", rightLeft, topStart, colW, boxH
-    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "yˆÙíŠŒ©z", leftMargin, secondRowTop, colW, boxH
-    CreateDailyField f, "lblDailyPlan", "txtDailyPlan", "y¡Œã‚Ì•ûjz", rightLeft, secondRowTop, colW, boxH
+    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "ˆÙíŠŒ©", leftMargin, topStart, f.Width - leftMargin * 2, boxH
 
 
     '=== ‹L˜^“à—eƒeƒLƒXƒgiƒ}ƒ‹ƒ`ƒ‰ƒCƒ“j ===
@@ -6415,18 +6408,14 @@ Public Sub BuildDailyLog_HistoryList(owner As Object)
     If f Is Nothing Then Exit Sub
 
     Set txtLeft = SafeGetControl(f, "txtDailyAbnormal")
-    Set txtRight = SafeGetControl(f, "txtDailyPlan")
-    If txtLeft Is Nothing Or txtRight Is Nothing Then
+    If txtLeft Is Nothing Then
         BuildDailyLogLayout
         Set txtLeft = SafeGetControl(f, "txtDailyAbnormal")
-        Set txtRight = SafeGetControl(f, "txtDailyPlan")
     End If
-    If txtLeft Is Nothing Or txtRight Is Nothing Then Exit Sub
-
+    If txtLeft Is Nothing Then Exit Sub
+    
     fieldsBottom = txtLeft.top + txtLeft.Height
-    If txtRight.top + txtRight.Height > fieldsBottom Then
-        fieldsBottom = txtRight.top + txtRight.Height
-    End If
+
     
     On Error Resume Next
     f.controls.Remove "lstDailyLogList"
@@ -7674,10 +7663,7 @@ End Sub
 
 Private Sub Tighten_DailyLog_Boxes_ForLayout()
     Dim f As Object
-    Dim txtTraining As Object
-    Dim txtReaction As Object
     Dim txtAbnormal As Object
-    Dim txtPlan As Object
     Dim lst As Object
     Dim lbl As Object
     Dim fieldsBottom As Single
@@ -7685,24 +7671,18 @@ Private Sub Tighten_DailyLog_Boxes_ForLayout()
     Set f = GetDailyLogFrame()
     If f Is Nothing Then Exit Sub
 
-    Set txtTraining = SafeGetControl(f, "txtDailyTraining")
-    Set txtReaction = SafeGetControl(f, "txtDailyReaction")
+
     Set txtAbnormal = SafeGetControl(f, "txtDailyAbnormal")
-    Set txtPlan = SafeGetControl(f, "txtDailyPlan")
     Set lst = SafeGetControl(f, "lstDailyLogList")
     Set lbl = SafeGetControl(f, "lblDailyHistory")
 
-    If txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Then Exit Sub
+    If txtAbnormal Is Nothing Then Exit Sub
 
-    txtTraining.Height = 50
-    txtReaction.Height = 50
+
     txtAbnormal.Height = 50
-    txtPlan.Height = 50
+
 
     fieldsBottom = txtAbnormal.top + txtAbnormal.Height
-    If txtPlan.top + txtPlan.Height > fieldsBottom Then
-        fieldsBottom = txtPlan.top + txtPlan.Height
-    End If
 
     If Not lbl Is Nothing Then lbl.top = fieldsBottom + 15
     If Not lst Is Nothing Then

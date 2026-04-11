@@ -3901,7 +3901,7 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Set txtCommon = ResolveDailyLogControl(owner, "txtDailyCommonRecord")
     Set hdr = SafeGetControl(owner, "frHeader")
     Set txtHdrPID = SafeGetControl(hdr, "txtHdrPID")
-    If txtDate Is Nothing Or txtStaff Is Nothing Or txtTraining Is Nothing Or txtReaction Is Nothing Or txtAbnormal Is Nothing Or txtPlan Is Nothing Or txtHdrPID Is Nothing Then Exit Sub
+    If txtDate Is Nothing Or txtStaff Is Nothing Or txtAbnormal Is Nothing Or txtHdrPID Is Nothing Then Exit Sub
     
 
 
@@ -3988,8 +3988,18 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
 
     txtDate.value = ws.Cells(r, 4).value
     txtStaff.value = ws.Cells(r, 6).value
-    FillDailyLogFieldsFromBody body, txtTraining.value, txtReaction.value, txtAbnormal.value, txtPlan.value
-        If Not txtCommon Is Nothing And IsDate(txtDate.value) Then
+    Dim parsedTraining As String
+    Dim parsedReaction As String
+    Dim parsedAbnormal As String
+    Dim parsedPlan As String
+    FillDailyLogFieldsFromBody body, parsedTraining, parsedReaction, parsedAbnormal, parsedPlan
+
+    If Not txtTraining Is Nothing Then txtTraining.value = parsedTraining
+    If Not txtReaction Is Nothing Then txtReaction.value = parsedReaction
+    txtAbnormal.value = parsedAbnormal
+    If Not txtPlan Is Nothing Then txtPlan.value = parsedPlan
+
+    If Not txtCommon Is Nothing And IsDate(txtDate.value) Then
         txtCommon.value = GetCommonRecordByWeekday(weekday(CDate(txtDate.value), vbSunday))
     End If
 
@@ -4053,19 +4063,18 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Set txtDailyCommonRecord = ResolveDailyLogControl(owner, "txtDailyCommonRecord")
     Set hdr = SafeGetControl(owner, "frHeader")
     Set txtHdrName = SafeGetControl(hdr, "txtHdrName")
-    If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyTraining Is Nothing Or txtDailyReaction Is Nothing Or txtDailyAbnormal Is Nothing Or txtDailyPlan Is Nothing Or txtHdrName Is Nothing Then Exit Sub
+    If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyAbnormal Is Nothing Or txtHdrName Is Nothing Then Exit Sub
     
     Set txtHdrPID = SafeGetControl(hdr, "txtHdrPID")
-    If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyTraining Is Nothing Or txtDailyReaction Is Nothing Or txtDailyAbnormal Is Nothing Or txtDailyPlan Is Nothing Or txtHdrName Is Nothing Or txtHdrPID Is Nothing Then Exit Sub
-
+    If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyAbnormal Is Nothing Or txtHdrName Is Nothing Or txtHdrPID Is Nothing Then Exit Sub
     dt = txtDailyDate.value
     nm = Trim$(txtHdrName.value)
     pid = Trim$(txtHdrPID.value)
     staff = Trim$(txtDailyStaff.value)
-    training = CStr(txtDailyTraining.value)
-    reaction = CStr(txtDailyReaction.value)
+    If Not txtDailyTraining Is Nothing Then training = CStr(txtDailyTraining.value)
+    If Not txtDailyReaction Is Nothing Then reaction = CStr(txtDailyReaction.value)
     abnormal = CStr(txtDailyAbnormal.value)
-    plan = CStr(txtDailyPlan.value)
+    If Not txtDailyPlan Is Nothing Then plan = CStr(txtDailyPlan.value)
     If Not txtDailyCommonRecord Is Nothing Then
         commonRecord = CStr(txtDailyCommonRecord.value)
     Else

@@ -352,36 +352,27 @@ Public Sub Tighten_DailyLog_Boxes()
     Dim mp As Object: Set mp = uf.controls("MultiPage1")
     Dim pg As Object: Set pg = mp.pages(7) ' 日々の記録
 
-    Dim f As MSForms.Frame: Set f = pg.controls("fraDailyLog")
-    Dim txtTraining As MSForms.TextBox: Set txtTraining = f.controls("txtDailyTraining")
-    Dim txtReaction As MSForms.TextBox: Set txtReaction = f.controls("txtDailyReaction")
-    Dim txtAbnormal As MSForms.TextBox: Set txtAbnormal = f.controls("txtDailyAbnormal")
-    Dim txtPlan As MSForms.TextBox: Set txtPlan = f.controls("txtDailyPlan")
-    Dim lst As MSForms.ListBox: Set lst = f.controls("lstDailyLogList")
+    Dim txtAbnormal As Object: Set txtAbnormal = SafeGetControl(pg, "txtDailyAbnormal")
+    Dim lst As Object: Set lst = SafeGetControl(pg, "lstDailyLogList")
+
+    If txtAbnormal Is Nothing Then Exit Sub
 
     Const BOX_H As Single = 95
 
-    txtTraining.Height = BOX_H
-    txtReaction.Height = BOX_H
     txtAbnormal.Height = BOX_H
-    txtPlan.Height = BOX_H
 
     Dim fieldsBottom As Single
-    fieldsBottom = Application.Max(txtAbnormal.top + txtAbnormal.Height, txtPlan.top + txtPlan.Height)
 
 
+    Dim lbl As Object
+    Set lbl = SafeGetControl(pg, "lblDailyHistory")
 
-    ' ラベルを「一覧の直上」に置く
-    Dim lbl As MSForms.label
-    Set lbl = f.controls("lblDailyHistory")
-
-
-    ' ListBoxは溢れたら自動でスクロールが出る（常時表示は仕様上できない）
-    lbl.top = fieldsBottom + 15
-    lst.top = lbl.top + lbl.Height + 4
-    lst.Height = Application.Max(60, f.Height - lst.top - 8)
-    lst.IntegralHeight = False
-
+    If Not lbl Is Nothing Then lbl.top = fieldsBottom + 15
+    If Not lst Is Nothing Then
+        If Not lbl Is Nothing Then lst.top = lbl.top + lbl.Height + 4
+        lst.Height = Application.Max(60, pg.Height - lst.top - 8)
+        lst.IntegralHeight = False
+    End If
 
 End Sub
 
