@@ -666,66 +666,7 @@ Private Function EnsureClientMasterSheet() As Worksheet
     Set EnsureClientMasterSheet = ws
 End Function
 
-Private Function ClientMasterWeekdayHeaderByDate(ByVal targetDate As Date) As String
-    Select Case weekday(targetDate, vbMonday)
-        Case 1: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_MON
-        Case 2: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_TUE
-        Case 3: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_WED
-        Case 4: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_THU
-        Case 5: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_FRI
-        Case 6: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_SAT
-        Case Else
-            ClientMasterWeekdayHeaderByDate = vbNullString
-    End Select
-End Function
 
-Public Function BuildClientTargetsFromDateValue(ByVal dateValue As Variant) As Collection
-    Dim result As New Collection
-    If Not IsDate(dateValue) Then
-        Set BuildClientTargetsFromDateValue = result
-        Exit Function
-    End If
-
-    Dim useHeader As String
-    useHeader = ClientMasterWeekdayHeaderByDate(CDate(dateValue))
-    If Len(useHeader) = 0 Then
-        Set BuildClientTargetsFromDateValue = result
-        Exit Function
-    End If
-
-    Dim ws As Worksheet
-    Set ws = EnsureClientMasterSheet()
-
-    Dim cName As Long
-    cName = FindColByHeaderExact(ws, HDR_NAME)
-    If cName = 0 Then cName = FindHeaderCol(ws, "Name")
-    If cName = 0 Then
-        Set BuildClientTargetsFromDateValue = result
-        Exit Function
-    End If
-
-    Dim cUseDay As Long
-    cUseDay = FindColByHeaderExact(ws, useHeader)
-    If cUseDay = 0 Then cUseDay = FindHeaderCol(ws, useHeader)
-    If cUseDay = 0 Then
-        Set BuildClientTargetsFromDateValue = result
-        Exit Function
-    End If
-
-    Dim lastRow As Long
-    lastRow = Application.Max(ws.Cells(ws.rows.count, cName).End(xlUp).row, ws.Cells(ws.rows.count, cUseDay).End(xlUp).row)
-
-    Dim r As Long
-    Dim nm As String
-    For r = 2 To lastRow
-        nm = Trim$(CStr(ws.Cells(r, cName).value))
-        If Len(nm) = 0 Then GoTo NextRow
-        If IsTruthyValue(ws.Cells(r, cUseDay).value) Then result.Add nm
-NextRow:
-    Next r
-
-    Set BuildClientTargetsFromDateValue = result
-End Function
 
 
 Private Function FindClientMasterRowsByName(ByVal ws As Worksheet, ByVal nameText As String) As Collection

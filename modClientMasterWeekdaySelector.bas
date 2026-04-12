@@ -95,7 +95,14 @@ Private Function BuildClientTargetsByWeekdayHeader(ByVal ws As Worksheet, ByVal 
     colGender = FindHeaderCol(ws, HDR_GENDER)
     colCareLevel = FindHeaderCol(ws, HDR_CARE_LEVEL)
 
-   lastRow = ws.Cells.Find("*", SearchOrder:=xlByRows, SearchDirection:=xlPrevious).row
+    Dim lastCell As Range
+    Set lastCell = ws.Cells.Find("*", SearchOrder:=xlByRows, SearchDirection:=xlPrevious)
+    If lastCell Is Nothing Then
+        Set BuildClientTargetsByWeekdayHeader = result
+        Exit Function
+    End If
+
+    lastRow = lastCell.row
 
     For r = 2 To lastRow
         If IsTruthyLikeValue(ws.Cells(r, colWeekday).value) Then
@@ -160,4 +167,4 @@ End Function
 
 
 
-End Sub
+
