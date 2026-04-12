@@ -4222,9 +4222,10 @@ Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, By
                 End If
             End If
         Next i
-    Else
-        AddDailySaveTarget result, uniqueMap, defaultPID, defaultName
     End If
+    
+    ' Ensure caller-specified default target is always saved, regardless of list selection state
+    AddDailySaveTarget result, uniqueMap, defaultPID, defaultName
 
     Set BuildDailySaveTargets = result
 End Function
