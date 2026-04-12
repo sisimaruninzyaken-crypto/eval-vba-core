@@ -6243,16 +6243,28 @@ Private Sub BuildDailyLogLayout()
     Dim panelLeft As Single
     Dim lblTargets As Object
     Dim lstTargets As Object
-    Dim boxH As Single
+    Dim abnormalTop As Single
+    Dim abnormalH As Single
+    Dim labelH As Single
+    Dim inputTopGap As Single
+    Dim sectionGap As Single
+    Dim bottomPad As Single
     
     Set f = GetDailyLogFrame()
     If f Is Nothing Then GoTo ExitHere
+    
+    ResetDailyLogLayoutControls f
 
     leftMargin = 12
     colGap = 12
     topStart = 48
     topLabelW = 42
     topInputW = 88
+    
+    labelH = 16
+    inputTopGap = 2
+    sectionGap = 10
+    bottomPad = 12
     
     '=== 記録日ラベル ===
     panelW = 180
@@ -6317,27 +6329,24 @@ Private Sub BuildDailyLogLayout()
     End With
     
     commonTop = topStart
-    commonH = 90
+    commonH = 96
+    abnormalTop = commonTop + labelH + inputTopGap + commonH + sectionGap
+    abnormalH = Application.Max(100, f.Height - (abnormalTop + labelH + inputTopGap) - bottomPad)
 
 
-    On Error Resume Next
-    Set lblCommon = f.controls("lblDailyCommonRecord")
-    On Error GoTo EH
-    If lblCommon Is Nothing Then Set lblCommon = f.controls.Add("Forms.Label.1", "lblDailyCommonRecord")
+    Set lblCommon = f.controls.Add("Forms.Label.1", "lblDailyCommonRecord")
     With lblCommon
         .caption = "当日共通実施記録"
         .Left = leftMargin
         .top = commonTop
         .Width = leftAreaW
-        .Height = 14
+        .Height = labelH
     End With
 
-    On Error Resume Next
-    Set txtCommon = SafeGetControl(f, "txtDailyCommonRecord")
-    On Error GoTo EH
-    If txtCommon Is Nothing Then Set txtCommon = f.controls.Add("Forms.TextBox.1", "txtDailyCommonRecord")
+    Set txtCommon = f.controls.Add("Forms.TextBox.1", "txtDailyCommonRecord")
     With txtCommon
         .Left = leftMargin
+        .top = commonTop + labelH + inputTopGap
         .Width = leftAreaW
         .Height = commonH
         .multiline = True
@@ -6345,47 +6354,33 @@ Private Sub BuildDailyLogLayout()
         .ScrollBars = 2
     End With
 
-    topStart = txtCommon.top + txtCommon.Height + 8
+    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "異常所見", leftMargin, abnormalTop, leftAreaW, abnormalH
 
-    boxH = Application.Max(84, f.Height - topStart - 12)
-    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "異常所見", leftMargin, topStart, leftAreaW, boxH
-    
-    On Error Resume Next
-    Set lblTargets = f.controls("lblDailyClientTargets")
-    On Error GoTo EH
-    If lblTargets Is Nothing Then Set lblTargets = f.controls.Add("Forms.Label.1", "lblDailyClientTargets")
+    Set lblTargets = f.controls.Add("Forms.Label.1", "lblDailyClientTargets")
     With lblTargets
-        .caption = "対象者一覧"
+        .caption = BuildDailyClientTargetCaption(0)
         .Left = panelLeft
         .top = commonTop
         .Width = panelW
-        .Height = 16
+        .Height = labelH
         .Font.Bold = True
     End With
 
-    On Error Resume Next
-    Set lstTargets = SafeGetControl(f, "lstDailyClientTargets")
-    On Error GoTo EH
-    If lstTargets Is Nothing Then Set lstTargets = f.controls.Add("Forms.ListBox.1", "lstDailyClientTargets")
+    Set lstTargets = f.controls.Add("Forms.ListBox.1", "lstDailyClientTargets")
     With lstTargets
         .Left = panelLeft
-        .top = lblTargets.top + lblTargets.Height + 2
+        .top = lblTargets.top + lblTargets.Height + inputTopGap
         .Width = panelW
-        .Height = f.Height - .top - 12
+        .Height = Application.Max(84, f.Height - .top - bottomPad)
         .ColumnCount = 1
         .ColumnHeads = False
         .IntegralHeight = False
-         .MultiSelect = fmMultiSelectSingle
+        .MultiSelect = fmMultiSelectSingle
     End With
     
     RefreshDailyClientTargetList
     
 
-    '=== 記録内容テキスト（マルチライン） ===
-    On Error Resume Next
-    f.controls.Remove "lblDailyNote"
-    f.controls.Remove "txtDailyNote"
-    On Error GoTo EH
  
 ExitHere:
     Exit Sub
@@ -6394,6 +6389,31 @@ EH:
 
     Resume ExitHere
 End Sub
+
+Private Sub ResetDailyLogLayoutControls(ByVal f As Object)
+    If f Is Nothing Then Exit Sub
+
+    RemoveControlIfExists f, "lblDailyCommonRecord"
+    RemoveControlIfExists f, "txtDailyCommonRecord"
+    RemoveControlIfExists f, "lblDailyAbnormal"
+    RemoveControlIfExists f, "txtDailyAbnormal"
+    RemoveControlIfExists f, "lblDailyClientTargets"
+    RemoveControlIfExists f, "lstDailyClientTargets"
+
+    ' legacy / old layout artifacts
+    RemoveControlIfExists f, "lblDailyNote"
+    RemoveControlIfExists f, "txtDailyNote"
+    RemoveControlIfExists f, "lblDailyHistory"
+    RemoveControlIfExists f, "lblDailyMonitoringCreate"
+    RemoveControlIfExists f, "lstDailyLogList"
+End Sub
+
+Private Sub RemoveControlIfExists(ByVal parent As Object, ByVal controlName As String)
+    On Error Resume Next
+    parent.controls.Remove controlName
+    On Error GoTo 0
+End Sub
+
 
 
 Private Sub BuildDailyLog_StaffAndNote()
@@ -7699,73 +7719,7 @@ Private Sub Tidy_DailyLog_Once()
 End Sub
 
 Private Sub Tighten_DailyLog_Boxes_ForLayout()
-    Dim f As Object
-    Dim txtAbnormal As Object
-    Dim txtCommon As Object
-    Dim lst As Object
-    Dim lbl As Object
-    Dim leftMargin As Single
-    Dim colGap As Single
-    Dim panelW As Single
-    Dim leftAreaW As Single
-    Dim panelLeft As Single
-    Dim topStart As Single
-    Dim commonTop As Single
-    Dim commonH As Single
-    Dim abnormalH As Single
-
-    Set f = GetDailyLogFrame()
-    If f Is Nothing Then Exit Sub
-
-   leftMargin = 12
-    colGap = 12
-    panelW = 180
-    leftAreaW = f.Width - leftMargin * 2 - colGap - panelW
-    If leftAreaW < 280 Then
-        leftAreaW = 280
-        panelW = f.Width - leftMargin * 2 - colGap - leftAreaW
-        If panelW < 120 Then panelW = 120
-        leftAreaW = f.Width - leftMargin * 2 - colGap - panelW
-    End If
-    panelLeft = leftMargin + leftAreaW + colGap
-    commonTop = 48
-    commonH = 90
-    topStart = commonTop + 14 + 2 + commonH + 8
-    abnormalH = Application.Max(84, f.Height - topStart - 12)
-
-
-    Set txtAbnormal = SafeGetControl(f, "txtDailyAbnormal")
-    Set txtCommon = SafeGetControl(f, "txtDailyCommonRecord")
-    Set lst = SafeGetControl(f, "lstDailyClientTargets")
-    Set lbl = SafeGetControl(f, "lblDailyClientTargets")
-
-    If Not txtCommon Is Nothing Then
-        txtCommon.Left = leftMargin
-        txtCommon.Width = leftAreaW
-        txtCommon.top = commonTop + 14 + 2
-        txtCommon.Height = commonH
-    End If
-    If Not txtAbnormal Is Nothing Then
-        txtAbnormal.Left = leftMargin
-        txtAbnormal.top = topStart + 14 + 2
-        txtAbnormal.Width = leftAreaW
-        txtAbnormal.Height = abnormalH
-    End If
-    
-
-    If Not lbl Is Nothing Then
-        lbl.Left = panelLeft
-        lbl.top = commonTop
-        lbl.Width = panelW
-    End If
-    
-    If Not lst Is Nothing Then
-        lst.Left = panelLeft
-        If Not lbl Is Nothing Then lst.top = lbl.top + lbl.Height + 2
-        lst.Width = panelW
-        lst.Height = Application.Max(60, f.Height - lst.top - 12)
-        lst.IntegralHeight = False
-    End If
+    BuildDailyLogLayout
 End Sub
 
 
