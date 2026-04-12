@@ -6243,9 +6243,8 @@ Private Sub BuildDailyLogLayout()
     Dim panelLeft As Single
     Dim lblTargets As Object
     Dim lstTargets As Object
-    Dim txtAbnormal As Object
-    Dim abnormalH As Single
-
+    Dim boxH As Single
+    
     Set f = GetDailyLogFrame()
     If f Is Nothing Then GoTo ExitHere
 
@@ -6317,8 +6316,8 @@ Private Sub BuildDailyLogLayout()
         .Height = 18
     End With
     
-    Dim lblTargets As Object
-    Dim lstTargets As Object
+    commonTop = topStart
+    commonH = 90
 
 
     On Error Resume Next
@@ -6326,10 +6325,10 @@ Private Sub BuildDailyLogLayout()
     On Error GoTo EH
     If lblCommon Is Nothing Then Set lblCommon = f.controls.Add("Forms.Label.1", "lblDailyCommonRecord")
     With lblCommon
-        .caption = "—j“ú‹¤’ÊŽÀŽ{‹L˜^"
+        .caption = "“–“ú‹¤’ÊŽÀŽ{‹L˜^"
         .Left = leftMargin
         .top = commonTop
-        .Width = f.Width - leftMargin * 2
+        .Width = leftAreaW
         .Height = 14
     End With
 
@@ -6339,8 +6338,7 @@ Private Sub BuildDailyLogLayout()
     If txtCommon Is Nothing Then Set txtCommon = f.controls.Add("Forms.TextBox.1", "txtDailyCommonRecord")
     With txtCommon
         .Left = leftMargin
-        .top = lblCommon.top + lblCommon.Height + 2
-        .Width = f.Width - leftMargin * 2
+        .Width = leftAreaW
         .Height = commonH
         .multiline = True
         .EnterKeyBehavior = True
@@ -6349,9 +6347,9 @@ Private Sub BuildDailyLogLayout()
 
     topStart = txtCommon.top + txtCommon.Height + 8
 
-    boxH = 72
-    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "ˆÙíŠŒ©", leftMargin, topStart, f.Width - leftMargin * 2, boxH
-
+    boxH = Application.Max(84, f.Height - topStart - 12)
+    CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "ˆÙíŠŒ©", leftMargin, topStart, leftAreaW, boxH
+    
     On Error Resume Next
     Set lblTargets = f.controls("lblDailyClientTargets")
     On Error GoTo EH
@@ -6359,7 +6357,7 @@ Private Sub BuildDailyLogLayout()
     With lblTargets
         .caption = "‘ÎÛŽÒˆê——"
         .Left = panelLeft
-        .top = topStart
+        .top = commonTop
         .Width = panelW
         .Height = 16
         .Font.Bold = True
@@ -6439,62 +6437,19 @@ End Sub
 
 Public Sub BuildDailyLog_HistoryList(owner As Object)
     Dim f As Object
-    Dim txtAbnormal As Object
-    Dim lst As MSForms.ListBox
-    Dim lblTargets As MSForms.label
-    Dim topPos As Single
-    Dim margin As Single
-    Dim fieldsBottom As Single
-
-    margin = 12
 
     Set f = GetDailyLogFrame()
     If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     If f Is Nothing Then Exit Sub
-
-    Set txtAbnormal = SafeGetControl(f, "txtDailyAbnormal")
-    If txtAbnormal Is Nothing Then
-        BuildDailyLogLayout
-        Set txtAbnormal = SafeGetControl(f, "txtDailyAbnormal")
-    End If
-    If txtAbnormal Is Nothing Then Exit Sub
-
-    fieldsBottom = txtAbnormal.top + txtAbnormal.Height
-    topPos = fieldsBottom + 16
-
     
     On Error Resume Next
     f.controls.Remove "lblDailyHistory"
     f.controls.Remove "lblDailyMonitoringCreate"
     f.controls.Remove "lstDailyLogList"
-    f.controls.Remove "lblDailyClientTargets"
-    f.controls.Remove "lstDailyClientTargets"
     On Error GoTo 0
 
 
-    Set lblTargets = f.controls.Add("Forms.Label.1", "lblDailyClientTargets", True)
-    With lblTargets
-        .caption = "Target Clients"
-        .Left = margin
-        .top = topPos
-        .Width = 200
-        .Height = 18
-        .Font.Bold = True
-    End With
-
-
-     Set lst = f.controls.Add("Forms.ListBox.1", "lstDailyClientTargets", True)
-    With lst
-        .Left = margin
-        .top = lblTargets.top + lblTargets.Height + 4
-        .Width = f.Width - margin * 2
-        .Height = f.Height - .top - 8
-        .ColumnCount = 1
-        .ColumnHeads = False
-        .IntegralHeight = False
-        .MultiSelect = fmMultiSelectSingle
-    End With
-
+    BuildDailyLogLayout
     RefreshDailyClientTargetList
 
 
@@ -6880,29 +6835,58 @@ End Sub
 Private Sub RefreshDailyClientTargetList()
     Dim txtDailyDate As Object
     Dim lst As MSForms.ListBox
+    Dim lbl As Object
     Dim targets As Collection
     Dim i As Long
     Dim displayName As String
+    Dim targetCount As Long
 
     Set txtDailyDate = DailyLogCtl("txtDailyDate")
     Set lst = DailyLogCtl("lstDailyClientTargets")
+    Set lbl = DailyLogCtl("lblDailyClientTargets")
     If lst Is Nothing Then Exit Sub
 
     lst.Clear
-
-    If txtDailyDate Is Nothing Then Exit Sub
-    If Not IsDate(txtDailyDate.value) Then Exit Sub
+    targetCount = 0
+    
+    
+    If txtDailyDate Is Nothing Then
+        UpdateDailyClientTargetCaption lbl, targetCount
+        Exit Sub
+    End If
+    If Not IsDate(txtDailyDate.value) Then
+        UpdateDailyClientTargetCaption lbl, targetCount
+        Exit Sub
+    End If
+    
 
     Set targets = BuildClientTargetsFromDateValue(txtDailyDate.value)
-    If targets Is Nothing Then Exit Sub
+    If targets Is Nothing Then
+        UpdateDailyClientTargetCaption lbl, targetCount
+        Exit Sub
+    End If
 
     For i = 1 To targets.count
-        lst.AddItem CStr(targets(i))
         displayName = ResolveDailyTargetDisplayName(targets(i))
-        If Len(displayName) > 0 Then lst.AddItem displayName
+        If Len(displayName) = 0 Then displayName = Trim$(CStr(targets(i)))
+        If Len(displayName) > 0 Then
+            lst.AddItem displayName
+            targetCount = targetCount + 1
+        End If
     Next i
+
+    UpdateDailyClientTargetCaption lbl, targetCount
 End Sub
 
+Private Sub UpdateDailyClientTargetCaption(ByVal lbl As Object, ByVal targetCount As Long)
+    If lbl Is Nothing Then Exit Sub
+    lbl.caption = BuildDailyClientTargetCaption(targetCount)
+End Sub
+
+Private Function BuildDailyClientTargetCaption(ByVal targetCount As Long) As String
+    BuildDailyClientTargetCaption = ChrW(&H5BFE) & ChrW(&H8C61) & ChrW(&H8005) & ChrW(&H4E00) & ChrW(&H89A7) & _
+        ChrW(&HFF08) & CStr(targetCount) & ChrW(&H540D) & ChrW(&HFF09)
+End Function
 Private Function ResolveDailyTargetDisplayName(ByVal targetItem As Variant) As String
     If IsObject(targetItem) Then
         On Error Resume Next
@@ -7717,30 +7701,70 @@ End Sub
 Private Sub Tighten_DailyLog_Boxes_ForLayout()
     Dim f As Object
     Dim txtAbnormal As Object
+    Dim txtCommon As Object
     Dim lst As Object
     Dim lbl As Object
-    Dim fieldsBottom As Single
+    Dim leftMargin As Single
+    Dim colGap As Single
+    Dim panelW As Single
+    Dim leftAreaW As Single
+    Dim panelLeft As Single
+    Dim topStart As Single
+    Dim commonTop As Single
+    Dim commonH As Single
+    Dim abnormalH As Single
 
     Set f = GetDailyLogFrame()
     If f Is Nothing Then Exit Sub
 
+   leftMargin = 12
+    colGap = 12
+    panelW = 180
+    leftAreaW = f.Width - leftMargin * 2 - colGap - panelW
+    If leftAreaW < 280 Then
+        leftAreaW = 280
+        panelW = f.Width - leftMargin * 2 - colGap - leftAreaW
+        If panelW < 120 Then panelW = 120
+        leftAreaW = f.Width - leftMargin * 2 - colGap - panelW
+    End If
+    panelLeft = leftMargin + leftAreaW + colGap
+    commonTop = 48
+    commonH = 90
+    topStart = commonTop + 14 + 2 + commonH + 8
+    abnormalH = Application.Max(84, f.Height - topStart - 12)
+
 
     Set txtAbnormal = SafeGetControl(f, "txtDailyAbnormal")
+    Set txtCommon = SafeGetControl(f, "txtDailyCommonRecord")
     Set lst = SafeGetControl(f, "lstDailyClientTargets")
     Set lbl = SafeGetControl(f, "lblDailyClientTargets")
 
-    If txtAbnormal Is Nothing Then Exit Sub
+    If Not txtCommon Is Nothing Then
+        txtCommon.Left = leftMargin
+        txtCommon.Width = leftAreaW
+        txtCommon.top = commonTop + 14 + 2
+        txtCommon.Height = commonH
+    End If
+    If Not txtAbnormal Is Nothing Then
+        txtAbnormal.Left = leftMargin
+        txtAbnormal.top = topStart + 14 + 2
+        txtAbnormal.Width = leftAreaW
+        txtAbnormal.Height = abnormalH
+    End If
+    
 
-
-    txtAbnormal.Height = 50
-
-
-    fieldsBottom = txtAbnormal.top + txtAbnormal.Height
-
-    If Not lbl Is Nothing Then lbl.top = fieldsBottom + 15
+    If Not lbl Is Nothing Then
+        lbl.Left = panelLeft
+        lbl.top = commonTop
+        lbl.Width = panelW
+    End If
+    
     If Not lst Is Nothing Then
-        If Not lbl Is Nothing Then lst.top = lbl.top + lbl.Height + 4
-        lst.Height = f.Height - lst.top - 8
+        lst.Left = panelLeft
+        If Not lbl Is Nothing Then lst.top = lbl.top + lbl.Height + 2
+        lst.Width = panelW
+        lst.Height = Application.Max(60, f.Height - lst.top - 12)
+        lst.IntegralHeight = False
     End If
 End Sub
 
