@@ -6339,7 +6339,7 @@ Private Sub BuildDailyLogLayout()
     abnormalH = Application.Min(180, Application.Max(100, f.Height - (abnormalTop + labelH + inputTopGap) - bottomPad))
 
 
-    Set lblCommon = f.controls.Add("Forms.Label.1", "lblDailyCommonRecord")
+    Set lblCommon = GetOrCreateDailyLogControl(f, "Forms.Label.1", "lblDailyCommonRecord")
     With lblCommon
         .caption = "ìñì˙ã§í é¿é{ãLò^"
         .Left = leftMargin
@@ -6348,7 +6348,7 @@ Private Sub BuildDailyLogLayout()
         .Height = labelH
     End With
 
-    Set txtCommon = f.controls.Add("Forms.TextBox.1", "txtDailyCommonRecord")
+    Set txtCommon = GetOrCreateDailyLogControl(f, "Forms.TextBox.1", "txtDailyCommonRecord")
     With txtCommon
         .Left = leftMargin
         .top = commonTop + labelH + inputTopGap
@@ -6361,7 +6361,7 @@ Private Sub BuildDailyLogLayout()
 
     CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "àŸèÌèäå©", leftMargin, abnormalTop, leftAreaW, abnormalH
 
-    Set lblTargets = f.controls.Add("Forms.Label.1", "lblDailyClientTargets")
+8    Set lblTargets = GetOrCreateDailyLogControl(f, "Forms.Label.1", "lblDailyClientTargets")
     With lblTargets
         .caption = BuildDailyClientTargetCaption(0)
         .Left = panelLeft
@@ -6371,7 +6371,7 @@ Private Sub BuildDailyLogLayout()
         .Font.Bold = True
     End With
 
-    Set lstTargets = f.controls.Add("Forms.ListBox.1", "lstDailyClientTargets")
+    Set lstTargets = GetOrCreateDailyLogControl(f, "Forms.ListBox.1", "lstDailyClientTargets")
     With lstTargets
         .Left = panelLeft
         .top = lblTargets.top + lblTargets.Height + inputTopGap
@@ -6399,13 +6399,6 @@ End Sub
 Private Sub ResetDailyLogLayoutControls(ByVal f As Object)
     If f Is Nothing Then Exit Sub
 
-    RemoveControlIfExists f, "lblDailyCommonRecord"
-    RemoveControlIfExists f, "txtDailyCommonRecord"
-    RemoveControlIfExists f, "lblDailyAbnormal"
-    RemoveControlIfExists f, "txtDailyAbnormal"
-    RemoveControlIfExists f, "lblDailyClientTargets"
-    RemoveControlIfExists f, "lstDailyClientTargets"
-
     ' legacy / old layout artifacts
     RemoveControlIfExists f, "lblDailyNote"
     RemoveControlIfExists f, "txtDailyNote"
@@ -6420,10 +6413,19 @@ Private Sub RemoveControlIfExists(ByVal parent As Object, ByVal controlName As S
     On Error GoTo 0
 End Sub
 
+Private Function GetOrCreateDailyLogControl(ByVal parent As Object, ByVal progId As String, ByVal controlName As String) As Object
+    If parent Is Nothing Then Exit Function
+    If LenB(Trim$(controlName)) = 0 Then Exit Function
+
+    Set GetOrCreateDailyLogControl = SafeGetControl(parent, controlName)
+    If Not GetOrCreateDailyLogControl Is Nothing Then Exit Function
+
+    Set GetOrCreateDailyLogControl = parent.controls.Add(progId, controlName)
+End Function
 
 
 Private Sub BuildDailyLog_StaffAndNote()
-    BuildDailyLogLayout
+    ' layout is built in BuildDailyLogTab; keep this procedure as a compatibility seam
 End Sub
 
 Private Sub CreateDailyField(ByVal f As Object, ByVal lblName As String, ByVal txtName As String, ByVal caption As String, _
@@ -6475,7 +6477,7 @@ Public Sub BuildDailyLog_HistoryList(owner As Object)
     On Error GoTo 0
 
 
-    BuildDailyLogLayout
+
     RefreshDailyClientTargetList
 
 
@@ -7725,7 +7727,7 @@ Private Sub Tidy_DailyLog_Once()
 End Sub
 
 Private Sub Tighten_DailyLog_Boxes_ForLayout()
-    BuildDailyLogLayout
+    ' no-op: BuildDailyLogLayout is already responsible for control placement
 End Sub
 
 
