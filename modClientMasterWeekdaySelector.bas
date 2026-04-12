@@ -18,7 +18,9 @@ Private Const HDR_USE_WEEKDAY_FRI As String = "UseWeekday_Fri"
 Private Const HDR_USE_WEEKDAY_SAT As String = "UseWeekday_Sat"
 
 Public Function ResolveClientUseWeekdayHeaderByDate(ByVal targetDate As Date) As String
-    ResolveClientUseWeekdayHeaderByDate = ResolveClientUseWeekdayHeaderByWeekday(weekday(targetDate, vbMonday))
+    Dim wd As Long
+    wd = weekday(targetDate, vbMonday)
+    ResolveClientUseWeekdayHeaderByDate = ResolveClientUseWeekdayHeaderByWeekday(wd)
 End Function
 
 Public Function ResolveClientUseWeekdayHeaderByWeekday(ByVal weekdayMonStart As Long) As String
@@ -38,9 +40,7 @@ End Function
 Public Function BuildClientTargetsFromDateValue(ByVal dateValue As Variant) As Collection
     Dim targetDate As Date
 
-    If IsDate(dateValue) Then
-        targetDate = CDate(dateValue)
-    Else
+    If Not TryParseClientTargetDateValue(dateValue, targetDate) Then
         targetDate = Date
     End If
 
@@ -49,9 +49,11 @@ End Function
 
 Public Function BuildClientTargetsByDate(ByVal targetDate As Date) As Collection
     Dim ws As Worksheet
+    Dim wd As Long
     Dim weekdayHeader As String
 
-    weekdayHeader = ResolveClientUseWeekdayHeaderByDate(targetDate)
+    wd = weekday(targetDate, vbMonday)
+    weekdayHeader = ResolveClientUseWeekdayHeaderByWeekday(wd)
     If Len(weekdayHeader) = 0 Then
         Set BuildClientTargetsByDate = New Collection
         Exit Function
@@ -65,10 +67,10 @@ Public Function BuildClientTargetsByDate(ByVal targetDate As Date) As Collection
         Exit Function
     End If
 
-    Set BuildClientTargetsByDate = BuildClientTargetsByWeekdayHeader(ws, weekdayHeader, targetDate)
+    Set BuildClientTargetsByDate = BuildClientTargetsByWeekdayHeader(ws, weekdayHeader, targetDate, wd)
 End Function
 
-Private Function BuildClientTargetsByWeekdayHeader(ByVal ws As Worksheet, ByVal weekdayHeader As String, ByVal targetDate As Date) As Collection
+Private Function BuildClientTargetsByWeekdayHeader(ByVal ws As Worksheet, ByVal weekdayHeader As String, ByVal targetDate As Date, ByVal weekdayMonStart As Long) As Collection
     Dim result As Collection
     Dim lastRow As Long
     Dim colWeekday As Long
@@ -112,7 +114,7 @@ Private Function BuildClientTargetsByWeekdayHeader(ByVal ws As Worksheet, ByVal 
             item("Row") = r
             item("TargetDate") = targetDate
             item("TargetDateText") = Format$(targetDate, "yyyy/mm/dd")
-            item("WeekdayMonStart") = weekday(targetDate, vbMonday)
+            item("WeekdayMonStart") = weekdayMonStart
             item("WeekdayHeader") = weekdayHeader
             item("UserID") = CellText(ws, r, colUserID)
             item("Name") = CellText(ws, r, colName)
@@ -127,6 +129,60 @@ Private Function BuildClientTargetsByWeekdayHeader(ByVal ws As Worksheet, ByVal 
 
     Set BuildClientTargetsByWeekdayHeader = result
 End Function
+
+Private Function TryParseClientTargetDateValue(ByVal rawValue As Variant, ByRef targetDate As Date) As Boolean
+    On Error GoTo EH
+
+    If IsDate(rawValue) Then
+        targetDate = dateValue(CDate(rawValue))
+        TryParseClientTargetDateValue = True
+        Exit Function
+    End If
+
+    Dim normalized As String
+    normalized = NormalizeClientTargetDateText(CStr(rawValue))
+    If LenB(normalized) = 0 Then Exit Function
+
+    If IsDate(normalized) Then
+        targetDate = dateValue(CDate(normalized))
+        TryParseClientTargetDateValue = True
+    End If
+    Exit Function
+EH:
+    TryParseClientTargetDateValue = False
+End Function
+
+Private Function NormalizeClientTargetDateText(ByVal raw As String) As String
+    Dim s As String
+    s = Trim$(raw)
+    If LenB(s) = 0 Then Exit Function
+
+    On Error Resume Next
+    s = StrConv(s, vbNarrow)
+    On Error GoTo 0
+
+    s = Replace$(s, "”N", "/")
+    s = Replace$(s, "ŒŽ", "/")
+    s = Replace$(s, "“ú", "")
+    s = Replace$(s, ".", "/")
+    s = Replace$(s, "-", "/")
+
+    Dim p As Long
+    p = InStr(s, "(")
+    If p > 0 Then s = Left$(s, p - 1)
+    p = InStr(s, "i")
+    If p > 0 Then s = Left$(s, p - 1)
+
+    Do While InStr(s, "//") > 0
+        s = Replace$(s, "//", "/")
+    Loop
+
+    s = Trim$(s)
+    If Right$(s, 1) = "/" Then s = Left$(s, Len(s) - 1)
+
+    NormalizeClientTargetDateText = s
+End Function
+
 
 Private Function FindHeaderCol(ByVal ws As Worksheet, ByVal headerName As String) As Long
     Dim lastCol As Long
