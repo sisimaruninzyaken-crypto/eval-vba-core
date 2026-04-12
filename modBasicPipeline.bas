@@ -253,7 +253,7 @@ Private Function FindLatestEvalRow(ByVal ws As Worksheet) As Long
     If colEvalDate = 0 Then Exit Function
     For r = 2 To ws.UsedRange.rows.count
         If IsDate(ws.Cells(r, colEvalDate).value) Then
-            d = DateValue(CDate(ws.Cells(r, colEvalDate).value))
+            d = dateValue(CDate(ws.Cells(r, colEvalDate).value))
             If Not hasDate Or d > latestDate Then
                 latestDate = d
                 latestRow = r

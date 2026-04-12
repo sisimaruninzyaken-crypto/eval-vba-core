@@ -68,11 +68,14 @@ Private WithEvents mDailyExtract As MSForms.CommandButton
 Attribute mDailyExtract.VB_VarHelpID = -1
 Private WithEvents mDailySave As MSForms.CommandButton
 Attribute mDailySave.VB_VarHelpID = -1
+Private WithEvents mDailyDateText As MSForms.TextBox
+Attribute mDailyDateText.VB_VarHelpID = -1
 Private mPlacedGlobalSave As Boolean
 Private WithEvents mGlobalSave As clsGlobalSaveButton
 Attribute mGlobalSave.VB_VarHelpID = -1
 Private WithEvents mGlobalClear As clsGlobalSaveButton
 Attribute mGlobalClear.VB_VarHelpID = -1
+Private mDailyDateHook As clsDailyDateHook
 Private WithEvents mDailyList As clsDailyLogList
 Attribute mDailyList.VB_VarHelpID = -1
 Private mBaseLayoutDone As Boolean
@@ -267,6 +270,95 @@ Private Function DailyLogCtl(ByVal ctrlName As String) As Object
     If f Is Nothing Then Exit Function
     Set DailyLogCtl = SafeGetControl(f, ctrlName)
 End Function
+
+
+Private Sub RefreshDailyTargetList()
+    On Error GoTo EH
+
+    Dim f As Object
+    Dim lst As Object
+    Dim txtDate As Object
+    Dim dateValue As Date
+    Dim targets As Collection
+    Dim item As Variant
+    Dim nameText As String
+
+    Set f = GetDailyLogFrame()
+    If f Is Nothing Then Exit Sub
+
+    Set lst = SafeGetControl(f, "lstDailyTargets")
+    If lst Is Nothing Then Exit Sub
+
+    lst.Clear
+
+    Set txtDate = SafeGetControl(f, "txtDailyDate")
+    If txtDate Is Nothing Then Exit Sub
+    If Len(Trim$(CStr(txtDate.value))) = 0 Then Exit Sub
+    If Not IsDate(txtDate.value) Then Exit Sub
+
+    dateValue = CDate(txtDate.value)
+    Set targets = ResolveDailyClientTargets(dateValue)
+    If targets Is Nothing Then Exit Sub
+
+    For Each item In targets
+        nameText = ExtractDailyTargetName(item)
+        If Len(nameText) > 0 Then lst.AddItem nameText
+    Next item
+    Exit Sub
+EH:
+    Err.Clear
+End Sub
+
+Private Function ResolveDailyClientTargets(ByVal dateValue As Date) As Collection
+    On Error GoTo EH
+
+    Dim targetObj As Object
+    Set targetObj = Application.Run("BuildClientTargetsFromDateValue", dateValue)
+
+    If targetObj Is Nothing Then Exit Function
+    If TypeName(targetObj) <> "Collection" Then Exit Function
+
+    Set ResolveDailyClientTargets = targetObj
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Private Function ExtractDailyTargetName(ByVal target As Variant) As String
+    On Error Resume Next
+
+    Dim nameText As String
+
+    nameText = Trim$(CStr(CallByName(target, "Name", VbGet)))
+    If Len(nameText) > 0 Then
+        ExtractDailyTargetName = nameText
+        Exit Function
+    End If
+
+    nameText = Trim$(CStr(CallByName(target, "name", VbGet)))
+    If Len(nameText) > 0 Then
+        ExtractDailyTargetName = nameText
+        Exit Function
+    End If
+
+    If IsObject(target) Then
+        If TypeName(target) = "Dictionary" Or TypeName(target) = "Scripting.Dictionary" Then
+            If target.exists("Name") Then
+                ExtractDailyTargetName = Trim$(CStr(target("Name")))
+            ElseIf target.exists("name") Then
+                ExtractDailyTargetName = Trim$(CStr(target("name")))
+            End If
+        End If
+    End If
+
+    On Error GoTo 0
+End Function
+
+Private Sub mDailyDateText_AfterUpdate()
+    RefreshDailyTargetList
+End Sub
+
+
 
 
 '=== ここから 画面作成ヘルパーの最小実装 =========================
@@ -3246,8 +3338,7 @@ End If
     
         ApplyDailyLogImeSettings
     
-    Set mDailyList = New clsDailyLogList
-    'Set mDailyList.lb = Me.Controls("lstDailyLogList")
+
 
 
     
@@ -3257,6 +3348,8 @@ End If
     Dim txtDailyDate As Object
     Set txtDailyDate = DailyLogCtl("txtDailyDate")
     If Not txtDailyDate Is Nothing Then txtDailyDate.value = Date
+    HookDailyDateTextBox
+    RefreshDailyTargetList
 
     If Not mPlacedGlobalSave Then
     PlaceGlobalSaveButton_Once
@@ -6303,7 +6396,36 @@ Private Sub BuildDailyLogLayout()
         .Height = 18
     End With
     
-    commonTop = 44
+    Dim lblTargets As Object
+    Dim lstTargets As Object
+
+    On Error Resume Next
+    Set lblTargets = f.controls("lblDailyTargets")
+    On Error GoTo EH
+    If lblTargets Is Nothing Then Set lblTargets = f.controls.Add("Forms.Label.1", "lblDailyTargets")
+    With lblTargets
+        .caption = "対象者一覧"
+        .Left = leftMargin
+        .top = 44
+        .Width = f.Width - leftMargin * 2
+        .Height = 14
+    End With
+
+    On Error Resume Next
+    Set lstTargets = SafeGetControl(f, "lstDailyTargets")
+    On Error GoTo EH
+    If lstTargets Is Nothing Then Set lstTargets = f.controls.Add("Forms.ListBox.1", "lstDailyTargets")
+    With lstTargets
+        .Left = leftMargin
+        .top = lblTargets.top + lblTargets.Height + 2
+        .Width = f.Width - leftMargin * 2
+        .Height = 54
+        .ColumnCount = 1
+        .ColumnHeads = False
+        .IntegralHeight = False
+    End With
+
+    commonTop = lstTargets.top + lstTargets.Height + 6
     commonH = 34
 
     On Error Resume Next
@@ -6336,7 +6458,8 @@ Private Sub BuildDailyLogLayout()
 
     boxH = 95
     CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "異常所見", leftMargin, topStart, f.Width - leftMargin * 2, boxH
-
+    RefreshDailyTargetList
+    
 
     '=== 記録内容テキスト（マルチライン） ===
     On Error Resume Next
@@ -6394,9 +6517,9 @@ End Sub
 
 Public Sub BuildDailyLog_HistoryList(owner As Object)
     Dim f As Object
-    Dim txtLeft As Object
-    Dim txtRight As Object
+    Dim txtAbnormal As Object
     Dim lst As MSForms.ListBox
+    Dim lblTargets As MSForms.label
     Dim topPos As Single
     Dim margin As Single
     Dim fieldsBottom As Single
@@ -6407,53 +6530,50 @@ Public Sub BuildDailyLog_HistoryList(owner As Object)
     If f Is Nothing Then Set f = SafeGetControl(owner, "fraDailyLog")
     If f Is Nothing Then Exit Sub
 
-    Set txtLeft = SafeGetControl(f, "txtDailyAbnormal")
-    If txtLeft Is Nothing Then
+    Set txtAbnormal = SafeGetControl(f, "txtDailyAbnormal")
+    If txtAbnormal Is Nothing Then
         BuildDailyLogLayout
-        Set txtLeft = SafeGetControl(f, "txtDailyAbnormal")
+        Set txtAbnormal = SafeGetControl(f, "txtDailyAbnormal")
     End If
-    If txtLeft Is Nothing Then Exit Sub
-    
-    fieldsBottom = txtLeft.top + txtLeft.Height
+    If txtAbnormal Is Nothing Then Exit Sub
+
+    fieldsBottom = txtAbnormal.top + txtAbnormal.Height
+    topPos = fieldsBottom + 16
 
     
     On Error Resume Next
-    f.controls.Remove "lstDailyLogList"
     f.controls.Remove "lblDailyHistory"
     f.controls.Remove "lblDailyMonitoringCreate"
+    f.controls.Remove "lstDailyLogList"
+    f.controls.Remove "lblDailyClientTargets"
+    f.controls.Remove "lstDailyClientTargets"
     On Error GoTo 0
 
-'--- 履歴ラベル作成 ---
-Dim lbl As MSForms.label
-Dim lblMonitoring As MSForms.label
 
-Set lblMonitoring = f.controls.Add("Forms.Label.1", "lblDailyMonitoringCreate", True)
-With lblMonitoring
-    .caption = "モニタリング本文"
-    .Left = margin
-    .top = fieldsBottom - 4
-    .Width = 200
-    .Height = 18
-    .Font.Bold = True
-End With
-
-    ' ListBox 追加
-    Set lst = f.controls.Add("Forms.ListBox.1", "lstDailyLogList", True)
-
-  
-    With lst
+    Set lblTargets = f.controls.Add("Forms.Label.1", "lblDailyClientTargets", True)
+    With lblTargets
+        .caption = "Target Clients"
         .Left = margin
         .top = topPos
-        .Width = f.Width - margin * 2
-        .Height = f.Height - .top - 8
-        .ColumnCount = 3          ' 記録年月 / 名前 / 記録内容
-        .ColumnHeads = False
-        .IntegralHeight = False
-        .ColumnWidths = "70 pt;0 pt;9999 pt"
-
+        .Width = 200
+        .Height = 18
+        .Font.Bold = True
     End With
 
-Call owner.HookDailyLogList(lst)
+
+     Set lst = f.controls.Add("Forms.ListBox.1", "lstDailyClientTargets", True)
+    With lst
+        .Left = margin
+        .top = lblTargets.top + lblTargets.Height + 4
+        .Width = f.Width - margin * 2
+        .Height = f.Height - .top - 8
+        .ColumnCount = 1
+        .ColumnHeads = False
+        .IntegralHeight = False
+        .MultiSelect = fmMultiSelectSingle
+    End With
+
+    RefreshDailyClientTargetList
 
 
 End Sub
@@ -6776,46 +6896,6 @@ Private Sub mGlobalClear_Clicked()
 End Sub
 
 
-
-
-Private Sub mDailyList_DblClicked()
-    Dim lb As MSForms.ListBox
-    Dim r As Long, c As Long
-    Dim buf As String
-    
-    ' 対象の一覧ListBoxを取得
-    Set lb = Me.controls("lstDailyLogList")
-    
-    ' 全行・全列をタブ区切り＋改行で連結
-    For r = 0 To lb.ListCount - 1
-        For c = 0 To lb.ColumnCount - 1
-            If c > 0 Then buf = buf & vbTab
-            buf = buf & CStr(lb.List(r, c))
-        Next c
-        buf = buf & vbCrLf
-    Next r
-    
-    ' クリップボードへコピー
-    Dim dobj As New MSForms.DataObject
-    dobj.SetText buf
-    dobj.PutInClipboard
-    
-    MsgBox "この月の記録一覧をクリップボードにコピーしました。" & vbCrLf & _
-           "メモ帳やWordに Ctrl+V で貼り付けできます。", vbInformation
-End Sub
-
-
-
-Public Sub HookDailyLogList(lb As MSForms.ListBox)
-    ' 日々の記録一覧 ListBox 用のイベントフック
-    If mDailyList Is Nothing Then
-        Set mDailyList = New clsDailyLogList
-    End If
-    Set mDailyList.lb = lb
-End Sub
-
-
-
 '=== 日々の記録フレーム取得ヘルパー（共通化用） ===
 Private Function GetDailyLogFrame() As MSForms.Frame
     Dim mp As Object
@@ -6861,6 +6941,42 @@ Private Function GetMainMultiPage() As MSForms.MultiPage
         End If
     Next
 End Function
+
+Private Sub HookDailyDateTextBox()
+    Dim txt As MSForms.TextBox
+    Set txt = DailyLogCtl("txtDailyDate")
+    If txt Is Nothing Then Exit Sub
+
+    If mDailyDateHook Is Nothing Then Set mDailyDateHook = New clsDailyDateHook
+    mDailyDateHook.Hook txt, Me
+End Sub
+
+Public Sub OnDailyDateChanged()
+    RefreshDailyClientTargetList
+End Sub
+
+Private Sub RefreshDailyClientTargetList()
+    Dim txtDailyDate As Object
+    Dim lst As MSForms.ListBox
+    Dim targets As Collection
+    Dim i As Long
+
+    Set txtDailyDate = DailyLogCtl("txtDailyDate")
+    Set lst = DailyLogCtl("lstDailyClientTargets")
+    If lst Is Nothing Then Exit Sub
+
+    lst.Clear
+
+    If txtDailyDate Is Nothing Then Exit Sub
+    If Not IsDate(txtDailyDate.value) Then Exit Sub
+
+    Set targets = BuildClientTargetsFromDateValue(txtDailyDate.value)
+    If targets Is Nothing Then Exit Sub
+
+    For i = 1 To targets.count
+        lst.AddItem CStr(targets(i))
+    Next i
+End Sub
 
 
 
@@ -7673,8 +7789,8 @@ Private Sub Tighten_DailyLog_Boxes_ForLayout()
 
 
     Set txtAbnormal = SafeGetControl(f, "txtDailyAbnormal")
-    Set lst = SafeGetControl(f, "lstDailyLogList")
-    Set lbl = SafeGetControl(f, "lblDailyHistory")
+    Set lst = SafeGetControl(f, "lstDailyClientTargets")
+    Set lbl = SafeGetControl(f, "lblDailyClientTargets")
 
     If txtAbnormal Is Nothing Then Exit Sub
 
@@ -8326,6 +8442,7 @@ Private Sub MultiPage1_Change()
     ' タブ移動のタイミングで必ず同期
     On Error Resume Next
     UpdateAgeFromBirth
+    RefreshDailyClientTargetList
     On Error GoTo 0
     UpdateAgeFromBirth
 End Sub

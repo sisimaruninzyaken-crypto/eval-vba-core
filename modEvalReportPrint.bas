@@ -67,8 +67,7 @@ Public Sub Fix_Page8_DailyLog_Once()
     Dim maxBottom As Double
     maxBottom = 0#
     
-    pg.controls("lstDailyLogList").Height = 140
-
+    pg.controls("lstDailyClientTargets").Height = 140
     
     WalkContainer pg, maxBottom
 
@@ -77,10 +76,10 @@ Public Sub Fix_Page8_DailyLog_Once()
 
 
     If needShrink > 0 Then
-        pg.controls("lstDailyLogList").Height = Application.Max(40, 140 - needShrink)
+        pg.controls("lstDailyClientTargets").Height = Application.Max(40, 140 - needShrink)
 
     Else
-        pg.controls("lstDailyLogList").Height = 140
+        pg.controls("lstDailyClientTargets").Height = 140
     End If
 
     'ŒŸØƒƒOiŒ‹‰Ê‚¾‚¯j

@@ -379,7 +379,7 @@ Private Sub DedupByDate_1(ByRef d() As Date, ByRef v() As Double, ByRef cnt As L
 
     n = 0
     For i = 1 To cnt
-        dayKey = CLng(DateValue(d(i)))
+        dayKey = CLng(dateValue(d(i)))
         If n = 0 Or dayKey <> lastKey Then
             n = n + 1
             ReDim Preserve nd(1 To n)
@@ -402,7 +402,7 @@ Private Sub DedupByDate_2(ByRef d() As Date, ByRef v1() As Double, ByRef v2() As
 
     n = 0
     For i = 1 To cnt
-        dayKey = CLng(DateValue(d(i)))
+        dayKey = CLng(dateValue(d(i)))
         If n = 0 Or dayKey <> lastKey Then
             n = n + 1
             ReDim Preserve nd(1 To n)

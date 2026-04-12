@@ -666,6 +666,68 @@ Private Function EnsureClientMasterSheet() As Worksheet
     Set EnsureClientMasterSheet = ws
 End Function
 
+Private Function ClientMasterWeekdayHeaderByDate(ByVal targetDate As Date) As String
+    Select Case weekday(targetDate, vbMonday)
+        Case 1: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_MON
+        Case 2: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_TUE
+        Case 3: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_WED
+        Case 4: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_THU
+        Case 5: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_FRI
+        Case 6: ClientMasterWeekdayHeaderByDate = HDR_USE_WEEKDAY_SAT
+        Case Else
+            ClientMasterWeekdayHeaderByDate = vbNullString
+    End Select
+End Function
+
+Public Function BuildClientTargetsFromDateValue(ByVal dateValue As Variant) As Collection
+    Dim result As New Collection
+    If Not IsDate(dateValue) Then
+        Set BuildClientTargetsFromDateValue = result
+        Exit Function
+    End If
+
+    Dim useHeader As String
+    useHeader = ClientMasterWeekdayHeaderByDate(CDate(dateValue))
+    If Len(useHeader) = 0 Then
+        Set BuildClientTargetsFromDateValue = result
+        Exit Function
+    End If
+
+    Dim ws As Worksheet
+    Set ws = EnsureClientMasterSheet()
+
+    Dim cName As Long
+    cName = FindColByHeaderExact(ws, HDR_NAME)
+    If cName = 0 Then cName = FindHeaderCol(ws, "Name")
+    If cName = 0 Then
+        Set BuildClientTargetsFromDateValue = result
+        Exit Function
+    End If
+
+    Dim cUseDay As Long
+    cUseDay = FindColByHeaderExact(ws, useHeader)
+    If cUseDay = 0 Then cUseDay = FindHeaderCol(ws, useHeader)
+    If cUseDay = 0 Then
+        Set BuildClientTargetsFromDateValue = result
+        Exit Function
+    End If
+
+    Dim lastRow As Long
+    lastRow = Application.Max(ws.Cells(ws.rows.count, cName).End(xlUp).row, ws.Cells(ws.rows.count, cUseDay).End(xlUp).row)
+
+    Dim r As Long
+    Dim nm As String
+    For r = 2 To lastRow
+        nm = Trim$(CStr(ws.Cells(r, cName).value))
+        If Len(nm) = 0 Then GoTo NextRow
+        If IsTruthyValue(ws.Cells(r, cUseDay).value) Then result.Add nm
+NextRow:
+    Next r
+
+    Set BuildClientTargetsFromDateValue = result
+End Function
+
+
 Private Function FindClientMasterRowsByName(ByVal ws As Worksheet, ByVal nameText As String) As Collection
     Dim c As New Collection
     Dim lastRow As Long: lastRow = ws.Cells(ws.rows.count, 2).End(xlUp).row
@@ -3675,33 +3737,49 @@ End Function
 
 
 
-Private Function ComposeDailyLogBody(ByVal training As String, ByVal reaction As String, ByVal abnormal As String, ByVal plan As String) As String
-    ComposeDailyLogBody = "Åyé¿é{ì‡óeÅz" & vbCrLf & training & vbCrLf & vbCrLf & _
-                          "Åyóòópé“ÇÃîΩâûÅz" & vbCrLf & reaction & vbCrLf & vbCrLf & _
-                          "ÅyàŸèÌèäå©Åz" & vbCrLf & abnormal & vbCrLf & vbCrLf & _
-                          "Åyç°å„ÇÃï˚êjÅz" & vbCrLf & plan
+Private Function ComposeDailyLogBody(ByVal commonRecord As String, ByVal abnormal As String) As String
+    ComposeDailyLogBody = "Åyã§í é¿é{ãLò^Åz" & vbCrLf & CStr(commonRecord) & vbCrLf & vbCrLf & _
+                          "ÅyàŸèÌèäå©Åz" & vbCrLf & CStr(abnormal)
 End Function
 
-Private Sub FillDailyLogFieldsFromBody(ByVal body As String, ByRef training As String, ByRef reaction As String, ByRef abnormal As String, ByRef plan As String)
-    Dim p1 As Long, p2 As Long, p3 As Long, p4 As Long
+Private Function ExtractDailyLogSection(ByVal body As String, ByVal heading As String, Optional ByVal nextHeading As String = "") As String
+    Dim p1 As Long
+    Dim p2 As Long
+    Dim s As Long
 
-    training = ""
-    reaction = ""
+    p1 = InStr(body, heading)
+    If p1 = 0 Then Exit Function
+
+    s = p1 + Len(heading)
+    If Len(nextHeading) > 0 Then
+        p2 = InStr(s, body, nextHeading)
+        If p2 > s Then
+            ExtractDailyLogSection = Trim$(Mid$(body, s, p2 - s))
+            Exit Function
+        End If
+    End If
+
+    ExtractDailyLogSection = Trim$(Mid$(body, s))
+End Function
+
+Private Sub FillDailyLogFieldsFromBody(ByVal body As String, ByRef commonRecord As String, ByRef abnormal As String)
+    Dim pAbnormal As Long
+
+    commonRecord = ""
     abnormal = ""
-    plan = ""
+commonRecord = ExtractDailyLogSection(body, "Åyã§í é¿é{ãLò^Åz", "ÅyàŸèÌèäå©Åz")
+abnormal = ExtractDailyLogSection(body, "ÅyàŸèÌèäå©Åz")
 
-    p1 = InStr(body, "Åyé¿é{ì‡óeÅz")
-    p2 = InStr(body, "Åyóòópé“ÇÃîΩâûÅz")
-    p3 = InStr(body, "ÅyàŸèÌèäå©Åz")
-    p4 = InStr(body, "Åyç°å„ÇÃï˚êjÅz")
+If Len(commonRecord) > 0 Or Len(abnormal) > 0 Then
+    Exit Sub
+End If
 
-    If p1 > 0 And p2 > p1 And p3 > p2 And p4 > p3 Then
-        training = Trim$(Mid$(body, p1 + Len("Åyé¿é{ì‡óeÅz"), p2 - (p1 + Len("Åyé¿é{ì‡óeÅz"))))
-        reaction = Trim$(Mid$(body, p2 + Len("Åyóòópé“ÇÃîΩâûÅz"), p3 - (p2 + Len("Åyóòópé“ÇÃîΩâûÅz"))))
-        abnormal = Trim$(Mid$(body, p3 + Len("ÅyàŸèÌèäå©Åz"), p4 - (p3 + Len("ÅyàŸèÌèäå©Åz"))))
-        plan = Trim$(Mid$(body, p4 + Len("Åyç°å„ÇÃï˚êjÅz")))
+' ãåÉtÉHÅ[É}ÉbÉgå›ä∑: ÅyàŸèÌèäå©Åz ÇóDêÊíäèoÇµÅAã§í ãLò^ÇÕójì˙É}ÉXÉ^Ç≈ï‚äÆ
+pAbnormal = InStr(body, "ÅyàŸèÌèäå©Åz")
+If pAbnormal > 0 Then
+    abnormal = ExtractDailyLogSection(body, "ÅyàŸèÌèäå©Åz", "Åyç°å„ÇÃï˚êjÅz")
     Else
-        training = body
+        abnormal = Trim$(body)
     End If
 End Sub
 
@@ -3988,20 +4066,21 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
 
     txtDate.value = ws.Cells(r, 4).value
     txtStaff.value = ws.Cells(r, 6).value
-    Dim parsedTraining As String
-    Dim parsedReaction As String
+    Dim parsedCommon As String
     Dim parsedAbnormal As String
-    Dim parsedPlan As String
-    FillDailyLogFieldsFromBody body, parsedTraining, parsedReaction, parsedAbnormal, parsedPlan
+    FillDailyLogFieldsFromBody body, parsedCommon, parsedAbnormal
 
-    If Not txtTraining Is Nothing Then txtTraining.value = parsedTraining
-    If Not txtReaction Is Nothing Then txtReaction.value = parsedReaction
-    txtAbnormal.value = parsedAbnormal
-    If Not txtPlan Is Nothing Then txtPlan.value = parsedPlan
-
-    If Not txtCommon Is Nothing And IsDate(txtDate.value) Then
-        txtCommon.value = GetCommonRecordByWeekday(weekday(CDate(txtDate.value), vbSunday))
+    If Not txtCommon Is Nothing Then
+        If Len(parsedCommon) > 0 Then
+            txtCommon.value = parsedCommon
+        ElseIf IsDate(txtDate.value) Then
+            txtCommon.value = GetCommonRecordByWeekday(weekday(CDate(txtDate.value), vbSunday))
+        Else
+            txtCommon.value = vbNullString
+        End If
     End If
+    
+    txtAbnormal.value = parsedAbnormal
 
 FinallyExit:
     If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
@@ -4032,7 +4111,6 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Dim abnormal As String
     Dim plan As String
     Dim commonRecord As String
-    Dim mergedAbnormal As String
     Dim logDate As Date
     Dim lastRow As Long
     Dim hitRow As Long
@@ -4093,7 +4171,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
         Exit Sub
     End If
 
-    If Trim$(training & reaction & abnormal & plan) = "" Then
+    If Trim$(commonRecord & abnormal) = "" Then
         If MsgBox("ãLò^ì‡óeÇ™ãÛÇ≈Ç∑Ç™ï€ë∂ÇµÇ‹Ç∑Ç©ÅH", vbQuestion + vbOKCancel) = vbCancel Then Exit Sub
     
  End If
@@ -4101,8 +4179,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
     logDate = CDate(dt)
     
     Call SaveCommonRecordByWeekday(weekday(logDate, vbSunday), commonRecord)
-    mergedAbnormal = MergeDailyLog(commonRecord, abnormal)
-    note = ComposeDailyLogBody(training, reaction, mergedAbnormal, plan)
+    note = ComposeDailyLogBody(commonRecord, abnormal)
     
     
     Set ws = GetDailyLogSheetByDate(logDate, True, wb, wbOpenedHere)
@@ -5126,7 +5203,7 @@ Private Function TryParseEvalDate(ByVal v As Variant, ByRef normalizedDate As Da
     On Error GoTo EH
 
     If IsDate(v) Then
-        normalizedDate = DateValue(CDate(v))
+        normalizedDate = dateValue(CDate(v))
         TryParseEvalDate = True
         Exit Function
     End If
@@ -5136,7 +5213,7 @@ Private Function TryParseEvalDate(ByVal v As Variant, ByRef normalizedDate As Da
     If LenB(s) = 0 Then Exit Function
 
     If IsDate(s) Then
-        normalizedDate = DateValue(CDate(s))
+        normalizedDate = dateValue(CDate(s))
         TryParseEvalDate = True
         Exit Function
     End If

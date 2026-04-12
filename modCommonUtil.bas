@@ -365,7 +365,7 @@ Public Sub Tighten_DailyLog_Boxes()
 
 
     Dim lbl As Object
-    Set lbl = SafeGetControl(pg, "lblDailyHistory")
+    Set lbl = SafeGetControl(pg, "lblDailyClientTargets")
 
     If Not lbl Is Nothing Then lbl.top = fieldsBottom + 15
     If Not lst Is Nothing Then

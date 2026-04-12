@@ -8,13 +8,13 @@ Public Sub Run_PrintPack_LatestRow()
     For r = 2 To lastR
         d = ws.Cells(r, 86).value
         If IsDate(d) Then
-            If DateValue(d) > latest Then latest = DateValue(d)
+            If dateValue(d) > latest Then latest = dateValue(d)
         End If
     Next
     For r = 2 To lastR
         d = ws.Cells(r, 86).value
         If IsDate(d) Then
-            If DateValue(d) = latest Then lastHit = r
+            If dateValue(d) = latest Then lastHit = r
         End If
     Next
 

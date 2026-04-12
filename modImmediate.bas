@@ -673,7 +673,7 @@ Public Sub Swap_DailyLogList_ToMonthlyDraftBox()
     ' 重要：New は使わない（Initializeで落ちる環境があるため）
     Set uf = frmEval            ' 起動中のインスタンスを参照
 
-    Set lb = uf.controls("lstDailyLogList")
+ Set lb = uf.controls("lstDailyLogList")
     Set host = lb.parent        ' fraDailyLog のはず
 
     ' 既に作ってあればそれを使う
@@ -725,7 +725,7 @@ Public Sub Ensure_MonthlyDraftBox_UnderFraDailyLog()
 
     Set uf = VBA.UserForms(0)
     Set f = uf.controls("fraDailyLog")
-    Set lb = f.controls("lstDailyLogList")
+    Set lb = f.controls("lstDailyClientTargets")
 
     ' 既存があれば取得、なければ作成（fraDailyLog 直下）
     On Error Resume Next
