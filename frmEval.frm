@@ -3259,7 +3259,7 @@ End If
     BuildDailyLog_SaveButton Me
     Me.controls("txtEDate").value = Date
     Dim txtDailyDate As Object
-    Set txtDailyDate = DailyLogCtl("txtDailyDate")
+    Set txtDailyDate = Me.controls("txtDailyDate")
     If Not txtDailyDate Is Nothing Then txtDailyDate.value = Date
     HookDailyDateTextBox
     RefreshDailyClientTargetList
@@ -6334,9 +6334,9 @@ Private Sub BuildDailyLogLayout()
     End With
     
     commonTop = topStart
-    commonH = 96
+    commonH = 120
     abnormalTop = commonTop + labelH + inputTopGap + commonH + sectionGap
-    abnormalH = Application.Max(100, f.Height - (abnormalTop + labelH + inputTopGap) - bottomPad)
+    abnormalH = Application.Min(180, Application.Max(100, f.Height - (abnormalTop + labelH + inputTopGap) - bottomPad))
 
 
     Set lblCommon = f.controls.Add("Forms.Label.1", "lblDailyCommonRecord")
@@ -6382,6 +6382,7 @@ Private Sub BuildDailyLogLayout()
         .IntegralHeight = False
         .MultiSelect = fmMultiSelectSingle
     End With
+    
     
     RefreshDailyClientTargetList
     
@@ -6594,18 +6595,18 @@ Private Sub mDailyExtract_Click()
             
             box.value = "【月次モニタリング下書き】" & vbCrLf & _
             "対象：" & Me.controls("frHeader").controls("txtHdrName").value & vbCrLf & _
-                 "期間：" & Format$(DateSerial(Year(CDate(DailyLogCtl("txtDailyDate").value)), _
-                                      Month(CDate(DailyLogCtl("txtDailyDate").value)), 1), "yyyy/mm/dd") & _
+                 "期間" & Format$(DateSerial(Year(CDate(Me.controls("txtDailyDate").value)), _
+                                      Month(CDate(Me.controls("txtDailyDate").value)), 1), "yyyy/mm/dd") & _
             " - " & _
-            Format$(DateSerial(Year(CDate(DailyLogCtl("txtDailyDate").value)), _
-                                Month(CDate(DailyLogCtl("txtDailyDate").value)) + 1, 0), "yyyy/mm/dd") & vbCrLf & vbCrLf & _
+             Format$(DateSerial(Year(CDate(Me.controls("txtDailyDate").value)), _
+                                Month(CDate(Me.controls("txtDailyDate").value)) + 1, 0), "yyyy/mm/dd") & vbCrLf & vbCrLf & _
             "■ この月に記録された特記事項" & vbCrLf & _
             "この月は特記事項となる記録はありませんでした。" & vbCrLf & _
             "体調面に大きな変動はなく、日々のリハビリにも安定して取り組まれていました。" & vbCrLf & _
             "今後も現在の状態を維持できるよう、引き続き経過を観察していきます。"
 
                       Call ExportMonitoring_ToMonthlyWorkbook( _
-          CDate(DailyLogCtl("txtDailyDate").value), _
+        CDate(Me.controls("txtDailyDate").value), _
                 Me.controls("frHeader").controls("txtHdrName").value, _
                 box.value)
 
@@ -6846,7 +6847,7 @@ End Function
 
 Private Sub HookDailyDateTextBox()
     Dim txt As MSForms.TextBox
-    Set txt = DailyLogCtl("txtDailyDate")
+    Set txt = Me.controls("txtDailyDate")
     If txt Is Nothing Then Exit Sub
 
     If mDailyDateHook Is Nothing Then Set mDailyDateHook = New clsDailyDateHook
@@ -6866,7 +6867,7 @@ Private Sub RefreshDailyClientTargetList()
     Dim displayName As String
     Dim targetCount As Long
 
-    Set txtDailyDate = DailyLogCtl("txtDailyDate")
+    Set txtDailyDate = Me.controls("txtDailyDate")
     Set lst = DailyLogCtl("lstDailyClientTargets")
     Set lbl = DailyLogCtl("lblDailyClientTargets")
     If lst Is Nothing Then Exit Sub
@@ -7887,7 +7888,7 @@ Public Sub BuildMonthlyDraft_FromDailyLog()
     Dim hit As Long
     Dim d As Date, staff As String, note As String
 
-    Set txtDailyDate = DailyLogCtl("txtDailyDate")
+    Set txtDailyDate = Me.controls("txtDailyDate")
     If txtDailyDate Is Nothing Then Exit Sub
 
     ' 対象月＝記録日（txtDailyDate）の月

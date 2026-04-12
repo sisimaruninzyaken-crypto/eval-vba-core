@@ -3773,6 +3773,56 @@ Private Function EnsureDailyLogSheet(ByVal wb As Workbook) As Worksheet
     Set EnsureDailyLogSheet = ws
 End Function
 
+Private Function EnsureDailyLogHistorySheet(ByVal wb As Workbook) As Worksheet
+    Dim ws As Worksheet
+
+    On Error Resume Next
+    Set ws = wb.Worksheets("DailyLogHistory")
+    On Error GoTo 0
+
+    If ws Is Nothing Then
+        Set ws = wb.Worksheets.Add(After:=wb.Worksheets(wb.Worksheets.count))
+        ws.name = "DailyLogHistory"
+    End If
+
+    If Trim$(CStr(ws.Cells(1, 1).value)) = "" Then ws.Cells(1, 1).value = "HistoryID"
+    If Trim$(CStr(ws.Cells(1, 2).value)) = "" Then ws.Cells(1, 2).value = "MainLogID"
+    If Trim$(CStr(ws.Cells(1, 3).value)) = "" Then ws.Cells(1, 3).value = "pID"
+    If Trim$(CStr(ws.Cells(1, 4).value)) = "" Then ws.Cells(1, 4).value = "p?"
+    If Trim$(CStr(ws.Cells(1, 5).value)) = "" Then ws.Cells(1, 5).value = "p"
+    If Trim$(CStr(ws.Cells(1, 6).value)) = "" Then ws.Cells(1, 6).value = "L^{"
+    If Trim$(CStr(ws.Cells(1, 7).value)) = "" Then ws.Cells(1, 7).value = "L^"
+    If Trim$(CStr(ws.Cells(1, 8).value)) = "" Then ws.Cells(1, 8).value = "?"
+
+    Set EnsureDailyLogHistorySheet = ws
+End Function
+
+Private Function GenerateDailyLogHistoryID(ByVal ws As Worksheet, ByVal saveAt As Date) As String
+    Dim y As String
+    Dim lastRow As Long
+    Dim r As Long
+    Dim maxSeq As Long
+    Dim token As String
+    Dim seqPart As String
+
+    y = Format$(saveAt, "yyyy")
+    lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
+
+    For r = 2 To lastRow
+        token = Trim$(CStr(ws.Cells(r, 1).value))
+        If Len(token) >= 12 And Left$(token, 4) = y And Mid$(token, 5, 1) = "-" Then
+            seqPart = Mid$(token, 6)
+            If IsNumeric(seqPart) Then
+                If CLng(seqPart) > maxSeq Then maxSeq = CLng(seqPart)
+            End If
+        End If
+    Next r
+
+    GenerateDailyLogHistoryID = y & "-" & Format$(maxSeq + 1, "000000")
+End Function
+
+
+
 Private Function OpenDailyLogWorkbook(ByVal d As Date, ByVal createIfMissing As Boolean, ByRef openedHere As Boolean) As Workbook
     Dim filePath As String
     Dim wb As Workbook
@@ -4055,7 +4105,9 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Dim logDate As Date
     Dim lastRow As Long
     Dim hitRow As Long
-
+    Dim saveAt As Date
+    Dim wsHistory As Worksheet
+    Dim historyRow As Long
 
     Set f = ResolveDailyLogRoot(owner)
     If f Is Nothing Then Exit Sub
@@ -4121,10 +4173,14 @@ Public Sub SaveDailyLog_Append(owner As Object)
     
     Call SaveCommonRecordByWeekday(weekday(logDate, vbSunday), commonRecord)
     note = ComposeDailyLogBody(commonRecord, abnormal)
+    saveAt = Now
     
     
     Set ws = GetDailyLogSheetByDate(logDate, True, wb, wbOpenedHere)
     If ws Is Nothing Then Exit Sub
+    Set wsHistory = EnsureDailyLogHistorySheet(wb)
+    If wsHistory Is Nothing Then Exit Sub
+    
 
     lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
     hitRow = 0
@@ -4162,8 +4218,22 @@ Public Sub SaveDailyLog_Append(owner As Object)
     ws.Cells(hitRow, 4).NumberFormatLocal = "yyyy/mm/dd"
     ws.Cells(hitRow, 5).value = note
     ws.Cells(hitRow, 6).value = staff
-    ws.Cells(hitRow, 7).value = Now
+    ws.Cells(hitRow, 7).value = saveAt
     ws.Cells(hitRow, 7).NumberFormatLocal = "yyyy/mm/dd hh:mm"
+    
+   '--- V[g?????Li?pj ---
+    historyRow = wsHistory.Cells(wsHistory.rows.count, 1).End(xlUp).row + 1
+    If historyRow < 2 Then historyRow = 2
+    wsHistory.Cells(historyRow, 1).value = GenerateDailyLogHistoryID(wsHistory, saveAt)
+    wsHistory.Cells(historyRow, 2).value = CStr(ws.Cells(hitRow, 1).value)
+    wsHistory.Cells(historyRow, 3).value = pid
+    wsHistory.Cells(historyRow, 4).value = nm
+    wsHistory.Cells(historyRow, 5).value = logDate
+    wsHistory.Cells(historyRow, 5).NumberFormatLocal = "yyyy/mm/dd"
+    wsHistory.Cells(historyRow, 6).value = note
+    wsHistory.Cells(historyRow, 7).value = staff
+    wsHistory.Cells(historyRow, 8).value = saveAt
+    wsHistory.Cells(historyRow, 8).NumberFormatLocal = "yyyy/mm/dd hh:mm"
     
 
 End Sub
