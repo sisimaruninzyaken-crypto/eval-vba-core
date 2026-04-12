@@ -3941,7 +3941,7 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Dim lastRow As Long
     Dim r As Long
     Dim targetName As String
-    Dim targetPid As String
+    Dim targetPID As String
     Dim hit As Boolean
     Dim body As String
     Dim basePath As String
@@ -3977,8 +3977,8 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
 
     '--- 該当利用者の「最新（いちばん下）」の行を探す ---
     targetName = Trim$(CStr(txtName.value))
-    targetPid = Trim$(CStr(txtHdrPID.value))
-    If targetPid = "" And targetName = "" Then GoTo FinallyExit
+    targetPID = Trim$(CStr(txtHdrPID.value))
+    If targetPID = "" And targetName = "" Then GoTo FinallyExit
 
     basePath = EnsureDailyLogFolderPath()
     fileName = Dir(basePath & "DailyLog_*.xlsx")
@@ -4024,8 +4024,8 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
         If Not ws Is Nothing Then
             lastRow = ws.Cells(ws.rows.count, 3).End(xlUp).row
             For r = lastRow To 2 Step -1
-                 If targetPid <> "" Then
-                    If Trim$(CStr(ws.Cells(r, 2).value)) = targetPid Then
+                 If targetPID <> "" Then
+                    If Trim$(CStr(ws.Cells(r, 2).value)) = targetPID Then
                         hit = True
                         Set wb = candidateWb
                         wbOpenedHere = candidateOpenedHere
@@ -4090,62 +4090,52 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Dim ws As Worksheet
     Dim wb As Workbook
     Dim wbOpenedHere As Boolean
-    Dim r As Long
     Dim f As Object
     Dim dt As Variant
     Dim nm As String
     Dim pid As String
     Dim staff As String
     Dim note As String
-    Dim training As String
-    Dim reaction As String
     Dim abnormal As String
-    Dim plan As String
     Dim commonRecord As String
     Dim logDate As Date
-    Dim lastRow As Long
-    Dim hitRow As Long
     Dim saveAt As Date
     Dim wsHistory As Worksheet
-    Dim historyRow As Long
-
-    Set f = ResolveDailyLogRoot(owner)
-    If f Is Nothing Then Exit Sub
+    Dim i As Long
+    Dim item As Object
+    Dim saveTargets As Collection
 
     Dim txtDailyDate As Object
     Dim txtDailyStaff As Object
-    Dim txtDailyTraining As Object
-    Dim txtDailyReaction As Object
     Dim txtDailyAbnormal As Object
-    Dim txtDailyPlan As Object
     Dim txtDailyCommonRecord As Object
+    Dim lstDailyClientTargets As Object
     Dim hdr As Object
     Dim txtHdrName As Object
     Dim txtHdrPID As Object
     
-    
+    Set f = ResolveDailyLogRoot(owner)
+    If f Is Nothing Then Exit Sub
 
     Set txtDailyDate = ResolveDailyLogControl(owner, "txtDailyDate")
     Set txtDailyStaff = ResolveDailyLogControl(owner, "txtDailyStaff")
-    Set txtDailyTraining = ResolveDailyLogControl(owner, "txtDailyTraining")
-    Set txtDailyReaction = ResolveDailyLogControl(owner, "txtDailyReaction")
     Set txtDailyAbnormal = ResolveDailyLogControl(owner, "txtDailyAbnormal")
-    Set txtDailyPlan = ResolveDailyLogControl(owner, "txtDailyPlan")
     Set txtDailyCommonRecord = ResolveDailyLogControl(owner, "txtDailyCommonRecord")
+    Set lstDailyClientTargets = ResolveDailyLogControl(owner, "lstDailyClientTargets")
     Set hdr = SafeGetControl(owner, "frHeader")
     Set txtHdrName = SafeGetControl(hdr, "txtHdrName")
-    If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyAbnormal Is Nothing Or txtHdrName Is Nothing Then Exit Sub
+
     
     Set txtHdrPID = SafeGetControl(hdr, "txtHdrPID")
-    If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyAbnormal Is Nothing Or txtHdrName Is Nothing Or txtHdrPID Is Nothing Then Exit Sub
+    
+        If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyAbnormal Is Nothing Then Exit Sub
+    If txtHdrName Is Nothing Or txtHdrPID Is Nothing Then Exit Sub
+    
     dt = txtDailyDate.value
     nm = Trim$(txtHdrName.value)
     pid = Trim$(txtHdrPID.value)
     staff = Trim$(txtDailyStaff.value)
-    If Not txtDailyTraining Is Nothing Then training = CStr(txtDailyTraining.value)
-    If Not txtDailyReaction Is Nothing Then reaction = CStr(txtDailyReaction.value)
     abnormal = CStr(txtDailyAbnormal.value)
-    If Not txtDailyPlan Is Nothing Then plan = CStr(txtDailyPlan.value)
     If Not txtDailyCommonRecord Is Nothing Then
         commonRecord = CStr(txtDailyCommonRecord.value)
     Else
@@ -4155,8 +4145,8 @@ Public Sub SaveDailyLog_Append(owner As Object)
 
     '--- 入力チェック ---
     If nm = "" Then
-     MsgBox "利用者名を入力してください。", vbExclamation
-     Exit Sub
+         MsgBox "利用者名を入力してください。", vbExclamation
+         Exit Sub
     End If
 
     If Not IsDate(dt) Then
@@ -4181,6 +4171,97 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Set wsHistory = EnsureDailyLogHistorySheet(wb)
     If wsHistory Is Nothing Then Exit Sub
     
+    Set saveTargets = BuildDailySaveTargets(lstDailyClientTargets, pid, nm)
+
+    If saveTargets Is Nothing Or saveTargets.count = 0 Then
+        MsgBox "?????B?????I?iI=OjmF?B", vbExclamation
+        Exit Sub
+    End If
+
+    For i = 1 To saveTargets.count
+        Set item = saveTargets(i)
+
+        Call SaveOrUpdateDailyLogEntry( _
+            ws, wsHistory, logDate, _
+            Trim$(CStr(item("PID"))), _
+            Trim$(CStr(item("Name"))), _
+            note, staff, saveAt)
+    Next i
+
+End Sub
+
+Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, ByVal defaultPID As String, ByVal defaultName As String) As Collection
+    Dim result As Collection
+    Dim uniqueMap As Object
+    Dim i As Long
+    Dim targetName As String
+    Dim targetPID As String
+    Dim key As String
+    Dim item As Object
+
+    Set result = New Collection
+    Set uniqueMap = CreateObject("Scripting.Dictionary")
+
+    If Not lstDailyClientTargets Is Nothing And lstDailyClientTargets.ListCount > 0 Then
+
+        For i = 0 To lstDailyClientTargets.ListCount - 1
+            If Not CBool(lstDailyClientTargets.Selected(i)) Then
+                targetName = Trim$(CStr(lstDailyClientTargets.List(i, 0)))
+                targetPID = vbNullString
+                On Error Resume Next
+                targetPID = Trim$(CStr(lstDailyClientTargets.List(i, 1)))
+                On Error GoTo 0
+
+                key = targetPID & "|" & targetName
+                If Len(targetName) > 0 And Not uniqueMap.exists(key) Then
+                    Set item = CreateObject("Scripting.Dictionary")
+                    item("PID") = targetPID
+                    item("Name") = targetName
+                    result.Add item
+                    uniqueMap.Add key, True
+                End If
+            End If
+        Next i
+    Else
+        AddDailySaveTarget result, uniqueMap, defaultPID, defaultName
+    End If
+
+    Set BuildDailySaveTargets = result
+End Function
+
+Private Sub AddDailySaveTarget(ByRef result As Collection, ByRef uniqueMap As Object, ByVal targetPID As String, ByVal targetName As String)
+    Dim key As String
+    Dim item As Object
+
+    key = Trim$(targetPID) & "|" & Trim$(targetName)
+    If Len(Trim$(targetName)) = 0 Then Exit Sub
+    If uniqueMap.exists(key) Then Exit Sub
+
+    Set item = CreateObject("Scripting.Dictionary")
+    item("PID") = Trim$(targetPID)
+    item("Name") = Trim$(targetName)
+    result.Add item
+    uniqueMap.Add key, True
+End Sub
+
+Private Sub SaveOrUpdateDailyLogEntry( _
+    ByVal ws As Worksheet, _
+    ByVal wsHistory As Worksheet, _
+    ByVal logDate As Date, _
+    ByVal pid As String, _
+    ByVal nm As String, _
+    ByVal note As String, _
+    ByVal staff As String, _
+    ByVal saveAt As Date)
+
+    Dim lastRow As Long
+    Dim hitRow As Long
+    Dim r As Long
+    Dim historyRow As Long
+
+    If ws Is Nothing Or wsHistory Is Nothing Then Exit Sub
+    If Len(nm) = 0 Then Exit Sub
+    
 
     lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
     hitRow = 0
@@ -4188,7 +4269,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
     For r = 2 To lastRow
         If IsDate(ws.Cells(r, 4).value) Then
             If CLng(CDate(ws.Cells(r, 4).value)) = CLng(logDate) Then
-                If pid <> "" Then
+                If Len(pid) > 0 Then
                     If Trim$(CStr(ws.Cells(r, 2).value)) = pid Then
                         hitRow = r
                         Exit For

@@ -6376,11 +6376,14 @@ Private Sub BuildDailyLogLayout()
         .Left = panelLeft
         .top = lblTargets.top + lblTargets.Height + inputTopGap
         .Width = panelW
-        .Height = Application.Max(84, f.Height - .top - bottomPad)
+        .Height = Application.Max(140, f.Height - .top - bottomPad)
+        .ColumnCount = 2
+        .ColumnWidths = CStr(Application.Max(120, panelW - 12)) & " pt;0 pt"
         .ColumnCount = 1
         .ColumnHeads = False
         .IntegralHeight = False
-        .MultiSelect = fmMultiSelectSingle
+        .MultiSelect = fmMultiSelectMulti
+        .Font.Size = 11
     End With
     
     
@@ -6899,6 +6902,9 @@ Private Sub RefreshDailyClientTargetList()
         If Len(displayName) = 0 Then displayName = Trim$(CStr(targets(i)))
         If Len(displayName) > 0 Then
             lst.AddItem displayName
+            On Error Resume Next
+            If IsObject(targets(i)) Then lst.List(lst.ListCount - 1, 1) = Trim$(CStr(targets(i)("UserID")))
+            On Error GoTo 0
             targetCount = targetCount + 1
         End If
     Next i
