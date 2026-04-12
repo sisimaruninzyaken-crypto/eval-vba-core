@@ -6229,35 +6229,43 @@ Private Sub BuildDailyLogLayout()
     Dim f As Object
     Dim lbl As Object
     Dim txt As Object
-    Dim colGap As Single
-    Dim rowGap As Single
     Dim leftMargin As Single
     Dim topStart As Single
-    Dim colW As Single
-    Dim boxH As Single
-    Dim rightLeft As Single
     Dim topLabelW As Single
     Dim topInputW As Single
-    Dim secondRowTop As Single
     Dim lblCommon As Object
     Dim txtCommon As Object
     Dim commonTop As Single
     Dim commonH As Single
+    Dim colGap As Single
+    Dim panelW As Single
+    Dim leftAreaW As Single
+    Dim panelLeft As Single
+    Dim lblTargets As Object
+    Dim lstTargets As Object
+    Dim txtAbnormal As Object
+    Dim abnormalH As Single
 
     Set f = GetDailyLogFrame()
     If f Is Nothing Then GoTo ExitHere
 
     leftMargin = 12
     colGap = 12
-    rowGap = 0
     topStart = 48
-    colW = (f.Width - leftMargin * 2 - colGap) / 2
-    If colW < 120 Then colW = 120
-    rightLeft = leftMargin + colW + colGap
     topLabelW = 42
     topInputW = 88
     
     '=== ‹L˜^“úƒ‰ƒxƒ‹ ===
+    panelW = 180
+    leftAreaW = f.Width - leftMargin * 2 - colGap - panelW
+    If leftAreaW < 280 Then
+        leftAreaW = 280
+        panelW = f.Width - leftMargin * 2 - colGap - leftAreaW
+        If panelW < 120 Then panelW = 120
+        leftAreaW = f.Width - leftMargin * 2 - colGap - panelW
+    End If
+    panelLeft = leftMargin + leftAreaW + colGap
+    
     On Error Resume Next
     Set lbl = f.controls("lblDailyDate")
     On Error GoTo EH
@@ -6312,34 +6320,6 @@ Private Sub BuildDailyLogLayout()
     Dim lblTargets As Object
     Dim lstTargets As Object
 
-    On Error Resume Next
-    Set lblTargets = f.controls("lblDailyTargets")
-    On Error GoTo EH
-    If lblTargets Is Nothing Then Set lblTargets = f.controls.Add("Forms.Label.1", "lblDailyTargets")
-    With lblTargets
-        .caption = "‘ÎÛŽÒˆê——"
-        .Left = leftMargin
-        .top = 44
-        .Width = f.Width - leftMargin * 2
-        .Height = 14
-    End With
-
-    On Error Resume Next
-    Set lstTargets = SafeGetControl(f, "lstDailyClientTargets")
-    On Error GoTo EH
-    If lstTargets Is Nothing Then Set lstTargets = f.controls.Add("Forms.ListBox.1", "lstDailyClientTargets")
-    With lstTargets
-        .Left = leftMargin
-        .top = lblTargets.top + lblTargets.Height + 2
-        .Width = f.Width - leftMargin * 2
-        .Height = 54
-        .ColumnCount = 1
-        .ColumnHeads = False
-        .IntegralHeight = False
-    End With
-
-    commonTop = lstTargets.top + lstTargets.Height + 6
-    commonH = 34
 
     On Error Resume Next
     Set lblCommon = f.controls("lblDailyCommonRecord")
@@ -6369,8 +6349,37 @@ Private Sub BuildDailyLogLayout()
 
     topStart = txtCommon.top + txtCommon.Height + 8
 
-    boxH = 95
+    boxH = 72
     CreateDailyField f, "lblDailyAbnormal", "txtDailyAbnormal", "ˆÙíŠŒ©", leftMargin, topStart, f.Width - leftMargin * 2, boxH
+
+    On Error Resume Next
+    Set lblTargets = f.controls("lblDailyClientTargets")
+    On Error GoTo EH
+    If lblTargets Is Nothing Then Set lblTargets = f.controls.Add("Forms.Label.1", "lblDailyClientTargets")
+    With lblTargets
+        .caption = "‘ÎÛŽÒˆê——"
+        .Left = panelLeft
+        .top = topStart
+        .Width = panelW
+        .Height = 16
+        .Font.Bold = True
+    End With
+
+    On Error Resume Next
+    Set lstTargets = SafeGetControl(f, "lstDailyClientTargets")
+    On Error GoTo EH
+    If lstTargets Is Nothing Then Set lstTargets = f.controls.Add("Forms.ListBox.1", "lstDailyClientTargets")
+    With lstTargets
+        .Left = panelLeft
+        .top = lblTargets.top + lblTargets.Height + 2
+        .Width = panelW
+        .Height = f.Height - .top - 12
+        .ColumnCount = 1
+        .ColumnHeads = False
+        .IntegralHeight = False
+         .MultiSelect = fmMultiSelectSingle
+    End With
+    
     RefreshDailyClientTargetList
     
 
