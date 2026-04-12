@@ -715,7 +715,7 @@ EH:
 End Sub
 
 
-Public Sub Ensure_MonthlyDraftBox_UnderFraDailyLog()
+Public Sub Ensure_MonthlyDraftBox_UnderFraDailyLog(Optional ByVal showDraft As Boolean = False)
     On Error GoTo EH
 
     Dim uf As Object
@@ -746,8 +746,8 @@ Public Sub Ensure_MonthlyDraftBox_UnderFraDailyLog()
     tb.EnterKeyBehavior = True
     tb.ScrollBars = fmScrollBarsVertical
 
-    lb.Visible = False
-    tb.Visible = True
+    lb.Visible = Not showDraft
+    tb.Visible = showDraft
 
     Debug.Print "[EnsureDraftBox] OK name=" & tb.name, _
                 "L=" & tb.Left & " T=" & tb.top & " W=" & tb.Width & " H=" & tb.Height

@@ -6254,6 +6254,11 @@ Private Sub BuildDailyLogLayout()
     If f Is Nothing Then GoTo ExitHere
     
     ResetDailyLogLayoutControls f
+    
+    On Error Resume Next
+    Set txt = SafeGetControl(f, "txtMonthlyMonitoringDraft")
+    On Error GoTo EH
+    If Not txt Is Nothing Then txt.Visible = False
 
     leftMargin = 12
     colGap = 12
@@ -6264,7 +6269,7 @@ Private Sub BuildDailyLogLayout()
     labelH = 16
     inputTopGap = 2
     sectionGap = 10
-    bottomPad = 12
+    bottomPad = 24
     
     '=== 記録日ラベル ===
     panelW = 180
@@ -7947,7 +7952,7 @@ End If
     
     ' 出力先（起動時に確保済みだが念のため）
 WriteOut:
-    Call Ensure_MonthlyDraftBox_UnderFraDailyLog
+    Call Ensure_MonthlyDraftBox_UnderFraDailyLog(True)
     DailyLogCtl("txtMonthlyMonitoringDraft").value = s
 
     If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
