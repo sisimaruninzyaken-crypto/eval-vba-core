@@ -24,6 +24,10 @@ Private Sub tb_Change()
     NotifyHost
 End Sub
 
+Private Sub tb_AfterUpdate()
+    NotifyHost
+End Sub
+
 Private Sub tb_Exit(ByVal Cancel As MSForms.ReturnBoolean)
     NotifyHost
 End Sub
