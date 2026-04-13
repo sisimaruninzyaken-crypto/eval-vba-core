@@ -56,37 +56,45 @@ End Sub
 
 Public Sub Fix_Page8_DailyLog_Once()
 
-    'Debug.Print "[Fix_Page8] ENTER"
-
-
-
     Dim uf As Object: Set uf = frmEval
     Dim mp As MSForms.MultiPage: Set mp = uf.controls("MultiPage1")
-    Dim pg As MSForms.page: Set pg = mp.pages("Page8")
-
+    Dim fraDailyLog As Object
+    Dim lst As Object
     Dim maxBottom As Double
+    Dim needShrink As Double
+
+    Set fraDailyLog = modEvalIOEntry.ResolveDailyLogRoot(uf)
+    If fraDailyLog Is Nothing Then Exit Sub
+
+    Set lst = modEvalIOEntry.ResolveDailyLogControl(uf, "lstDailyClientTargets")
+    If lst Is Nothing Then Exit Sub
+
+
+    Call Expand_DailyClientTargetList(140)
+    
+
     maxBottom = 0#
     
-    pg.controls("lstDailyClientTargets").Height = 140
     
-    WalkContainer pg, maxBottom
+    WalkContainer fraDailyLog, maxBottom
 
-    Dim needShrink As Double
+
     needShrink = Application.Max(0, maxBottom - mp.Height + 1)
+    
 
 
     If needShrink > 0 Then
-        pg.controls("lstDailyClientTargets").Height = Application.Max(40, 140 - needShrink)
-
+         Call Expand_DailyClientTargetList(Application.Max(40, 140 - needShrink))
     Else
-        pg.controls("lstDailyClientTargets").Height = 140
+        Call Expand_DailyClientTargetList(140)
     End If
 
     'ŒŸØƒƒOiŒ‹‰Ê‚¾‚¯j
     maxBottom = 0#
-    WalkContainer pg, maxBottom
+    WalkContainer fraDailyLog, maxBottom
     Static callN As Long: callN = callN + 1: Debug.Print "[Fix_Page8] call#" & callN & " needShrink=" & needShrink & "  NewBottom=" & maxBottom & "  Overflow=" & (maxBottom - mp.Height)
-
+    
+    
 End Sub
 
 

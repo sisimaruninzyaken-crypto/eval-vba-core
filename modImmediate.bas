@@ -662,57 +662,7 @@ End Sub
 
 
 
-Public Sub Swap_DailyLogList_ToMonthlyDraftBox()
-    On Error GoTo EH
 
-    Dim uf As frmEval
-    Dim lb As MSForms.Control
-    Dim host As Object          ' fraDailyLog
-    Dim tb As MSForms.Control   ' TextBox
-
-    ' 重要：New は使わない（Initializeで落ちる環境があるため）
-    Set uf = frmEval            ' 起動中のインスタンスを参照
-
- Set lb = uf.controls("lstDailyLogList")
-    Set host = lb.parent        ' fraDailyLog のはず
-
-    ' 既に作ってあればそれを使う
-    On Error Resume Next
-    Set tb = host.controls("txtMonthlyMonitoringDraft")
-    On Error GoTo EH
-
-    If tb Is Nothing Then
-        Set tb = host.controls.Add("Forms.TextBox.1", "txtMonthlyMonitoringDraft", True)
-    End If
-
-    ' 位置とサイズを lstDailyLogList に合わせる
-    tb.Left = lb.Left
-    tb.top = lb.top
-    tb.Width = lb.Width
-    tb.Height = lb.Height
-
-    ' 使い勝手の最小限（WordWrap等は触らない）
-    tb.multiline = True
-    tb.EnterKeyBehavior = True
-    tb.ScrollBars = fmScrollBarsVertical
-
-    ' ListBox は隠す（戻したい時に戻せる）
-    lb.Visible = False
-    tb.Visible = True
-
-#If APP_DEBUG Then
-    Debug.Print "[Swap] lb.Visible=" & lb.Visible, _
-                "tb.Name=" & tb.name, _
-                "L=" & tb.Left & " T=" & tb.top & " W=" & tb.Width & " H=" & tb.Height
-#End If
-
-    Exit Sub
-
-EH:
-#If APP_DEBUG Then
-    Debug.Print "[Swap][ERR]", Err.Number, Err.Description
-#End If
-End Sub
 
 
 Public Sub Ensure_MonthlyDraftBox_UnderFraDailyLog(Optional ByVal showDraft As Boolean = False)

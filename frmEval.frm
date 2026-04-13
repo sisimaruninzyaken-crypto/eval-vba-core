@@ -6405,9 +6405,7 @@ Private Sub ResetDailyLogLayoutControls(ByVal f As Object)
     ' legacy / old layout artifacts
     RemoveControlIfExists f, "lblDailyNote"
     RemoveControlIfExists f, "txtDailyNote"
-    RemoveControlIfExists f, "lblDailyHistory"
     RemoveControlIfExists f, "lblDailyMonitoringCreate"
-    RemoveControlIfExists f, "lstDailyLogList"
 End Sub
 
 Private Sub RemoveControlIfExists(ByVal parent As Object, ByVal controlName As String)
@@ -6474,9 +6472,7 @@ Public Sub BuildDailyLog_HistoryList(owner As Object)
     If f Is Nothing Then Exit Sub
     
     On Error Resume Next
-    f.controls.Remove "lblDailyHistory"
     f.controls.Remove "lblDailyMonitoringCreate"
-    f.controls.Remove "lstDailyLogList"
     On Error GoTo 0
 
 

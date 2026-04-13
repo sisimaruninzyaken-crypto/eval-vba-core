@@ -344,36 +344,46 @@ Private Function BuildVisitedKey(ByVal node As Object) As String
     BuildVisitedKey = TypeName(node) & "|" & h & "|" & n
 End Function
 
+Public Sub Expand_DailyClientTargetList(Optional ByVal targetHeight As Single = 140)
+    Dim uf As Object: Set uf = frmEval
+    Dim lst As Object
 
+    Set lst = modEvalIOEntry.ResolveDailyLogControl(uf, "lstDailyClientTargets")
+    If lst Is Nothing Then Exit Sub
+
+    lst.Height = Application.Max(40, targetHeight)
+    lst.IntegralHeight = False
+End Sub
 
 Public Sub Tighten_DailyLog_Boxes()
     Dim uf As Object: Set uf = frmEval
+    Dim f As Object
+    Dim txtAbnormal As Object
+    Dim lst As Object
+    Dim lbl As Object
+    Dim fieldsBottom As Single
 
-    Dim mp As Object: Set mp = uf.controls("MultiPage1")
-    Dim pg As Object: Set pg = mp.pages(7) ' ì˙ÅXÇÃãLò^
+    Set f = modEvalIOEntry.ResolveDailyLogRoot(uf)
+    If f Is Nothing Then Exit Sub
 
-    Dim txtAbnormal As Object: Set txtAbnormal = SafeGetControl(pg, "txtDailyAbnormal")
-    Dim lst As Object: Set lst = SafeGetControl(pg, "lstDailyLogList")
-
+    Set txtAbnormal = modEvalIOEntry.ResolveDailyLogControl(uf, "txtDailyAbnormal")
+    Set lst = modEvalIOEntry.ResolveDailyLogControl(uf, "lstDailyClientTargets")
+    Set lbl = modEvalIOEntry.ResolveDailyLogControl(uf, "lblDailyClientTargets")
+    
     If txtAbnormal Is Nothing Then Exit Sub
 
     Const BOX_H As Single = 95
 
     txtAbnormal.Height = BOX_H
 
-    Dim fieldsBottom As Single
-
-
-    Dim lbl As Object
-    Set lbl = SafeGetControl(pg, "lblDailyClientTargets")
+    fieldsBottom = txtAbnormal.top + txtAbnormal.Height
 
     If Not lbl Is Nothing Then lbl.top = fieldsBottom + 15
     If Not lst Is Nothing Then
         If Not lbl Is Nothing Then lst.top = lbl.top + lbl.Height + 4
-        lst.Height = Application.Max(60, pg.Height - lst.top - 8)
+        lst.Height = Application.Max(60, f.Height - lst.top - 8)
         lst.IntegralHeight = False
     End If
-
 End Sub
 
 Public Function HasControls(ByVal o As Object) As Boolean

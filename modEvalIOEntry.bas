@@ -1390,12 +1390,12 @@ Private Function NormalizeCompareValue(ByVal v As String) As String
     NormalizeCompareValue = Trim$(Replace(CStr(v), vbCrLf, vbLf))
 End Function
 
-Private Function ResolveDailyLogRoot(ByVal owner As Object) As Object
+Public Function ResolveDailyLogRoot(ByVal owner As Object) As Object
     If owner Is Nothing Then Exit Function
     Set ResolveDailyLogRoot = SafeGetControl(owner, "fraDailyLog")
 End Function
 
-Private Function ResolveDailyLogControl(ByVal owner As Object, ByVal controlName As String) As Object
+Public Function ResolveDailyLogControl(ByVal owner As Object, ByVal controlName As String) As Object
     Dim root As Object
     If owner Is Nothing Then Exit Function
     If LenB(Trim$(controlName)) = 0 Then Exit Function
