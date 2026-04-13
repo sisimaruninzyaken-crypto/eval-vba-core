@@ -4193,42 +4193,74 @@ End Sub
 Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, ByVal defaultPID As String, ByVal defaultName As String) As Collection
     Dim result As Collection
     Dim uniqueMap As Object
+    Dim excludedMap As Object
     Dim i As Long
     Dim targetName As String
     Dim targetPID As String
-    Dim key As String
-    Dim item As Object
+ 
 
     Set result = New Collection
     Set uniqueMap = CreateObject("Scripting.Dictionary")
+    Set excludedMap = CreateObject("Scripting.Dictionary")
 
     If Not lstDailyClientTargets Is Nothing And lstDailyClientTargets.ListCount > 0 Then
 
+        ' 1) Build exclusion set from explicit exclusion rows in the list.
         For i = 0 To lstDailyClientTargets.ListCount - 1
-            If Not CBool(lstDailyClientTargets.Selected(i)) Then
-                targetName = Trim$(CStr(lstDailyClientTargets.List(i, 0)))
-                targetPID = vbNullString
-                On Error Resume Next
-                targetPID = Trim$(CStr(lstDailyClientTargets.List(i, 1)))
-                On Error GoTo 0
+            targetName = Trim$(CStr(lstDailyClientTargets.List(i, 0)))
+            targetPID = DailyTargetPIDFromListRow(lstDailyClientTargets, i)
 
-                key = targetPID & "|" & targetName
-                If Len(targetName) > 0 And Not uniqueMap.exists(key) Then
-                    Set item = CreateObject("Scripting.Dictionary")
-                    item("PID") = targetPID
-                    item("Name") = targetName
-                    result.Add item
-                    uniqueMap.Add key, True
-                End If
+            If IsDailyTargetExcluded(lstDailyClientTargets, i) Then
+                AddDailySaveTargetKey excludedMap, targetPID, targetName
+            End If
+        Next i
+
+        ' 2) Add all list rows except exclusions.
+
+        For i = 0 To lstDailyClientTargets.ListCount - 1
+            targetName = Trim$(CStr(lstDailyClientTargets.List(i, 0)))
+            targetPID = DailyTargetPIDFromListRow(lstDailyClientTargets, i)
+
+            If Not IsDailySaveTargetExcluded(excludedMap, targetPID, targetName) Then
+                AddDailySaveTarget result, uniqueMap, targetPID, targetName
             End If
         Next i
     End If
     
-    ' Ensure caller-specified default target is always saved, regardless of list selection state
+     ' 3) Header target is always included (deduplicated with list target by PID/Name key).
     AddDailySaveTarget result, uniqueMap, defaultPID, defaultName
 
     Set BuildDailySaveTargets = result
 End Function
+
+Private Function DailyTargetPIDFromListRow(ByVal lstDailyClientTargets As Object, ByVal rowIndex As Long) As String
+    On Error Resume Next
+    DailyTargetPIDFromListRow = Trim$(CStr(lstDailyClientTargets.List(rowIndex, 1)))
+    On Error GoTo 0
+End Function
+
+Private Function IsDailyTargetExcluded(ByVal lstDailyClientTargets As Object, ByVal rowIndex As Long) As Boolean
+    On Error Resume Next
+    IsDailyTargetExcluded = CBool(lstDailyClientTargets.Selected(rowIndex))
+    On Error GoTo 0
+End Function
+
+Private Function IsDailySaveTargetExcluded(ByVal excludedMap As Object, ByVal targetPID As String, ByVal targetName As String) As Boolean
+    IsDailySaveTargetExcluded = excludedMap.exists(Trim$(targetPID) & "|" & Trim$(targetName))
+End Function
+
+Private Sub AddDailySaveTargetKey(ByRef keyMap As Object, ByVal targetPID As String, ByVal targetName As String)
+    Dim key As String
+
+    If keyMap Is Nothing Then Exit Sub
+
+    key = Trim$(targetPID) & "|" & Trim$(targetName)
+    If Len(Trim$(targetName)) = 0 Then Exit Sub
+    If keyMap.exists(key) Then Exit Sub
+
+    keyMap.Add key, True
+End Sub
+
 
 Private Sub AddDailySaveTarget(ByRef result As Collection, ByRef uniqueMap As Object, ByVal targetPID As String, ByVal targetName As String)
     Dim key As String

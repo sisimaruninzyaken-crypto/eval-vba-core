@@ -62,6 +62,7 @@ Public Sub Fix_Page8_DailyLog_Once()
     Dim lst As Object
     Dim maxBottom As Double
     Dim needShrink As Double
+    Dim baseHeight As Double
 
     Set fraDailyLog = modEvalIOEntry.ResolveDailyLogRoot(uf)
     If fraDailyLog Is Nothing Then Exit Sub
@@ -70,7 +71,7 @@ Public Sub Fix_Page8_DailyLog_Once()
     If lst Is Nothing Then Exit Sub
 
 
-    Call Expand_DailyClientTargetList(140)
+    baseHeight = lst.Height
     
 
     maxBottom = 0#
@@ -84,9 +85,8 @@ Public Sub Fix_Page8_DailyLog_Once()
 
 
     If needShrink > 0 Then
-         Call Expand_DailyClientTargetList(Application.Max(40, 140 - needShrink))
-    Else
-        Call Expand_DailyClientTargetList(140)
+        lst.Height = Application.Max(40, baseHeight - needShrink)
+        lst.IntegralHeight = False
     End If
 
     'ŒŸØƒƒOiŒ‹‰Ê‚¾‚¯j
