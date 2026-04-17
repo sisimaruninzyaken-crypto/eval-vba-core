@@ -6377,15 +6377,12 @@ Private Sub BuildDailyLogLayout()
         .top = lblTargets.top + lblTargets.Height + inputTopGap
         .Width = panelW
         .Height = Application.Max(140, f.Height - .top - bottomPad)
-        .ColumnCount = 2
-        .ColumnWidths = CStr(Application.Max(120, panelW - 12)) & " pt;0 pt"
-        .ColumnCount = 1
         .ColumnHeads = False
         .IntegralHeight = False
         .MultiSelect = fmMultiSelectMulti
         .Font.Size = 11
     End With
-    
+    ConfigureDailyClientTargetListColumns lstTargets, panelW
     
     RefreshDailyClientTargetList
     
@@ -6872,6 +6869,8 @@ Private Sub RefreshDailyClientTargetList()
     Set lst = DailyLogCtl("lstDailyClientTargets")
     Set lbl = DailyLogCtl("lblDailyClientTargets")
     If lst Is Nothing Then Exit Sub
+    
+    ConfigureDailyClientTargetListColumns lst, lst.Width
 
     lst.Clear
     targetCount = 0
@@ -6898,15 +6897,26 @@ Private Sub RefreshDailyClientTargetList()
         If Len(displayName) = 0 Then displayName = Trim$(CStr(targets(i)))
         If Len(displayName) > 0 Then
             lst.AddItem displayName
-            On Error Resume Next
-            If IsObject(targets(i)) Then lst.List(lst.ListCount - 1, 1) = Trim$(CStr(targets(i)("UserID")))
-            On Error GoTo 0
+            If IsObject(targets(i)) Then
+                lst.List(lst.ListCount - 1, 1) = Trim$(CStr(targets(i)("UserID")))
+            Else
+                lst.List(lst.ListCount - 1, 1) = vbNullString
+            End If
             targetCount = targetCount + 1
         End If
     Next i
 
     UpdateDailyClientTargetCaption lbl, targetCount
 End Sub
+
+Private Sub ConfigureDailyClientTargetListColumns(ByVal lst As MSForms.ListBox, ByVal listWidth As Single)
+    If lst Is Nothing Then Exit Sub
+
+    lst.ColumnCount = 2
+    lst.ColumnWidths = CStr(Application.Max(120, listWidth - 12)) & " pt;0 pt"
+End Sub
+
+
 
 Private Sub UpdateDailyClientTargetCaption(ByVal lbl As Object, ByVal targetCount As Long)
     If lbl Is Nothing Then Exit Sub

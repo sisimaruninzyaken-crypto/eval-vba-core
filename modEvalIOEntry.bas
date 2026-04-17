@@ -3683,6 +3683,35 @@ Private Function ComposeDailyLogBody(ByVal commonRecord As String, ByVal abnorma
                           "yˆÙíŠŒ©z" & vbCrLf & CStr(abnormal)
 End Function
 
+Private Function ComposeDailyLogNote(ByVal commonRecord As String, _
+                                     ByVal abnormal As String, _
+                                     Optional ByVal tokhen As String = vbNullString) As String
+    Dim normalizedCommon As String
+    Dim normalizedAbnormal As String
+    Dim normalizedTokhen As String
+    Dim noteBody As String
+
+    normalizedCommon = Trim$(CStr(commonRecord))
+    normalizedAbnormal = Trim$(CStr(abnormal))
+    normalizedTokhen = Trim$(CStr(tokhen))
+
+    ' fallback when both sections are empty
+    If Len(normalizedCommon) = 0 And Len(normalizedAbnormal) = 0 Then
+        normalizedCommon = "‹L˜^‚È‚µ"
+        normalizedAbnormal = "ˆÙíŠŒ©‚È‚µ"
+    End If
+
+    noteBody = ComposeDailyLogBody(normalizedCommon, normalizedAbnormal)
+
+    ' future extension: append tokhen only when it exists
+    If Len(normalizedTokhen) > 0 Then
+        noteBody = noteBody & vbCrLf & vbCrLf & "yƒÏz" & vbCrLf & normalizedTokhen
+    End If
+
+    ComposeDailyLogNote = noteBody
+End Function
+
+
 Private Function ExtractDailyLogSection(ByVal body As String, ByVal heading As String, Optional ByVal nextHeading As String = "") As String
     Dim p1 As Long
     Dim p2 As Long
@@ -4162,7 +4191,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
     logDate = CDate(dt)
     
     Call SaveCommonRecordByWeekday(weekday(logDate, vbSunday), commonRecord)
-    note = ComposeDailyLogBody(commonRecord, abnormal)
+    note = ComposeDailyLogNote(commonRecord, abnormal)
     saveAt = Now
     
     
@@ -4187,6 +4216,14 @@ Public Sub SaveDailyLog_Append(owner As Object)
             Trim$(CStr(item("Name"))), _
             note, staff, saveAt)
     Next i
+    
+    CommitDailyLogWorkbook wb
+
+End Sub
+
+Private Sub CommitDailyLogWorkbook(ByVal wb As Workbook)
+    If wb Is Nothing Then Exit Sub
+    wb.Save
 
 End Sub
 
@@ -4218,7 +4255,7 @@ Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, By
         ' 2) Add all list rows except exclusions.
 
         For i = 0 To lstDailyClientTargets.ListCount - 1
-            targetName = Trim$(CStr(lstDailyClientTargets.List(i, 0)))
+            targetName = DailyTargetNameFromListRow(lstDailyClientTargets, i)
             targetPID = DailyTargetPIDFromListRow(lstDailyClientTargets, i)
 
             If Not IsDailySaveTargetExcluded(excludedMap, targetPID, targetName) Then
@@ -4233,16 +4270,29 @@ Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, By
     Set BuildDailySaveTargets = result
 End Function
 
+Private Function DailyTargetNameFromListRow(ByVal lstDailyClientTargets As Object, ByVal rowIndex As Long) As String
+    If lstDailyClientTargets Is Nothing Then Exit Function
+    If rowIndex < 0 Or rowIndex >= lstDailyClientTargets.ListCount Then Exit Function
+
+    DailyTargetNameFromListRow = Trim$(CStr(lstDailyClientTargets.List(rowIndex, 0)))
+End Function
+
+
 Private Function DailyTargetPIDFromListRow(ByVal lstDailyClientTargets As Object, ByVal rowIndex As Long) As String
-    On Error Resume Next
+    If lstDailyClientTargets Is Nothing Then Exit Function
+    If rowIndex < 0 Or rowIndex >= lstDailyClientTargets.ListCount Then Exit Function
+    If lstDailyClientTargets.ColumnCount < 2 Then Exit Function
+    
     DailyTargetPIDFromListRow = Trim$(CStr(lstDailyClientTargets.List(rowIndex, 1)))
-    On Error GoTo 0
+
 End Function
 
 Private Function IsDailyTargetExcluded(ByVal lstDailyClientTargets As Object, ByVal rowIndex As Long) As Boolean
-    On Error Resume Next
+    If lstDailyClientTargets Is Nothing Then Exit Function
+    If rowIndex < 0 Or rowIndex >= lstDailyClientTargets.ListCount Then Exit Function
+    
     IsDailyTargetExcluded = CBool(lstDailyClientTargets.Selected(rowIndex))
-    On Error GoTo 0
+
 End Function
 
 Private Function IsDailySaveTargetExcluded(ByVal excludedMap As Object, ByVal targetPID As String, ByVal targetName As String) As Boolean
