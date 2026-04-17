@@ -4133,6 +4133,9 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Dim i As Long
     Dim item As Object
     Dim saveTargets As Collection
+    Dim debugList0 As String
+    Dim debugList1 As String
+    Dim debugSelected As Variant
 
     Dim txtDailyDate As Object
     Dim txtDailyStaff As Object
@@ -4200,10 +4203,55 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Set wsHistory = EnsureDailyLogHistorySheet(wb)
     If wsHistory Is Nothing Then Exit Sub
     
+        Debug.Print "[SaveDailyLog_Append][PreBuild] defaultPID=" & pid & ", defaultName=" & nm
+    If lstDailyClientTargets Is Nothing Then
+        Debug.Print "[SaveDailyLog_Append][PreBuild] lstDailyClientTargets is Nothing"
+    Else
+        Debug.Print "[SaveDailyLog_Append][PreBuild] lstDailyClientTargets.ListCount=" & lstDailyClientTargets.ListCount
+        For i = 0 To lstDailyClientTargets.ListCount - 1
+            On Error Resume Next
+            debugList0 = CStr(lstDailyClientTargets.List(i, 0))
+            If Err.Number <> 0 Then
+                debugList0 = "#ERR:" & Err.Description
+                Err.Clear
+            End If
+            debugList1 = CStr(lstDailyClientTargets.List(i, 1))
+            If Err.Number <> 0 Then
+                debugList1 = "#ERR:" & Err.Description
+                Err.Clear
+            End If
+            debugSelected = lstDailyClientTargets.Selected(i)
+            If Err.Number <> 0 Then
+                debugSelected = "#ERR:" & Err.Description
+                Err.Clear
+            End If
+            On Error GoTo 0
+
+            Debug.Print "[SaveDailyLog_Append][PreBuild] row=" & i & _
+                        ", List(i,0)=" & debugList0 & _
+                        ", List(i,1)=" & debugList1 & _
+                        ", Selected(i)=" & CStr(debugSelected)
+        Next i
+    End If
+
+    
     Set saveTargets = BuildDailySaveTargets(lstDailyClientTargets, pid, nm)
+    
+        If saveTargets Is Nothing Then
+        Debug.Print "[SaveDailyLog_Append][PostBuild] saveTargets is Nothing"
+    Else
+        Debug.Print "[SaveDailyLog_Append][PostBuild] saveTargets.Count=" & saveTargets.count
+        For i = 1 To saveTargets.count
+            Set item = saveTargets(i)
+            Debug.Print "[SaveDailyLog_Append][PostBuild] idx=" & i & _
+                        ", PID=" & Trim$(CStr(item("PID"))) & _
+                        ", Name=" & Trim$(CStr(item("Name")))
+        Next i
+    End If
+
 
     If saveTargets Is Nothing Or saveTargets.count = 0 Then
-        MsgBox "?????B?????I?iI=OjmF?B", vbExclamation
+        MsgBox "ï€ë∂ëŒè€Ç™Ç†ÇËÇ‹ÇπÇÒÅB", vbExclamation
         Exit Sub
     End If
 
@@ -4234,7 +4282,7 @@ Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, By
     Dim i As Long
     Dim targetName As String
     Dim targetPID As String
- 
+    Dim item As Object
 
     Set result = New Collection
     Set uniqueMap = CreateObject("Scripting.Dictionary")
@@ -4266,6 +4314,21 @@ Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, By
     
      ' 3) Header target is always included (deduplicated with list target by PID/Name key).
     AddDailySaveTarget result, uniqueMap, defaultPID, defaultName
+
+  Debug.Print "[BuildDailySaveTargets] defaultPID=" & Trim$(defaultPID) & ", defaultName=" & Trim$(defaultName)
+    If lstDailyClientTargets Is Nothing Then
+        Debug.Print "[BuildDailySaveTargets] lstDailyClientTargets is Nothing"
+    Else
+        Debug.Print "[BuildDailySaveTargets] lstDailyClientTargets.ListCount=" & lstDailyClientTargets.ListCount
+    End If
+    Debug.Print "[BuildDailySaveTargets] saveTargets.Count=" & result.count
+    For i = 1 To result.count
+        Set item = result(i)
+        Debug.Print "[BuildDailySaveTargets] idx=" & i & _
+                    ", PID=" & Trim$(CStr(item("PID"))) & _
+                    ", Name=" & Trim$(CStr(item("Name")))
+    Next i
+
 
     Set BuildDailySaveTargets = result
 End Function

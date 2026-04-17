@@ -6646,6 +6646,9 @@ DailyLogCtl("txtMonthlyMonitoringDraft").value = _
 End Sub
 
 Private Sub mDailySave_Click()
+
+MsgBox "mDailySave_Click ’Ê‚Á‚½"
+
     mDailyLogManual = True
     Call SaveDailyLog_Append(Me)
     mDailyLogManual = False
