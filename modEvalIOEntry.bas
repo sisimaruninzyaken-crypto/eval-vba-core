@@ -4266,11 +4266,7 @@ Private Sub CommitDailyLogWorkbook(ByVal wb As Workbook)
 
 End Sub
 
-Private Const DAILY_TARGET_COL_NAME As Long = 0
-Private Const DAILY_TARGET_COL_PID As Long = 1
-Private Const DAILY_TARGET_COL_EXCLUDE As Long = 2
-Private Const DAILY_TARGET_COL_CATEGORY As Long = 3
-Private Const DAILY_TARGET_EXCLUDE_MARK As String = "O"
+
 
 
 Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, ByVal defaultPID As String, ByVal defaultName As String) As Collection
@@ -4342,7 +4338,7 @@ Private Function IsDailyTargetExcluded(ByVal lstDailyClientTargets As Object, By
     If lstDailyClientTargets.ColumnCount <= DAILY_TARGET_COL_EXCLUDE Then Exit Function
 
     marker = Trim$(CStr(lstDailyClientTargets.List(rowIndex, DAILY_TARGET_COL_EXCLUDE)))
-    IsDailyTargetExcluded = (StrComp(marker, DAILY_TARGET_EXCLUDE_MARK, vbTextCompare) = 0)
+    IsDailyTargetExcluded = IsDailyTargetExcludeMarker(marker)
 
 End Function
 

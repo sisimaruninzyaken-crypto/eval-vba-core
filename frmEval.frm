@@ -109,13 +109,6 @@ Private mNameSuggestSink As cNameSuggestSink
 Private mDupNameWarned As Boolean
 Private mBasicInfoTidyDone As Boolean
 Private mAgeBusy As Boolean
-Private Const DAILY_TARGET_COL_NAME As Long = 0
-Private Const DAILY_TARGET_COL_PID As Long = 1
-Private Const DAILY_TARGET_COL_EXCLUDE As Long = 2
-Private Const DAILY_TARGET_COL_CATEGORY As Long = 3
-Private Const DAILY_TARGET_CATEGORY_NORMAL As String = "í èÌ"
-Private Const DAILY_TARGET_CATEGORY_ADDED As String = "í«â¡"
-Private Const DAILY_TARGET_EXCLUDE_MARK As String = "èúäO"
 Private WithEvents mBIEnter_txtLiving As MSForms.TextBox
 Attribute mBIEnter_txtLiving.VB_VarHelpID = -1
 Private WithEvents mBIEnter_txtEvaluator As MSForms.TextBox
@@ -6954,7 +6947,7 @@ Private Sub ConfigureDailyClientTargetListColumns(ByVal lst As MSForms.ListBox, 
     categoryWidth = 56
     nameWidth = Application.Max(90, listWidth - excludeWidth - categoryWidth - 12)
 
-    lst.ColumnCount = 4
+    lst.ColumnCount = DAILY_TARGET_COL_COUNT
     lst.ColumnWidths = CStr(nameWidth) & " pt;0 pt;" & CStr(excludeWidth) & " pt;" & CStr(categoryWidth) & " pt"
 End Sub
 
