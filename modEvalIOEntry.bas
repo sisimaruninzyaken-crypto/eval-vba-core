@@ -4109,11 +4109,11 @@ End Sub
 
 
 
-Public Sub SaveDailyLog_Append(owner As Object)
+Public Function SaveDailyLog_Append(owner As Object) As Boolean
 
     
     ' 専用ボタンからの呼び出し以外では何もしない
-    If Not mDailyLogManual Then Exit Sub
+    If Not mDailyLogManual Then Exit Function
 
 
     Dim ws As Worksheet
@@ -4147,7 +4147,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Dim txtHdrPID As Object
     
     Set f = ResolveDailyLogRoot(owner)
-    If f Is Nothing Then Exit Sub
+    If Not mDailyLogManual Then Exit Function
 
     Set txtDailyDate = ResolveDailyLogControl(owner, "txtDailyDate")
     Set txtDailyStaff = ResolveDailyLogControl(owner, "txtDailyStaff")
@@ -4160,12 +4160,19 @@ Public Sub SaveDailyLog_Append(owner As Object)
     
     Set txtHdrPID = SafeGetControl(hdr, "txtHdrPID")
     
-        If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyAbnormal Is Nothing Then Exit Sub
-    If txtHdrName Is Nothing Or txtHdrPID Is Nothing Then Exit Sub
+        If txtDailyDate Is Nothing Or txtDailyStaff Is Nothing Or txtDailyAbnormal Is Nothing Then Exit Function
     
     dt = txtDailyDate.value
-    nm = Trim$(txtHdrName.value)
-    pid = Trim$(txtHdrPID.value)
+    If Not txtHdrName Is Nothing Then
+        nm = Trim$(txtHdrName.value)
+    Else
+        nm = vbNullString
+    End If
+    If Not txtHdrPID Is Nothing Then
+        pid = Trim$(txtHdrPID.value)
+    Else
+        pid = vbNullString
+    End If
     staff = Trim$(txtDailyStaff.value)
     abnormal = CStr(txtDailyAbnormal.value)
     If Not txtDailyCommonRecord Is Nothing Then
@@ -4176,18 +4183,15 @@ Public Sub SaveDailyLog_Append(owner As Object)
 
 
     '--- 入力チェック ---
-    If nm = "" Then
-         MsgBox "利用者名を入力してください。", vbExclamation
-         Exit Sub
-    End If
+
 
     If Not IsDate(dt) Then
         MsgBox "記録日の欄に正しい日付を入力してください。", vbExclamation
-        Exit Sub
+        Exit Function
     End If
 
     If Trim$(commonRecord & abnormal) = "" Then
-        If MsgBox("記録内容が空ですが保存しますか？", vbQuestion + vbOKCancel) = vbCancel Then Exit Sub
+       If MsgBox("記録が空ですが保存しますか？", vbQuestion + vbOKCancel) = vbCancel Then Exit Function
     
  End If
 
@@ -4199,9 +4203,9 @@ Public Sub SaveDailyLog_Append(owner As Object)
     
     
     Set ws = GetDailyLogSheetByDate(logDate, True, wb, wbOpenedHere)
-    If ws Is Nothing Then Exit Sub
+    If ws Is Nothing Then Exit Function
     Set wsHistory = EnsureDailyLogHistorySheet(wb)
-    If wsHistory Is Nothing Then Exit Sub
+    If wsHistory Is Nothing Then Exit Function
     
         Debug.Print "[SaveDailyLog_Append][PreBuild] defaultPID=" & pid & ", defaultName=" & nm
     If lstDailyClientTargets Is Nothing Then
@@ -4252,7 +4256,7 @@ Public Sub SaveDailyLog_Append(owner As Object)
 
     If saveTargets Is Nothing Or saveTargets.count = 0 Then
         MsgBox "保存対象がありません。", vbExclamation
-        Exit Sub
+        Exit Function
     End If
 
     For i = 1 To saveTargets.count
@@ -4266,8 +4270,10 @@ Public Sub SaveDailyLog_Append(owner As Object)
     Next i
     
     CommitDailyLogWorkbook wb
+    SaveDailyLog_Append = True
+    
 
-End Sub
+End Function
 
 Private Sub CommitDailyLogWorkbook(ByVal wb As Workbook)
     If wb Is Nothing Then Exit Sub
@@ -4313,7 +4319,10 @@ Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, By
     End If
     
      ' 3) Header target is always included (deduplicated with list target by PID/Name key).
-    AddDailySaveTarget result, uniqueMap, defaultPID, defaultName
+    If Len(Trim$(defaultName)) > 0 Then
+        AddDailySaveTarget result, uniqueMap, defaultPID, defaultName
+    End If
+
 
   Debug.Print "[BuildDailySaveTargets] defaultPID=" & Trim$(defaultPID) & ", defaultName=" & Trim$(defaultName)
     If lstDailyClientTargets Is Nothing Then

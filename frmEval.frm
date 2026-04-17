@@ -6647,12 +6647,28 @@ End Sub
 
 Private Sub mDailySave_Click()
 
-MsgBox "mDailySave_Click 通った"
+    Dim saveOk As Boolean
+    
+    MsgBox "mDailySave_Click ?"
+
+    On Error GoTo EH
 
     mDailyLogManual = True
-    Call SaveDailyLog_Append(Me)
+    saveOk = SaveDailyLog_Append(Me)
+
+CleanExit:
     mDailyLogManual = False
-    MsgBox "日々の記録を保存しました。", vbInformation
+
+    If saveOk Then
+         MsgBox "日々の記録を保存しました。", vbInformation
+    Else
+         MsgBox "日々の記録を保存できませんでした。", vbExclamation
+    End If
+    Exit Sub
+
+EH:
+    saveOk = False
+    Resume CleanExit
 End Sub
 
 
