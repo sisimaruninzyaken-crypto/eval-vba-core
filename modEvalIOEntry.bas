@@ -3678,40 +3678,6 @@ End Function
 
 
 
-Private Function ComposeDailyLogBody(ByVal commonRecord As String, ByVal abnormal As String) As String
-    ComposeDailyLogBody = "y‹¤’ÊŽÀŽ{‹L˜^z" & vbCrLf & CStr(commonRecord) & vbCrLf & vbCrLf & _
-                          "yˆÙíŠŒ©z" & vbCrLf & CStr(abnormal)
-End Function
-
-Private Function ComposeDailyLogNote(ByVal commonRecord As String, _
-                                     ByVal abnormal As String, _
-                                     Optional ByVal tokhen As String = vbNullString) As String
-    Dim normalizedCommon As String
-    Dim normalizedAbnormal As String
-    Dim normalizedTokhen As String
-    Dim noteBody As String
-
-    normalizedCommon = Trim$(CStr(commonRecord))
-    normalizedAbnormal = Trim$(CStr(abnormal))
-    normalizedTokhen = Trim$(CStr(tokhen))
-
-    ' fallback when both sections are empty
-    If Len(normalizedCommon) = 0 And Len(normalizedAbnormal) = 0 Then
-        normalizedCommon = "‹L˜^‚È‚µ"
-        normalizedAbnormal = "ˆÙíŠŒ©‚È‚µ"
-    End If
-
-    noteBody = ComposeDailyLogBody(normalizedCommon, normalizedAbnormal)
-
-    ' future extension: append tokhen only when it exists
-    If Len(normalizedTokhen) > 0 Then
-        noteBody = noteBody & vbCrLf & vbCrLf & "yƒÏz" & vbCrLf & normalizedTokhen
-    End If
-
-    ComposeDailyLogNote = noteBody
-End Function
-
-
 Private Function ExtractDailyLogSection(ByVal body As String, ByVal heading As String, Optional ByVal nextHeading As String = "") As String
     Dim p1 As Long
     Dim p2 As Long
@@ -3791,14 +3757,15 @@ Private Function EnsureDailyLogSheet(ByVal wb As Workbook) As Worksheet
         ws.name = "DailyLog"
     End If
 
-      If Trim$(CStr(ws.Cells(1, 1).value)) = "" Then ws.Cells(1, 1).value = "LogID"
-      If Trim$(CStr(ws.Cells(1, 2).value)) = "" Then ws.Cells(1, 2).value = "—˜—pŽÒID"
-      If Trim$(CStr(ws.Cells(1, 3).value)) = "" Then ws.Cells(1, 3).value = "—˜—pŽÒ–¼"
-      If Trim$(CStr(ws.Cells(1, 4).value)) = "" Then ws.Cells(1, 4).value = "—˜—p“ú"
-      If Trim$(CStr(ws.Cells(1, 5).value)) = "" Then ws.Cells(1, 5).value = "‹L˜^–{•¶"
-      If Trim$(CStr(ws.Cells(1, 6).value)) = "" Then ws.Cells(1, 6).value = "‹L˜^ŽÒ"
-      If Trim$(CStr(ws.Cells(1, 7).value)) = "" Then ws.Cells(1, 7).value = "XV“úŽž"
-
+    ws.Cells(1, 1).value = "LogID"
+    ws.Cells(1, 2).value = "pID"
+    ws.Cells(1, 3).value = "Ž–¼"
+    ws.Cells(1, 4).value = "“ú•t"
+    ws.Cells(1, 5).value = "‹¤’ÊŽÀŽ{‹L˜^"
+    ws.Cells(1, 6).value = "ˆÙíŠŒ©"
+    ws.Cells(1, 7).value = "•Û‘¶ŽÒ"
+    ws.Cells(1, 8).value = "•Û‘¶“úŽž"
+    
     Set EnsureDailyLogSheet = ws
 End Function
 
@@ -3814,14 +3781,15 @@ Private Function EnsureDailyLogHistorySheet(ByVal wb As Workbook) As Worksheet
         ws.name = "DailyLogHistory"
     End If
 
-    If Trim$(CStr(ws.Cells(1, 1).value)) = "" Then ws.Cells(1, 1).value = "HistoryID"
-    If Trim$(CStr(ws.Cells(1, 2).value)) = "" Then ws.Cells(1, 2).value = "MainLogID"
-    If Trim$(CStr(ws.Cells(1, 3).value)) = "" Then ws.Cells(1, 3).value = "pID"
-    If Trim$(CStr(ws.Cells(1, 4).value)) = "" Then ws.Cells(1, 4).value = "p?"
-    If Trim$(CStr(ws.Cells(1, 5).value)) = "" Then ws.Cells(1, 5).value = "p"
-    If Trim$(CStr(ws.Cells(1, 6).value)) = "" Then ws.Cells(1, 6).value = "L^{"
-    If Trim$(CStr(ws.Cells(1, 7).value)) = "" Then ws.Cells(1, 7).value = "L^"
-    If Trim$(CStr(ws.Cells(1, 8).value)) = "" Then ws.Cells(1, 8).value = "?"
+    ws.Cells(1, 1).value = "HistoryID"
+    ws.Cells(1, 2).value = "MainLogID"
+    ws.Cells(1, 3).value = "pID"
+    ws.Cells(1, 4).value = "Ž–¼"
+    ws.Cells(1, 5).value = "“ú•t"
+    ws.Cells(1, 6).value = "‹¤’ÊŽÀŽ{‹L˜^"
+    ws.Cells(1, 7).value = "ˆÙíŠŒ©"
+    ws.Cells(1, 8).value = "•Û‘¶ŽÒ"
+    ws.Cells(1, 9).value = "•Û‘¶“úŽž"
 
     Set EnsureDailyLogHistorySheet = ws
 End Function
@@ -3973,6 +3941,9 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     Dim targetPID As String
     Dim hit As Boolean
     Dim body As String
+    Dim commonInSheet As String
+    Dim abnormalInSheet As String
+    Dim isLegacyRow As Boolean
     Dim basePath As String
     Dim fileName As String
     Dim token As String
@@ -4082,13 +4053,29 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     
 
     '--- Œ©‚Â‚©‚Á‚½s‚ðƒtƒH[ƒ€‚Ö”½‰f ---
-    body = CStr(ws.Cells(r, 5).value)
 
     txtDate.value = ws.Cells(r, 4).value
-    txtStaff.value = ws.Cells(r, 6).value
+    
+    isLegacyRow = IsDate(ws.Cells(r, 7).value) And Trim$(CStr(ws.Cells(r, 8).value)) = ""
+    If isLegacyRow Then
+        body = CStr(ws.Cells(r, 5).value)
+        txtStaff.value = ws.Cells(r, 6).value
+    Else
+        commonInSheet = CStr(ws.Cells(r, 5).value)
+        abnormalInSheet = CStr(ws.Cells(r, 6).value)
+        txtStaff.value = ws.Cells(r, 7).value
+    End If
+    
+    
     Dim parsedCommon As String
     Dim parsedAbnormal As String
-    FillDailyLogFieldsFromBody body, parsedCommon, parsedAbnormal
+
+    If isLegacyRow Then
+        FillDailyLogFieldsFromBody body, parsedCommon, parsedAbnormal
+    Else
+        parsedCommon = commonInSheet
+        parsedAbnormal = abnormalInSheet
+    End If
 
     If Not txtCommon Is Nothing Then
         If Len(parsedCommon) > 0 Then
@@ -4124,7 +4111,6 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
     Dim nm As String
     Dim pid As String
     Dim staff As String
-    Dim note As String
     Dim abnormal As String
     Dim commonRecord As String
     Dim logDate As Date
@@ -4198,7 +4184,6 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
     logDate = CDate(dt)
     
     Call SaveCommonRecordByWeekday(weekday(logDate, vbSunday), commonRecord)
-    note = ComposeDailyLogNote(commonRecord, abnormal)
     saveAt = Now
     
     
@@ -4266,7 +4251,7 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
             ws, wsHistory, logDate, _
             Trim$(CStr(item("PID"))), _
             Trim$(CStr(item("Name"))), _
-            note, staff, saveAt)
+            commonRecord, abnormal, staff, saveAt)
     Next i
     
     CommitDailyLogWorkbook wb
@@ -4405,7 +4390,8 @@ Private Sub SaveOrUpdateDailyLogEntry( _
     ByVal logDate As Date, _
     ByVal pid As String, _
     ByVal nm As String, _
-    ByVal note As String, _
+    ByVal commonRecord As String, _
+    ByVal abnormal As String, _
     ByVal staff As String, _
     ByVal saveAt As Date)
 
@@ -4452,10 +4438,11 @@ Private Sub SaveOrUpdateDailyLogEntry( _
     ws.Cells(hitRow, 3).value = nm
     ws.Cells(hitRow, 4).value = logDate
     ws.Cells(hitRow, 4).NumberFormatLocal = "yyyy/mm/dd"
-    ws.Cells(hitRow, 5).value = note
-    ws.Cells(hitRow, 6).value = staff
-    ws.Cells(hitRow, 7).value = saveAt
-    ws.Cells(hitRow, 7).NumberFormatLocal = "yyyy/mm/dd hh:mm"
+    ws.Cells(hitRow, 5).value = commonRecord
+    ws.Cells(hitRow, 6).value = abnormal
+    ws.Cells(hitRow, 7).value = staff
+    ws.Cells(hitRow, 8).value = saveAt
+    ws.Cells(hitRow, 8).NumberFormatLocal = "yyyy/mm/dd hh:mm"
     
    '--- V[g?????Li?pj ---
     historyRow = wsHistory.Cells(wsHistory.rows.count, 1).End(xlUp).row + 1
@@ -4466,10 +4453,11 @@ Private Sub SaveOrUpdateDailyLogEntry( _
     wsHistory.Cells(historyRow, 4).value = nm
     wsHistory.Cells(historyRow, 5).value = logDate
     wsHistory.Cells(historyRow, 5).NumberFormatLocal = "yyyy/mm/dd"
-    wsHistory.Cells(historyRow, 6).value = note
-    wsHistory.Cells(historyRow, 7).value = staff
-    wsHistory.Cells(historyRow, 8).value = saveAt
-    wsHistory.Cells(historyRow, 8).NumberFormatLocal = "yyyy/mm/dd hh:mm"
+    wsHistory.Cells(historyRow, 6).value = commonRecord
+    wsHistory.Cells(historyRow, 7).value = abnormal
+    wsHistory.Cells(historyRow, 8).value = staff
+    wsHistory.Cells(historyRow, 9).value = saveAt
+    wsHistory.Cells(historyRow, 9).NumberFormatLocal = "yyyy/mm/dd hh:mm"
     
 
 End Sub
