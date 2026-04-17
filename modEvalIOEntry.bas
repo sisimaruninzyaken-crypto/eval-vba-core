@@ -4121,7 +4121,7 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
     Dim saveTargets As Collection
     Dim debugList0 As String
     Dim debugList1 As String
-    Dim debugSelected As Variant
+    Dim debugExclude As String
 
     Dim txtDailyDate As Object
     Dim txtDailyStaff As Object
@@ -4209,9 +4209,9 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
                 debugList1 = "#ERR:" & Err.Description
                 Err.Clear
             End If
-            debugSelected = lstDailyClientTargets.Selected(i)
+            debugExclude = CStr(lstDailyClientTargets.List(i, DAILY_TARGET_COL_EXCLUDE))
             If Err.Number <> 0 Then
-                debugSelected = "#ERR:" & Err.Description
+                debugExclude = "#ERR:" & Err.Description
                 Err.Clear
             End If
             On Error GoTo 0
@@ -4219,7 +4219,7 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
             Debug.Print "[SaveDailyLog_Append][PreBuild] row=" & i & _
                         ", List(i,0)=" & debugList0 & _
                         ", List(i,1)=" & debugList1 & _
-                        ", Selected(i)=" & CStr(debugSelected)
+                        ", Exclude=" & debugExclude
         Next i
     End If
 
@@ -4266,10 +4266,16 @@ Private Sub CommitDailyLogWorkbook(ByVal wb As Workbook)
 
 End Sub
 
+Private Const DAILY_TARGET_COL_NAME As Long = 0
+Private Const DAILY_TARGET_COL_PID As Long = 1
+Private Const DAILY_TARGET_COL_EXCLUDE As Long = 2
+Private Const DAILY_TARGET_COL_CATEGORY As Long = 3
+Private Const DAILY_TARGET_EXCLUDE_MARK As String = "O"
+
+
 Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, ByVal defaultPID As String, ByVal defaultName As String) As Collection
     Dim result As Collection
     Dim uniqueMap As Object
-    Dim excludedMap As Object
     Dim i As Long
     Dim targetName As String
     Dim targetPID As String
@@ -4277,37 +4283,20 @@ Private Function BuildDailySaveTargets(ByVal lstDailyClientTargets As Object, By
 
     Set result = New Collection
     Set uniqueMap = CreateObject("Scripting.Dictionary")
-    Set excludedMap = CreateObject("Scripting.Dictionary")
 
     If Not lstDailyClientTargets Is Nothing And lstDailyClientTargets.ListCount > 0 Then
 
-        ' 1) Build exclusion set from explicit exclusion rows in the list.
-        For i = 0 To lstDailyClientTargets.ListCount - 1
-            targetName = Trim$(CStr(lstDailyClientTargets.List(i, 0)))
-            targetPID = DailyTargetPIDFromListRow(lstDailyClientTargets, i)
-
-            If IsDailyTargetExcluded(lstDailyClientTargets, i) Then
-                AddDailySaveTargetKey excludedMap, targetPID, targetName
-            End If
-        Next i
-
-        ' 2) Add all list rows except exclusions.
 
         For i = 0 To lstDailyClientTargets.ListCount - 1
             targetName = DailyTargetNameFromListRow(lstDailyClientTargets, i)
             targetPID = DailyTargetPIDFromListRow(lstDailyClientTargets, i)
 
-            If Not IsDailySaveTargetExcluded(excludedMap, targetPID, targetName) Then
+            If Not IsDailyTargetExcluded(lstDailyClientTargets, i) Then
                 AddDailySaveTarget result, uniqueMap, targetPID, targetName
             End If
         Next i
     End If
     
-     ' 3) Header target is always included (deduplicated with list target by PID/Name key).
-    If Len(Trim$(defaultName)) > 0 Then
-        AddDailySaveTarget result, uniqueMap, defaultPID, defaultName
-    End If
-
 
   Debug.Print "[BuildDailySaveTargets] defaultPID=" & Trim$(defaultPID) & ", defaultName=" & Trim$(defaultName)
     If lstDailyClientTargets Is Nothing Then
@@ -4331,24 +4320,29 @@ Private Function DailyTargetNameFromListRow(ByVal lstDailyClientTargets As Objec
     If lstDailyClientTargets Is Nothing Then Exit Function
     If rowIndex < 0 Or rowIndex >= lstDailyClientTargets.ListCount Then Exit Function
 
-    DailyTargetNameFromListRow = Trim$(CStr(lstDailyClientTargets.List(rowIndex, 0)))
+   DailyTargetNameFromListRow = Trim$(CStr(lstDailyClientTargets.List(rowIndex, DAILY_TARGET_COL_NAME)))
 End Function
 
 
 Private Function DailyTargetPIDFromListRow(ByVal lstDailyClientTargets As Object, ByVal rowIndex As Long) As String
     If lstDailyClientTargets Is Nothing Then Exit Function
     If rowIndex < 0 Or rowIndex >= lstDailyClientTargets.ListCount Then Exit Function
-    If lstDailyClientTargets.ColumnCount < 2 Then Exit Function
+    If lstDailyClientTargets.ColumnCount <= DAILY_TARGET_COL_PID Then Exit Function
     
-    DailyTargetPIDFromListRow = Trim$(CStr(lstDailyClientTargets.List(rowIndex, 1)))
+    DailyTargetPIDFromListRow = Trim$(CStr(lstDailyClientTargets.List(rowIndex, DAILY_TARGET_COL_PID)))
 
 End Function
 
 Private Function IsDailyTargetExcluded(ByVal lstDailyClientTargets As Object, ByVal rowIndex As Long) As Boolean
+    Dim marker As String
+
     If lstDailyClientTargets Is Nothing Then Exit Function
     If rowIndex < 0 Or rowIndex >= lstDailyClientTargets.ListCount Then Exit Function
     
-    IsDailyTargetExcluded = CBool(lstDailyClientTargets.Selected(rowIndex))
+    If lstDailyClientTargets.ColumnCount <= DAILY_TARGET_COL_EXCLUDE Then Exit Function
+
+    marker = Trim$(CStr(lstDailyClientTargets.List(rowIndex, DAILY_TARGET_COL_EXCLUDE)))
+    IsDailyTargetExcluded = (StrComp(marker, DAILY_TARGET_EXCLUDE_MARK, vbTextCompare) = 0)
 
 End Function
 

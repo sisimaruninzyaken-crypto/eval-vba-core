@@ -14,7 +14,18 @@ Attribute lb.VB_VarHelpID = -1
 
 Public Event DblClicked()
 
+Public Event Clicked(ByVal rowIndex As Long)
+
+Private Function CurrentRowIndex() As Long
+    On Error Resume Next
+    CurrentRowIndex = lb.ListIndex
+    On Error GoTo 0
+End Function
+
 Private Sub lb_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
     RaiseEvent DblClicked
 End Sub
 
+Private Sub lb_Click()
+    RaiseEvent Clicked(CurrentRowIndex())
+End Sub

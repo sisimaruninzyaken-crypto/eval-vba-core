@@ -10,8 +10,8 @@ Attribute VB_Exposed = False
 
 Option Explicit
 
-Public WithEvents Btn As MSForms.CommandButton
-Attribute Btn.VB_VarHelpID = -1
+Public WithEvents btn As MSForms.CommandButton
+Attribute btn.VB_VarHelpID = -1
 
 
 Private mOwner As frmFacilitySettings
@@ -19,7 +19,7 @@ Private mActionName As String
 
 Public Sub Init(ByVal owner As frmFacilitySettings, ByVal target As MSForms.CommandButton, ByVal actionName As String)
     Set mOwner = owner
-    Set Btn = target
+    Set btn = target
     mActionName = actionName
 End Sub
 

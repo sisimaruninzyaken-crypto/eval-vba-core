@@ -68,6 +68,8 @@ Private WithEvents mDailyExtract As MSForms.CommandButton
 Attribute mDailyExtract.VB_VarHelpID = -1
 Private WithEvents mDailySave As MSForms.CommandButton
 Attribute mDailySave.VB_VarHelpID = -1
+Private WithEvents mDailyAddTarget As MSForms.CommandButton
+Attribute mDailyAddTarget.VB_VarHelpID = -1
 Private mPlacedGlobalSave As Boolean
 Private WithEvents mGlobalSave As clsGlobalSaveButton
 Attribute mGlobalSave.VB_VarHelpID = -1
@@ -107,6 +109,13 @@ Private mNameSuggestSink As cNameSuggestSink
 Private mDupNameWarned As Boolean
 Private mBasicInfoTidyDone As Boolean
 Private mAgeBusy As Boolean
+Private Const DAILY_TARGET_COL_NAME As Long = 0
+Private Const DAILY_TARGET_COL_PID As Long = 1
+Private Const DAILY_TARGET_COL_EXCLUDE As Long = 2
+Private Const DAILY_TARGET_COL_CATEGORY As Long = 3
+Private Const DAILY_TARGET_CATEGORY_NORMAL As String = "通常"
+Private Const DAILY_TARGET_CATEGORY_ADDED As String = "追加"
+Private Const DAILY_TARGET_EXCLUDE_MARK As String = "除外"
 Private WithEvents mBIEnter_txtLiving As MSForms.TextBox
 Attribute mBIEnter_txtLiving.VB_VarHelpID = -1
 Private WithEvents mBIEnter_txtEvaluator As MSForms.TextBox
@@ -2068,7 +2077,7 @@ Private Sub HookRomMirrorButtonsInContainer(ByVal container As Object)
             If CStr(c.tag) = "ROM_MIRROR" Then
                 Dim h As clsRomMirrorBtnHook
                 Set h = New clsRomMirrorBtnHook
-                Set h.Btn = c
+                Set h.btn = c
                 mRomMirrorHooks.Add h
             End If
         End If
@@ -3368,7 +3377,7 @@ Call HookRomMirrorButtons_Once
 
 '--- hook header "LoadPrev" button (MUST be after Ensure_LoadPrevButton_Once) ---
 Set mHdrLoadPrevHook = New clsHdrBtnHook
-Set mHdrLoadPrevHook.Btn = Me.controls("frHeader").controls("cmdHdrLoadPrev")
+Set mHdrLoadPrevHook.btn = Me.controls("frHeader").controls("cmdHdrLoadPrev")
 mHdrLoadPrevHook.tag = "LoadPrev"
 Set mHdrLoadPrevHook.owner = Me
 DoEvents
@@ -6379,10 +6388,16 @@ Private Sub BuildDailyLogLayout()
         .Height = Application.Max(140, f.Height - .top - bottomPad)
         .ColumnHeads = False
         .IntegralHeight = False
-        .MultiSelect = fmMultiSelectMulti
+        .MultiSelect = fmMultiSelectSingle
         .Font.Size = 11
     End With
     ConfigureDailyClientTargetListColumns lstTargets, panelW
+    
+    EnsureDailyAddTargetButton f, lblTargets
+
+    If mDailyList Is Nothing Then Set mDailyList = New clsDailyLogList
+    Set mDailyList.lb = lstTargets
+    
     
     RefreshDailyClientTargetList
     
@@ -6742,7 +6757,7 @@ End With
     If mGlobalClear Is Nothing Then
     Set mGlobalClear = New clsGlobalSaveButton
 End If
-Set mGlobalClear.Btn = btnClear
+Set mGlobalClear.btn = btnClear
 
     
     
@@ -6764,7 +6779,7 @@ btnClear.Left = btnSave.Left - btnClear.Width - 12
        If mGlobalSave Is Nothing Then
         Set mGlobalSave = New clsGlobalSaveButton
     End If
-    Set mGlobalSave.Btn = btnSave
+    Set mGlobalSave.btn = btnSave
 
 
 
@@ -6882,6 +6897,7 @@ Private Sub RefreshDailyClientTargetList()
     Dim targets As Collection
     Dim i As Long
     Dim displayName As String
+    Dim targetPID As String
     Dim targetCount As Long
 
     Set txtDailyDate = Me.controls("txtDailyDate")
@@ -6915,12 +6931,11 @@ Private Sub RefreshDailyClientTargetList()
         displayName = ResolveDailyTargetDisplayName(targets(i))
         If Len(displayName) = 0 Then displayName = Trim$(CStr(targets(i)))
         If Len(displayName) > 0 Then
-            lst.AddItem displayName
+            targetPID = vbNullString
             If IsObject(targets(i)) Then
-                lst.List(lst.ListCount - 1, 1) = Trim$(CStr(targets(i)("UserID")))
-            Else
-                lst.List(lst.ListCount - 1, 1) = vbNullString
+                targetPID = Trim$(CStr(targets(i)("UserID")))
             End If
+            AddDailyTargetListRow lst, displayName, targetPID, False, DAILY_TARGET_CATEGORY_NORMAL
             targetCount = targetCount + 1
         End If
     Next i
@@ -6929,12 +6944,152 @@ Private Sub RefreshDailyClientTargetList()
 End Sub
 
 Private Sub ConfigureDailyClientTargetListColumns(ByVal lst As MSForms.ListBox, ByVal listWidth As Single)
+    Dim nameWidth As Single
+    Dim excludeWidth As Single
+    Dim categoryWidth As Single
+
     If lst Is Nothing Then Exit Sub
 
-    lst.ColumnCount = 2
-    lst.ColumnWidths = CStr(Application.Max(120, listWidth - 12)) & " pt;0 pt"
+    excludeWidth = 42
+    categoryWidth = 56
+    nameWidth = Application.Max(90, listWidth - excludeWidth - categoryWidth - 12)
+
+    lst.ColumnCount = 4
+    lst.ColumnWidths = CStr(nameWidth) & " pt;0 pt;" & CStr(excludeWidth) & " pt;" & CStr(categoryWidth) & " pt"
 End Sub
 
+Private Sub EnsureDailyAddTargetButton(ByVal f As Object, ByVal lblTargets As Object)
+    Dim btn As MSForms.CommandButton
+
+    If f Is Nothing Then Exit Sub
+    If lblTargets Is Nothing Then Exit Sub
+
+    Set btn = SafeGetControl(f, "cmdDailyAddHeaderTarget")
+    If btn Is Nothing Then
+        Set btn = f.controls.Add("Forms.CommandButton.1", "cmdDailyAddHeaderTarget", True)
+    End If
+
+    With btn
+        .caption = "対象者を追加"
+        .Width = 130
+        .Height = 18
+        .top = lblTargets.top - 1
+        .Left = lblTargets.Left + lblTargets.Width - .Width
+    End With
+
+    Set mDailyAddTarget = btn
+End Sub
+
+Private Sub mDailyAddTarget_Click()
+    Dim lst As MSForms.ListBox
+    Dim hdr As Object
+    Dim txtHdrName As Object
+    Dim txtHdrPID As Object
+    Dim targetName As String
+    Dim targetPID As String
+
+    Set lst = DailyLogCtl("lstDailyClientTargets")
+    If lst Is Nothing Then Exit Sub
+
+    Set hdr = SafeGetControl(Me, "frHeader")
+    If hdr Is Nothing Then Exit Sub
+
+    Set txtHdrName = SafeGetControl(hdr, "txtHdrName")
+    Set txtHdrPID = SafeGetControl(hdr, "txtHdrPID")
+
+    If Not txtHdrName Is Nothing Then targetName = Trim$(CStr(txtHdrName.value))
+    If Not txtHdrPID Is Nothing Then targetPID = Trim$(CStr(txtHdrPID.value))
+
+    If Len(targetName) = 0 Then
+        MsgBox "追加対象者を選択してください。", vbExclamation
+        Exit Sub
+    End If
+
+    AddOrUpdateDailyTargetListRow lst, targetName, targetPID, DAILY_TARGET_CATEGORY_ADDED
+
+    UpdateDailyClientTargetCaption DailyLogCtl("lblDailyClientTargets"), lst.ListCount
+End Sub
+
+Private Sub mDailyList_DblClicked()
+    Dim lst As MSForms.ListBox
+    Dim rowIndex As Long
+
+    Set lst = DailyLogCtl("lstDailyClientTargets")
+    If lst Is Nothing Then Exit Sub
+
+    rowIndex = lst.ListIndex
+    If rowIndex < 0 Then Exit Sub
+
+    ToggleDailyTargetExcluded lst, rowIndex
+End Sub
+
+Private Sub mDailyList_Clicked(ByVal rowIndex As Long)
+' 一覧選択は1人だけにし、
+' 個別異常所見の入力対象を明確にする。
+End Sub
+
+Private Sub AddOrUpdateDailyTargetListRow(ByVal lst As MSForms.ListBox, ByVal targetName As String, ByVal targetPID As String, ByVal category As String)
+    Dim i As Long
+
+    If lst Is Nothing Then Exit Sub
+
+    For i = 0 To lst.ListCount - 1
+        If IsDailyTargetSame(lst, i, targetPID, targetName) Then
+            If Len(Trim$(CStr(lst.List(i, DAILY_TARGET_COL_CATEGORY)))) = 0 Then
+                lst.List(i, DAILY_TARGET_COL_CATEGORY) = category
+            End If
+            If category = DAILY_TARGET_CATEGORY_ADDED Then
+                lst.List(i, DAILY_TARGET_COL_CATEGORY) = DAILY_TARGET_CATEGORY_ADDED
+            End If
+            If Len(Trim$(CStr(lst.List(i, DAILY_TARGET_COL_PID)))) = 0 Then
+                lst.List(i, DAILY_TARGET_COL_PID) = targetPID
+            End If
+            Exit Sub
+        End If
+    Next i
+
+    AddDailyTargetListRow lst, targetName, targetPID, False, category
+End Sub
+
+Private Sub AddDailyTargetListRow(ByVal lst As MSForms.ListBox, ByVal targetName As String, ByVal targetPID As String, ByVal excluded As Boolean, ByVal category As String)
+    Dim rowIndex As Long
+    
+    If lst Is Nothing Then Exit Sub
+    If Len(Trim$(targetName)) = 0 Then Exit Sub
+
+    lst.AddItem Trim$(targetName)
+    rowIndex = lst.ListCount - 1
+    lst.List(rowIndex, DAILY_TARGET_COL_PID) = Trim$(targetPID)
+    lst.List(rowIndex, DAILY_TARGET_COL_EXCLUDE) = IIf(excluded, DAILY_TARGET_EXCLUDE_MARK, vbNullString)
+    lst.List(rowIndex, DAILY_TARGET_COL_CATEGORY) = category
+End Sub
+
+Private Sub ToggleDailyTargetExcluded(ByVal lst As MSForms.ListBox, ByVal rowIndex As Long)
+    Dim isExcluded As Boolean
+
+    If lst Is Nothing Then Exit Sub
+    If rowIndex < 0 Or rowIndex >= lst.ListCount Then Exit Sub
+
+    isExcluded = (Trim$(CStr(lst.List(rowIndex, DAILY_TARGET_COL_EXCLUDE))) = DAILY_TARGET_EXCLUDE_MARK)
+    lst.List(rowIndex, DAILY_TARGET_COL_EXCLUDE) = IIf(isExcluded, vbNullString, DAILY_TARGET_EXCLUDE_MARK)
+End Sub
+
+Private Function IsDailyTargetSame(ByVal lst As MSForms.ListBox, ByVal rowIndex As Long, ByVal targetPID As String, ByVal targetName As String) As Boolean
+    Dim rowPID As String
+    Dim rowName As String
+
+    If lst Is Nothing Then Exit Function
+    If rowIndex < 0 Or rowIndex >= lst.ListCount Then Exit Function
+
+    rowPID = Trim$(CStr(lst.List(rowIndex, DAILY_TARGET_COL_PID)))
+    rowName = Trim$(CStr(lst.List(rowIndex, DAILY_TARGET_COL_NAME)))
+
+    If Len(targetPID) > 0 And Len(rowPID) > 0 Then
+        IsDailyTargetSame = (StrComp(rowPID, targetPID, vbTextCompare) = 0)
+    Else
+        IsDailyTargetSame = (StrComp(rowName, targetName, vbTextCompare) = 0)
+    End If
+End Function
 
 
 Private Sub UpdateDailyClientTargetCaption(ByVal lbl As Object, ByVal targetCount As Long)
@@ -7532,15 +7687,15 @@ Public Sub CreateHeaderButtons_Once()
     hClear.Left = hSave.Left - gap - hClear.Width
     
     Set mHdr1 = New clsHeaderBtnEvents
-Set mHdr1.Btn = hSave
+Set mHdr1.btn = hSave
 mHdr1.tag = "Save"
 
 Set mHdr2 = New clsHeaderBtnEvents
-Set mHdr2.Btn = hClear
+Set mHdr2.btn = hClear
 mHdr2.tag = "Clear"
 
 Set mHdr3 = New clsHeaderBtnEvents
-Set mHdr3.Btn = hClose
+Set mHdr3.btn = hClose
 mHdr3.tag = "Close"
 
 
@@ -7579,7 +7734,7 @@ End If
 
 ' Hook（クリックで既存の btnLoadPrevCtl_Click へ流す）
 Set mHdrLoadPrevHook = New clsHdrBtnHook
-Set mHdrLoadPrevHook.Btn = hLoadPrev
+Set mHdrLoadPrevHook.btn = hLoadPrev
 mHdrLoadPrevHook.tag = "LoadPrev"
 Set mHdrLoadPrevHook.owner = Me
 RearrangeHeaderTopAreaLayout
@@ -7881,28 +8036,28 @@ Public Sub AddPrintButton_TestEval()
     Set f = Me.controls("txtTUG").parent
     If f Is Nothing Then Exit Sub
 
-    Dim Btn As MSForms.CommandButton
+    Dim btn As MSForms.CommandButton
     On Error Resume Next
-    Set Btn = f.controls("cmdPrintTestEval")
+    Set btn = f.controls("cmdPrintTestEval")
     On Error GoTo 0
 
-    If Btn Is Nothing Then
-        Set Btn = f.controls.Add("Forms.CommandButton.1", "cmdPrintTestEval", True)
-        With Btn
+    If btn Is Nothing Then
+        Set btn = f.controls.Add("Forms.CommandButton.1", "cmdPrintTestEval", True)
+        With btn
        .caption = "グラフ印刷"
-        Btn.Width = 120
-        Btn.Height = 28
-        Btn.Left = f.InsideWidth - Btn.Width - 28.35
-        Btn.top = 12
+        btn.Width = 120
+        btn.Height = 28
+        btn.Left = f.InsideWidth - btn.Width - 28.35
+        btn.top = 12
 
         End With
     End If
     
-Btn.Left = f.InsideWidth - Btn.Width - 28.35
+btn.Left = f.InsideWidth - btn.Width - 28.35
 
     ' ← ★ここ★（この2行だけ追加）
     Set mPrintBtnHook = New clsPrintBtnHook
-    Set mPrintBtnHook.Btn = Btn
+    Set mPrintBtnHook.btn = btn
     
     
 End Sub
@@ -8113,7 +8268,7 @@ End Function
 Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     Const BTN_NAME As String = "cmdHdrLoadPrev"
 
-    Dim hdr As Object, kana As Object, Btn As Object
+    Dim hdr As Object, kana As Object, btn As Object
     Dim refBtn As Object
 
     Set hdr = SafeGetControl(f, "frHeader")
@@ -8123,16 +8278,16 @@ Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     Set kana = SafeGetControl(hdr, "txtHdrKana")
     If kana Is Nothing Then Exit Sub
 
-    Set Btn = SafeGetControl(hdr, BTN_NAME)
-    If Btn Is Nothing Then
+    Set btn = SafeGetControl(hdr, BTN_NAME)
+    If btn Is Nothing Then
     
     
         ' 無ければ作る（frHeader配下）
-        Set Btn = hdr.controls.Add("Forms.CommandButton.1", BTN_NAME, True)
-        Btn.caption = "前回の値を読み込む"
-        Btn.Accelerator = "L"
-        Btn.Width = 180
-        Btn.Height = 24
+        Set btn = hdr.controls.Add("Forms.CommandButton.1", BTN_NAME, True)
+        btn.caption = "前回の値を読み込む"
+        btn.Accelerator = "L"
+        btn.Width = 180
+        btn.Height = 24
     End If
 
     ' 見た目合わせ用の参照ボタン（あれば）
@@ -8141,8 +8296,8 @@ Public Sub Ensure_LoadPrevButton_Once(ByVal f As Object)
     If refBtn Is Nothing Then Set refBtn = SafeGetControl(hdr, "cmdCloseHeader")
 
     If Not refBtn Is Nothing Then
-        Btn.Font.name = refBtn.Font.name
-        Btn.Font.Size = refBtn.Font.Size
+        btn.Font.name = refBtn.Font.name
+        btn.Font.Size = refBtn.Font.Size
        
     End If
 

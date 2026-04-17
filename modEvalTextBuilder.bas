@@ -9,8 +9,8 @@ Public Sub Preview_NameToHeader()
     Set hdr = f.controls("frHeader")
     Call Align_LoadPrevButton_NextToHdrKana(f)
 
-    Dim Btn As MSForms.CommandButton
-    Set Btn = hdr.controls("cmdClearHeader")
+    Dim btn As MSForms.CommandButton
+    Set btn = hdr.controls("cmdClearHeader")
     
     Dim gap As Single: gap = 10
     Dim pad As Single: pad = 8
@@ -78,13 +78,13 @@ End If
     txt.text = f.controls("txtName").text
 
     '--- position: [éÅñº][txt] [cmdClearHeader][cmdSaveHeader][cmdCloseHeader] ---
-    txt.top = Btn.top + (Btn.Height - txt.Height) / 2
-    lbl.top = Btn.top + (Btn.Height - lbl.Height) / 2
+    txt.top = btn.top + (btn.Height - txt.Height) / 2
+    lbl.top = btn.top + (btn.Height - lbl.Height) / 2
 
-    txt.Left = Btn.Left - pad - txt.Width
+    txt.Left = btn.Left - pad - txt.Width
     lbl.Left = txt.Left - gap - lbl.Width
 
-    txtKana.Left = Btn.Left - pad - txtKana.Width
+    txtKana.Left = btn.Left - pad - txtKana.Width
     txtKana.top = 36
     lblKana.top = txtKana.top + (txtKana.Height - lblKana.Height) / 2
     lblKana.Left = txtKana.Left - gap - lblKana.Width
@@ -119,8 +119,8 @@ End If
     txtID.text = f.controls("txtPID").text
 
     '--- position: [ID][txt] [éÅñº][txt] [buttons...] ---
-    txtID.top = Btn.top + (Btn.Height - txtID.Height) / 2
-    lblID.top = Btn.top + (Btn.Height - lblID.Height) / 2
+    txtID.top = btn.top + (btn.Height - txtID.Height) / 2
+    lblID.top = btn.top + (btn.Height - lblID.Height) / 2
 
     txtID.Left = lbl.Left - pad - txtID.Width
     lblID.Left = txtID.Left - gap - lblID.Width
