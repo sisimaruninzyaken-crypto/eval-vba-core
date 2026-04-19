@@ -276,74 +276,49 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
     Dim wsTarget As Worksheet
     Dim resolveMessage As String
     Dim resolvedIndexRow As Long
-    Dim preloadName As String: preloadName = Trim$(owner.txtName.text)
-    Dim preloadID As String: preloadID = Trim$(GetID_FromBasicInfo(owner))
-    If Len(preloadID) > 0 Then
-        Dim preloadIndexWs As Worksheet: Set preloadIndexWs = EnsureEvalIndexSheet()
-        Dim preloadRowsByName As Collection: Set preloadRowsByName = FindEvalIndexRowsByName(preloadIndexWs, preloadName)
-        If preloadRowsByName.count > 1 Then
-            Dim preloadPickReason As String
-            Dim preloadPickedRow As Long
+    If ResolveUserHistorySheetEx(owner, False, wsTarget, resolveMessage, resolvedIndexRow) Then
+        Dim validRow As Long
+        Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
+        Dim nameVal As String: nameVal = Trim$(owner.txtName.text)
+        Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
+        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                               "resolvedSheet=" & HistoryLoadDebug_SheetName(wsTarget), _
+                               "nameVal=" & HistoryLoadDebug_Quote(nameVal), _
+                               "idVal=" & HistoryLoadDebug_Quote(idVal), _
+                               "kanaVal=" & HistoryLoadDebug_Quote(kanaVal)
 
-            preloadPickedRow = PickDuplicateNameIndexRow(preloadIndexWs, preloadRowsByName, preloadPickReason)
-            If preloadPickedRow > 0 Then
-                If TryResolveHistorySheetFromIndexRow(preloadIndexWs, preloadPickedRow, preloadName, wsTarget) Then
-                    resolvedIndexRow = preloadPickedRow
-                Else
-                    MsgBox "Could not open the selected history sheet.", vbExclamation
-                    Exit Sub
-                End If
-            Else
-                Exit Sub
-            End If
+        If Len(idVal) > 0 Then
+            validRow = FindLatestValidEvalRowByIdentity(wsTarget, nameVal, idVal, kanaVal)
+            HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                                   "identityLookupCalled=True", _
+                                   "identityRow=" & CStr(validRow)
         End If
-    End If
-
-    If wsTarget Is Nothing Then
-        If Not ResolveUserHistorySheetEx(owner, False, wsTarget, resolveMessage, resolvedIndexRow) Then
-            If Len(resolveMessage) > 0 Then
-                MsgBox resolveMessage, vbExclamation
-            End If
+        If validRow = 0 Then
+            HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                                   "fallbackFindLatestRowByName=True"
+            validRow = FindLatestRowByName(wsTarget, nameVal)
+        Else
+            HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                                   "fallbackFindLatestRowByName=False"
+        End If
+        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                               "finalValidRow=" & CStr(validRow)
+        
+        If validRow = 0 Then
+             HistoryLoadDebug_ScanWorkbookForName nameVal, wsTarget
+            MsgBox "対象の評価履歴が見つかりません。", vbInformation
             Exit Sub
         End If
-    End If
-
-    Dim validRow As Long
-    Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
-    Dim nameVal As String: nameVal = Trim$(owner.txtName.text)
-    Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
-    HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
-                           "resolvedSheet=" & HistoryLoadDebug_SheetName(wsTarget), _
-                           "nameVal=" & HistoryLoadDebug_Quote(nameVal), _
-                           "idVal=" & HistoryLoadDebug_Quote(idVal), _
-                           "kanaVal=" & HistoryLoadDebug_Quote(kanaVal)
-
-    If Len(idVal) > 0 Then
-        validRow = FindLatestValidEvalRowByIdentity(wsTarget, nameVal, idVal, kanaVal)
-        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
-                               "identityLookupCalled=True", _
-                               "identityRow=" & CStr(validRow)
-    End If
-    If validRow = 0 Then
-        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
-                               "fallbackFindLatestRowByName=True"
-        validRow = FindLatestRowByName(wsTarget, nameVal)
-    Else
-        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
-                               "fallbackFindLatestRowByName=False"
-    End If
-    HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
-                           "finalValidRow=" & CStr(validRow)
-    
-    If validRow = 0 Then
-         HistoryLoadDebug_ScanWorkbookForName nameVal, wsTarget
-        MsgBox "History was not found.", vbInformation
+        LoadAllSectionsFromSheet wsTarget, validRow, owner
+        RestoreHeaderUserIDAfterHistoryLoad owner, resolvedIndexRow, wsTarget, validRow
+             MsgBox "前回値の読み込みが完了しました。", vbInformation
         Exit Sub
+
     End If
-    LoadAllSectionsFromSheet wsTarget, validRow, owner
-    RestoreHeaderUserIDAfterHistoryLoad owner, resolvedIndexRow, wsTarget, validRow
-    MsgBox "Previous values were loaded.", vbInformation
-    Exit Sub
+
+    If Len(resolveMessage) > 0 Then
+        MsgBox resolveMessage, vbExclamation
+    End If
     ' ★ここまで
 
 End Sub
@@ -5139,19 +5114,42 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
             ElseIf TryGetWorksheetByName(storedSheetName, wsTarget) Then
                 EnsureHistorySheetInitialized wsTarget
             Else
-                message = "蟇ｾ雎｡縺ｮ隧穂ｾ｡螻･豁ｴ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・"
+                message = "対象の評価履歴が見つかりません。"
                 Exit Function
             End If
         End If
 
+ 
+       
         HistoryLoadDebug_Print "[ResolveUserHistorySheet]", _
                                "branch=noID_uniqueName", _
                                "resolvedSheet=" & HistoryLoadDebug_SheetName(wsTarget), _
                                "sheetLastDataRow=" & CStr(LastDataRow(wsTarget))
 
+
         If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
         resolvedIndexRow = indexRow
         ResolveUserHistorySheetEx = True
+        Exit Function
+    End If
+
+    
+    If Len(idVal) > 0 And Not forSave And rowsByName.count > 1 Then
+        Dim loadPickReason2 As String
+
+        pickedRow = PickDuplicateNameIndexRow(indexWs, rowsByName, loadPickReason2)
+        If pickedRow > 0 Then
+            If TryResolveHistorySheetFromIndexRow(indexWs, pickedRow, nm, wsTarget) Then
+                resolvedIndexRow = pickedRow
+                ResolveUserHistorySheetEx = True
+                Exit Function
+            End If
+
+            message = "Could not open the selected history sheet."
+            Exit Function
+        End If
+
+        message = ""
         Exit Function
     End If
 
