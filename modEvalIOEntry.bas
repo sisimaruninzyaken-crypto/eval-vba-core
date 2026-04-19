@@ -5134,20 +5134,7 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
     End If
 
     
-    If Len(idVal) > 0 And Not forSave And rowsByName.count > 1 Then
-        Dim loadPickReason2 As String
 
-        pickedRow = PickDuplicateNameIndexRow(indexWs, rowsByName, loadPickReason2)
-        If pickedRow > 0 Then
-            If TryResolveHistorySheetFromIndexRow(indexWs, pickedRow, nm, wsTarget) Then
-                resolvedIndexRow = pickedRow
-                ResolveUserHistorySheetEx = True
-                Exit Function
-            End If
-
-            message = "Could not open the selected history sheet."
-            Exit Function
-        End If
 
         message = ""
         Exit Function
@@ -5208,14 +5195,25 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
     If Len(idVal) > 0 Then
         Set rowsByNameWithoutID = FindEvalIndexRowsByNameWithoutUserID(indexWs, nm)
 
-
-        If rowsByNameWithoutID.count = 1 Then
+        If forSave And rowsByName.count > 1 Then
+            Dim savePickReason As String
+            pickedRow = PickDuplicateNameIndexRow(indexWs, rowsByName, savePickReason)
+            If pickedRow > 0 Then
+                If Len(Trim$(CStr(indexWs.Cells(pickedRow, 1).value))) = 0 Then
+                    If AssignUserIDToHistoryEntry(indexWs, pickedRow, idVal, nm, kanaVal, wsTarget) Then
+                        resolvedIndexRow = pickedRow
+                        ResolveUserHistorySheetEx = True
+                        Exit Function
+                    End If
+                Else
+                    message = "The selected candidate already has a different ID."
+                    Exit Function
+                End If
+            End If
+        ElseIf rowsByNameWithoutID.count = 1 Then
             pickedRow = CLng(rowsByNameWithoutID(1))
         ElseIf rowsByNameWithoutID.count > 1 Then
-            If forSave Then
-                Dim savePickReason As String
-                pickedRow = PickDuplicateNameIndexRow(indexWs, rowsByNameWithoutID, savePickReason)
-            Else
+            If Not forSave Then
                 pickedRow = PickLegacyTransferIndexRow(indexWs, rowsByNameWithoutID, idVal, nm, forSave)
             End If
         End If
