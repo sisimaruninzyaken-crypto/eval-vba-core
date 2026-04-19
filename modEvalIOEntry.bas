@@ -4898,6 +4898,7 @@ Private Function PickLegacyTransferIndexRow(ByVal indexWs As Worksheet, _
     Dim n As Long
     Dim hasUnassigned As Boolean
     
+    
     If rowsByName Is Nothing Then Exit Function
     If rowsByName.count = 0 Then Exit Function
 
@@ -4969,9 +4970,9 @@ Private Function PickDuplicateNameIndexRow(ByVal indexWs As Worksheet, _
                                            ByVal rowsByName As Collection, _
                                            ByRef reason As String) As Long
     Dim prompt As String
-    Dim picked As Variant
+    Dim pickedText As String
+    Dim pickedValue As Double
     Dim n As Long
-    Dim retryAns As VbMsgBoxResult
 
     reason = ""
     If rowsByName Is Nothing Then Exit Function
@@ -4979,24 +4980,43 @@ Private Function PickDuplicateNameIndexRow(ByVal indexWs As Worksheet, _
 
     prompt = BuildDuplicateNameSelectionPrompt(indexWs, rowsByName)
 
-    Do
-        picked = Application.InputBox(prompt, "I", Type:=1)
-        If VarType(picked) = vbBoolean Then Exit Function
+    pickedText = VBA.InputBox(prompt, "I")
+    If StrPtr(pickedText) = 0 Then
+        reason = "cancelled"
+        Exit Function
+    End If
 
-        If IsError(picked) Or Not IsNumeric(picked) Or Len(CStr(picked)) = 0 Then
-            reason = "invalid_selection"
-            Exit Function
-        Else
-            n = CLng(picked)
-            If n >= 1 And n <= rowsByName.count Then
-                PickDuplicateNameIndexRow = CLng(rowsByName(n))
-                Exit Function
-            End If
+    pickedText = Trim$(pickedText)
+    If Len(pickedText) = 0 Then
+        reason = "empty"
+        Exit Function
+    End If
 
-            reason = "out_of_range"
-            Exit Function
-        End If
-    Loop
+    If Not IsNumeric(pickedText) Then
+        reason = "not_numeric"
+        Exit Function
+    End If
+
+    On Error GoTo InvalidInput
+    pickedValue = CDbl(pickedText)
+    If pickedValue <> Fix(pickedValue) Then
+        reason = "not_integer"
+        Exit Function
+    End If
+
+    n = CLng(pickedValue)
+    On Error GoTo 0
+
+    If n < 1 Or n > rowsByName.count Then
+        reason = "out_of_range"
+        Exit Function
+    End If
+
+    PickDuplicateNameIndexRow = CLng(rowsByName(n))
+    Exit Function
+
+InvalidInput:
+    reason = "invalid_selection"
 End Function
 
 
