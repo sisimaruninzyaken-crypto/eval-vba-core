@@ -2,6 +2,7 @@ Attribute VB_Name = "modEvalIOEntry"
 
 
 Option Explicit
+Private mBatchContextSheetName As String
 
 Public Const EVAL_SHEET_NAME As String = "EvalData"
 Private Const EVAL_INDEX_SHEET_NAME As String = "EvalIndex"
@@ -19,6 +20,7 @@ Private Const HDR_BIRTH_DATE As String = "BirthDate"
 Private Const HDR_GENDER As String = "Gender"
 Private Const HDR_CARE_LEVEL As String = "CareLevel"
 Private Const HDR_CREATED_DATE As String = "CreatedDate"
+Private Const HDR_LAST_PLAN_DATE As String = "LastPlanDate"
 Private Const HDR_USE_WEEKDAY_MON As String = "UseWeekday_Mon"
 Private Const HDR_USE_WEEKDAY_TUE As String = "UseWeekday_Tue"
 Private Const HDR_USE_WEEKDAY_WED As String = "UseWeekday_Wed"
@@ -274,52 +276,98 @@ Public Sub LoadEvaluation_ByName_From(owner As Object)
     Dim wsTarget As Worksheet
     Dim resolveMessage As String
     Dim resolvedIndexRow As Long
-    If ResolveUserHistorySheetEx(owner, False, wsTarget, resolveMessage, resolvedIndexRow) Then
-        Dim validRow As Long
-        Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
-        Dim nameVal As String: nameVal = Trim$(owner.txtName.text)
-        Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
-        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
-                               "resolvedSheet=" & HistoryLoadDebug_SheetName(wsTarget), _
-                               "nameVal=" & HistoryLoadDebug_Quote(nameVal), _
-                               "idVal=" & HistoryLoadDebug_Quote(idVal), _
-                               "kanaVal=" & HistoryLoadDebug_Quote(kanaVal)
+    Dim preloadName As String: preloadName = Trim$(owner.txtName.text)
+    Dim preloadID As String: preloadID = Trim$(GetID_FromBasicInfo(owner))
+    If Len(preloadID) > 0 Then
+        Dim preloadIndexWs As Worksheet: Set preloadIndexWs = EnsureEvalIndexSheet()
+        Dim preloadRowsByName As Collection: Set preloadRowsByName = FindEvalIndexRowsByName(preloadIndexWs, preloadName)
+        If preloadRowsByName.count > 1 Then
+            Dim preloadPickReason As String
+            Dim preloadPickedRow As Long
 
-        If Len(idVal) > 0 Then
-            validRow = FindLatestValidEvalRowByIdentity(wsTarget, nameVal, idVal, kanaVal)
-            HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
-                                   "identityLookupCalled=True", _
-                                   "identityRow=" & CStr(validRow)
+            preloadPickedRow = PickDuplicateNameIndexRow(preloadIndexWs, preloadRowsByName, preloadPickReason)
+            If preloadPickedRow > 0 Then
+                If TryResolveHistorySheetFromIndexRow(preloadIndexWs, preloadPickedRow, preloadName, wsTarget) Then
+                    resolvedIndexRow = preloadPickedRow
+                Else
+                    MsgBox "Could not open the selected history sheet.", vbExclamation
+                    Exit Sub
+                End If
+            Else
+                Exit Sub
+            End If
         End If
-        If validRow = 0 Then
-            HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
-                                   "fallbackFindLatestRowByName=True"
-            validRow = FindLatestRowByName(wsTarget, nameVal)
-        Else
-            HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
-                                   "fallbackFindLatestRowByName=False"
-        End If
-        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
-                               "finalValidRow=" & CStr(validRow)
-        
-        If validRow = 0 Then
-             HistoryLoadDebug_ScanWorkbookForName nameVal, wsTarget
-            MsgBox "対象の評価履歴が見つかりません。", vbInformation
+    End If
+
+    If wsTarget Is Nothing Then
+        If Not ResolveUserHistorySheetEx(owner, False, wsTarget, resolveMessage, resolvedIndexRow) Then
+            If Len(resolveMessage) > 0 Then
+                MsgBox resolveMessage, vbExclamation
+            End If
             Exit Sub
         End If
-        LoadAllSectionsFromSheet wsTarget, validRow, owner
-        RestoreHeaderUserIDAfterHistoryLoad owner, resolvedIndexRow, wsTarget, validRow
-             MsgBox "前回値の読み込みが完了しました。", vbInformation
+    End If
+
+    Dim validRow As Long
+    Dim idVal As String: idVal = Trim$(GetID_FromBasicInfo(owner))
+    Dim nameVal As String: nameVal = Trim$(owner.txtName.text)
+    Dim kanaVal As String: kanaVal = Trim$(GetHdrKanaText(owner))
+    HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                           "resolvedSheet=" & HistoryLoadDebug_SheetName(wsTarget), _
+                           "nameVal=" & HistoryLoadDebug_Quote(nameVal), _
+                           "idVal=" & HistoryLoadDebug_Quote(idVal), _
+                           "kanaVal=" & HistoryLoadDebug_Quote(kanaVal)
+
+    If Len(idVal) > 0 Then
+        validRow = FindLatestValidEvalRowByIdentity(wsTarget, nameVal, idVal, kanaVal)
+        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                               "identityLookupCalled=True", _
+                               "identityRow=" & CStr(validRow)
+    End If
+    If validRow = 0 Then
+        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                               "fallbackFindLatestRowByName=True"
+        validRow = FindLatestRowByName(wsTarget, nameVal)
+    Else
+        HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                               "fallbackFindLatestRowByName=False"
+    End If
+    HistoryLoadDebug_Print "[LoadEvaluation_ByName_From]", _
+                           "finalValidRow=" & CStr(validRow)
+    
+    If validRow = 0 Then
+         HistoryLoadDebug_ScanWorkbookForName nameVal, wsTarget
+        MsgBox "History was not found.", vbInformation
         Exit Sub
-
     End If
-
-    If Len(resolveMessage) > 0 Then
-        MsgBox resolveMessage, vbExclamation
-    End If
+    LoadAllSectionsFromSheet wsTarget, validRow, owner
+    RestoreHeaderUserIDAfterHistoryLoad owner, resolvedIndexRow, wsTarget, validRow
+    MsgBox "Previous values were loaded.", vbInformation
+    Exit Sub
     ' ★ここまで
 
 End Sub
+
+Public Function LoadEvaluation_FromHistorySheet(ByVal owner As Object, ByVal historySheetName As String) As Boolean
+    Dim wsTarget As Worksheet
+    Dim validRow As Long
+    Dim resolvedIndexRow As Long
+    Dim indexWs As Worksheet
+
+    EnsureFormLoaded
+    If Len(Trim$(historySheetName)) = 0 Then Exit Function
+    If Not TryGetWorksheetByName(historySheetName, wsTarget) Then Exit Function
+
+    validRow = GetLatestValidEvalRow(wsTarget)
+    If validRow < 2 Then Exit Function
+
+    Set indexWs = EnsureEvalIndexSheet()
+    resolvedIndexRow = FindEvalIndexRowBySheetName(indexWs, wsTarget.name)
+
+    LoadAllSectionsFromSheet wsTarget, validRow, owner
+    RestoreHeaderUserIDAfterHistoryLoad owner, resolvedIndexRow, wsTarget, validRow
+    LoadEvaluation_FromHistorySheet = True
+End Function
 
 
 ' 下から遡って氏名一致の最新行を返す（見出しは「氏名」「利用者名」「名前」を順に探す）
@@ -1971,6 +2019,8 @@ End Function
 Public Function GetID_FromBasicInfo(ByVal owner As Object) As String
     On Error Resume Next
     GetID_FromBasicInfo = Trim$(CStr(owner.controls("frHeader").controls("txtHdrPID").value))
+    If Len(GetID_FromBasicInfo) = 0 Then GetID_FromBasicInfo = Trim$(CStr(owner.controls("txtPID").value))
+    If Len(GetID_FromBasicInfo) = 0 Then GetID_FromBasicInfo = Trim$(CStr(owner.controls("txtPID").text))
     On Error GoTo 0
 End Function
 
@@ -4088,14 +4138,12 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     End If
     
     txtAbnormal.value = parsedAbnormal
+    CallByName owner, "PrimeCurrentDailyAbnormalFromForm", VbMethod
+    CallByName owner, "SelectDailyTargetByPID", VbMethod, targetPID
 
 FinallyExit:
     If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
 End Sub
-
-
-
-
 Public Function SaveDailyLog_Append(owner As Object) As Boolean
 
     
@@ -4160,6 +4208,7 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
         pid = vbNullString
     End If
     staff = Trim$(txtDailyStaff.value)
+    CallByName owner, "StashCurrentDailyAbnormal", VbMethod
     abnormal = CStr(txtDailyAbnormal.value)
     If Not txtDailyCommonRecord Is Nothing Then
         commonRecord = CStr(txtDailyCommonRecord.value)
@@ -4251,13 +4300,35 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
             ws, wsHistory, logDate, _
             Trim$(CStr(item("PID"))), _
             Trim$(CStr(item("Name"))), _
-            commonRecord, abnormal, staff, saveAt)
+            commonRecord, ResolveDailyTargetAbnormal(owner, item, abnormal), staff, saveAt)
     Next i
     
     CommitDailyLogWorkbook wb
     SaveDailyLog_Append = True
     
 
+End Function
+
+Private Function ResolveDailyTargetAbnormal(ByVal owner As Object, ByVal targetItem As Object, ByVal fallbackAbnormal As String) As String
+    Dim abnormalMap As Object
+    Dim pid As String
+
+    ResolveDailyTargetAbnormal = fallbackAbnormal
+
+    pid = Trim$(CStr(targetItem("PID")))
+    If Len(pid) = 0 Then Exit Function
+
+    On Error Resume Next
+    Set abnormalMap = CallByName(owner, "DailyAbnormalMap", VbGet)
+    On Error GoTo 0
+
+    If abnormalMap Is Nothing Then Exit Function
+    If Not abnormalMap.exists(pid) Then
+        ResolveDailyTargetAbnormal = vbNullString
+        Exit Function
+    End If
+
+    ResolveDailyTargetAbnormal = CStr(abnormalMap(pid))
 End Function
 
 Private Sub CommitDailyLogWorkbook(ByVal wb As Workbook)
@@ -4373,7 +4444,6 @@ Private Sub AddDailySaveTarget(ByRef result As Collection, ByRef uniqueMap As Ob
     result.Add item
     uniqueMap.Add key, True
 End Sub
-
 Private Sub SaveOrUpdateDailyLogEntry( _
     ByVal ws As Worksheet, _
     ByVal wsHistory As Worksheet, _
@@ -4389,10 +4459,11 @@ Private Sub SaveOrUpdateDailyLogEntry( _
     Dim hitRow As Long
     Dim r As Long
     Dim historyRow As Long
+    Dim rowPID As String
+    Dim rowName As String
 
     If ws Is Nothing Or wsHistory Is Nothing Then Exit Sub
     If Len(nm) = 0 Then Exit Sub
-    
 
     lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
     hitRow = 0
@@ -4400,12 +4471,21 @@ Private Sub SaveOrUpdateDailyLogEntry( _
     For r = 2 To lastRow
         If IsDate(ws.Cells(r, 4).value) Then
             If CLng(CDate(ws.Cells(r, 4).value)) = CLng(logDate) Then
+                rowPID = Trim$(CStr(ws.Cells(r, 2).value))
+                rowName = Trim$(CStr(ws.Cells(r, 3).value))
+
                 If Len(pid) > 0 Then
-                    If Trim$(CStr(ws.Cells(r, 2).value)) = pid Then
+                    If StrComp(rowPID, pid, vbTextCompare) = 0 Then
                         hitRow = r
                         Exit For
                     End If
-                ElseIf Trim$(CStr(ws.Cells(r, 3).value)) = nm Then
+                    If Len(rowPID) = 0 And Len(rowName) > 0 Then
+                        If StrComp(rowName, nm, vbTextCompare) = 0 Then
+                            hitRow = r
+                            Exit For
+                        End If
+                    End If
+                ElseIf StrComp(rowName, nm, vbTextCompare) = 0 Then
                     hitRow = r
                     Exit For
                 End If
@@ -4418,12 +4498,8 @@ Private Sub SaveOrUpdateDailyLogEntry( _
         ws.Cells(hitRow, 1).value = GenerateDailyLogID(ws, logDate)
     ElseIf Trim$(CStr(ws.Cells(hitRow, 1).value)) = "" Then
         ws.Cells(hitRow, 1).value = GenerateDailyLogID(ws, logDate)
-    
     End If
-    
-    
 
-    '--- 追記行を決める（1行目に見出しがある前提）---
     ws.Cells(hitRow, 2).value = pid
     ws.Cells(hitRow, 3).value = nm
     ws.Cells(hitRow, 4).value = logDate
@@ -4433,8 +4509,7 @@ Private Sub SaveOrUpdateDailyLogEntry( _
     ws.Cells(hitRow, 7).value = staff
     ws.Cells(hitRow, 8).value = saveAt
     ws.Cells(hitRow, 8).NumberFormatLocal = "yyyy/mm/dd hh:mm"
-    
-   '--- V[g?????Li?pj ---
+
     historyRow = wsHistory.Cells(wsHistory.rows.count, 1).End(xlUp).row + 1
     If historyRow < 2 Then historyRow = 2
     wsHistory.Cells(historyRow, 1).value = GenerateDailyLogHistoryID(wsHistory, saveAt)
@@ -4448,7 +4523,6 @@ Private Sub SaveOrUpdateDailyLogEntry( _
     wsHistory.Cells(historyRow, 8).value = staff
     wsHistory.Cells(historyRow, 9).value = saveAt
     wsHistory.Cells(historyRow, 9).NumberFormatLocal = "yyyy/mm/dd hh:mm"
-    
 
 End Sub
 
@@ -4935,8 +5009,8 @@ Private Function PickDuplicateNameIndexRow(ByVal indexWs As Worksheet, _
         If VarType(picked) = vbBoolean Then Exit Function
 
         If IsError(picked) Or Not IsNumeric(picked) Or Len(CStr(picked)) = 0 Then
-            retryAns = MsgBox("???B???H", vbExclamation + vbRetryCancel)
-            If retryAns = vbCancel Then Exit Function
+            reason = "invalid_selection"
+            Exit Function
         Else
             n = CLng(picked)
             If n >= 1 And n <= rowsByName.count Then
@@ -4944,8 +5018,8 @@ Private Function PickDuplicateNameIndexRow(ByVal indexWs As Worksheet, _
                 Exit Function
             End If
 
-            retryAns = MsgBox("? 1`" & rowsByName.count & " ??????B???H", vbExclamation + vbRetryCancel)
-            If retryAns = vbCancel Then Exit Function
+            reason = "out_of_range"
+            Exit Function
         End If
     Loop
 End Function
@@ -5065,18 +5139,15 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
             ElseIf TryGetWorksheetByName(storedSheetName, wsTarget) Then
                 EnsureHistorySheetInitialized wsTarget
             Else
-                message = "対象の評価履歴が見つかりません。"
+                message = "蟇ｾ雎｡縺ｮ隧穂ｾ｡螻･豁ｴ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・"
                 Exit Function
             End If
         End If
 
- 
-       
         HistoryLoadDebug_Print "[ResolveUserHistorySheet]", _
                                "branch=noID_uniqueName", _
                                "resolvedSheet=" & HistoryLoadDebug_SheetName(wsTarget), _
                                "sheetLastDataRow=" & CStr(LastDataRow(wsTarget))
-
 
         If Len(kanaVal) > 0 Then indexWs.Cells(indexRow, 3).value = kanaVal
         resolvedIndexRow = indexRow
@@ -5084,7 +5155,6 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
         Exit Function
     End If
 
-    
     If Len(idVal) > 0 Then
         Set rowsByID = FindEvalIndexRowsByUserID(indexWs, idVal)
         If rowsByID.count > 1 Then
@@ -5139,7 +5209,30 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
 
     If Len(idVal) > 0 Then
         Set rowsByNameWithoutID = FindEvalIndexRowsByNameWithoutUserID(indexWs, nm)
-        pickedRow = PickLegacyTransferIndexRow(indexWs, rowsByNameWithoutID, idVal, nm, forSave)
+
+        If forSave And rowsByName.count > 1 Then
+            Dim savePickReason As String
+            pickedRow = PickDuplicateNameIndexRow(indexWs, rowsByName, savePickReason)
+            If pickedRow > 0 Then
+                If Len(Trim$(CStr(indexWs.Cells(pickedRow, 1).value))) = 0 Then
+                    If AssignUserIDToHistoryEntry(indexWs, pickedRow, idVal, nm, kanaVal, wsTarget) Then
+                        resolvedIndexRow = pickedRow
+                        ResolveUserHistorySheetEx = True
+                        Exit Function
+                    End If
+                Else
+                    message = "The selected candidate already has a different ID."
+                    Exit Function
+                End If
+            End If
+        ElseIf rowsByNameWithoutID.count = 1 Then
+            pickedRow = CLng(rowsByNameWithoutID(1))
+        ElseIf rowsByNameWithoutID.count > 1 Then
+            If Not forSave Then
+                pickedRow = PickLegacyTransferIndexRow(indexWs, rowsByNameWithoutID, idVal, nm, forSave)
+            End If
+        End If
+
         If pickedRow > 0 Then
             If AssignUserIDToHistoryEntry(indexWs, pickedRow, idVal, nm, kanaVal, wsTarget) Then
                 resolvedIndexRow = pickedRow
@@ -5148,21 +5241,23 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
             End If
         End If
 
-        If forSave Then
-            newRow = NextAppendRow(indexWs)
-            indexWs.Cells(newRow, 1).value = idVal
-            indexWs.Cells(newRow, 2).value = nm
-            indexWs.Cells(newRow, 3).value = kanaVal
-            indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
-            Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
-            EnsureHistorySheetInitialized wsTarget
-            resolvedIndexRow = newRow
-            ResolveUserHistorySheetEx = True
-            Exit Function
+        If rowsByNameWithoutID.count = 0 Then
+            If forSave Then
+                newRow = NextAppendRow(indexWs)
+                indexWs.Cells(newRow, 1).value = idVal
+                indexWs.Cells(newRow, 2).value = nm
+                indexWs.Cells(newRow, 3).value = kanaVal
+                indexWs.Cells(newRow, 4).value = NextHistorySheetName(indexWs)
+                Set wsTarget = EnsureEvalSheet(CStr(indexWs.Cells(newRow, 4).value))
+                EnsureHistorySheetInitialized wsTarget
+                resolvedIndexRow = newRow
+                ResolveUserHistorySheetEx = True
+                Exit Function
+            End If
         End If
 
-        message = "同姓同名の利用者が複数存在します。" & vbCrLf & _
-          "該当する履歴を選択してください。"
+        message = "Multiple same-name records exist." & vbCrLf & _
+          "Please select the target history."
         If Not rowsByNameWithoutID Is Nothing Then
             If rowsByNameWithoutID.count > 0 Then
                 message = message & vbCrLf & vbCrLf & BuildLegacyTransferCandidatesMessage(indexWs, rowsByNameWithoutID)
@@ -5219,13 +5314,248 @@ Private Sub RestoreHeaderUserIDAfterHistoryLoad(ByVal owner As Object, _
 
     If Len(restoredID) > 0 Then SetCtlValueSafe owner, "txtHdrPID", restoredID
 End Sub
-
-
-
 Public Function TryGetUserHistorySheet(ByVal owner As Object, ByRef wsTarget As Worksheet) As Boolean
     Dim message As String
+
+    If TryGetBatchContextSheet(wsTarget) Then
+        TryGetUserHistorySheet = True
+        Exit Function
+    End If
+
     TryGetUserHistorySheet = ResolveUserHistorySheet(owner, False, wsTarget, message)
 End Function
+Public Function TryGetUserHistorySheetName(ByVal owner As Object) As String
+    Dim wsTarget As Worksheet
+    Dim resolveMessage As String
+    Dim resolvedIndexRow As Long
+
+    If TryGetBatchContextSheet(wsTarget) Then
+        TryGetUserHistorySheetName = wsTarget.name
+        Exit Function
+    End If
+
+    If ResolveUserHistorySheetEx(owner, False, wsTarget, resolveMessage, resolvedIndexRow) Then
+        If Not wsTarget Is Nothing Then TryGetUserHistorySheetName = wsTarget.name
+    End If
+End Function
+
+Public Sub BeginBatchTargetContext(ByVal targetItem As Object)
+    mBatchContextSheetName = vbNullString
+    If targetItem Is Nothing Then Exit Sub
+    If targetItem.exists("SheetName") Then mBatchContextSheetName = Trim$(CStr(targetItem("SheetName")))
+End Sub
+
+Public Sub EndBatchTargetContext()
+    mBatchContextSheetName = vbNullString
+End Sub
+
+Public Function IsBatchTargetContextActive() As Boolean
+    IsBatchTargetContextActive = (LenB(mBatchContextSheetName) > 0)
+End Function
+
+Private Function TryGetBatchContextSheet(ByRef wsTarget As Worksheet) As Boolean
+    If LenB(mBatchContextSheetName) = 0 Then Exit Function
+    If TryGetWorksheetByName(mBatchContextSheetName, wsTarget) Then
+        EnsureHistorySheetInitialized wsTarget
+        TryGetBatchContextSheet = True
+    End If
+End Function
+Public Function SaveLastPlanDateForOwner(ByVal owner As Object, Optional ByVal planDate As Variant) As Boolean
+    On Error GoTo EH
+
+    Dim wsTarget As Worksheet
+    Dim resolveMessage As String
+    Dim resolvedIndexRow As Long
+    Dim targetRow As Long
+    Dim targetDate As Date
+    Dim idVal As String
+    Dim nameVal As String
+    Dim kanaVal As String
+
+    If owner Is Nothing Then Exit Function
+
+    If TryGetBatchContextSheet(wsTarget) Then
+        EnsureHistorySheetInitialized wsTarget
+    Else
+        If Not ResolveUserHistorySheetEx(owner, True, wsTarget, resolveMessage, resolvedIndexRow) Then Exit Function
+        If wsTarget Is Nothing Then Exit Function
+        EnsureHistorySheetInitialized wsTarget
+    End If
+
+    nameVal = Trim$(GetCtlTextGeneric(owner, "txtName"))
+    idVal = Trim$(GetID_FromBasicInfo(owner))
+    kanaVal = Trim$(GetHdrKanaText(owner))
+
+    targetRow = ResolveLastPlanDateTargetRow(wsTarget, nameVal, idVal, kanaVal)
+    If targetRow < 2 Then Exit Function
+
+    If IsMissing(planDate) Or Not IsDate(planDate) Then
+        targetDate = Date
+    Else
+        targetDate = dateValue(CDate(planDate))
+    End If
+
+    wsTarget.Cells(targetRow, EnsureHeaderCol(wsTarget, HDR_LAST_PLAN_DATE)).value = targetDate
+    SaveLastPlanDateForOwner = True
+    Exit Function
+EH:
+    Err.Clear
+End Function
+
+Public Function SaveLastPlanDateForTarget(ByVal targetItem As Object, Optional ByVal planDate As Variant) As Boolean
+    On Error GoTo EH
+
+    Dim wsTarget As Worksheet
+    Dim targetRow As Long
+    Dim targetDate As Date
+
+    If targetItem Is Nothing Then Exit Function
+    If Not targetItem.exists("SheetName") Then Exit Function
+    If Not TryGetWorksheetByName(CStr(targetItem("SheetName")), wsTarget) Then Exit Function
+
+    EnsureHistorySheetInitialized wsTarget
+
+    If targetItem.exists("TargetRow") Then targetRow = CLng(targetItem("TargetRow"))
+    If targetRow < 2 Or Not IsPlanUpdateTargetRowMatch(wsTarget, targetRow, targetItem) Then
+        targetRow = ResolveLastPlanDateTargetRow(wsTarget, _
+                                                 CStr(targetItem("DisplayName")), _
+                                                 CStr(targetItem("UserID")), _
+                                                 CStr(targetItem("NameKana")))
+    End If
+    If targetRow < 2 Then Exit Function
+
+    If IsMissing(planDate) Or Not IsDate(planDate) Then
+        targetDate = Date
+    Else
+        targetDate = dateValue(CDate(planDate))
+    End If
+
+    wsTarget.Cells(targetRow, EnsureHeaderCol(wsTarget, HDR_LAST_PLAN_DATE)).value = targetDate
+    SaveLastPlanDateForTarget = True
+    Exit Function
+EH:
+    Err.Clear
+End Function
+Public Function GetPlanUpdateTargets() As Collection
+    Dim ws As Worksheet
+    Dim targetName As String
+    Dim targetRow As Long
+    Dim targetItem As Object
+    Dim targetItems As Collection
+
+    Set targetItems = New Collection
+    For Each ws In ThisWorkbook.Worksheets
+        If Left$(ws.name, Len(EVAL_HISTORY_SHEET_PREFIX)) = EVAL_HISTORY_SHEET_PREFIX Then
+            targetName = vbNullString
+            If IsPlanUpdateNoticeTarget(ws, targetName) Then
+                targetRow = GetLatestValidEvalRow(ws)
+                If targetRow >= 2 Then
+                    Set targetItem = CreateObject("Scripting.Dictionary")
+                    targetItem("DisplayName") = targetName
+                    targetItem("SheetName") = ws.name
+                    targetItem("TargetRow") = targetRow
+                    targetItem("UserID") = GetPlanUpdateTargetUserID(ws, targetRow)
+                    targetItem("NameKana") = GetPlanUpdateTargetNameKana(ws, targetRow)
+                    targetItems.Add targetItem
+                End If
+            End If
+        End If
+    Next ws
+
+    Set GetPlanUpdateTargets = targetItems
+End Function
+
+Private Function ResolveLastPlanDateTargetRow(ByVal wsTarget As Worksheet, _
+                                              ByVal nameVal As String, _
+                                              ByVal idVal As String, _
+                                              ByVal kanaVal As String) As Long
+    Dim latestNameRow As Long
+    Dim nameMatchCount As Long
+    Dim identityRow As Long
+
+    nameVal = Trim$(nameVal)
+    If Len(nameVal) = 0 Then Exit Function
+
+    latestNameRow = FindLatestRowByName(wsTarget, nameVal)
+    If latestNameRow = 0 Then Exit Function
+
+    nameMatchCount = CountNormalizedNameRows(wsTarget, nameVal)
+    If nameMatchCount <= 1 Then
+        ResolveLastPlanDateTargetRow = latestNameRow
+        Exit Function
+    End If
+
+    If Len(idVal) > 0 Then
+        identityRow = FindLatestValidEvalRowByIdentity(wsTarget, nameVal, idVal, kanaVal)
+        If identityRow > 0 Then
+            ResolveLastPlanDateTargetRow = identityRow
+        End If
+        Exit Function
+    End If
+
+    If Len(kanaVal) > 0 Then
+        ResolveLastPlanDateTargetRow = FindLatestRowByNameAndKana(wsTarget, nameVal, kanaVal)
+    End If
+End Function
+
+Private Function CountNormalizedNameRows(ByVal ws As Worksheet, ByVal nameText As String) As Long
+    Dim cName As Long
+    Dim lastRow As Long
+    Dim r As Long
+    Dim normalizedTarget As String
+
+    cName = FindHeaderCol(ws, "Basic.Name")
+    If cName = 0 Then cName = FindHeaderCol(ws, ChrW$(&H6C0F) & ChrW$(&H540D))
+    If cName = 0 Then cName = FindHeaderCol(ws, ChrW$(&H5229) & ChrW$(&H7528) & ChrW$(&H8005) & ChrW$(&H540D))
+    If cName = 0 Then cName = FindHeaderCol(ws, ChrW$(&H540D) & ChrW$(&H524D))
+    If cName = 0 Then cName = FindHeaderCol(ws, "Name")
+    If cName = 0 Then Exit Function
+
+    normalizedTarget = NormalizeName(nameText)
+    lastRow = LastDataRow(ws)
+    For r = 2 To lastRow
+        If NormalizeName(CStr(ws.Cells(r, cName).value)) = normalizedTarget Then
+            CountNormalizedNameRows = CountNormalizedNameRows + 1
+        End If
+    Next r
+End Function
+
+Private Function FindLatestRowByNameAndKana(ByVal ws As Worksheet, ByVal nameText As String, ByVal kanaText As String) As Long
+    Dim cName As Long
+    Dim cKana As Long
+    Dim lastRow As Long
+    Dim r As Long
+    Dim normalizedTarget As String
+    Dim normalizedRow As String
+    Dim rowKana As String
+
+    cName = FindHeaderCol(ws, "Basic.Name")
+    If cName = 0 Then cName = FindHeaderCol(ws, ChrW$(&H6C0F) & ChrW$(&H540D))
+    If cName = 0 Then cName = FindHeaderCol(ws, ChrW$(&H5229) & ChrW$(&H7528) & ChrW$(&H8005) & ChrW$(&H540D))
+    If cName = 0 Then cName = FindHeaderCol(ws, ChrW$(&H540D) & ChrW$(&H524D))
+    If cName = 0 Then cName = FindHeaderCol(ws, "Name")
+    If cName = 0 Then Exit Function
+
+    cKana = FindColByHeaderExact(ws, "Basic.NameKana")
+    If cKana = 0 Then cKana = FindHeaderCol(ws, "Kana")
+    If cKana = 0 Then Exit Function
+
+    normalizedTarget = NormalizeName(nameText)
+    lastRow = LastDataRow(ws)
+    For r = lastRow To 2 Step -1
+        normalizedRow = NormalizeName(CStr(ws.Cells(r, cName).value))
+        If normalizedRow <> normalizedTarget Then GoTo NextRow
+
+        rowKana = Trim$(CStr(ws.Cells(r, cKana).value))
+        If Len(rowKana) = 0 Then GoTo NextRow
+        If StrComp(rowKana, Trim$(kanaText), vbTextCompare) = 0 Then
+            FindLatestRowByNameAndKana = r
+            Exit Function
+        End If
+NextRow:
+    Next r
+End Function
+
 
 
 Private Function TryResolveHistorySheetFromIndexRow(ByVal indexWs As Worksheet, _
@@ -5566,7 +5896,153 @@ Public Function GetClientMasterCreatedDateText(ByVal owner As Object) As String
 EH:
     Err.Clear
 End Function
+Public Function GetPlanUpdateTargetNames() As Collection
+    Dim targetItems As Collection
+    Dim targetNames As Collection
+    Dim i As Long
 
+    Set targetItems = GetPlanUpdateTargets()
+    Set targetNames = New Collection
+
+    If Not targetItems Is Nothing Then
+        For i = 1 To targetItems.count
+            targetNames.Add CStr(targetItems(i)("DisplayName"))
+        Next i
+    End If
+
+    Set GetPlanUpdateTargetNames = targetNames
+End Function
+
+Private Function GetPlanUpdateTargetUserID(ByVal wsTarget As Worksheet, ByVal targetRow As Long) As String
+    Dim cID As Long
+
+    cID = FindColByHeaderExact(wsTarget, "Basic.ID")
+    If cID = 0 Then cID = FindColByHeaderExact(wsTarget, "ID")
+    If cID > 0 Then GetPlanUpdateTargetUserID = Trim$(CStr(wsTarget.Cells(targetRow, cID).value))
+End Function
+
+Private Function GetPlanUpdateTargetNameKana(ByVal wsTarget As Worksheet, ByVal targetRow As Long) As String
+    Dim cKana As Long
+
+    cKana = FindColByHeaderExact(wsTarget, "Basic.NameKana")
+    If cKana = 0 Then cKana = FindHeaderCol(wsTarget, "Kana")
+    If cKana > 0 Then GetPlanUpdateTargetNameKana = Trim$(CStr(wsTarget.Cells(targetRow, cKana).value))
+End Function
+
+Private Function IsPlanUpdateTargetRowMatch(ByVal wsTarget As Worksheet, ByVal targetRow As Long, ByVal targetItem As Object) As Boolean
+    Dim rowName As String
+    Dim rowID As String
+    Dim rowKana As String
+
+    If wsTarget Is Nothing Then Exit Function
+    If targetRow < 2 Then Exit Function
+    If targetItem Is Nothing Then Exit Function
+
+    rowName = ResolveHistorySheetDisplayName(wsTarget, targetRow)
+    If NormalizeName(rowName) <> NormalizeName(CStr(targetItem("DisplayName"))) Then Exit Function
+
+    rowID = GetPlanUpdateTargetUserID(wsTarget, targetRow)
+    If Len(CStr(targetItem("UserID"))) > 0 Then
+        If StrComp(rowID, CStr(targetItem("UserID")), vbTextCompare) <> 0 Then Exit Function
+    End If
+
+    rowKana = GetPlanUpdateTargetNameKana(wsTarget, targetRow)
+    If Len(CStr(targetItem("NameKana"))) > 0 And Len(rowKana) > 0 Then
+        If StrComp(rowKana, CStr(targetItem("NameKana")), vbTextCompare) <> 0 Then Exit Function
+    End If
+
+    IsPlanUpdateTargetRowMatch = True
+End Function
+Public Function BuildPlanUpdateTargetNoticeMessage() As String
+    Dim targetNames As Collection
+    Dim targetList As String
+    Dim i As Long
+
+    Set targetNames = GetPlanUpdateTargetNames()
+    If targetNames Is Nothing Then Exit Function
+    If targetNames.count = 0 Then Exit Function
+
+    For i = 1 To targetNames.count
+        If LenB(targetList) > 0 Then targetList = targetList & vbCrLf
+        targetList = targetList & CStr(targetNames(i))
+    Next i
+
+    BuildPlanUpdateTargetNoticeMessage = _
+        JPText(26356, 26032, 23550, 35937, 12364, 12356, 12414, 12377, 12290) & vbCrLf & vbCrLf & _
+        JPText(23550, 35937, 32773, 25968) & ": " & CStr(targetNames.count) & vbCrLf & _
+        JPText(23550, 35937, 32773, 21517) & ":" & vbCrLf & targetList
+End Function
+
+Private Function IsPlanUpdateNoticeTarget(ByVal wsTarget As Worksheet, ByRef targetName As String) As Boolean
+    Dim targetRow As Long
+    Dim lastPlanCol As Long
+    Dim lastPlanDate As Date
+    Dim rawValue As Variant
+
+    targetRow = GetLatestValidEvalRow(wsTarget)
+    If targetRow < 2 Then Exit Function
+
+    targetName = ResolveHistorySheetDisplayName(wsTarget, targetRow)
+    If LenB(Trim$(targetName)) = 0 Then Exit Function
+
+    lastPlanCol = FindColByHeaderExact(wsTarget, HDR_LAST_PLAN_DATE)
+    If lastPlanCol = 0 Then
+        IsPlanUpdateNoticeTarget = True
+        Exit Function
+    End If
+
+    rawValue = wsTarget.Cells(targetRow, lastPlanCol).value
+    If IsEmpty(rawValue) Or IsNull(rawValue) Then
+        IsPlanUpdateNoticeTarget = True
+        Exit Function
+    End If
+    If LenB(Trim$(CStr(rawValue))) = 0 Then
+        IsPlanUpdateNoticeTarget = True
+        Exit Function
+    End If
+    If Not TryParseEvalDate(rawValue, lastPlanDate) Then
+        IsPlanUpdateNoticeTarget = True
+        Exit Function
+    End If
+
+    IsPlanUpdateNoticeTarget = (DateAdd("m", 3, lastPlanDate) <= Date)
+End Function
+
+Private Function ResolveHistorySheetDisplayName(ByVal wsTarget As Worksheet, ByVal targetRow As Long) As String
+    Dim nameCol As Long
+    Dim indexRow As Long
+    Dim indexWs As Worksheet
+
+    nameCol = ResolveHistoryNameColumn(wsTarget)
+    If nameCol > 0 Then
+        ResolveHistorySheetDisplayName = Trim$(CStr(wsTarget.Cells(targetRow, nameCol).value))
+        If LenB(ResolveHistorySheetDisplayName) > 0 Then Exit Function
+    End If
+
+    Set indexWs = EnsureEvalIndexSheet()
+    indexRow = FindEvalIndexRowBySheetName(indexWs, wsTarget.name)
+    If indexRow > 0 Then
+        ResolveHistorySheetDisplayName = Trim$(CStr(indexWs.Cells(indexRow, 2).value))
+        If LenB(ResolveHistorySheetDisplayName) > 0 Then Exit Function
+    End If
+
+    ResolveHistorySheetDisplayName = wsTarget.name
+End Function
+
+Private Function ResolveHistoryNameColumn(ByVal wsTarget As Worksheet) As Long
+    ResolveHistoryNameColumn = FindColByHeaderExact(wsTarget, "Basic.Name")
+    If ResolveHistoryNameColumn = 0 Then ResolveHistoryNameColumn = FindHeaderCol(wsTarget, ChrW$(&H6C0F) & ChrW$(&H540D))
+    If ResolveHistoryNameColumn = 0 Then ResolveHistoryNameColumn = FindHeaderCol(wsTarget, ChrW$(&H5229) & ChrW$(&H7528) & ChrW$(&H8005) & ChrW$(&H540D))
+    If ResolveHistoryNameColumn = 0 Then ResolveHistoryNameColumn = FindHeaderCol(wsTarget, ChrW$(&H540D) & ChrW$(&H524D))
+    If ResolveHistoryNameColumn = 0 Then ResolveHistoryNameColumn = FindHeaderCol(wsTarget, "Name")
+End Function
+
+Private Function JPText(ParamArray codePoints() As Variant) As String
+    Dim i As Long
+    For i = LBound(codePoints) To UBound(codePoints)
+        JPText = JPText & ChrW$(CLng(codePoints(i)))
+    Next i
+End Function
 
 Private Sub UpdateEvalIndexStats(ByVal indexRow As Long, ByVal wsTarget As Worksheet)
     Dim firstEvalDate As String, latestEvalDate As String, previousEvalDate As String

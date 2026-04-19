@@ -78,6 +78,8 @@ Attribute mGlobalClear.VB_VarHelpID = -1
 Private mDailyDateHook As clsDailyDateHook
 Private WithEvents mDailyList As clsDailyLogList
 Attribute mDailyList.VB_VarHelpID = -1
+Private mDailyAbnormalByPID As Object
+Private mCurrentDailyAbnormalPID As String
 Private mBaseLayoutDone As Boolean
 Private mLayoutBuilt As Boolean
 Private mMPPhysHookAttached As Boolean
@@ -127,6 +129,8 @@ Private WithEvents mBIEnter_txtTxCourse As MSForms.TextBox
 Attribute mBIEnter_txtTxCourse.VB_VarHelpID = -1
 Private WithEvents btnGeneratePlanCtl As MSForms.CommandButton
 Attribute btnGeneratePlanCtl.VB_VarHelpID = -1
+Private WithEvents btnBatchGenerate As MSForms.CommandButton
+Attribute btnBatchGenerate.VB_VarHelpID = -1
 
 
 
@@ -3162,6 +3166,8 @@ Private Sub UserForm_Activate()
     Call Align_BIHomeEnv_Once
     
     
+    Call NotifyPlanUpdateTargetsOnFirstShow
+
     Me.controls("txtHdrName").SetFocus
     
 
@@ -3169,6 +3175,124 @@ End Sub
 
 
 
+
+Private Sub NotifyPlanUpdateTargetsOnFirstShow()
+    Dim noticeMessage As String
+
+    noticeMessage = modEvalIOEntry.BuildPlanUpdateTargetNoticeMessage()
+    If LenB(noticeMessage) = 0 Then Exit Sub
+
+    MsgBox noticeMessage, vbInformation
+End Sub
+Private Sub btnBatchGenerate_Click()
+    On Error GoTo EH
+
+    Dim targetItems As Collection
+    Dim targetItem As Object
+    Dim originalSheetName As String
+    Dim confirmText As String
+    Dim successNames As String
+    Dim failureNames As String
+    Dim successCount As Long
+    Dim failureCount As Long
+
+    Set targetItems = modEvalIOEntry.GetPlanUpdateTargets()
+    If targetItems Is Nothing Then Exit Sub
+
+    If targetItems.count = 0 Then
+        MsgBox ChrW$(23550) & ChrW$(35937) & ChrW$(32773) & ChrW$(12394) & ChrW$(12375), vbInformation
+        Exit Sub
+    End If
+
+    On Error Resume Next
+    originalSheetName = modEvalIOEntry.TryGetUserHistorySheetName(Me)
+    Err.Clear
+    On Error GoTo EH
+
+    confirmText = modEvalIOEntry.BuildPlanUpdateTargetNoticeMessage() & vbCrLf & vbCrLf & _
+                  ChrW$(19968) & ChrW$(25324) & ChrW$(29983) & ChrW$(25104) & _
+                  ChrW$(12434) & ChrW$(23455) & ChrW$(34892) & ChrW$(12375) & ChrW$(12414) & ChrW$(12377) & ChrW$(12363) & ChrW$(65311)
+    If MsgBox(confirmText, vbQuestion + vbYesNo) <> vbYes Then Exit Sub
+
+    For Each targetItem In targetItems
+        On Error GoTo TargetEH
+        Call modEvalIOEntry.BeginBatchTargetContext(targetItem)
+
+        If Not modEvalIOEntry.LoadEvaluation_FromHistorySheet(Me, CStr(targetItem("SheetName"))) Then
+            Err.Raise 5, "btnBatchGenerate_Click", "load failed"
+        End If
+
+        modBasicPipeline.ExportAllSheets Me
+        If Not modEvalIOEntry.SaveLastPlanDateForTarget(targetItem) Then
+            Err.Raise 5, "btnBatchGenerate_Click", "last plan date update failed"
+        End If
+
+        successCount = successCount + 1
+        If LenB(successNames) > 0 Then successNames = successNames & vbCrLf
+        successNames = successNames & CStr(targetItem("DisplayName"))
+        Call modEvalIOEntry.EndBatchTargetContext
+        DoEvents
+        GoTo NextTarget
+
+TargetEH:
+        failureCount = failureCount + 1
+        If LenB(failureNames) > 0 Then failureNames = failureNames & vbCrLf
+        failureNames = failureNames & CStr(targetItem("DisplayName"))
+        Call modEvalIOEntry.EndBatchTargetContext
+        Err.Clear
+        On Error GoTo EH
+
+NextTarget:
+    Next targetItem
+
+    If LenB(originalSheetName) > 0 Then
+        On Error Resume Next
+        Call modEvalIOEntry.LoadEvaluation_FromHistorySheet(Me, originalSheetName)
+        Err.Clear
+        On Error GoTo EH
+    End If
+
+    MsgBox BuildBatchGenerateSummary(successCount, successNames, failureCount, failureNames), vbInformation
+    Exit Sub
+EH:
+    Call modEvalIOEntry.EndBatchTargetContext
+    MsgBox ChrW$(19968) & ChrW$(25324) & ChrW$(29983) & ChrW$(25104) & _
+           ChrW$(12391) & ChrW$(12456) & ChrW$(12521) & ChrW$(12540) & _
+           ChrW$(12364) & ChrW$(30330) & ChrW$(29983) & ChrW$(12375) & ChrW$(12414) & ChrW$(12375) & ChrW$(12383) & _
+           ChrW$(12290) & vbCrLf & Err.Number & " - " & Err.Description, vbExclamation
+End Sub
+
+Private Function BuildBatchTargetNameList(ByVal targetNames As Collection) As String
+    Dim i As Long
+
+    For i = 1 To targetNames.count
+        If LenB(BuildBatchTargetNameList) > 0 Then BuildBatchTargetNameList = BuildBatchTargetNameList & vbCrLf
+        BuildBatchTargetNameList = BuildBatchTargetNameList & CStr(targetNames(i))
+    Next i
+End Function
+
+Private Function BuildBatchGenerateSummary(ByVal successCount As Long, _
+                                           ByVal successNames As String, _
+                                           ByVal failureCount As Long, _
+                                           ByVal failureNames As String) As String
+    BuildBatchGenerateSummary = _
+        ChrW$(19968) & ChrW$(25324) & ChrW$(29983) & ChrW$(25104) & _
+        ChrW$(12364) & ChrW$(23436) & ChrW$(20102) & ChrW$(12375) & ChrW$(12414) & ChrW$(12375) & ChrW$(12383) & ChrW$(12290) & _
+        vbCrLf & vbCrLf & _
+        ChrW$(20966) & ChrW$(29702) & ChrW$(20214) & ChrW$(25968) & ": " & CStr(successCount + failureCount) & vbCrLf & _
+        ChrW$(25104) & ChrW$(21151) & ": " & CStr(successCount) & vbCrLf & _
+        ChrW$(22833) & ChrW$(25943) & ": " & CStr(failureCount)
+
+    If LenB(successNames) > 0 Then
+        BuildBatchGenerateSummary = BuildBatchGenerateSummary & vbCrLf & vbCrLf & _
+            ChrW$(25104) & ChrW$(21151) & ChrW$(23550) & ChrW$(35937) & ":" & vbCrLf & successNames
+    End If
+
+    If LenB(failureNames) > 0 Then
+        BuildBatchGenerateSummary = BuildBatchGenerateSummary & vbCrLf & vbCrLf & _
+            ChrW$(22833) & ChrW$(25943) & ChrW$(23550) & ChrW$(35937) & ":" & vbCrLf & failureNames
+    End If
+End Function
 
 '==== UserForm コードモジュール（fraDynPainBox が載っているフォーム）====
 
@@ -3343,18 +3467,43 @@ On Error GoTo 0
 
     
     ' 終了者削除の代わりに計画生成ボタンをfrHeaderに配置
+    ' 邨ゆｺ・・炎髯､縺ｮ莉｣繧上ｊ縺ｫ險育判逕滓・繝懊ち繝ｳ繧断rHeader縺ｫ驟咲ｽｮ
+    ' 邨ゆｺ・・炎髯､縺ｮ莉｣繧上ｊ縺ｫ險育判逕滓・繝懊ち繝ｳ繧断rHeader縺ｫ驟咲ｽｮ
+    ' 邨ゆｺ・・炎髯､縺ｮ莉｣繧上ｊ縺ｫ險育判逕滓・繝懊ち繝ｳ繧断rHeader縺ｫ驟咲ｽｮ
     Dim frHdrRef As MSForms.Frame
     Set frHdrRef = Me.controls("frHeader")
-    Set btnGeneratePlanCtl = frHdrRef.controls.Add("Forms.CommandButton.1")
+
+    On Error Resume Next
+    Set btnGeneratePlanCtl = frHdrRef.controls("cmdArchiveDelete")
+    Set btnBatchGenerate = frHdrRef.controls("btnBatchGenerate")
+    On Error GoTo 0
+
+    If btnGeneratePlanCtl Is Nothing Then
+        Set btnGeneratePlanCtl = frHdrRef.controls.Add("Forms.CommandButton.1", "cmdArchiveDelete", True)
+    End If
     With btnGeneratePlanCtl
-        .caption = "計画生成": .Accelerator = "G"
-        .Width = 90: .name = "cmdArchiveDelete"
+        .caption = ChrW$(35336) & ChrW$(30011) & ChrW$(29983) & ChrW$(25104)
+        .Accelerator = "G"
+        .Width = 90
         .Height = frHdrRef.controls("txtHdrPID").Height
         .top = frHdrRef.controls("txtHdrPID").top
         .Left = 8
     End With
 
-      RearrangeHeaderTopAreaLayout
+    If btnBatchGenerate Is Nothing Then
+        Set btnBatchGenerate = frHdrRef.controls.Add("Forms.CommandButton.1", "btnBatchGenerate", True)
+    End If
+    With btnBatchGenerate
+        .caption = ChrW$(19968) & ChrW$(25324) & ChrW$(29983) & ChrW$(25104)
+        .Accelerator = "B"
+        .Width = 90
+        .Height = frHdrRef.controls("txtHdrPID").Height
+        .top = frHdrRef.controls("txtHdrPID").top
+        .Left = btnGeneratePlanCtl.Left + btnGeneratePlanCtl.Width + 6
+    End With
+
+    RearrangeHeaderTopAreaLayout
+    RearrangeHeaderTopAreaLayout
       
 AddPrintButton_TestEval
 
@@ -6584,73 +6733,116 @@ Public Sub BuildDailyLog_SaveButton(owner As Object)
 
 
 End Sub
-
-
-
 Private Sub mDailyExtract_Click()
-    ' ① 材料文を作る
-    Call Me.BuildMonthlyDraft_FromDailyLog
-    
-    
+    Dim txtDailyDate As Object
+    Dim targetDate As Date
+    Dim targets As Collection
+    Dim targetItem As Object
     Dim box As Object
-            Set box = DailyLogCtl("txtMonthlyMonitoringDraft")
+    Dim sourceText As String
+    Dim draftText As String
+    Dim processed As Collection
+    Dim failedTargets As Collection
+    Dim i As Long
+    Dim summary As String
+    Dim successCount As Long
+    Dim failureCount As Long
+    Dim targetName As String
+    Dim failureReason As String
+
+    Set txtDailyDate = Me.controls("txtDailyDate")
+    If txtDailyDate Is Nothing Then Exit Sub
+    If Not IsDate(txtDailyDate.value) Then
+        MsgBox "記録日の欄に正しい日付を入力してください。", vbExclamation
+        Exit Sub
+    End If
+
+    targetDate = CDate(txtDailyDate.value)
+    Set targets = CollectMonthlyMonitoringTargets(targetDate)
+
+    Set box = DailyLogCtl("txtMonthlyMonitoringDraft")
     If box Is Nothing Then Exit Sub
 
+    If targets Is Nothing Or targets.count = 0 Then
+        box.value = "【月次モニタリング下書き】" & vbCrLf & _
+                    "対象月：" & Format$(DateSerial(Year(targetDate), Month(targetDate), 1), "yyyy/mm") & vbCrLf & vbCrLf & _
+                    "この月にDailyLogが存在する利用者はいません。"
+        MsgBox "この月にDailyLogが存在する利用者はいません。", vbExclamation
+        Exit Sub
+    End If
 
-        If InStr(1, box.value, "（この月の記録はありません）", vbTextCompare) > 0 Then
-            
-            box.value = "【月次モニタリング下書き】" & vbCrLf & _
-            "対象：" & Me.controls("frHeader").controls("txtHdrName").value & vbCrLf & _
-                 "期間" & Format$(DateSerial(Year(CDate(Me.controls("txtDailyDate").value)), _
-                                      Month(CDate(Me.controls("txtDailyDate").value)), 1), "yyyy/mm/dd") & _
-            " - " & _
-             Format$(DateSerial(Year(CDate(Me.controls("txtDailyDate").value)), _
-                                Month(CDate(Me.controls("txtDailyDate").value)) + 1, 0), "yyyy/mm/dd") & vbCrLf & vbCrLf & _
-            "■ この月に記録された特記事項" & vbCrLf & _
-            "この月は特記事項となる記録はありませんでした。" & vbCrLf & _
-            "体調面に大きな変動はなく、日々のリハビリにも安定して取り組まれていました。" & vbCrLf & _
-            "今後も現在の状態を維持できるよう、引き続き経過を観察していきます。"
+    Set processed = New Collection
+    Set failedTargets = New Collection
 
-                      Call ExportMonitoring_ToMonthlyWorkbook( _
-        CDate(Me.controls("txtDailyDate").value), _
-                Me.controls("frHeader").controls("txtHdrName").value, _
-                box.value)
+    For i = 1 To targets.count
+        Set targetItem = targets(i)
+        targetName = CStr(targetItem("Name"))
 
-           Exit Sub
+        On Error GoTo HandleTargetError
+        sourceText = BuildMonthlyDraftTextForClient(targetDate, targetName, CStr(targetItem("PID")))
+        draftText = GenerateMonitoringDraftText(sourceText)
+        Call ExportMonitoring_ToMonthlyWorkbook(targetDate, targetName, draftText)
+        processed.Add targetName
+        successCount = successCount + 1
+        On Error GoTo 0
+        GoTo ContinueNextTarget
 
+HandleTargetError:
+        failureCount = failureCount + 1
+        failureReason = Trim$(Err.Description)
+        If Len(failureReason) = 0 Then
+            failureReason = "不明なエラー"
+        ElseIf Len(failureReason) > 60 Then
+            failureReason = Left$(failureReason, 60) & "..."
         End If
+        failedTargets.Add targetName & "：" & failureReason
+        Err.Clear
+        On Error GoTo 0
 
-    
-    
+ContinueNextTarget:
+    Next i
 
-    ' ② AIで下書きに変換
-' AIで下書きに変換
-If Trim$(DailyLogCtl("txtMonthlyMonitoringDraft").value) = "" Then
-    MsgBox "モニタリング本文が空です。先に内容を入力してください。", vbExclamation
-    Exit Sub
-End If
+    summary = "【月次モニタリング下書き】" & vbCrLf & _
+              "対象月：" & Format$(DateSerial(Year(targetDate), Month(targetDate), 1), "yyyy/mm") & vbCrLf & _
+              "対象人数：" & CStr(targets.count) & "名" & vbCrLf & _
+              "成功件数：" & CStr(successCount) & "件" & vbCrLf & _
+              "失敗件数：" & CStr(failureCount) & "件" & vbCrLf & vbCrLf & _
+              "対象者："
 
+    For i = 1 To processed.count
+        summary = summary & vbCrLf & "・" & CStr(processed(i))
+    Next i
 
+    If failedTargets.count > 0 Then
+        summary = summary & vbCrLf & vbCrLf & "失敗利用者："
+        For i = 1 To failedTargets.count
+            summary = summary & vbCrLf & "・" & CStr(failedTargets(i))
+        Next i
+    End If
 
-DailyLogCtl("txtMonthlyMonitoringDraft").value = _
-    OpenAI_BuildDraft( _
-            "【出力フォーマット厳守】" & vbCrLf & _
-"以下の見出しを、表記・順序・記号（■）を一切変えずに必ず出力すること。" & vbCrLf & _
-"見出しの追加・削除・言い換え禁止。装飾（★/【】/番号付け）禁止。" & vbCrLf & _
-"必ずこの順序：" & vbCrLf & _
-"■ この月に記録された特記事項" & vbCrLf & _
-"■ コメント・考察" & vbCrLf & vbCrLf & _
-"・本文（経過・時系列）には、事実のみを記載する。記録に書かれていない事実や推測は、本文には含めない。「コメント・考察」欄に限り、記録内容を踏まえた今後の観察視点や留意点を記載してよい。その際は、断定を避け、「○○の可能性がある」「○○に留意して経過を確認する」などの表現に限定する。医学的判断、改善・悪化の断定、因果関係の断定は行わない。文体は「です・ます調」とし、現場記録として自然で読みやすい柔らかさを持たせる。", _
-            DailyLogCtl("txtMonthlyMonitoringDraft").value _
-        )
+    If Len(draftText) > 0 Then
+        summary = summary & vbCrLf & vbCrLf & "--- 最後に生成した下書き ---" & vbCrLf & draftText
+    End If
 
+    box.value = summary
 
-            Call ExportMonitoring_ToMonthlyWorkbook( _
-        CDate(DailyLogCtl("txtDailyDate").value), _
-        Me.controls("frHeader").controls("txtHdrName").value, _
-         DailyLogCtl("txtMonthlyMonitoringDraft").value)
+    summary = "月次モニタリング生成が完了しました。" & vbCrLf & vbCrLf & _
+              "対象人数：" & CStr(targets.count) & "名" & vbCrLf & _
+              "成功件数：" & CStr(successCount) & "件" & vbCrLf & _
+              "失敗件数：" & CStr(failureCount) & "件"
 
-        
+    If failedTargets.count > 0 Then
+        summary = summary & vbCrLf & vbCrLf & "失敗利用者一覧："
+        For i = 1 To failedTargets.count
+            summary = summary & vbCrLf & "・" & CStr(failedTargets(i))
+        Next i
+    End If
+
+    summary = summary & vbCrLf & vbCrLf & "出力先：" & BuildMonthlyMonitoringOutputFolder(targetDate)
+
+    MsgBox summary, _
+           IIf(failureCount > 0, vbExclamation, vbInformation), _
+           "月次モニタリング生成"
 End Sub
 
 Private Sub mDailySave_Click()
@@ -6869,7 +7061,6 @@ Private Function GetMainMultiPage() As MSForms.MultiPage
         End If
     Next
 End Function
-
 Private Sub HookDailyDateTextBox()
     Dim txt As MSForms.TextBox
     Set txt = Me.controls("txtDailyDate")
@@ -6879,10 +7070,107 @@ Private Sub HookDailyDateTextBox()
     mDailyDateHook.Hook txt, Me
 End Sub
 
-Public Sub OnDailyDateChanged()
-    RefreshDailyClientTargetList
+Private Sub EnsureDailyAbnormalState()
+    If mDailyAbnormalByPID Is Nothing Then
+        Set mDailyAbnormalByPID = CreateObject("Scripting.Dictionary")
+    End If
 End Sub
 
+Public Property Get DailyAbnormalMap() As Object
+    EnsureDailyAbnormalState
+    Set DailyAbnormalMap = mDailyAbnormalByPID
+End Property
+
+Private Function CurrentDailyAbnormalTextBox() As Object
+    Set CurrentDailyAbnormalTextBox = DailyLogCtl("txtDailyAbnormal")
+End Function
+
+Private Function DailyTargetPIDByRow(ByVal lst As MSForms.ListBox, ByVal rowIndex As Long) As String
+    If lst Is Nothing Then Exit Function
+    If rowIndex < 0 Or rowIndex >= lst.ListCount Then Exit Function
+    If lst.ColumnCount <= DAILY_TARGET_COL_PID Then Exit Function
+    DailyTargetPIDByRow = Trim$(CStr(lst.List(rowIndex, DAILY_TARGET_COL_PID)))
+End Function
+
+Public Sub StashCurrentDailyAbnormal()
+    Dim txtAbnormal As Object
+
+    If Len(mCurrentDailyAbnormalPID) = 0 Then Exit Sub
+
+    Set txtAbnormal = CurrentDailyAbnormalTextBox()
+    If txtAbnormal Is Nothing Then Exit Sub
+
+    EnsureDailyAbnormalState
+    mDailyAbnormalByPID(mCurrentDailyAbnormalPID) = CStr(txtAbnormal.value)
+End Sub
+
+Private Sub ShowDailyAbnormalByPID(ByVal targetPID As String)
+    Dim txtAbnormal As Object
+
+    Set txtAbnormal = CurrentDailyAbnormalTextBox()
+    If txtAbnormal Is Nothing Then Exit Sub
+
+    EnsureDailyAbnormalState
+    mCurrentDailyAbnormalPID = Trim$(targetPID)
+
+    If Len(mCurrentDailyAbnormalPID) = 0 Then
+        txtAbnormal.value = vbNullString
+    ElseIf mDailyAbnormalByPID.exists(mCurrentDailyAbnormalPID) Then
+        txtAbnormal.value = CStr(mDailyAbnormalByPID(mCurrentDailyAbnormalPID))
+    Else
+        txtAbnormal.value = vbNullString
+    End If
+End Sub
+
+Private Sub ResetDailyAbnormalState()
+    Set mDailyAbnormalByPID = CreateObject("Scripting.Dictionary")
+    mCurrentDailyAbnormalPID = vbNullString
+    ShowDailyAbnormalByPID vbNullString
+End Sub
+
+Public Sub PrimeCurrentDailyAbnormalFromForm()
+    Dim hdr As Object
+    Dim txtHdrPID As Object
+    Dim txtAbnormal As Object
+    Dim pid As String
+
+    Set txtAbnormal = CurrentDailyAbnormalTextBox()
+    If txtAbnormal Is Nothing Then Exit Sub
+
+    Set hdr = SafeGetControl(Me, "frHeader")
+    If hdr Is Nothing Then Exit Sub
+
+    Set txtHdrPID = SafeGetControl(hdr, "txtHdrPID")
+    If txtHdrPID Is Nothing Then Exit Sub
+
+    pid = Trim$(CStr(txtHdrPID.value))
+    If Len(pid) = 0 Then Exit Sub
+
+    EnsureDailyAbnormalState
+    mDailyAbnormalByPID(pid) = CStr(txtAbnormal.value)
+    mCurrentDailyAbnormalPID = pid
+End Sub
+
+Public Sub SelectDailyTargetByPID(ByVal targetPID As String)
+    Dim lst As MSForms.ListBox
+    Dim i As Long
+
+    Set lst = DailyLogCtl("lstDailyClientTargets")
+    If lst Is Nothing Then Exit Sub
+
+    For i = 0 To lst.ListCount - 1
+        If StrComp(DailyTargetPIDByRow(lst, i), Trim$(targetPID), vbTextCompare) = 0 Then
+            lst.ListIndex = i
+            mDailyList_Clicked i
+            Exit Sub
+        End If
+    Next i
+End Sub
+Public Sub OnDailyDateChanged()
+    StashCurrentDailyAbnormal
+    ResetDailyAbnormalState
+    RefreshDailyClientTargetList
+End Sub
 Private Sub RefreshDailyClientTargetList()
     Dim txtDailyDate As Object
     Dim lst As MSForms.ListBox
@@ -6934,6 +7222,12 @@ Private Sub RefreshDailyClientTargetList()
     Next i
 
     UpdateDailyClientTargetCaption lbl, targetCount
+    If lst.ListCount > 0 Then
+        lst.ListIndex = 0
+        mDailyList_Clicked lst.ListIndex
+    Else
+        ShowDailyAbnormalByPID vbNullString
+    End If
 End Sub
 
 Private Sub ConfigureDailyClientTargetListColumns(ByVal lst As MSForms.ListBox, ByVal listWidth As Single)
@@ -6972,7 +7266,6 @@ Private Sub EnsureDailyAddTargetButton(ByVal f As Object, ByVal lblTargets As Ob
 
     Set mDailyAddTarget = btn
 End Sub
-
 Private Sub mDailyAddTarget_Click()
     Dim lst As MSForms.ListBox
     Dim hdr As Object
@@ -7001,6 +7294,10 @@ Private Sub mDailyAddTarget_Click()
     AddOrUpdateDailyTargetListRow lst, targetName, targetPID, DAILY_TARGET_CATEGORY_ADDED
 
     UpdateDailyClientTargetCaption DailyLogCtl("lblDailyClientTargets"), lst.ListCount
+    If lst.ListIndex < 0 Then
+        lst.ListIndex = lst.ListCount - 1
+        mDailyList_Clicked lst.ListIndex
+    End If
 End Sub
 
 Private Sub mDailyList_DblClicked()
@@ -7015,10 +7312,17 @@ Private Sub mDailyList_DblClicked()
 
     ToggleDailyTargetExcluded lst, rowIndex
 End Sub
-
 Private Sub mDailyList_Clicked(ByVal rowIndex As Long)
-' 一覧選択は1人だけにし、
-' 個別異常所見の入力対象を明確にする。
+    Dim lst As MSForms.ListBox
+    Dim targetPID As String
+
+    Set lst = DailyLogCtl("lstDailyClientTargets")
+    If lst Is Nothing Then Exit Sub
+    If rowIndex < 0 Or rowIndex >= lst.ListCount Then Exit Sub
+
+    StashCurrentDailyAbnormal
+    targetPID = DailyTargetPIDByRow(lst, rowIndex)
+    ShowDailyAbnormalByPID targetPID
 End Sub
 
 Private Sub AddOrUpdateDailyTargetListRow(ByVal lst As MSForms.ListBox, ByVal targetName As String, ByVal targetPID As String, ByVal category As String)
@@ -7758,7 +8062,7 @@ End Sub
 Private Sub RearrangeHeaderTopAreaLayout()
     Dim f As Object
     Dim btnArchive As Object
-    Dim btnClear As Object, btnSave As Object, btnClose As Object, btnLoadPrev As Object
+Dim btnBatch As Object, btnClear As Object, btnSave As Object, btnClose As Object, btnLoadPrev As Object
     Dim lblPID As Object, lblName As Object, lblKana As Object
     Dim txtPID As Object, txtName As Object, txtKana As Object
     Dim leftX As Single, midLeft As Single, midRight As Single
@@ -7770,6 +8074,7 @@ Private Sub RearrangeHeaderTopAreaLayout()
     If f Is Nothing Then Exit Sub
 
     Set btnArchive = SafeGetControl(f, "cmdArchiveDelete")
+    Set btnBatch = SafeGetControl(f, "btnBatchGenerate")
     Set btnClear = SafeGetControl(f, "cmdClearHeader")
     Set btnSave = SafeGetControl(f, "cmdSaveHeader")
     Set btnClose = SafeGetControl(f, "cmdCloseHeader")
@@ -7812,9 +8117,21 @@ Private Sub RearrangeHeaderTopAreaLayout()
     If Not btnArchive Is Nothing Then
         btnArchive.Left = 8
         btnArchive.top = headerTop
-        leftX = btnArchive.Left + btnArchive.Width + 14
+        leftX = btnArchive.Left + btnArchive.Width + btnGap
     Else
         leftX = 8
+    End If
+
+    If Not btnBatch Is Nothing Then
+        btnBatch.Left = leftX
+        btnBatch.top = headerTop
+        leftX = btnBatch.Left + btnBatch.Width + 14
+    End If
+
+    If Not btnBatch Is Nothing Then
+        btnBatch.Left = leftX
+        btnBatch.top = headerTop
+        leftX = btnBatch.Left + btnBatch.Width + 14
     End If
 
 
@@ -8054,72 +8371,100 @@ btn.Left = f.InsideWidth - btn.Width - 28.35
     
     
 End Sub
-
-
 Public Sub BuildMonthlyDraft_FromDailyLog()
-    Dim ws As Worksheet
-    Dim wb As Workbook
-    Dim wbOpenedHere As Boolean
     Dim txtDailyDate As Object
     Dim nm As String
-    Dim v As Variant
-    Dim dFrom As Date, dTo As Date
-    Dim lastRow As Long, r As Long
-    Dim s As String
-    Dim hit As Long
-    Dim d As Date, staff As String, note As String
+    Dim pid As String
+    Dim sourceText As String
 
     Set txtDailyDate = Me.controls("txtDailyDate")
     If txtDailyDate Is Nothing Then Exit Sub
-
-    ' 対象月＝記録日（txtDailyDate）の月
-    v = txtDailyDate.value
-    If Not IsDate(v) Then
+    If Not IsDate(txtDailyDate.value) Then
         MsgBox "記録日の欄に正しい日付を入力してください。", vbExclamation
         Exit Sub
     End If
-    dFrom = DateSerial(Year(CDate(v)), Month(CDate(v)), 1)
-    dTo = DateSerial(Year(CDate(v)), Month(CDate(v)) + 1, 0)
 
-    ' 対象者＝フォーム氏名（DailyLogのB列と一致）
     nm = Trim$(Me.controls("frHeader").controls("txtHdrName").value)
-    If nm = "" Then
+    pid = Trim$(Me.controls("frHeader").controls("txtHdrPID").value)
+    If Len(nm) = 0 Then
         MsgBox "氏名を入力してください。", vbExclamation
         Exit Sub
     End If
-    
-    Dim pid As String, cntSameName As Long
-    
 
-Set ws = GetDailyLogSheetByDate(dFrom, False, wb, wbOpenedHere)
-If ws Is Nothing Then
-    s = "【モニタリング】" & vbCrLf _
-      & "利用者名：" & nm & vbCrLf _
-      & "期間：" & Format$(dFrom, "yyyy/mm/dd") & " ～ " & Format$(dTo, "yyyy/mm/dd") & vbCrLf & vbCrLf _
-      & "該当期間の記録はありません。" & vbCrLf
-    GoTo WriteOut
-End If
+    sourceText = BuildMonthlyDraftTextForClient(CDate(txtDailyDate.value), nm, pid)
+
+    Call Ensure_MonthlyDraftBox_UnderFraDailyLog(True)
+    DailyLogCtl("txtMonthlyMonitoringDraft").value = sourceText
+End Sub
+Private Function BuildMonthlyDraftTextForClient(ByVal targetDate As Date, ByVal clientName As String, ByVal clientPID As String) As String
+    Dim ws As Worksheet
+    Dim wb As Workbook
+    Dim wbOpenedHere As Boolean
+    Dim dFrom As Date
+    Dim dTo As Date
+    Dim lastRow As Long
+    Dim r As Long
+    Dim s As String
+    Dim hit As Long
+    Dim rowDate As Date
+    Dim rowPID As String
+    Dim rowName As String
+    Dim staff As String
+    Dim dayText As String
+    Dim merged As Object
+    Dim orderedKeys As Collection
+    Dim mergeKey As String
+    Dim mergedItem As Object
+    Dim occurrenceLabel As String
+    Dim keyItem As Variant
+
+    dFrom = DateSerial(Year(targetDate), Month(targetDate), 1)
+    dTo = DateSerial(Year(targetDate), Month(targetDate) + 1, 0)
+
+    Set ws = GetDailyLogSheetByDate(dFrom, False, wb, wbOpenedHere)
+    If ws Is Nothing Then
+        BuildMonthlyDraftTextForClient = BuildMonthlyDraftNoLogText(clientName, dFrom, dTo)
+        Exit Function
+    End If
 
     lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
 
-    pid = Trim$(Me.controls("frHeader").controls("txtHdrPID").value)
-    cntSameName = Application.WorksheetFunction.CountIf(ws.Range("C:C"), nm)
+    s = "【モニタリング】" & vbCrLf & _
+        "対象：" & clientName & vbCrLf & _
+        "期間：" & Format$(dFrom, "yyyy/mm/dd") & " - " & Format$(dTo, "yyyy/mm/dd") & vbCrLf & vbCrLf & _
+        "■ この月に記録された特記事項（時系列）" & vbCrLf
 
-    s = "【モニタリング】" & vbCrLf _
-      & "対象：" & nm & vbCrLf _
-      & "期間：" & Format$(dFrom, "yyyy/mm/dd") & " - " & Format$(dTo, "yyyy/mm/dd") & vbCrLf & vbCrLf _
-      & "■ この月に記録された特記事項（時系列）" & vbCrLf
-
+    Set merged = CreateObject("Scripting.Dictionary")
+    Set orderedKeys = New Collection
     hit = 0
+
     For r = 2 To lastRow
-        If Trim$(ws.Cells(r, 3).value) = nm And (cntSameName = 1 Or Trim$(ws.Cells(r, 2).value) = pid) Then
-            If IsDate(ws.Cells(r, 4).value) Then
-                d = CDate(ws.Cells(r, 4).value)
-                If d >= dFrom And d <= dTo Then
-                    note = ExtractAbnormalFindingsFromNote(CStr(ws.Cells(r, 5).value))
-                    If Len(Trim$(note)) > 0 Then
-                        staff = CStr(ws.Cells(r, 6).value)
-                        s = s & "・" & Format$(d, "m/d") & "（" & staff & "） " & note & vbCrLf
+        If IsDate(ws.Cells(r, 4).value) Then
+            rowDate = CDate(ws.Cells(r, 4).value)
+            If rowDate >= dFrom And rowDate <= dTo Then
+                rowPID = Trim$(CStr(ws.Cells(r, 2).value))
+                rowName = Trim$(CStr(ws.Cells(r, 3).value))
+                If IsMonthlyMonitoringTargetRow(clientPID, clientName, rowPID, rowName) Then
+                    dayText = BuildMonitoringDailyLogText(CStr(ws.Cells(r, 5).value), CStr(ws.Cells(r, 6).value))
+                    If Len(dayText) > 0 Then
+                        staff = Trim$(CStr(ws.Cells(r, 7).value))
+                        If Len(staff) > 0 Then
+                            occurrenceLabel = Format$(rowDate, "m/d") & "（" & staff & "）"
+                        Else
+                            occurrenceLabel = Format$(rowDate, "m/d")
+                        End If
+
+                        mergeKey = BuildMonitoringAggregationKey(dayText)
+                        If merged.exists(mergeKey) Then
+                            Set mergedItem = merged(mergeKey)
+                            mergedItem("Occurrences") = mergedItem("Occurrences") & "、" & occurrenceLabel
+                        Else
+                            Set mergedItem = CreateObject("Scripting.Dictionary")
+                            mergedItem("Text") = dayText
+                            mergedItem("Occurrences") = occurrenceLabel
+                            merged.Add mergeKey, mergedItem
+                            orderedKeys.Add mergeKey
+                        End If
                         hit = hit + 1
                     End If
                 End If
@@ -8129,16 +8474,167 @@ End If
 
     If hit = 0 Then
         s = s & "・（この月の記録はありません）" & vbCrLf
+    Else
+        For Each keyItem In orderedKeys
+            Set mergedItem = merged(CStr(keyItem))
+            s = s & "・" & CStr(mergedItem("Occurrences")) & " " & CStr(mergedItem("Text")) & vbCrLf
+        Next keyItem
     End If
 
-    
-    ' 出力先（起動時に確保済みだが念のため）
-WriteOut:
-    Call Ensure_MonthlyDraftBox_UnderFraDailyLog(True)
-    DailyLogCtl("txtMonthlyMonitoringDraft").value = s
+    BuildMonthlyDraftTextForClient = s
 
     If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
-End Sub
+End Function
+
+Private Function BuildMonthlyDraftNoLogText(ByVal clientName As String, ByVal dFrom As Date, ByVal dTo As Date) As String
+    BuildMonthlyDraftNoLogText = "【モニタリング】" & vbCrLf & _
+                                 "対象：" & clientName & vbCrLf & _
+                                 "期間：" & Format$(dFrom, "yyyy/mm/dd") & " - " & Format$(dTo, "yyyy/mm/dd") & vbCrLf & vbCrLf & _
+                                 "■ この月に記録された特記事項（時系列）" & vbCrLf & _
+                                 "・（この月の記録はありません）" & vbCrLf
+End Function
+Private Function BuildMonitoringDailyLogText(ByVal commonText As String, ByVal abnormalText As String) As String
+    Dim normalizedAbnormal As String
+
+    normalizedAbnormal = NormalizeMonitoringText(abnormalText)
+    If Len(normalizedAbnormal) = 0 Then Exit Function
+    If IsMeaninglessMonitoringAbnormalText(normalizedAbnormal) Then Exit Function
+
+    BuildMonitoringDailyLogText = "異常所見: " & normalizedAbnormal
+End Function
+Private Function NormalizeMonitoringText(ByVal rawText As String) As String
+    Dim s As String
+
+    s = Trim$(CStr(rawText))
+    s = Replace$(s, vbCrLf, " ")
+    s = Replace$(s, vbCr, " ")
+    s = Replace$(s, vbLf, " ")
+    Do While InStr(s, "  ") > 0
+        s = Replace$(s, "  ", " ")
+    Loop
+
+    NormalizeMonitoringText = Trim$(s)
+End Function
+
+Private Function IsMeaninglessMonitoringAbnormalText(ByVal abnormalText As String) As Boolean
+    Dim key As String
+
+    key = LCase$(abnormalText)
+    key = Replace$(key, "　", "")
+    key = Replace$(key, " ", "")
+    key = Replace$(key, vbCrLf, "")
+    key = Replace$(key, vbCr, "")
+    key = Replace$(key, vbLf, "")
+    key = Replace$(key, "。", "")
+    key = Replace$(key, "、", "")
+    key = Replace$(key, "・", "")
+    key = Replace$(key, ":", "")
+    key = Replace$(key, "：", "")
+
+    Select Case key
+        Case "なし", "特になし", "異常なし", "異常所見なし", "特記事項なし", "著変なし", "変化なし", "問題なし", "特記なし"
+            IsMeaninglessMonitoringAbnormalText = True
+    End Select
+End Function
+
+Private Function BuildMonitoringAggregationKey(ByVal dayText As String) As String
+    BuildMonitoringAggregationKey = LCase$(NormalizeMonitoringText(dayText))
+End Function
+
+Private Function BuildMonthlyMonitoringOutputFolder(ByVal targetDate As Date) As String
+    BuildMonthlyMonitoringOutputFolder = ThisWorkbook.path & "\Monitoring\" & Format$(targetDate, "yyyy-mm")
+End Function
+
+Private Function IsMonthlyMonitoringTargetRow(ByVal targetPID As String, ByVal targetName As String, ByVal rowPID As String, ByVal rowName As String) As Boolean
+    If Len(targetPID) > 0 And Len(rowPID) > 0 Then
+        IsMonthlyMonitoringTargetRow = (StrComp(targetPID, rowPID, vbTextCompare) = 0)
+        Exit Function
+    End If
+
+    If Len(targetName) = 0 Or Len(rowName) = 0 Then Exit Function
+    IsMonthlyMonitoringTargetRow = (StrComp(targetName, rowName, vbTextCompare) = 0)
+End Function
+
+Private Function CollectMonthlyMonitoringTargets(ByVal targetDate As Date) As Collection
+    Dim ws As Worksheet
+    Dim wb As Workbook
+    Dim wbOpenedHere As Boolean
+    Dim dFrom As Date
+    Dim dTo As Date
+    Dim lastRow As Long
+    Dim r As Long
+    Dim rowDate As Date
+    Dim rowPID As String
+    Dim rowName As String
+    Dim key As String
+    Dim seen As Object
+    Dim item As Object
+    Dim result As Collection
+
+    dFrom = DateSerial(Year(targetDate), Month(targetDate), 1)
+    dTo = DateSerial(Year(targetDate), Month(targetDate) + 1, 0)
+
+    Set result = New Collection
+    Set seen = CreateObject("Scripting.Dictionary")
+    Set ws = GetDailyLogSheetByDate(dFrom, False, wb, wbOpenedHere)
+    If ws Is Nothing Then
+        Set CollectMonthlyMonitoringTargets = result
+        Exit Function
+    End If
+
+    lastRow = ws.Cells(ws.rows.count, 1).End(xlUp).row
+    For r = 2 To lastRow
+        If IsDate(ws.Cells(r, 4).value) Then
+            rowDate = CDate(ws.Cells(r, 4).value)
+            If rowDate >= dFrom And rowDate <= dTo Then
+                rowPID = Trim$(CStr(ws.Cells(r, 2).value))
+                rowName = Trim$(CStr(ws.Cells(r, 3).value))
+                If Len(rowName) > 0 Then
+                    key = BuildMonthlyMonitoringTargetKey(rowPID, rowName)
+                    If Not seen.exists(key) Then
+                        Set item = CreateObject("Scripting.Dictionary")
+                        item("PID") = rowPID
+                        item("Name") = rowName
+                        result.Add item
+                        seen.Add key, True
+                    End If
+                End If
+            End If
+        End If
+    Next r
+
+    Set CollectMonthlyMonitoringTargets = result
+
+    If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
+End Function
+
+Private Function BuildMonthlyMonitoringTargetKey(ByVal targetPID As String, ByVal targetName As String) As String
+    If Len(Trim$(targetPID)) > 0 Then
+        BuildMonthlyMonitoringTargetKey = "PID|" & Trim$(targetPID)
+    Else
+        BuildMonthlyMonitoringTargetKey = "NAME|" & Trim$(targetName)
+    End If
+End Function
+
+Private Function GenerateMonitoringDraftText(ByVal sourceText As String) As String
+    If InStr(1, sourceText, "（この月の記録はありません）", vbTextCompare) > 0 Then
+        GenerateMonitoringDraftText = "【月次モニタリング下書き】" & vbCrLf & _
+                                      sourceText & vbCrLf & vbCrLf & _
+                                      "■ コメント・考察" & vbCrLf & _
+                                      "この月は特記事項となる記録はありませんでした。体調面に大きな変動はなく、日々のリハビリにも安定して取り組まれていました。今後も現在の状態を維持できるよう、引き続き経過を観察していきます。"
+        Exit Function
+    End If
+
+    GenerateMonitoringDraftText = OpenAI_BuildDraft( _
+        "【出力フォーマット厳守】" & vbCrLf & _
+        "以下の見出しを、表記・順序・記号（■）を一切変えずに必ず出力すること。" & vbCrLf & _
+        "見出しの追加・削除・言い換え禁止。装飾（★/【】/番号付け）禁止。" & vbCrLf & _
+        "必ずこの順序：" & vbCrLf & _
+        "■ この月に記録された特記事項" & vbCrLf & _
+        "■ コメント・考察" & vbCrLf & vbCrLf & _
+        "・本文（経過・時系列）には、事実のみを記載する。記録に書かれていない事実や推測は、本文には含めない。「コメント・考察」欄に限り、記録内容を踏まえた今後の観察視点や留意点を記載してよい。その際は、断定を避け、「○○の可能性がある」「○○に留意して経過を確認する」などの表現に限定する。医学的判断、改善・悪化の断定、因果関係の断定は行わない。文体は「です・ます調」とし、現場記録として自然で読みやすい柔らかさを持たせる。", _
+        sourceText)
+End Function
 
 Private Function ExtractAbnormalFindingsFromNote(ByVal note As String) As String
     
@@ -8386,11 +8882,11 @@ Private Sub mBIEnter_txtTxCourse_KeyDown(ByVal KeyCode As MSForms.ReturnInteger,
     HandleBasicInfoEnterRoute KeyCode
 End Sub
 
-Private Sub HandleBasicInfoEnterRoute(ByRef KeyCode As MSForms.ReturnInteger, Optional ByVal nextTarget As MSForms.TextBox = Nothing)
+Private Sub HandleBasicInfoEnterRoute(ByRef KeyCode As MSForms.ReturnInteger, Optional ByVal NextTarget As MSForms.TextBox = Nothing)
     If KeyCode <> vbKeyReturn Then Exit Sub
     KeyCode = 0
-    If nextTarget Is Nothing Then Exit Sub
-    nextTarget.SetFocus
+    If NextTarget Is Nothing Then Exit Sub
+    NextTarget.SetFocus
 End Sub
 
 ' clsBasicInfoEnterTextHook / clsBasicInfoEnterComboHook から呼ばれる

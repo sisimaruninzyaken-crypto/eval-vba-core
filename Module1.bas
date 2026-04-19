@@ -49,6 +49,8 @@ Public Sub ExportEvalPlanSheet(ByVal owner As Object, ByVal planData As Object, 
     Application.DisplayAlerts = True
     newWb.Close SaveChanges:=False
 
+    Call modEvalIOEntry.SaveLastPlanDateForOwner(owner, Date)
+
     MsgBox "saved: " & outputPath, vbInformation, "done"
     Exit Sub
 EH:
@@ -57,7 +59,6 @@ EH:
     On Error Resume Next
     If Not newWb Is Nothing Then newWb.Close SaveChanges:=False
 End Sub
-
 Public Sub ExportUnifiedPlanAndLifeFuncWorkbook(ByVal owner As Object, ByVal planData As Object, Optional ByVal patientName As String = "")
     On Error GoTo EH
 
@@ -66,7 +67,7 @@ Public Sub ExportUnifiedPlanAndLifeFuncWorkbook(ByVal owner As Object, ByVal pla
     Set planTemplateWs = ThisWorkbook.Worksheets(PLAN_TEMPLATE_SHEET)
     On Error GoTo EH
     If planTemplateWs Is Nothing Then
-        MsgBox "個別機能訓練計画書のテンプレシートが見つかりません。", vbExclamation
+        MsgBox "蛟句挨讖溯・險鍋ｷｴ險育判譖ｸ縺ｮ繝・Φ繝励Ξ繧ｷ繝ｼ繝医′隕九▽縺九ｊ縺ｾ縺帙ｓ縲・, vbExclamation"
         Exit Sub
     End If
 
@@ -107,7 +108,11 @@ Public Sub ExportUnifiedPlanAndLifeFuncWorkbook(ByVal owner As Object, ByVal pla
     Application.DisplayAlerts = True
     newWb.Close SaveChanges:=False
 
-    MsgBox "saved: " & outputPath, vbInformation, "done"
+    Call modEvalIOEntry.SaveLastPlanDateForOwner(owner, Date)
+
+    If Not modEvalIOEntry.IsBatchTargetContextActive() Then
+        MsgBox "saved: " & outputPath, vbInformation, "done"
+    End If
     Exit Sub
 EH:
     Application.DisplayAlerts = True

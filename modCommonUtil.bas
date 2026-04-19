@@ -573,11 +573,6 @@ Public Function MaskNameForPrint(ByVal s As String, Optional ByVal maskChar As S
 
     MaskNameForPrint = out
 End Function
-
-
-
-' 月単位のブックに、利用者シートを追加していく
-' ymKey 例: "2026-02" など（月単位で一意になる文字列）
 Public Sub ExportMonitoring_ToMonthlyWorkbook(ByVal dailyDate As Date, ByVal clientName As String, ByVal bodyText As String)
     
     Dim reportEvalDate As Date
@@ -670,6 +665,7 @@ End If
 
     ' 印刷物の表示名だけ伏字（シート名は実名）
     wsNew.Range("C7").value = MaskNameForPrint(clientName)
+    wsNew.Range("I9").value = BuildMonitoringServiceMonthText(Date)
 
     ' 本文
     wsNew.Range("A32:J37").Merge
@@ -845,3 +841,7 @@ Fallback:
     ReplaceFirstDateRangeText = sourceText
 End Function
 
+
+Private Function BuildMonitoringServiceMonthText(ByVal baseDate As Date) As String
+    BuildMonitoringServiceMonthText = "令和" & CStr(Year(baseDate) - 2018) & "年" & CStr(Month(baseDate)) & "月"
+End Function
