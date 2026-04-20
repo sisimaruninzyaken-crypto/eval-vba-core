@@ -5237,6 +5237,12 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
     End If
 
     If Len(idVal) > 0 Then
+    
+    
+    
+    
+    
+    
         Set rowsByNameWithoutID = FindEvalIndexRowsByNameWithoutUserID(indexWs, nm)
 
         If rowsByNameWithoutID.count = 1 Then
