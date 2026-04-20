@@ -4114,11 +4114,22 @@ Public Sub Load_DailyLog_Latest_FromForm(owner As Object)
     
     txtAbnormal.value = parsedAbnormal
     CallByName owner, "PrimeCurrentDailyAbnormalFromForm", VbMethod
-    CallByName owner, "SelectDailyTargetByPID", VbMethod, targetPID
+    CallByName owner, "SelectDailyTargetByPID", VbMethod, targetPID, targetName
 
 FinallyExit:
     If wbOpenedHere And Not wb Is Nothing Then wb.Close SaveChanges:=False
 End Sub
+
+Public Function DailyAbnormalStorageKey(ByVal targetPID As String, ByVal targetName As String) As String
+    targetPID = Trim$(targetPID)
+    targetName = Trim$(targetName)
+
+    If Len(targetPID) > 0 Then
+        DailyAbnormalStorageKey = "PID:" & targetPID
+    ElseIf Len(targetName) > 0 Then
+        DailyAbnormalStorageKey = "NAME:" & targetName
+    End If
+End Function
 Public Function SaveDailyLog_Append(owner As Object) As Boolean
 
     
@@ -4283,27 +4294,27 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
     
 
 End Function
-
 Private Function ResolveDailyTargetAbnormal(ByVal owner As Object, ByVal targetItem As Object, ByVal fallbackAbnormal As String) As String
     Dim abnormalMap As Object
     Dim pid As String
+    Dim targetName As String
+    Dim storageKey As String
 
-    ResolveDailyTargetAbnormal = fallbackAbnormal
+    ResolveDailyTargetAbnormal = vbNullString
 
     pid = Trim$(CStr(targetItem("PID")))
-    If Len(pid) = 0 Then Exit Function
+    targetName = Trim$(CStr(targetItem("Name")))
+    storageKey = DailyAbnormalStorageKey(pid, targetName)
+    If Len(storageKey) = 0 Then Exit Function
 
     On Error Resume Next
     Set abnormalMap = CallByName(owner, "DailyAbnormalMap", VbGet)
     On Error GoTo 0
 
     If abnormalMap Is Nothing Then Exit Function
-    If Not abnormalMap.exists(pid) Then
-        ResolveDailyTargetAbnormal = vbNullString
-        Exit Function
-    End If
+    If Not abnormalMap.exists(storageKey) Then Exit Function
 
-    ResolveDailyTargetAbnormal = CStr(abnormalMap(pid))
+    ResolveDailyTargetAbnormal = CStr(abnormalMap(storageKey))
 End Function
 
 Private Sub CommitDailyLogWorkbook(ByVal wb As Workbook)
@@ -5229,7 +5240,6 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
         Set rowsByNameWithoutID = FindEvalIndexRowsByNameWithoutUserID(indexWs, nm)
 
         If rowsByNameWithoutID.count = 1 Then
-        ElseIf rowsByNameWithoutID.count = 1 Then
             pickedRow = CLng(rowsByNameWithoutID(1))
         ElseIf rowsByNameWithoutID.count > 1 Then
             pickedRow = PickLegacyTransferIndexRow(indexWs, rowsByNameWithoutID, idVal, nm, forSave)

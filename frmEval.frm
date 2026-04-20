@@ -78,8 +78,8 @@ Attribute mGlobalClear.VB_VarHelpID = -1
 Private mDailyDateHook As clsDailyDateHook
 Private WithEvents mDailyList As clsDailyLogList
 Attribute mDailyList.VB_VarHelpID = -1
-Private mDailyAbnormalByPID As Object
-Private mCurrentDailyAbnormalPID As String
+Private mDailyAbnormalByKey As Object
+Private mCurrentDailyAbnormalKey As String
 Private mBaseLayoutDone As Boolean
 Private mLayoutBuilt As Boolean
 Private mMPPhysHookAttached As Boolean
@@ -7069,16 +7069,15 @@ Private Sub HookDailyDateTextBox()
     If mDailyDateHook Is Nothing Then Set mDailyDateHook = New clsDailyDateHook
     mDailyDateHook.Hook txt, Me
 End Sub
-
 Private Sub EnsureDailyAbnormalState()
-    If mDailyAbnormalByPID Is Nothing Then
-        Set mDailyAbnormalByPID = CreateObject("Scripting.Dictionary")
+    If mDailyAbnormalByKey Is Nothing Then
+        Set mDailyAbnormalByKey = CreateObject("Scripting.Dictionary")
     End If
 End Sub
 
 Public Property Get DailyAbnormalMap() As Object
     EnsureDailyAbnormalState
-    Set DailyAbnormalMap = mDailyAbnormalByPID
+    Set DailyAbnormalMap = mDailyAbnormalByKey
 End Property
 
 Private Function CurrentDailyAbnormalTextBox() As Object
@@ -7092,47 +7091,52 @@ Private Function DailyTargetPIDByRow(ByVal lst As MSForms.ListBox, ByVal rowInde
     DailyTargetPIDByRow = Trim$(CStr(lst.List(rowIndex, DAILY_TARGET_COL_PID)))
 End Function
 
+Private Function DailyTargetNameByRow(ByVal lst As MSForms.ListBox, ByVal rowIndex As Long) As String
+    If lst Is Nothing Then Exit Function
+    If rowIndex < 0 Or rowIndex >= lst.ListCount Then Exit Function
+    DailyTargetNameByRow = Trim$(CStr(lst.List(rowIndex, DAILY_TARGET_COL_NAME)))
+End Function
 Public Sub StashCurrentDailyAbnormal()
     Dim txtAbnormal As Object
 
-    If Len(mCurrentDailyAbnormalPID) = 0 Then Exit Sub
+    If Len(mCurrentDailyAbnormalKey) = 0 Then Exit Sub
 
     Set txtAbnormal = CurrentDailyAbnormalTextBox()
     If txtAbnormal Is Nothing Then Exit Sub
 
     EnsureDailyAbnormalState
-    mDailyAbnormalByPID(mCurrentDailyAbnormalPID) = CStr(txtAbnormal.value)
+    mDailyAbnormalByKey(mCurrentDailyAbnormalKey) = CStr(txtAbnormal.value)
 End Sub
-
-Private Sub ShowDailyAbnormalByPID(ByVal targetPID As String)
+Private Sub ShowDailyAbnormalByPID(ByVal targetPID As String, Optional ByVal targetName As String = vbNullString)
     Dim txtAbnormal As Object
 
     Set txtAbnormal = CurrentDailyAbnormalTextBox()
     If txtAbnormal Is Nothing Then Exit Sub
 
     EnsureDailyAbnormalState
-    mCurrentDailyAbnormalPID = Trim$(targetPID)
+    mCurrentDailyAbnormalKey = modEvalIOEntry.DailyAbnormalStorageKey(targetPID, targetName)
 
-    If Len(mCurrentDailyAbnormalPID) = 0 Then
+    If Len(mCurrentDailyAbnormalKey) = 0 Then
         txtAbnormal.value = vbNullString
-    ElseIf mDailyAbnormalByPID.exists(mCurrentDailyAbnormalPID) Then
-        txtAbnormal.value = CStr(mDailyAbnormalByPID(mCurrentDailyAbnormalPID))
+    ElseIf mDailyAbnormalByKey.exists(mCurrentDailyAbnormalKey) Then
+        txtAbnormal.value = CStr(mDailyAbnormalByKey(mCurrentDailyAbnormalKey))
     Else
         txtAbnormal.value = vbNullString
     End If
 End Sub
-
 Private Sub ResetDailyAbnormalState()
-    Set mDailyAbnormalByPID = CreateObject("Scripting.Dictionary")
-    mCurrentDailyAbnormalPID = vbNullString
-    ShowDailyAbnormalByPID vbNullString
+    Set mDailyAbnormalByKey = CreateObject("Scripting.Dictionary")
+    mCurrentDailyAbnormalKey = vbNullString
+    ShowDailyAbnormalByPID vbNullString, vbNullString
 End Sub
-
 Public Sub PrimeCurrentDailyAbnormalFromForm()
     Dim hdr As Object
     Dim txtHdrPID As Object
+    Dim txtHdrName As Object
     Dim txtAbnormal As Object
     Dim pid As String
+    Dim targetName As String
+    Dim storageKey As String
 
     Set txtAbnormal = CurrentDailyAbnormalTextBox()
     If txtAbnormal Is Nothing Then Exit Sub
@@ -7141,17 +7145,19 @@ Public Sub PrimeCurrentDailyAbnormalFromForm()
     If hdr Is Nothing Then Exit Sub
 
     Set txtHdrPID = SafeGetControl(hdr, "txtHdrPID")
-    If txtHdrPID Is Nothing Then Exit Sub
+    Set txtHdrName = SafeGetControl(hdr, "txtHdrName")
 
-    pid = Trim$(CStr(txtHdrPID.value))
-    If Len(pid) = 0 Then Exit Sub
+    If Not txtHdrPID Is Nothing Then pid = Trim$(CStr(txtHdrPID.value))
+    If Not txtHdrName Is Nothing Then targetName = Trim$(CStr(txtHdrName.value))
+
+    storageKey = modEvalIOEntry.DailyAbnormalStorageKey(pid, targetName)
+    If Len(storageKey) = 0 Then Exit Sub
 
     EnsureDailyAbnormalState
-    mDailyAbnormalByPID(pid) = CStr(txtAbnormal.value)
-    mCurrentDailyAbnormalPID = pid
+    mDailyAbnormalByKey(storageKey) = CStr(txtAbnormal.value)
+    mCurrentDailyAbnormalKey = storageKey
 End Sub
-
-Public Sub SelectDailyTargetByPID(ByVal targetPID As String)
+Public Sub SelectDailyTargetByPID(ByVal targetPID As String, Optional ByVal targetName As String = vbNullString)
     Dim lst As MSForms.ListBox
     Dim i As Long
 
@@ -7159,7 +7165,13 @@ Public Sub SelectDailyTargetByPID(ByVal targetPID As String)
     If lst Is Nothing Then Exit Sub
 
     For i = 0 To lst.ListCount - 1
-        If StrComp(DailyTargetPIDByRow(lst, i), Trim$(targetPID), vbTextCompare) = 0 Then
+        If Len(Trim$(targetPID)) > 0 Then
+            If StrComp(DailyTargetPIDByRow(lst, i), Trim$(targetPID), vbTextCompare) = 0 Then
+                lst.ListIndex = i
+                mDailyList_Clicked i
+                Exit Sub
+            End If
+        ElseIf StrComp(DailyTargetNameByRow(lst, i), Trim$(targetName), vbTextCompare) = 0 Then
             lst.ListIndex = i
             mDailyList_Clicked i
             Exit Sub
@@ -7315,6 +7327,7 @@ End Sub
 Private Sub mDailyList_Clicked(ByVal rowIndex As Long)
     Dim lst As MSForms.ListBox
     Dim targetPID As String
+    Dim targetName As String
 
     Set lst = DailyLogCtl("lstDailyClientTargets")
     If lst Is Nothing Then Exit Sub
@@ -7322,7 +7335,8 @@ Private Sub mDailyList_Clicked(ByVal rowIndex As Long)
 
     StashCurrentDailyAbnormal
     targetPID = DailyTargetPIDByRow(lst, rowIndex)
-    ShowDailyAbnormalByPID targetPID
+    targetName = DailyTargetNameByRow(lst, rowIndex)
+    ShowDailyAbnormalByPID targetPID, targetName
 End Sub
 
 Private Sub AddOrUpdateDailyTargetListRow(ByVal lst As MSForms.ListBox, ByVal targetName As String, ByVal targetPID As String, ByVal category As String)
