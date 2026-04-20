@@ -3,6 +3,9 @@ Attribute VB_Name = "modEvalIOEntry"
 
 Option Explicit
 Private mBatchContextSheetName As String
+Private mLastLoadedIndexRow As Long
+Private mLastLoadedSheetName As String
+Private mLastLoadedName As String
 
 Public Const EVAL_SHEET_NAME As String = "EvalData"
 Private Const EVAL_INDEX_SHEET_NAME As String = "EvalIndex"
@@ -616,9 +619,10 @@ End Function
 Public Sub SaveEvaluation_Append_From(owner As Object)
     Dim wsUser As Worksheet
     Dim resolveMessage As String
+    Dim allowLegacyTransfer As Boolean
 
-
-    If ResolveUserHistorySheet(owner, True, wsUser, resolveMessage) Then
+    allowLegacyTransfer = ShouldAllowLegacyTransferForSave(owner)
+    If ResolveUserHistorySheetEx(owner, True, wsUser, resolveMessage, 0, allowLegacyTransfer) Then
         EnsureHistorySheetInitialized wsUser
         EnsureClientMasterEntry owner
         
@@ -5088,14 +5092,15 @@ End Function
 
 
 Private Function ResolveUserHistorySheet(owner As Object, ByVal forSave As Boolean, ByRef wsTarget As Worksheet, ByRef message As String) As Boolean
-    ResolveUserHistorySheet = ResolveUserHistorySheetEx(owner, forSave, wsTarget, message)
+    ResolveUserHistorySheet = ResolveUserHistorySheetEx(owner, forSave, wsTarget, message, 0, False)
 End Function
 
 Private Function ResolveUserHistorySheetEx(owner As Object, _
                                            ByVal forSave As Boolean, _
                                            ByRef wsTarget As Worksheet, _
                                            ByRef message As String, _
-                                           Optional ByRef resolvedIndexRow As Long = 0) As Boolean
+                                           Optional ByRef resolvedIndexRow As Long = 0, _
+                                           Optional ByVal allowLegacyTransfer As Boolean = False) As Boolean
     
     
     Dim nm As String: nm = Trim$(owner.txtName.text)
@@ -5114,6 +5119,7 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
     Set rowsByName = FindEvalIndexRowsByName(indexWs, nm)
     HistoryLoadDebug_Print "[ResolveUserHistorySheet]", _
                            "forSave=" & CStr(forSave), _
+                                   "allowLegacyTransfer=" & CStr(allowLegacyTransfer), _
                            "name=" & HistoryLoadDebug_Quote(nm), _
                            "id=" & HistoryLoadDebug_Quote(idVal), _
                            "kana=" & HistoryLoadDebug_Quote(kanaVal), _
@@ -5243,24 +5249,26 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
     
     
     
-        Set rowsByNameWithoutID = FindEvalIndexRowsByNameWithoutUserID(indexWs, nm)
+        If allowLegacyTransfer Then
+            Set rowsByNameWithoutID = FindEvalIndexRowsByNameWithoutUserID(indexWs, nm)
 
-        If rowsByNameWithoutID.count = 1 Then
-            pickedRow = CLng(rowsByNameWithoutID(1))
-        ElseIf rowsByNameWithoutID.count > 1 Then
-            pickedRow = PickLegacyTransferIndexRow(indexWs, rowsByNameWithoutID, idVal, nm, forSave)
-        End If
+            If rowsByNameWithoutID.count = 1 Then
+                pickedRow = CLng(rowsByNameWithoutID(1))
+            ElseIf rowsByNameWithoutID.count > 1 Then
+                pickedRow = PickLegacyTransferIndexRow(indexWs, rowsByNameWithoutID, idVal, nm, forSave)
+            End If
 
-        If pickedRow > 0 Then
-            If AssignUserIDToHistoryEntry(indexWs, pickedRow, idVal, nm, kanaVal, wsTarget) Then
-                resolvedIndexRow = pickedRow
-                ResolveUserHistorySheetEx = True
-                Exit Function
+            If pickedRow > 0 Then
+                If AssignUserIDToHistoryEntry(indexWs, pickedRow, idVal, nm, kanaVal, wsTarget) Then
+                    resolvedIndexRow = pickedRow
+                    ResolveUserHistorySheetEx = True
+                    Exit Function
+                End If
             End If
         End If
 
-        If rowsByNameWithoutID.count = 0 Then
-            If forSave Then
+        If forSave Then
+            If (Not allowLegacyTransfer) Or rowsByNameWithoutID Is Nothing Or rowsByNameWithoutID.count = 0 Or pickedRow = 0 Then
                 newRow = NextAppendRow(indexWs)
                 indexWs.Cells(newRow, 1).value = idVal
                 indexWs.Cells(newRow, 2).value = nm
@@ -5276,7 +5284,7 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
 
         message = "Multiple same-name records exist." & vbCrLf & _
           "Please select the target history."
-        If Not rowsByNameWithoutID Is Nothing Then
+        If allowLegacyTransfer And Not rowsByNameWithoutID Is Nothing Then
             If rowsByNameWithoutID.count > 0 Then
                 message = message & vbCrLf & vbCrLf & BuildLegacyTransferCandidatesMessage(indexWs, rowsByNameWithoutID)
             End If
@@ -5331,7 +5339,53 @@ Private Sub RestoreHeaderUserIDAfterHistoryLoad(ByVal owner As Object, _
     End If
 
     If Len(restoredID) > 0 Then SetCtlValueSafe owner, "txtHdrPID", restoredID
+    UpdateLastLoadedHistoryContext resolvedIndexRow, wsTarget, Trim$(GetCtlTextGeneric(owner, "txtName"))
 End Sub
+
+Private Sub UpdateLastLoadedHistoryContext(ByVal resolvedIndexRow As Long, _
+                                           ByVal wsTarget As Worksheet, _
+                                           ByVal personName As String)
+    mLastLoadedIndexRow = resolvedIndexRow
+    mLastLoadedName = NormalizeName(personName)
+    If wsTarget Is Nothing Then
+        mLastLoadedSheetName = vbNullString
+    Else
+        mLastLoadedSheetName = wsTarget.name
+    End If
+End Sub
+
+Private Function ShouldAllowLegacyTransferForSave(ByVal owner As Object) As Boolean
+    Dim idVal As String
+    Dim nm As String
+    Dim indexWs As Worksheet
+    Dim storedID As String
+    Dim storedName As String
+    Dim storedSheet As String
+
+    idVal = Trim$(GetID_FromBasicInfo(owner))
+    If Len(idVal) = 0 Then Exit Function
+
+    nm = NormalizeName(Trim$(GetCtlTextGeneric(owner, "txtName")))
+    If Len(nm) = 0 Then Exit Function
+
+    If mLastLoadedIndexRow <= 1 Then Exit Function
+    If Len(mLastLoadedSheetName) = 0 Then Exit Function
+    If StrComp(mLastLoadedName, nm, vbTextCompare) <> 0 Then Exit Function
+
+    Set indexWs = EnsureEvalIndexSheet()
+    If mLastLoadedIndexRow > LastDataRow(indexWs) Then Exit Function
+
+    storedID = Trim$(CStr(indexWs.Cells(mLastLoadedIndexRow, 1).value))
+    storedName = NormalizeName(Trim$(CStr(indexWs.Cells(mLastLoadedIndexRow, 2).value)))
+    storedSheet = Trim$(CStr(indexWs.Cells(mLastLoadedIndexRow, 4).value))
+
+    If Len(storedID) > 0 Then Exit Function
+    If StrComp(storedName, nm, vbTextCompare) <> 0 Then Exit Function
+    If StrComp(storedSheet, mLastLoadedSheetName, vbTextCompare) <> 0 Then Exit Function
+
+    ShouldAllowLegacyTransferForSave = True
+End Function
+
 Public Function TryGetUserHistorySheet(ByVal owner As Object, ByRef wsTarget As Worksheet) As Boolean
     Dim message As String
 
@@ -5342,6 +5396,7 @@ Public Function TryGetUserHistorySheet(ByVal owner As Object, ByRef wsTarget As 
 
     TryGetUserHistorySheet = ResolveUserHistorySheet(owner, False, wsTarget, message)
 End Function
+
 Public Function TryGetUserHistorySheetName(ByVal owner As Object) As String
     Dim wsTarget As Worksheet
     Dim resolveMessage As String
