@@ -508,7 +508,7 @@ Private Sub MMT_ClearMMTCombos(ByVal mp As MSForms.MultiPage)
         For Each c In pg.controls
             If TypeName(c) = "ComboBox" Then
                 On Error Resume Next
-                c.ListIndex = -1   '選択解除（DropDownListでも有効）
+                c.listIndex = -1   '選択解除（DropDownListでも有効）
                 c.value = ""       '念のため空文字
                 On Error GoTo 0
             End If
@@ -684,10 +684,10 @@ foundL = Not cboL Is Nothing
 okR = (Len(vR) = 0)
 okL = (Len(vL) = 0)
 
-If foundR And Len(vR) > 0 Then cboR.ListIndex = val(vR): okR = (cboR.ListIndex = val(vR))
+If foundR And Len(vR) > 0 Then cboR.listIndex = val(vR): okR = (cboR.listIndex = val(vR))
 
 
-If foundL And Len(vL) > 0 Then cboL.ListIndex = val(vL): okL = (cboL.ListIndex = val(vL))
+If foundL And Len(vL) > 0 Then cboL.listIndex = val(vL): okL = (cboL.listIndex = val(vL))
 
 
 

@@ -88,7 +88,7 @@ vL = CStr(arr(pos + 1).value): If Len(vL) = 0 Then vL = CStr(arr(pos + 1).text)
 
         If Len(s) > 0 Then s = s & SEP_REC
         
-        Debug.Print "[TONE][GRAB]"; keys(k); " | R="; vR; " L="; vL; " | Rnm="; arr(pos).name; " Lnm="; arr(pos + 1).name; " | Ridx="; arr(pos).ListIndex; " Lidx="; arr(pos + 1).ListIndex
+        Debug.Print "[TONE][GRAB]"; keys(k); " | R="; vR; " L="; vL; " | Rnm="; arr(pos).name; " Lnm="; arr(pos + 1).name; " | Ridx="; arr(pos).listIndex; " Lidx="; arr(pos + 1).listIndex
 
         s = s & keys(k) & SEP_KV & "R=" & vR & SEP_RL & "L=" & vL
 
@@ -230,7 +230,7 @@ cont:
                 found = False
                 For ii = 0 To arr(pos).ListCount - 1
                     If StrComp(Trim$(arr(pos).List(ii, 0)), Trim$(tR), vbTextCompare) = 0 Then
-                        arr(pos).ListIndex = ii: found = True: Exit For
+                        arr(pos).listIndex = ii: found = True: Exit For
                     End If
                 Next ii
                 If Not found And Len(tR) > 0 Then
@@ -252,7 +252,7 @@ For ii = 0 To arr(pos + 1).ListCount - 1
     End If
 Next ii
 If j >= 0 Then
-    arr(pos + 1).ListIndex = j
+    arr(pos + 1).listIndex = j
     ' Valueが空のケース対策：選択文字をValueにも入れる
     If Len(CStr(arr(pos + 1).value)) = 0 Then arr(pos + 1).value = CStr(arr(pos + 1).List(j, 0))
 ElseIf Len(tL) > 0 Then

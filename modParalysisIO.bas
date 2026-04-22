@@ -69,9 +69,9 @@ Private Sub SetComboSafe(owner As Object, ctlName As String, ByVal v As Variant)
     Next
 
     If hit >= 0 Then
-        cb.ListIndex = hit              ' ← 安全に選択
+        cb.listIndex = hit              ' ← 安全に選択
     Else
-        cb.ListIndex = -1               ' ← 見つからなければクリア（空）
+        cb.listIndex = -1               ' ← 見つからなければクリア（空）
         ' 必要ならここで：cb.AddItem s : cb.Value = s   ' 自動で項目を追加して選択
     End If
 End Sub

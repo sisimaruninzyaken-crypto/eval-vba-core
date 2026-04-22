@@ -272,7 +272,7 @@ Private Function ComboValueText(ByVal cbo As Object) As String
     Dim t As String
     t = CStr(cbo.value)
     If LenB(t) = 0 Then
-        If cbo.ListIndex >= 0 Then t = CStr(cbo.List(cbo.ListIndex))
+        If cbo.listIndex >= 0 Then t = CStr(cbo.List(cbo.listIndex))
     End If
     If LenB(t) = 0 Then
         ' –¢“o˜^’l‚ª“ü‚Á‚Ä‚¢‚éƒP[ƒX‚É”õ‚¦‚ÄText‚àŒ©‚é
@@ -413,9 +413,9 @@ Public Sub SavePain_FillAndAppend_Once()
     uf.txtName.text = "ŒŸØAppend3"
     uf.controls("chkDiffOnly").value = False
     With uf.controls("mpPhys").pages(4)
-        .controls("cmbPainOnset").ListIndex = 0
-        .controls("cmbPainDurationUnit").ListIndex = 0
-        .controls("cmbPainDayPeriod").ListIndex = 2
+        .controls("cmbPainOnset").listIndex = 0
+        .controls("cmbPainDurationUnit").listIndex = 0
+        .controls("cmbPainDayPeriod").listIndex = 2
         Dim lb As MSForms.ListBox
         Set lb = .controls("lstPainQual"): If lb.ListCount > 0 Then lb.Selected(0) = True
         Set lb = .controls("lstPainSite"): If lb.ListCount > 0 Then lb.Selected(0) = True

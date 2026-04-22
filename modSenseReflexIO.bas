@@ -68,7 +68,7 @@ Public Function SerializeRL(container As Object) As String
     For Each k In dr.keys
         If dl.exists(k) Then
             If Len(s) > 0 Then s = s & SEP_REC
-            s = s & CStr(k) & SEP_KV & "R=" & CStr(dr(k).ListIndex) & SEP_RL & "L=" & CStr(dl(k).value)
+            s = s & CStr(k) & SEP_KV & "R=" & CStr(dr(k).listIndex) & SEP_RL & "L=" & CStr(dl(k).value)
         End If
     Next k
 
@@ -102,7 +102,7 @@ Public Sub DeserializeRL(container As Object, ByVal payload As String)
         Set lCtl = FindCtlDeep(container, "cboL_" & base)
         On Error GoTo 0
 
-        If Not rCtl Is Nothing Then rCtl.ListIndex = rIdx
+        If Not rCtl Is Nothing Then rCtl.listIndex = rIdx
         If Not lCtl Is Nothing Then lCtl.value = lVal
 
 NextRec:
@@ -214,8 +214,8 @@ For i = 1 To uniq.count: Set arr(i) = uniq(i): Next i
         If pos + 1 > UBound(arr) Then Exit For   ' 安全
 
         ' --- 右側コンボ（R） ---
-        If arr(pos).ListIndex >= 0 Then
-            vR = CStr(arr(pos).List(arr(pos).ListIndex, 0))
+        If arr(pos).listIndex >= 0 Then
+            vR = CStr(arr(pos).List(arr(pos).listIndex, 0))
         Else
             vR = CStr(arr(pos).text)
             If Len(vR) = 0 Then vR = CStr(arr(pos).value)
@@ -223,8 +223,8 @@ For i = 1 To uniq.count: Set arr(i) = uniq(i): Next i
 
         ' --- 左側コンボ（L） ---
         If pos + 1 <= UBound(arr) Then
-            If arr(pos + 1).ListIndex >= 0 Then
-                vL = CStr(arr(pos + 1).List(arr(pos + 1).ListIndex, 0))
+            If arr(pos + 1).listIndex >= 0 Then
+                vL = CStr(arr(pos + 1).List(arr(pos + 1).listIndex, 0))
             Else
                 vL = CStr(arr(pos + 1).text)
                 If Len(vL) = 0 Then vL = CStr(arr(pos + 1).value)
@@ -447,7 +447,7 @@ arr(pos).value = tR
 If Trim$(CStr(arr(pos).value)) <> Trim$(tR) Then
     For ii = 0 To arr(pos).ListCount - 1
         If StrComp(Trim$(arr(pos).List(ii, 0)), Trim$(tR), vbTextCompare) = 0 Then
-            arr(pos).ListIndex = ii
+            arr(pos).listIndex = ii
             found = True
             Exit For
         End If
@@ -464,7 +464,7 @@ arr(pos + 1).value = tL
 If Trim$(CStr(arr(pos + 1).value)) <> Trim$(tL) Then
     For ii = 0 To arr(pos + 1).ListCount - 1
         If StrComp(Trim$(arr(pos + 1).List(ii, 0)), Trim$(tL), vbTextCompare) = 0 Then
-            arr(pos + 1).ListIndex = ii
+            arr(pos + 1).listIndex = ii
             Exit For
         End If
     Next ii

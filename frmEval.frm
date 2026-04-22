@@ -690,7 +690,7 @@ Private Sub SetComboItems(ByRef cbo As MSForms.ComboBox, ByVal items As Variant)
         Next
     End If
     On Error Resume Next
-    cbo.ListIndex = -1
+    cbo.listIndex = -1
 End Sub
 
 
@@ -1001,7 +1001,7 @@ Private Sub FillComboItems(ByRef cbo As MSForms.ComboBox, ByVal items As Variant
     End If
     ' 既定選択なし
     On Error Resume Next
-    cbo.ListIndex = -1
+    cbo.listIndex = -1
 End Sub
 
 
@@ -2104,55 +2104,33 @@ Private Sub RefreshSaveEnabled()
 End Sub
 
 Private Sub txtPID_Change():  RefreshSaveEnabled: End Sub
-
 Private Sub txtHdrName_Change()
-     EnsureNameSuggestList
-
-     Me.controls("txtName").text = Me.controls("frHeader").controls("txtHdrName").text
-     Me.UpdateNameSuggest
-
-     UpdateNameSuggest
+    EnsureNameSuggestList
+    Me.controls("txtName").text = Me.controls("frHeader").controls("txtHdrName").text
+    Me.UpdateNameSuggest
 End Sub
-
-
 Public Sub UpdateNameSuggest()
 
     Dim host As Object
     Dim tb As MSForms.TextBox
     Dim lb As MSForms.ListBox
     Dim ws As Worksheet
-    Dim cName As Long, cID As Long
+    Dim cName As Long, cID As Long, cKana As Long
     Dim lastRow As Long, r As Long
     Dim key As String, keyN As String
-    Dim nm As String, idv As String
+    Dim nm As String, idv As String, kanaV As String
     Dim hit As Long
     Dim seen As Object
-
-
+    Dim displayText As String
+    Dim itemKey As String
+    Dim idDisplay As String
+    Dim kanaDisplay As String
 
     Set host = Me.controls("frHeader")
     Set tb = host.controls("txtHdrName")
 
-
-
-    ' 候補リスト確保
-    On Error Resume Next
-        Dim i As Long
-        Set lb = Nothing
-           For i = Me.controls.count - 1 To 0 Step -1
-           If Me.controls(i).name = "lstNameSuggest" Then
-        Set lb = Me.controls(i)
-        Exit For
-    End If
-Next i
-
-    On Error GoTo 0
-
-    If lb Is Nothing Then
-        EnsureNameSuggestList
-        Set lb = Me.controls("lstNameSuggest")
-    End If
-
+    EnsureNameSuggestList
+    Set lb = Me.controls("lstNameSuggest")
 
     key = Trim$(tb.text)
     keyN = NormalizeName(key)
@@ -2163,69 +2141,125 @@ Next i
 
     Set ws = ThisWorkbook.Worksheets(EVAL_SHEET_NAME)
 
-    ' 氏名列（既存ロジックと同じ探し方）
     cName = FindHeaderColLocal(ws, "Basic.Name")
-    If cName = 0 Then cName = FindHeaderColLocal(ws, "氏名")
+    If cName = 0 Then cName = FindHeaderColLocal(ws, ChrW(&H6C0F) & ChrW(&H540D))
     If cName = 0 Then cName = FindHeaderColLocal(ws, "Name")
     If cName = 0 Then Exit Sub
 
-    ' ID列（あれば併記）
     cID = FindHeaderColLocal(ws, "Basic.ID")
     If cID = 0 Then cID = FindHeaderColLocal(ws, "ID")
     If cID = 0 Then cID = FindHeaderColLocal(ws, "PID")
 
+    cKana = FindHeaderColLocal(ws, "Basic.NameKana")
+    If cKana = 0 Then cKana = FindHeaderColLocal(ws, ChrW(&H6C0F) & ChrW(&H540D) & ChrW(&H30AB) & ChrW(&H30CA))
+    If cKana = 0 Then cKana = FindHeaderColLocal(ws, ChrW(&H30D5) & ChrW(&H30EA) & ChrW(&H30AC) & ChrW(&H30CA))
+    If cKana = 0 Then cKana = FindHeaderColLocal(ws, "NameKana")
 
     lastRow = ws.Cells(ws.rows.count, cName).End(xlUp).row
 
-    ' 2列にして、2列目（ID）は非表示運用（表示文字列に併記する）
-    lb.ColumnCount = 2
-    lb.ColumnWidths = CStr(lb.Width - 2) & ";0"
-    
+    lb.ColumnCount = 4
+    lb.ColumnWidths = CStr(lb.Width - 6) & ";0;0;0"
+
     Set seen = CreateObject("Scripting.Dictionary")
     seen.CompareMode = vbTextCompare
 
-
     For r = 2 To lastRow
-        nm = CStr(ws.Cells(r, cName).value)
+        nm = Trim$(CStr(ws.Cells(r, cName).value))
         If Len(nm) > 0 Then
             If InStr(1, NormalizeName(nm), keyN, vbTextCompare) > 0 Then
-                idv = ""
-                If cID > 0 Then idv = CStr(ws.Cells(r, cID).value)
-                
-                
-                Dim nmKey As String
-                nmKey = NormalizeName(nm)
+                idv = vbNullString
+                kanaV = vbNullString
+                If cID > 0 Then idv = Trim$(CStr(ws.Cells(r, cID).value))
+                If cKana > 0 Then kanaV = Trim$(CStr(ws.Cells(r, cKana).value))
 
-                If Not seen.exists(nmKey) Then
-                seen.Add nmKey, True
-                
-
-                lb.AddItem nm
-                lb.List(lb.ListCount - 1, 1) = idv
-
-                hit = hit + 1
-                If hit >= 20 Then Exit For
+                If Len(idv) > 0 Then
+                    itemKey = "ID:" & idv
+                Else
+                    itemKey = NormalizeName(nm) & "|" & kanaV
                 End If
 
-                
+                If Not seen.exists(itemKey) Then
+                    seen.Add itemKey, True
+
+                    idDisplay = IIf(Len(idv) > 0, idv, "---")
+                    kanaDisplay = IIf(Len(kanaV) > 0, kanaV, "---")
+                    displayText = idDisplay & " | " & nm & " | " & kanaDisplay
+
+                    lb.AddItem displayText
+                    lb.List(lb.ListCount - 1, 1) = nm
+                    lb.List(lb.ListCount - 1, 2) = idv
+                    lb.List(lb.ListCount - 1, 3) = kanaV
+
+                    hit = hit + 1
+                    If hit >= 20 Then Exit For
+                End If
             End If
         End If
     Next r
 
-    If hit > 0 Then lb.Visible = True
-    
+    If hit > 0 Then
+        lb.listIndex = 0
+        lb.Visible = True
+    End If
+
     If lb.ListCount <= 1 Then
         mDupNameWarned = False
     ElseIf lb.ListCount > 1 Then
-       If Not mDupNameWarned Then
-           MsgBox "同姓同名の候補が複数あります。必要ならIDで絞り込みしてください。", vbInformation
-           mDupNameWarned = True
-      End If
+        If Not mDupNameWarned Then
+            MsgBox "Duplicate name candidates exist. Narrow by ID if needed.", vbInformation
+            mDupNameWarned = True
+        End If
     End If
 
-
-
 End Sub
+
+Public Sub CommitNameSuggestSelection(Optional ByVal listIndex As Long = -1)
+    Dim lb As MSForms.ListBox
+    Dim idx As Long
+    Dim selectedName As String
+    Dim selectedID As String
+    Dim selectedKana As String
+    Dim hdr As Object
+    Dim txtPID As Object
+    Dim txtKana As Object
+
+    On Error Resume Next
+    Set lb = Me.controls("lstNameSuggest")
+    On Error GoTo 0
+    If lb Is Nothing Then Exit Sub
+
+    idx = listIndex
+    If idx < 0 Then idx = lb.listIndex
+    If idx < 0 Then Exit Sub
+    If idx > lb.ListCount - 1 Then Exit Sub
+
+    If lb.ColumnCount >= 4 Then
+        selectedName = Trim$(CStr(lb.List(idx, 1)))
+        selectedID = Trim$(CStr(lb.List(idx, 2)))
+        selectedKana = Trim$(CStr(lb.List(idx, 3)))
+    Else
+        selectedName = Trim$(CStr(lb.List(idx, 0)))
+        If lb.ColumnCount > 1 Then selectedID = Trim$(CStr(lb.List(idx, 1)))
+    End If
+
+    If Len(selectedName) = 0 Then selectedName = Trim$(CStr(lb.List(idx, 0)))
+
+    Me.controls("frHeader").controls("txtHdrName").value = selectedName
+    Me.controls("txtName").value = selectedName
+
+    Set hdr = Me.controls("frHeader")
+
+    On Error Resume Next
+    Set txtPID = hdr.controls("txtHdrPID")
+    Set txtKana = hdr.controls("txtHdrKana")
+    On Error GoTo 0
+
+    If Not txtPID Is Nothing Then txtPID.value = selectedID
+    If Not txtKana Is Nothing Then txtKana.value = selectedKana
+
+    lb.Visible = False
+End Sub
+
 
 Private Function FindHeaderColLocal(ws As Worksheet, headerText As String) As Long
     Dim c As Long, lastCol As Long
@@ -2722,10 +2756,10 @@ Private Sub SetComboByValue(ByVal cbo As MSForms.ComboBox, ByVal v As String)
         If CStr(cbo.List(i)) = CStr(v) Then idx = i: Exit For
     Next
     If idx >= 0 Then
-        cbo.ListIndex = idx
+        cbo.listIndex = idx
     Else
         If Len(v) > 0 Then cbo.AddItem CStr(v)
-        If cbo.ListCount > 0 Then cbo.ListIndex = cbo.ListCount - 1
+        If cbo.ListCount > 0 Then cbo.listIndex = cbo.ListCount - 1
     End If
 End Sub
 
@@ -3587,7 +3621,7 @@ End Sub
     For i = 0 To 10
         cmb.AddItem CStr(i)
     Next
-    cmb.ListIndex = 0
+    cmb.listIndex = 0
     cmb.Style = fmStyleDropDownList
     cmb.MatchRequired = True
 End Sub
@@ -7007,7 +7041,7 @@ Private Sub mGlobalClear_Clicked()
             Dim i As Long
 
             Set lb = c
-            lb.ListIndex = -1
+            lb.listIndex = -1
             For i = 0 To lb.ListCount - 1
                 lb.Selected(i) = False
             Next i
@@ -7167,12 +7201,12 @@ Public Sub SelectDailyTargetByPID(ByVal targetPID As String, Optional ByVal targ
     For i = 0 To lst.ListCount - 1
         If Len(Trim$(targetPID)) > 0 Then
             If StrComp(DailyTargetPIDByRow(lst, i), Trim$(targetPID), vbTextCompare) = 0 Then
-                lst.ListIndex = i
+                lst.listIndex = i
                 mDailyList_Clicked i
                 Exit Sub
             End If
         ElseIf StrComp(DailyTargetNameByRow(lst, i), Trim$(targetName), vbTextCompare) = 0 Then
-            lst.ListIndex = i
+            lst.listIndex = i
             mDailyList_Clicked i
             Exit Sub
         End If
@@ -7235,8 +7269,8 @@ Private Sub RefreshDailyClientTargetList()
 
     UpdateDailyClientTargetCaption lbl, targetCount
     If lst.ListCount > 0 Then
-        lst.ListIndex = 0
-        mDailyList_Clicked lst.ListIndex
+        lst.listIndex = 0
+        mDailyList_Clicked lst.listIndex
     Else
         ShowDailyAbnormalByPID vbNullString
     End If
@@ -7306,9 +7340,9 @@ Private Sub mDailyAddTarget_Click()
     AddOrUpdateDailyTargetListRow lst, targetName, targetPID, DAILY_TARGET_CATEGORY_ADDED
 
     UpdateDailyClientTargetCaption DailyLogCtl("lblDailyClientTargets"), lst.ListCount
-    If lst.ListIndex < 0 Then
-        lst.ListIndex = lst.ListCount - 1
-        mDailyList_Clicked lst.ListIndex
+    If lst.listIndex < 0 Then
+        lst.listIndex = lst.ListCount - 1
+        mDailyList_Clicked lst.listIndex
     End If
 End Sub
 
@@ -7319,7 +7353,7 @@ Private Sub mDailyList_DblClicked()
     Set lst = DailyLogCtl("lstDailyClientTargets")
     If lst Is Nothing Then Exit Sub
 
-    rowIndex = lst.ListIndex
+    rowIndex = lst.listIndex
     If rowIndex < 0 Then Exit Sub
 
     ToggleDailyTargetExcluded lst, rowIndex
@@ -8687,68 +8721,41 @@ Private Function ExtractAbnormalFindingsFromNote(ByVal note As String) As String
 
     ExtractAbnormalFindingsFromNote = result
 End Function
-
-
-
 Public Sub EnsureNameSuggestList()
     Dim host As Object
     Dim tb As MSForms.TextBox
     Dim lb As MSForms.ListBox
 
-    Set host = Me
+    Set host = Me.controls("frHeader")
     Set tb = host.controls("txtHdrName")
-
 
     On Error Resume Next
     Set lb = Me.controls("lstNameSuggest")
     On Error GoTo 0
 
-
     If lb Is Nothing Then
-        Set lb = host.controls.Add("Forms.ListBox.1", "lstNameSuggest", True)
+        Set lb = Me.controls.Add("Forms.ListBox.1", "lstNameSuggest", True)
     End If
 
     With lb
-        .Left = Me.controls("frHeader").Left + tb.Left
-        .top = Me.controls("frHeader").top + tb.top + tb.Height + 4
-        .Width = 200     ' 横をコンパクトに
-        .Height = 60     ' 3件くらい見える高さ
-
+        .Left = host.Left + tb.Left
+        .top = host.top + tb.top + tb.Height + 4
+        .Width = 300
+        .Height = 108
         .Visible = False
+        .IntegralHeight = False
     End With
-    
-      Set mNameSuggestSink = New cNameSuggestSink
-      mNameSuggestSink.Hook Me.controls("lstNameSuggest")
-    
+
+    Set mNameSuggestSink = New cNameSuggestSink
+    mNameSuggestSink.Hook lb
 End Sub
-
-
-
 Private Sub txtHdrName_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
-    ' ヘッダ入力 → 裏口へ同期（既存ロジック駆動のため）
     Me.controls("txtName").text = Me.controls("frHeader").controls("txtHdrName").text
-
-    ' 候補BOX確保 → 更新
     EnsureNameSuggestList
     Me.UpdateNameSuggest
 End Sub
-
-
-
-
 Private Sub lstNameSuggest_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
-    Dim lb As MSForms.ListBox
-    Set lb = Me.controls("lstNameSuggest")
-
-    If lb.ListIndex < 0 Then Exit Sub
-
-    ' ヘッダの氏名だけ反映
-    Me.controls("frHeader").controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
-
-    ' 裏口同期（既存ロジック用）
-    Me.controls("txtName").text = Me.controls("frHeader").controls("txtHdrName").text
-
-    lb.Visible = False
+    CommitNameSuggestSelection
 End Sub
 
 

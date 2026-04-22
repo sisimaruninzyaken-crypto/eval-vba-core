@@ -18,7 +18,7 @@ Public Event Clicked(ByVal rowIndex As Long)
 
 Private Function CurrentRowIndex() As Long
     On Error Resume Next
-    CurrentRowIndex = lb.ListIndex
+    CurrentRowIndex = lb.listIndex
     On Error GoTo 0
 End Function
 

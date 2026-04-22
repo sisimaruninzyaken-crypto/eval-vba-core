@@ -492,7 +492,7 @@ Public Sub ClearPainUI(ByVal owner As Object)
 
     ' [Pain-UI] ensure no default selection (DO NOT REMOVE)
 On Error Resume Next
-pg.controls("lstPainQual").ListIndex = -1: pg.controls("lstPainSite").ListIndex = -1
+pg.controls("lstPainQual").listIndex = -1: pg.controls("lstPainSite").listIndex = -1
 On Error GoTo 0
 
 

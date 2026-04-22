@@ -15,14 +15,7 @@ Attribute lb.VB_VarHelpID = -1
 Public Sub Hook(ByVal x As MSForms.ListBox)
     Set lb = x
 End Sub
-
 Private Sub lb_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
-    If lb.ListIndex < 0 Then Exit Sub
-
-    ' Ž–¼‚¾‚¯”½‰fiƒwƒbƒ_{— Œûj
-    frmEval.controls("frHeader").controls("txtHdrName").text = lb.List(lb.ListIndex, 0)
-    frmEval.controls("txtName").text = frmEval.controls("frHeader").controls("txtHdrName").text
-
-    lb.Visible = False
+    If lb.listIndex < 0 Then Exit Sub
+    frmEval.CommitNameSuggestSelection lb.listIndex
 End Sub
-
