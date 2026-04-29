@@ -25,7 +25,7 @@ Private Sub Btn_Click()
             frmEval.DoClearGlobal
         Case "Close"
             frmEval.DoCloseForm
+        Case "LifeLink"
+            frmEval.OpenLifeLinkSettings
     End Select
 End Sub
-
-

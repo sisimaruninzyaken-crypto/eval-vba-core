@@ -220,3 +220,22 @@ End Function
 
 
 
+
+Public Sub Test_AdlEligibility_Direct()
+    Dim d As Object
+
+    ' š‚±‚±d—vFfrmEval‚ğ’¼Ú“n‚·
+    Set d = modLifeAdlEligibility.BuildAdlEligibility(frmEval)
+
+    If d Is Nothing Then
+        Debug.Print "”»’èŒ‹‰Ê‚È‚µ"
+        Exit Sub
+    End If
+
+    Debug.Print "Status=" & d("Status")
+    Debug.Print "FirstMonthFlag=" & d("FirstMonthFlag")
+    Debug.Print "SixthMonthFlag=" & d("SixthMonthFlag")
+    Debug.Print "CurrentEvaluateDate=" & d("CurrentEvaluateDate")
+    Debug.Print "PreviousEvaluateDate=" & d("PreviousEvaluateDate")
+    Debug.Print "MissingReason=" & d("MissingReason")
+End Sub

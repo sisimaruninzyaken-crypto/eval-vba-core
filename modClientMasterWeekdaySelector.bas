@@ -16,6 +16,7 @@ Private Const HDR_USE_WEEKDAY_WED As String = "UseWeekday_Wed"
 Private Const HDR_USE_WEEKDAY_THU As String = "UseWeekday_Thu"
 Private Const HDR_USE_WEEKDAY_FRI As String = "UseWeekday_Fri"
 Private Const HDR_USE_WEEKDAY_SAT As String = "UseWeekday_Sat"
+Private Const HDR_STATUS As String = "Status"
 
 Public Function ResolveClientUseWeekdayHeaderByDate(ByVal targetDate As Date) As String
     Dim wd As Long
@@ -80,6 +81,7 @@ Private Function BuildClientTargetsByWeekdayHeader(ByVal ws As Worksheet, ByVal 
     Dim colBirthDate As Long
     Dim colGender As Long
     Dim colCareLevel As Long
+    Dim colStatus As Long
     Dim r As Long
 
     Set result = New Collection
@@ -96,6 +98,7 @@ Private Function BuildClientTargetsByWeekdayHeader(ByVal ws As Worksheet, ByVal 
     colBirthDate = FindHeaderCol(ws, HDR_BIRTH_DATE)
     colGender = FindHeaderCol(ws, HDR_GENDER)
     colCareLevel = FindHeaderCol(ws, HDR_CARE_LEVEL)
+    colStatus = FindHeaderCol(ws, HDR_STATUS)
 
     Dim lastCell As Range
     Set lastCell = ws.Cells.Find("*", SearchOrder:=xlByRows, SearchDirection:=xlPrevious)
@@ -108,22 +111,24 @@ Private Function BuildClientTargetsByWeekdayHeader(ByVal ws As Worksheet, ByVal 
 
     For r = 2 To lastRow
         If IsTruthyLikeValue(ws.Cells(r, colWeekday).value) Then
-            Dim item As Object
-            Set item = CreateObject("Scripting.Dictionary")
+            If IsClientMasterRowAvailableForDailyList(ws, r, colStatus) Then
+                Dim item As Object
+                Set item = CreateObject("Scripting.Dictionary")
 
-            item("Row") = r
-            item("TargetDate") = targetDate
-            item("TargetDateText") = Format$(targetDate, "yyyy/mm/dd")
-            item("WeekdayMonStart") = weekdayMonStart
-            item("WeekdayHeader") = weekdayHeader
-            item("UserID") = CellText(ws, r, colUserID)
-            item("Name") = CellText(ws, r, colName)
-            item("Kana") = CellText(ws, r, colKana)
-            item("BirthDate") = CellText(ws, r, colBirthDate)
-            item("Gender") = CellText(ws, r, colGender)
-            item("CareLevel") = CellText(ws, r, colCareLevel)
+                item("Row") = r
+                item("TargetDate") = targetDate
+                item("TargetDateText") = Format$(targetDate, "yyyy/mm/dd")
+                item("WeekdayMonStart") = weekdayMonStart
+                item("WeekdayHeader") = weekdayHeader
+                item("UserID") = CellText(ws, r, colUserID)
+                item("Name") = CellText(ws, r, colName)
+                item("Kana") = CellText(ws, r, colKana)
+                item("BirthDate") = CellText(ws, r, colBirthDate)
+                item("Gender") = CellText(ws, r, colGender)
+                item("CareLevel") = CellText(ws, r, colCareLevel)
 
-            result.Add item
+                result.Add item
+            End If
         End If
     Next r
 
@@ -219,8 +224,23 @@ Private Function IsTruthyLikeValue(ByVal rawValue As Variant) As Boolean
     normalized = LCase$(Trim$(CStr(rawValue)))
     IsTruthyLikeValue = (normalized = "1" Or normalized = "true" Or normalized = "yes" Or normalized = "y")
 End Function
+Private Function NormalizeClientListStatus(ByVal rawStatus As Variant) As String
+    Dim normalized As String
 
+    normalized = UCase$(Trim$(CStr(rawStatus)))
+    If normalized = "ARCHIVED" Then
+        NormalizeClientListStatus = "Archived"
+    Else
+        NormalizeClientListStatus = "Active"
+    End If
+End Function
 
+Private Function IsClientMasterRowAvailableForDailyList(ByVal ws As Worksheet, ByVal rowNo As Long, ByVal colStatus As Long) As Boolean
+    If colStatus <= 0 Then
+        IsClientMasterRowAvailableForDailyList = True
+        Exit Function
+    End If
 
-
+    IsClientMasterRowAvailableForDailyList = (StrComp(NormalizeClientListStatus(ws.Cells(rowNo, colStatus).value), "Active", vbTextCompare) = 0)
+End Function
 

@@ -94,6 +94,7 @@ Private Const HEADER_H As Single = 62
 Private mHdr1 As clsHeaderBtnEvents
 Private mHdr2 As clsHeaderBtnEvents
 Private mHdr3 As clsHeaderBtnEvents
+Private mHdr4 As clsHeaderBtnEvents
 Private mScrollOnce_347 As Boolean
 Private mQuitExcelRequested As Boolean
 Private Enum QuitMode
@@ -145,6 +146,59 @@ EH:
     Debug.Print "[SyncAgeFromBirth][ERR]", Err.Number, Err.Description
 #End If
 End Sub
+
+Public Sub OpenLifeLinkSettings()
+    Load frmLifeLink
+    frmLifeLink.InitWithOwner Me
+    frmLifeLink.Show vbModal
+    Unload frmLifeLink
+End Sub
+
+Public Function GetLifeLinkFieldValue(ByVal fieldKey As String) As String
+    Dim hdr As Object
+    Dim ctl As Object
+    Dim ctlName As String
+
+    Set hdr = SafeGetControl(Me, "frHeader")
+    If hdr Is Nothing Then Exit Function
+
+    ctlName = ResolveLifeLinkStorageControlName(fieldKey)
+    If Len(ctlName) = 0 Then Exit Function
+
+    Set ctl = SafeGetControl(hdr, ctlName)
+    If ctl Is Nothing Then Exit Function
+
+    GetLifeLinkFieldValue = Trim$(CStr(ctl.value))
+End Function
+
+Public Sub SetLifeLinkFieldValue(ByVal fieldKey As String, ByVal valueText As String)
+    Dim hdr As Object
+    Dim ctl As Object
+    Dim ctlName As String
+
+    Set hdr = SafeGetControl(Me, "frHeader")
+    If hdr Is Nothing Then Exit Sub
+
+    ctlName = ResolveLifeLinkStorageControlName(fieldKey)
+    If Len(ctlName) = 0 Then Exit Sub
+
+    Set ctl = SafeGetControl(hdr, ctlName)
+    If ctl Is Nothing Then Exit Sub
+
+    ctl.value = valueText
+End Sub
+
+Private Function ResolveLifeLinkStorageControlName(ByVal fieldKey As String) As String
+    Select Case LCase$(Trim$(fieldKey))
+        Case "insuredno"
+            ResolveLifeLinkStorageControlName = "txtInsuredNo"
+        Case "insurerno"
+            ResolveLifeLinkStorageControlName = "txtInsurerNo"
+        Case "externalsystemkey"
+            ResolveLifeLinkStorageControlName = "txtExternalSystemKey"
+    End Select
+End Function
+
 
 Public Function TryGetBirthDateForStorage(ByVal raw As String, ByRef outDate As Date) As Boolean
     TryGetBirthDateForStorage = TryParseBirthDate_ShowaOrAD(raw, outDate)
@@ -2139,23 +2193,15 @@ Public Sub UpdateNameSuggest()
     lb.Visible = False
     If Len(keyN) = 0 Then Exit Sub
 
-    Set ws = ThisWorkbook.Worksheets(EVAL_SHEET_NAME)
+    Set ws = ThisWorkbook.Worksheets("EvalIndex")
 
-    cName = FindHeaderColLocal(ws, "Basic.Name")
-    If cName = 0 Then cName = FindHeaderColLocal(ws, ChrW(&H6C0F) & ChrW(&H540D))
-    If cName = 0 Then cName = FindHeaderColLocal(ws, "Name")
+    cID = FindHeaderColLocal(ws, "UserID")
+    cName = FindHeaderColLocal(ws, "Name")
+    cKana = FindHeaderColLocal(ws, "Kana")
     If cName = 0 Then Exit Sub
 
-    cID = FindHeaderColLocal(ws, "Basic.ID")
-    If cID = 0 Then cID = FindHeaderColLocal(ws, "ID")
-    If cID = 0 Then cID = FindHeaderColLocal(ws, "PID")
-
-    cKana = FindHeaderColLocal(ws, "Basic.NameKana")
-    If cKana = 0 Then cKana = FindHeaderColLocal(ws, ChrW(&H6C0F) & ChrW(&H540D) & ChrW(&H30AB) & ChrW(&H30CA))
-    If cKana = 0 Then cKana = FindHeaderColLocal(ws, ChrW(&H30D5) & ChrW(&H30EA) & ChrW(&H30AC) & ChrW(&H30CA))
-    If cKana = 0 Then cKana = FindHeaderColLocal(ws, "NameKana")
-
     lastRow = ws.Cells(ws.rows.count, cName).End(xlUp).row
+    If lastRow < 2 Then Exit Sub
 
     lb.ColumnCount = 4
     lb.ColumnWidths = CStr(lb.Width - 6) & ";0;0;0"
@@ -2201,19 +2247,14 @@ Public Sub UpdateNameSuggest()
         lb.listIndex = 0
         lb.Visible = True
     End If
-
     If lb.ListCount <= 1 Then
         mDupNameWarned = False
     ElseIf lb.ListCount > 1 Then
-        If Not mDupNameWarned Then
-            MsgBox "Duplicate name candidates exist. Narrow by ID if needed.", vbInformation
-            mDupNameWarned = True
-        End If
+        ' 重複候補があってもメッセージは表示しない（UIノイズ削除）
     End If
 
 End Sub
-
-Public Sub CommitNameSuggestSelection(Optional ByVal listIndex As Long = -1)
+Public Sub CommitNameSuggestSelection(Optional ByVal listIndex As Long = -1, Optional ByVal loadPrev As Boolean = False)
     Dim lb As MSForms.ListBox
     Dim idx As Long
     Dim selectedName As String
@@ -2227,6 +2268,7 @@ Public Sub CommitNameSuggestSelection(Optional ByVal listIndex As Long = -1)
     Set lb = Me.controls("lstNameSuggest")
     On Error GoTo 0
     If lb Is Nothing Then Exit Sub
+    If Not lb.Visible Then Exit Sub
 
     idx = listIndex
     If idx < 0 Then idx = lb.listIndex
@@ -2258,6 +2300,10 @@ Public Sub CommitNameSuggestSelection(Optional ByVal listIndex As Long = -1)
     If Not txtKana Is Nothing Then txtKana.value = selectedKana
 
     lb.Visible = False
+
+    If loadPrev Then
+        btnLoadPrevCtl_Click
+    End If
 End Sub
 
 
@@ -2582,29 +2628,16 @@ Private Function ValidateForm(ByRef errmsg As String) As Boolean
     errmsg = IIf(ok, "", sb)
     ValidateForm = ok
 End Function
-
 Private Sub btnSaveCtl_Click()
     Call SyncAgeFromBirth
     Me.controls("txtName").text = Me.controls("txtHdrName").text
     SaveEvaluation_Append_From Me
 End Sub
-
-
-
-'=== frmEval：前回読込ボタン 完全貼り替え ============================
 Private Sub btnLoadPrevCtl_Click()
-
-Me.controls("txtName").text = Me.controls("txtHdrName").text
-
-
-
+    Me.controls("txtName").text = Me.controls("frHeader").controls("txtHdrName").text
     Call modEvalIOEntry.LoadEvaluation_ByName_From(Me)
-
-
-Me.Repaint
-
+    Me.Repaint
     Exit Sub
-
 End Sub
 
 Private Sub btnGeneratePlanCtl_Click()
@@ -3181,28 +3214,27 @@ Private Sub cmdLoadPrev_Click()
     Call modEvalIOEntry.LoadEvaluation_ByName_From(Me)
 
 End Sub
-
-
-
-
-
 Private Sub UserForm_Activate()
    
-    Static done As Boolean
+    Static Done As Boolean
     Dim scrH As Single
     Dim h As Single
+    Dim hdrName As MSForms.TextBox
     
     Application.WindowState = xlMaximized
     
-    If done Then Exit Sub
-    done = True
-    
-    Call Align_BIHomeEnv_Once
-    
-    
-    Call NotifyPlanUpdateTargetsOnFirstShow
+    If Not Done Then
+        Done = True
+        
+        Call Align_BIHomeEnv_Once
+        
+        Call NotifyPlanUpdateTargetsOnFirstShow
+    End If
 
-    Me.controls("txtHdrName").SetFocus
+    Set hdrName = Me.controls("frHeader").controls("txtHdrName")
+    Set mHdrNameSink = New cHdrNameSink
+    mHdrNameSink.Hook hdrName
+    hdrName.SetFocus
     
 
 End Sub
@@ -3351,6 +3383,7 @@ Me.Left = Application.Left + (Application.Width - Me.Width) / 2: Me.top = Applic
     Dim pg1 As Object
     Dim fr32 As Object
     Dim btnLoadPrev As Object
+    Dim autoDeleteCount As Long
     scrH = Application.UsableHeight
     If scrH < 500 Then
         h = 530
@@ -3361,6 +3394,7 @@ Me.Left = Application.Left + (Application.Width - Me.Width) / 2: Me.top = Applic
     Me.Height = h
 
     Call LegacyInit
+    modLifeSettings.EnsureLifeSettingsReady
     EnsureMpPhysChangeHook_Once
 #If APP_DEBUG Then
     Debug.Print "[PostInit] CtlCount=" & Me.controls.count
@@ -3382,8 +3416,8 @@ Call RemoveLegacyPainUI
         mPainLayoutDone = True
     End If
     
-    TidyPainBoxes        ' ← 右列(誘因・軽減因子)の恒久配置
-    TidyPainCourse       ' ← ★追加：経過・時間の変化の恒久配置
+    TidyPainBoxes
+    TidyPainCourse
     Me.WidenAndTidyPainCourse
  
    
@@ -3392,9 +3426,8 @@ Call RemoveLegacyPainUI
     Me.TidyPainUI_Once
 
 If Not mPainTidyBusy Then
-    'TidyPainUI_Once
     Me.Height = h
-    ClearPainUI Me   ' ← 起動時は空で開始（読み込みは手動で）
+    ClearPainUI Me
 End If
 
         BuildWalkUI_All
@@ -3403,8 +3436,8 @@ End If
     Set cogRoot = GetCogRootFrame()
     If Not cogRoot Is Nothing Then cogRoot.caption = ""
     BuildCogMentalUI_Simple
-    BuildCog_CognitionCore      '← 認知6項目を生成
-    BuildCog_DementiaBlock      '← 認知症の種類＋備考を生成
+    BuildCog_CognitionCore
+    BuildCog_DementiaBlock
     BuildCog_BPSD
     BuildCog_MentalBlock
     BuildDailyLogTab
@@ -3436,20 +3469,8 @@ End If
     Me.controls("btnSaveCtl").Visible = False
     On Error GoTo 0
     
-    'Me.Height = Application.UsableHeight - 40
-    
-    
-
-
-
-
 If mBaseLayoutDone Then
-    'Apply_AlignRoot_All
 End If
-
-
-'--- Fix: 子MultiPage見切れ対策（2025-12-13 OKスナップショット固定）
-
 
 On Error Resume Next
 Set mp2 = SafeGetControl(Me, "MultiPage2")
@@ -3488,22 +3509,15 @@ On Error GoTo 0
 
     Tidy_DailyLog_Once
 
-    
-    
-
     Fix_Page8_DailyLog_Once
     Fix_Page6_Walk_FrameScroll_Once
     ApplyScroll_MP1_Page3_7_Once
     
     Call Preview_NameToHeader
+    HideLifeLinkControlsInHeader_IfPresent
     Me.controls("txtName").Visible = False
     Me.controls("txtPID").Visible = False
 
-    
-    ' 終了者削除の代わりに計画生成ボタンをfrHeaderに配置
-    ' 邨ゆｺ・・炎髯､縺ｮ莉｣繧上ｊ縺ｫ險育判逕滓・繝懊ち繝ｳ繧断rHeader縺ｫ驟咲ｽｮ
-    ' 邨ゆｺ・・炎髯､縺ｮ莉｣繧上ｊ縺ｫ險育判逕滓・繝懊ち繝ｳ繧断rHeader縺ｫ驟咲ｽｮ
-    ' 邨ゆｺ・・炎髯､縺ｮ莉｣繧上ｊ縺ｫ險育判逕滓・繝懊ち繝ｳ繧断rHeader縺ｫ驟咲ｽｮ
     Dim frHdrRef As MSForms.Frame
     Set frHdrRef = Me.controls("frHeader")
 
@@ -3551,14 +3565,12 @@ Call Align_LoadPrevButton_NextToHdrKana(Me)
 Call Ensure_LoadPrevButton_Once(Me)
 Call HookRomMirrorButtons_Once
 
-'--- hook header "LoadPrev" button (MUST be after Ensure_LoadPrevButton_Once) ---
 Set mHdrLoadPrevHook = New clsHdrBtnHook
 Set mHdrLoadPrevHook.btn = Me.controls("frHeader").controls("cmdHdrLoadPrev")
 mHdrLoadPrevHook.tag = "LoadPrev"
 Set mHdrLoadPrevHook.owner = Me
 DoEvents
 
-    
  If Not mBasicInfoTidyDone Then
     mBasicInfoTidyDone = True
     Call TidyBasicInfo_TwoColumns
@@ -3566,7 +3578,15 @@ DoEvents
     
  EnsureBasicInfoEnterFixedRouteReady
  
-  Call Fix_InnerScrollBars
+ Call Fix_InnerScrollBars
+
+ On Error Resume Next
+ autoDeleteCount = modEvalIOEntry.GetDeleteCandidateRows(Date).count
+ If autoDeleteCount > 0 Then
+    autoDeleteCount = modEvalIOEntry.RunClientAutoDeleteMaintenance()
+    Debug.Print "AutoDelete: " & autoDeleteCount
+ End If
+ On Error GoTo 0
  
 End Sub
 
@@ -6883,7 +6903,7 @@ Private Sub mDailySave_Click()
 
     Dim saveOk As Boolean
     
-    MsgBox "mDailySave_Click ?"
+
 
     On Error GoTo EH
 
@@ -7095,6 +7115,35 @@ Private Function GetMainMultiPage() As MSForms.MultiPage
         End If
     Next
 End Function
+
+Private Function LifeLinkPageCaptionText() As String
+    LifeLinkPageCaptionText = "LIFE" & ChrW(&H9023) & ChrW(&H643A)
+End Function
+Private Sub HideLifeLinkControlsInHeader_IfPresent()
+    Dim hdr As Object
+    Dim ctl As Object
+    Dim ctlName As Variant
+
+    Set hdr = SafeGetControl(Me, "frHeader")
+    If hdr Is Nothing Then Exit Sub
+
+    For Each ctlName In Array("txtInsuredNo", "txtInsurerNo", "txtExternalSystemKey", "lblHdrInsuredNo", "lblHdrInsurerNo", "lblHdrExternalSystemKey")
+        Set ctl = SafeGetControl(hdr, CStr(ctlName))
+        If Not ctl Is Nothing Then
+            ctl.Visible = False
+            ctl.Left = -2000
+            ctl.top = -2000
+        End If
+    Next ctlName
+End Sub
+Private Sub EnsureLifeLinkTab_Once()
+End Sub
+Private Sub SyncLifeLinkTabFromHeaderStorage()
+End Sub
+Private Sub SyncLifeLinkHeaderStorageFromTab()
+End Sub
+
+
 Private Sub HookDailyDateTextBox()
     Dim txt As MSForms.TextBox
     Set txt = Me.controls("txtDailyDate")
@@ -7934,9 +7983,9 @@ End Sub
 
 
 Public Sub MoveGlobalButtonsToHeader_Once()
-    Static done As Boolean
-    If done Then Exit Sub
-    done = True
+    Static Done As Boolean
+    If Done Then Exit Sub
+    Done = True
 
     On Error GoTo EH
     Dim stepN As String
@@ -7967,58 +8016,52 @@ Public Sub MoveGlobalButtonsToHeader_Once()
 EH:
     Debug.Print "[MoveButtons][ERR] step=" & stepN & " Err=" & Err.Number & " " & Err.Description
 End Sub
-
-
-
-
-
-
 Public Sub CreateHeaderButtons_Once()
    Dim mp1 As Object
    Dim pg1 As Object
    Dim fr32 As Object
    Dim btnLoadPrev As Object
 
-
-    Static done As Boolean
-    If done Then Exit Sub
-    done = True
+    Static Done As Boolean
+    If Done Then Exit Sub
+    Done = True
 
     Dim f As MSForms.Frame
     Set f = Me.controls("frHeader")
 
-    ' 既存ボタン（処理の本体）
     Dim bClear As MSForms.Control, bSave As MSForms.Control, bClose As MSForms.Control
     Set bClear = Me.controls("cmdClearGlobal")
     Set bSave = Me.controls("cmdSaveGlobal")
     Set bClose = Me.controls("btnCloseCtl")
 
-    ' 既存は見えなくする（位置は触らない）
     bClear.Visible = False
     bSave.Visible = False
     bClose.Visible = False
 
-    ' ヘッダー用の新ボタンを作る（名前固定）
     Dim hClear As MSForms.CommandButton
     Dim hSave  As MSForms.CommandButton
     Dim hClose As MSForms.CommandButton
+    Dim hLife As MSForms.CommandButton
 
-     On Error Resume Next
+    On Error Resume Next
     Set hClear = f.controls("cmdClearHeader")
     Set hSave = f.controls("cmdSaveHeader")
     Set hClose = f.controls("cmdCloseHeader")
+    Set hLife = f.controls("btnLifeLink")
     On Error GoTo 0
 
     If hClear Is Nothing Then Set hClear = f.controls.Add("Forms.CommandButton.1", "cmdClearHeader", True)
     If hSave Is Nothing Then Set hSave = f.controls.Add("Forms.CommandButton.1", "cmdSaveHeader", True)
     If hClose Is Nothing Then Set hClose = f.controls.Add("Forms.CommandButton.1", "cmdCloseHeader", True)
+    If hLife Is Nothing Then Set hLife = f.controls.Add("Forms.CommandButton.1", "btnLifeLink", True)
 
-    ' 見た目は既存を踏襲
     hClear.caption = bClear.caption: hClear.Width = bClear.Width: hClear.Height = bClear.Height
     hSave.caption = bSave.caption:   hSave.Width = bSave.Width:   hSave.Height = bSave.Height
     hClose.caption = bClose.caption: hClose.Width = bClose.Width: hClose.Height = bClose.Height
+    hLife.caption = "LIFE" & ChrW(&H8A2D) & ChrW(&H5B9A)
+    hLife.Width = 84
+    hLife.Height = hClose.Height
 
-    ' 右寄せ配置
     Const pad As Single = 8, gap As Single = 10
     Dim hdrBtnTop As Single
     hdrBtnTop = (44 - hClose.Height) / 2
@@ -8026,103 +8069,96 @@ Public Sub CreateHeaderButtons_Once()
     hClose.top = hdrBtnTop
     hSave.top = hClose.top
     hClear.top = hClose.top
+    hLife.top = hClose.top
 
     hClose.Left = f.Width - pad - hClose.Width
     hSave.Left = hClose.Left - gap - hSave.Width
     hClear.Left = hSave.Left - gap - hClear.Width
-    
+
     Set mHdr1 = New clsHeaderBtnEvents
-Set mHdr1.btn = hSave
-mHdr1.tag = "Save"
+    Set mHdr1.btn = hSave
+    mHdr1.tag = "Save"
 
-Set mHdr2 = New clsHeaderBtnEvents
-Set mHdr2.btn = hClear
-mHdr2.tag = "Clear"
+    Set mHdr2 = New clsHeaderBtnEvents
+    Set mHdr2.btn = hClear
+    mHdr2.tag = "Clear"
 
-Set mHdr3 = New clsHeaderBtnEvents
-Set mHdr3.btn = hClose
-mHdr3.tag = "Close"
+    Set mHdr3 = New clsHeaderBtnEvents
+    Set mHdr3.btn = hClose
+    mHdr3.tag = "Close"
 
+    Set mHdr4 = New clsHeaderBtnEvents
+    Set mHdr4.btn = hLife
+    mHdr4.tag = "LifeLink"
 
-'==============================
-' LoadPrev（前回の値を読み込む）ヘッダーボタン + Hook
-'==============================
-Dim hLoadPrev As MSForms.CommandButton
+    Dim hLoadPrev As MSForms.CommandButton
+    On Error Resume Next
+    Set hLoadPrev = f.controls("cmdHdrLoadPrev")
+    On Error GoTo 0
 
+    If hLoadPrev Is Nothing Then
+        Set hLoadPrev = f.controls.Add("Forms.CommandButton.1", "cmdHdrLoadPrev", True)
+    End If
 
-' 既にあればそれを掴む（＝インスタンスを増やさない）
-On Error Resume Next
-Set hLoadPrev = f.controls("cmdHdrLoadPrev")
-On Error GoTo 0
+    hLoadPrev.caption = ChrW(&H524D) & ChrW(&H56DE) & ChrW(&H306E) & ChrW(&H5024) & ChrW(&H3092) & ChrW(&H8AAD) & ChrW(&H307F) & ChrW(&H8FBC) & ChrW(&H3080)
+    hLoadPrev.Width = 180
+    hLoadPrev.Height = 24
+    hLoadPrev.top = hClose.top
 
-' 無ければ作る
-If hLoadPrev Is Nothing Then
-    Set hLoadPrev = f.controls.Add("Forms.CommandButton.1", "cmdHdrLoadPrev", True)
-End If
+    On Error Resume Next
+    Dim tbKana As MSForms.Control
+    Set tbKana = f.controls("txtHdrKana")
+    On Error GoTo 0
 
-hLoadPrev.caption = "前回の値を読み込む"
-hLoadPrev.Width = 180
-hLoadPrev.Height = 24
-hLoadPrev.top = hClose.top
+    If Not tbKana Is Nothing Then
+        hLoadPrev.Left = tbKana.Left + tbKana.Width + 12
+    Else
+        hLoadPrev.Left = hClear.Left - 12 - hLoadPrev.Width
+    End If
 
-' 位置：txtHdrKana の右（txtHdrKana が無い場合は右端の左に置く）
-On Error Resume Next
-Dim tbKana As MSForms.Control
-Set tbKana = f.controls("txtHdrKana")
-On Error GoTo 0
+    Set mHdrLoadPrevHook = New clsHdrBtnHook
+    Set mHdrLoadPrevHook.btn = hLoadPrev
+    mHdrLoadPrevHook.tag = "LoadPrev"
+    Set mHdrLoadPrevHook.owner = Me
+    RearrangeHeaderTopAreaLayout
 
-If Not tbKana Is Nothing Then
-    hLoadPrev.Left = tbKana.Left + tbKana.Width + 12
-Else
-    hLoadPrev.Left = hClear.Left - 12 - hLoadPrev.Width
-End If
+    On Error Resume Next
+    Set mp1 = Me.controls("MultiPage1")
+    If Not mp1 Is Nothing Then
+        Set pg1 = mp1.pages(0)
+        If Not pg1 Is Nothing Then
+            If Not btnLoadPrev Is Nothing Then btnLoadPrev.Visible = False
 
-' Hook（クリックで既存の btnLoadPrevCtl_Click へ流す）
-Set mHdrLoadPrevHook = New clsHdrBtnHook
-Set mHdrLoadPrevHook.btn = hLoadPrev
-mHdrLoadPrevHook.tag = "LoadPrev"
-Set mHdrLoadPrevHook.owner = Me
-RearrangeHeaderTopAreaLayout
-
-' 旧ボタンは非表示
-On Error Resume Next
-Set mp1 = Me.controls("MultiPage1")
-If Not mp1 Is Nothing Then
-    Set pg1 = mp1.pages(0)
-    If Not pg1 Is Nothing Then
-        If Not btnLoadPrev Is Nothing Then btnLoadPrev.Visible = False
-
-        Dim legacyLoadPrev As MSForms.Control
-        Set legacyLoadPrev = EvalCtl("btnLoadPrevCtl", "Page1")
-        If Not legacyLoadPrev Is Nothing Then
-            legacyLoadPrev.Visible = False
-            legacyLoadPrev.Enabled = False
-            legacyLoadPrev.Left = -1000
-            legacyLoadPrev.top = -1000
+            Dim legacyLoadPrev As MSForms.Control
+            Set legacyLoadPrev = EvalCtl("btnLoadPrevCtl", "Page1")
+            If Not legacyLoadPrev Is Nothing Then
+                legacyLoadPrev.Visible = False
+                legacyLoadPrev.Enabled = False
+                legacyLoadPrev.Left = -1000
+                legacyLoadPrev.top = -1000
+            End If
         End If
     End If
-End If
-On Error GoTo 0
-
-    
+    On Error GoTo 0
 End Sub
-
-Private Sub RearrangeHeaderTopAreaLayout()
+Public Sub RearrangeHeaderTopAreaLayout()
     Dim f As Object
     Dim btnArchive As Object
-Dim btnBatch As Object, btnClear As Object, btnSave As Object, btnClose As Object, btnLoadPrev As Object
+    Dim btnBatch As Object, btnLife As Object, btnClear As Object, btnSave As Object, btnClose As Object, btnLoadPrev As Object
     Dim lblPID As Object, lblName As Object, lblKana As Object
     Dim txtPID As Object, txtName As Object, txtKana As Object
     Dim leftX As Single, midLeft As Single, midRight As Single
-    Dim btnGap As Single, rowTop1 As Single, rowGap As Single, headerTop As Single
+    Dim btnGap As Single, rowTop1 As Single, rowTop2 As Single, rowGap As Single, headerTop As Single
     Dim idW As Single, nameW As Single, kanaW As Single
     Dim x As Single, remainW As Single, kanaReserve As Single
+    Dim rowHeight As Single
 
     Set f = SafeGetControl(Me, "frHeader")
     If f Is Nothing Then Exit Sub
 
     Set btnArchive = SafeGetControl(f, "cmdArchiveDelete")
     Set btnBatch = SafeGetControl(f, "btnBatchGenerate")
+    Set btnLife = SafeGetControl(f, "btnLifeLink")
     Set btnClear = SafeGetControl(f, "cmdClearHeader")
     Set btnSave = SafeGetControl(f, "cmdSaveHeader")
     Set btnClose = SafeGetControl(f, "cmdCloseHeader")
@@ -8137,8 +8173,6 @@ Dim btnBatch As Object, btnClear As Object, btnSave As Object, btnClose As Objec
 
     rowTop1 = 6
     rowGap = 4
-
-
     btnGap = 6
 
     If Not btnClose Is Nothing Then
@@ -8176,15 +8210,22 @@ Dim btnBatch As Object, btnClear As Object, btnSave As Object, btnClose As Objec
         leftX = btnBatch.Left + btnBatch.Width + 14
     End If
 
-    If Not btnBatch Is Nothing Then
-        btnBatch.Left = leftX
-        btnBatch.top = headerTop
-        leftX = btnBatch.Left + btnBatch.Width + 14
+    If Not btnLife Is Nothing Then
+        btnLife.Left = leftX
+        btnLife.top = headerTop
+        leftX = btnLife.Left + btnLife.Width + 14
     End If
 
+    rowHeight = 24
+    If Not btnClose Is Nothing Then
+        rowHeight = btnClose.Height
+    ElseIf Not txtPID Is Nothing Then
+        rowHeight = txtPID.Height
+    End If
+    rowTop2 = rowTop1 + rowHeight + rowGap
 
     If Not btnLoadPrev Is Nothing And Not btnClear Is Nothing And Not btnClose Is Nothing Then
-        btnLoadPrev.top = rowTop1 + btnClose.Height + rowGap
+        btnLoadPrev.top = rowTop2
         btnLoadPrev.Left = btnClear.Left
         btnLoadPrev.Width = (btnClose.Left + btnClose.Width) - btnClear.Left
     End If
@@ -8195,7 +8236,6 @@ Dim btnBatch As Object, btnClear As Object, btnSave As Object, btnClose As Objec
     If midRight <= midLeft Then Exit Sub
 
     If txtPID Is Nothing Or txtName Is Nothing Or txtKana Is Nothing Then Exit Sub
-    
 
     If Not lblPID Is Nothing Then
         lblPID.AutoSize = True
@@ -8246,7 +8286,6 @@ Dim btnBatch As Object, btnClear As Object, btnSave As Object, btnClose As Objec
     txtKana.Width = kanaW
 End Sub
 
-
 Public Sub DoSaveGlobal()
     Call btnSaveCtl_Click
 End Sub
@@ -8263,9 +8302,9 @@ End Sub
 
 
 Private Sub Tidy_DailyLog_Once()
-    Static done As Boolean
-    If done Then Exit Sub
-    done = True
+    Static Done As Boolean
+    If Done Then Exit Sub
+    Done = True
 
     Tighten_DailyLog_Boxes_ForLayout
 End Sub
@@ -8380,11 +8419,6 @@ End Sub
 
 Private Sub frHeader_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal x As Single, ByVal y As Single)
     On Error Resume Next
-    If TypeName(Me.ActiveControl) = "CommandButton" Then
-        If Me.ActiveControl.name = "cmdArchiveDelete" Then
-            ArchiveAndDelete_EvalData_ByName
-        End If
-    End If
     On Error GoTo 0
 End Sub
 
@@ -8755,7 +8789,7 @@ Private Sub txtHdrName_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift
     Me.UpdateNameSuggest
 End Sub
 Private Sub lstNameSuggest_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
-    CommitNameSuggestSelection
+    CommitNameSuggestSelection , True
 End Sub
 
 
@@ -9090,3 +9124,9 @@ End Sub
 Public Sub ExportAllSheets()
     modBasicPipeline.ExportAllSheets Me
 End Sub
+
+
+
+
+
+

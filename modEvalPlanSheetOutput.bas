@@ -782,7 +782,7 @@ Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVa
     On Error Resume Next
     Dim rng As Range
     Set rng = ws.Range(addressText)
-    If rng Is Nothing Then GoTo done
+    If rng Is Nothing Then GoTo Done
 
     Dim baseRow As Long: baseRow = rng.Cells(1, 1).row
     Dim cell As Range
@@ -792,7 +792,7 @@ Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVa
         If cell.MergeCells Then Set top = cell.MergeArea.Cells(1, 1)
         If top.row >= baseRow Then
             top.value = NzTextSafe(text)
-            GoTo done
+            GoTo Done
         ElseIf cell.MergeCells Then
             Dim ma As Range
             Set ma = cell.MergeArea
@@ -801,12 +801,12 @@ Private Sub WriteMerged(ByVal ws As Worksheet, ByVal addressText As String, ByVa
                And ma.Columns.count > 1 _
                And ma.row + ma.rows.count - 1 >= baseRow Then
                 top.value = NzTextSafe(text)
-                GoTo done
+                GoTo Done
             End If
             
         End If
     Next cell
-done:
+Done:
     Err.Clear
     On Error GoTo 0
 End Sub

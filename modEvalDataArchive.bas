@@ -13,8 +13,8 @@ Public Sub DumpUFTree(ByVal uf As Object)
     Debug.Print "[UF TREE]"; TypeName(uf); " Name="; uf.name
     Debug.Print "  UF: W=" & f2(uf.Width) & " H=" & f2(uf.Height) & _
                 " InW=" & f2(uf.InsideWidth) & " InH=" & f2(uf.InsideHeight) & _
-                " ScrollH=" & f2(NZ(uf.ScrollHeight)) & " ScrollW=" & f2(NZ(uf.ScrollWidth)) & _
-                " ScrollBars=" & NZ(uf.ScrollBars)
+                " ScrollH=" & f2(Nz(uf.ScrollHeight)) & " ScrollW=" & f2(Nz(uf.ScrollWidth)) & _
+                " ScrollBars=" & Nz(uf.ScrollBars)
 #End If
 
     DumpControlsRecursive uf, 0
@@ -141,11 +141,11 @@ EH:
     f2 = CStr(v)
 End Function
 
-Private Function NZ(ByVal v As Variant) As Variant
+Private Function Nz(ByVal v As Variant) As Variant
     If IsEmpty(v) Then
-        NZ = "empty"
+        Nz = "empty"
     Else
-        NZ = v
+        Nz = v
     End If
 End Function
 

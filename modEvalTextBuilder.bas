@@ -3,8 +3,6 @@ Public Sub Preview_NameToHeader()
     Dim f As Object
     Set f = frmEval
 
-
-
     Dim hdr As MSForms.Frame
     Set hdr = f.controls("frHeader")
     Call Align_LoadPrevButton_NextToHdrKana(f)
@@ -20,19 +18,16 @@ Public Sub Preview_NameToHeader()
     Dim lblKana As MSForms.label
     Dim txtKana As MSForms.TextBox
 
-    '--- create or get header label ---
     On Error Resume Next
     Set lbl = hdr.controls("lblHdrName")
     On Error GoTo 0
     If lbl Is Nothing Then
-    Set lbl = hdr.controls.Add("Forms.Label.1", "lblHdrName", True)
-    lbl.caption = "éÅñº"
-    lbl.AutoSize = True
-    lbl.Width = lbl.Width + 8   ' Å© Ç±Ç±
-End If
+        Set lbl = hdr.controls.Add("Forms.Label.1", "lblHdrName", True)
+        lbl.caption = ChrW(&H6C0F) & ChrW(&H540D)
+        lbl.AutoSize = True
+        lbl.Width = lbl.Width + 8
+    End If
 
-
-    '--- create or get header textbox ---
     On Error Resume Next
     Set txt = hdr.controls("txtHdrName")
     On Error GoTo 0
@@ -44,17 +39,14 @@ End If
         txt.Height = f.controls("txtName").Height
         txt.Width = f.controls("txtName").Width
     End If
+    txt.IMEMode = fmIMEModeHiragana
 
-
-        txt.IMEMode = fmIMEModeHiragana
-
-    '--- create or get header kana label/textbox ---
     On Error Resume Next
     Set lblKana = hdr.controls("lblHdrKana")
     On Error GoTo 0
     If lblKana Is Nothing Then
         Set lblKana = hdr.controls.Add("Forms.Label.1", "lblHdrKana", True)
-        lblKana.caption = "Ç”ÇËÇ™Ç»"
+        lblKana.caption = ChrW(&H3075) & ChrW(&H308A) & ChrW(&H304C) & ChrW(&H306A)
         lblKana.AutoSize = True
         lblKana.Width = lblKana.Width + 8
     End If
@@ -70,17 +62,11 @@ End If
         txtKana.Height = txt.Height
         txtKana.Width = txt.Width
     End If
-
     txtKana.IMEMode = fmIMEModeHiragana
-   'Call frmEval.EnsureHeaderLoadPrevButton
-
-    '--- value sync (one-way preview) ---
     txt.text = f.controls("txtName").text
 
-    '--- position: [éÅñº][txt] [cmdClearHeader][cmdSaveHeader][cmdCloseHeader] ---
     txt.top = btn.top + (btn.Height - txt.Height) / 2
     lbl.top = btn.top + (btn.Height - lbl.Height) / 2
-
     txt.Left = btn.Left - pad - txt.Width
     lbl.Left = txt.Left - gap - lbl.Width
 
@@ -89,10 +75,8 @@ End If
     lblKana.top = txtKana.top + (txtKana.Height - lblKana.Height) / 2
     lblKana.Left = txtKana.Left - gap - lblKana.Width
 
-        '--- create or get header PID label/textbox ---
     Dim lblID As MSForms.label
     Dim txtID As MSForms.TextBox
-
     On Error Resume Next
     Set lblID = hdr.controls("lblHdrPID")
     On Error GoTo 0
@@ -114,26 +98,86 @@ End If
         txtID.Height = f.controls("txtPID").Height
         txtID.Width = f.controls("txtPID").Width
     End If
-
-    '--- value sync (one-way preview) ---
     txtID.text = f.controls("txtPID").text
-
-    '--- position: [ID][txt] [éÅñº][txt] [buttons...] ---
     txtID.top = btn.top + (btn.Height - txtID.Height) / 2
     lblID.top = btn.top + (btn.Height - lblID.Height) / 2
-
     txtID.Left = lbl.Left - pad - txtID.Width
     lblID.Left = txtID.Left - gap - lblID.Width
 
+    Dim lblInsured As MSForms.label
+    Dim txtInsured As MSForms.TextBox
+    On Error Resume Next
+    Set lblInsured = hdr.controls("lblHdrInsuredNo")
+    On Error GoTo 0
+    If lblInsured Is Nothing Then
+        Set lblInsured = hdr.controls.Add("Forms.Label.1", "lblHdrInsuredNo", True)
+        lblInsured.caption = ChrW(&H88AB) & ChrW(&H4FDD) & ChrW(&H967A) & ChrW(&H8005) & ChrW(&H756A) & ChrW(&H53F7)
+        lblInsured.AutoSize = True
+        lblInsured.Width = lblInsured.Width + 8
+    End If
 
+    On Error Resume Next
+    Set txtInsured = hdr.controls("txtInsuredNo")
+    On Error GoTo 0
+    If txtInsured Is Nothing Then
+        Set txtInsured = hdr.controls.Add("Forms.TextBox.1", "txtInsuredNo", True)
+        txtInsured.SpecialEffect = txtID.SpecialEffect
+        txtInsured.Font.name = txtID.Font.name
+        txtInsured.Font.Size = txtID.Font.Size
+        txtInsured.Height = txtID.Height
+        txtInsured.Width = 132
+    End If
+    txtInsured.IMEMode = fmIMEModeOff
 
+    Dim lblInsurer As MSForms.label
+    Dim txtInsurer As MSForms.TextBox
+    On Error Resume Next
+    Set lblInsurer = hdr.controls("lblHdrInsurerNo")
+    On Error GoTo 0
+    If lblInsurer Is Nothing Then
+        Set lblInsurer = hdr.controls.Add("Forms.Label.1", "lblHdrInsurerNo", True)
+        lblInsurer.caption = ChrW(&H4FDD) & ChrW(&H967A) & ChrW(&H8005) & ChrW(&H756A) & ChrW(&H53F7)
+        lblInsurer.AutoSize = True
+        lblInsurer.Width = lblInsurer.Width + 8
+    End If
 
+    On Error Resume Next
+    Set txtInsurer = hdr.controls("txtInsurerNo")
+    On Error GoTo 0
+    If txtInsurer Is Nothing Then
+        Set txtInsurer = hdr.controls.Add("Forms.TextBox.1", "txtInsurerNo", True)
+        txtInsurer.SpecialEffect = txtInsured.SpecialEffect
+        txtInsurer.Font.name = txtInsured.Font.name
+        txtInsurer.Font.Size = txtInsured.Font.Size
+        txtInsurer.Height = txtInsured.Height
+        txtInsurer.Width = 132
+    End If
+    txtInsurer.IMEMode = fmIMEModeOff
+
+    Dim lblExternal As MSForms.label
+    Dim txtExternal As MSForms.TextBox
+    On Error Resume Next
+    Set lblExternal = hdr.controls("lblHdrExternalSystemKey")
+    On Error GoTo 0
+    If lblExternal Is Nothing Then
+        Set lblExternal = hdr.controls.Add("Forms.Label.1", "lblHdrExternalSystemKey", True)
+        lblExternal.caption = ChrW(&H5916) & ChrW(&H90E8) & ChrW(&H30B7) & ChrW(&H30B9) & ChrW(&H30C6) & ChrW(&H30E0) & ChrW(&H7BA1) & ChrW(&H7406) & ChrW(&H756A) & ChrW(&H53F7)
+        lblExternal.AutoSize = True
+        lblExternal.Width = lblExternal.Width + 8
+    End If
+
+    On Error Resume Next
+    Set txtExternal = hdr.controls("txtExternalSystemKey")
+    On Error GoTo 0
+    If txtExternal Is Nothing Then
+        Set txtExternal = hdr.controls.Add("Forms.TextBox.1", "txtExternalSystemKey", True)
+        txtExternal.SpecialEffect = txtInsurer.SpecialEffect
+        txtExternal.Font.name = txtInsurer.Font.name
+        txtExternal.Font.Size = txtInsurer.Font.Size
+        txtExternal.Height = txtInsurer.Height
+        txtExternal.Width = 220
+    End If
+    txtExternal.IMEMode = fmIMEModeOff
+
+    frmEval.RearrangeHeaderTopAreaLayout
 End Sub
-
-
-
-
-
-
-
-

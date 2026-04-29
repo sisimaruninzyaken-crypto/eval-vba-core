@@ -27,6 +27,13 @@ Private Const HDR_USE_WEEKDAY_WED As String = "UseWeekday_Wed"
 Private Const HDR_USE_WEEKDAY_THU As String = "UseWeekday_Thu"
 Private Const HDR_USE_WEEKDAY_FRI As String = "UseWeekday_Fri"
 Private Const HDR_USE_WEEKDAY_SAT As String = "UseWeekday_Sat"
+Private Const HDR_STATUS As String = "Status"
+Private Const HDR_LAST_EVAL_DATE As String = "LastEvalDate"
+Private Const HDR_LAST_DAILY_LOG_DATE As String = "LastDailyLogDate"
+Private Const HDR_LAST_ACTIVITY_DATE As String = "LastActivityDate"
+Private Const HDR_ARCHIVED_AT As String = "ArchivedAt"
+Private Const HDR_DELETE_AFTER As String = "DeleteAfter"
+Private Const CLIENT_DELETE_LOG_SHEET_NAME As String = "ClientDeleteLog"
 Public mDailyLogManual As Boolean    ' 日々の記録の手動保存フラグ
 
 
@@ -456,7 +463,6 @@ Private Function FindEvalIndexRowsByUserID(ByVal indexWs As Worksheet, ByVal use
 
     Set FindEvalIndexRowsByUserID = c
 End Function
-
 Private Function BuildDuplicateUserIDMessage(ByVal indexWs As Worksheet, ByVal userID As String, ByVal rowsByID As Collection) As String
     Dim lines As String
     Dim i As Long
@@ -473,10 +479,11 @@ Private Function BuildDuplicateUserIDMessage(ByVal indexWs As Worksheet, ByVal u
 
     BuildDuplicateUserIDMessage = _
        "EvalIndex内で同一IDが複数存在しています。" & vbCrLf & _
-       "ID: " & userID & vbCrLf & vbCrLf & lines
+       "ID: " & userID & vbCrLf & vbCrLf & lines & _
+       vbCrLf & vbCrLf & "次に使用可能なID: " & BuildNextAvailableUserIDCandidate(indexWs)
 End Function
-
-Private Function BuildUserIdentityMismatchMessage(ByVal userID As String, _
+Private Function BuildUserIdentityMismatchMessage(ByVal indexWs As Worksheet, _
+                                                  ByVal userID As String, _
                                                   ByVal inputName As String, _
                                                   ByVal indexName As String, _
                                                   ByVal inputKana As String, _
@@ -491,6 +498,8 @@ Private Function BuildUserIdentityMismatchMessage(ByVal userID As String, _
     If Len(Trim$(inputKana)) > 0 Or Len(Trim$(indexKana)) > 0 Then
         lines = lines & vbCrLf & "入力カナ: " & inputKana & vbCrLf & "登録カナ: " & indexKana
     End If
+
+    lines = lines & vbCrLf & vbCrLf & "次に使用可能なID: " & BuildNextAvailableUserIDCandidate(indexWs)
 
     BuildUserIdentityMismatchMessage = lines
 End Function
@@ -650,6 +659,8 @@ Public Sub SaveEvaluation_Append_From(owner As Object)
             UpdateEvalIndexMetadata owner, idxRow, wsUser.name
             UpdateEvalIndexStats idxRow, wsUser
         End If
+
+        UpdateClientMaster_AfterEvalSave owner, wsUser
         Exit Sub
     End If
 
@@ -666,7 +677,8 @@ End Sub
 Private Function ClientMasterHeaders() As Variant
     ClientMasterHeaders = Array( _
         HDR_USER_ID, HDR_NAME, HDR_KANA, HDR_BIRTH_DATE, HDR_GENDER, HDR_CARE_LEVEL, HDR_CREATED_DATE, _
-        HDR_USE_WEEKDAY_MON, HDR_USE_WEEKDAY_TUE, HDR_USE_WEEKDAY_WED, HDR_USE_WEEKDAY_THU, HDR_USE_WEEKDAY_FRI, HDR_USE_WEEKDAY_SAT)
+        HDR_USE_WEEKDAY_MON, HDR_USE_WEEKDAY_TUE, HDR_USE_WEEKDAY_WED, HDR_USE_WEEKDAY_THU, HDR_USE_WEEKDAY_FRI, HDR_USE_WEEKDAY_SAT, _
+        HDR_STATUS, HDR_LAST_EVAL_DATE, HDR_LAST_DAILY_LOG_DATE, HDR_LAST_ACTIVITY_DATE, HDR_ARCHIVED_AT, HDR_DELETE_AFTER)
 End Function
 
 Private Function EnsureClientMasterSheet() As Worksheet
@@ -923,6 +935,40 @@ Private Function GetCtlCheckValue(ByVal owner As Object, ByVal ctlName As String
     On Error Resume Next
     GetCtlCheckValue = CBool(o.value)
     On Error GoTo 0
+End Function
+
+Private Function GetInsuredNoText(ByVal owner As Object) As String
+    GetInsuredNoText = Trim$(GetCtlTextGeneric(owner, "txtInsuredNo"))
+End Function
+
+Private Function GetExternalSystemKeyText(ByVal owner As Object) As String
+    GetExternalSystemKeyText = Trim$(GetCtlTextGeneric(owner, "txtExternalSystemKey"))
+End Function
+
+Private Sub SetExternalSystemKeyText(ByVal owner As Object, ByVal valueText As String)
+    SetCtlValueSafe owner, "txtExternalSystemKey", valueText
+End Sub
+
+Public Function BuildExternalSystemKey(ByVal owner As Object) As String
+    Dim insuredNo As String
+    Dim evalText As String
+    Dim normalizedDate As Date
+
+    insuredNo = GetInsuredNoText(owner)
+    If Len(insuredNo) = 0 Then Exit Function
+
+    evalText = Trim$(GetCtlTextGeneric(owner, "txtEDate"))
+    If Len(evalText) = 0 Then Exit Function
+    If Not TryParseEvalDate(evalText, normalizedDate) Then Exit Function
+
+    BuildExternalSystemKey = insuredNo & "_" & Format$(normalizedDate, "yyyymmdd")
+End Function
+
+Private Function ResolveExternalSystemKeyForSave(ByVal owner As Object) As String
+    ResolveExternalSystemKeyForSave = GetExternalSystemKeyText(owner)
+    If Len(ResolveExternalSystemKeyForSave) > 0 Then Exit Function
+
+    ResolveExternalSystemKeyForSave = BuildExternalSystemKey(owner)
 End Function
 
 Private Sub SetCtlCheckValue(ByVal owner As Object, ByVal ctlName As String, ByVal checkValue As Boolean)
@@ -1677,6 +1723,10 @@ Public Sub SaveBasicInfoToSheet_FromMe(ws As Worksheet, r As Long, owner As Obje
     Debug.Print "[Basic] Enter_SaveBasicInfo | ws=" & ws.name & " | r=" & r
 
     SyncAgeBeforeBasicSave owner
+
+    Dim externalKeyVal As String
+    externalKeyVal = ResolveExternalSystemKeyForSave(owner)
+    If Len(externalKeyVal) > 0 Then SetExternalSystemKeyText owner, externalKeyVal
     
     
     '--- 単一値のマッピング（最後の要素に _ を付けない） ---
@@ -1687,6 +1737,9 @@ map = Array( _
     Array("生年月日", "txtBirth"), _
     Array("性別", "cboSex"), _
     Array("Basic.Name", "txtName"), _
+    Array("InsuredNo", "txtInsuredNo"), _
+    Array("InsurerNo", "txtInsurerNo"), _
+    Array("ExternalSystemKey", "txtExternalSystemKey"), _
     Array("評価者", "txtEvaluator"), _
     Array("評価者職種", "txtEvaluatorJob"), _
     Array("発症日", "txtOnset"), _
@@ -1784,6 +1837,9 @@ map = Array( _
     Array("生年月日", "txtBirth"), _
     Array("性別", "cboSex"), _
     Array("Basic.Name", "txtName"), _
+    Array("InsuredNo", "txtInsuredNo"), _
+    Array("InsurerNo", "txtInsurerNo"), _
+    Array("ExternalSystemKey", "txtExternalSystemKey"), _
     Array("評価者", "txtEvaluator"), _
     Array("評価者職種", "txtEvaluatorJob"), _
     Array("発症日", "txtOnset"), _
@@ -2125,6 +2181,10 @@ Public Sub EnsureHeaderCol_BasicInfo(ByVal ws As Worksheet)
     d("BasicInfo_認知症高齢者の日常生活自立度") = "Basic.DementiaADL"
     d("認知症高齢者の日常生活自立度") = "Basic.DementiaADL"
     d("BasicInfo_BI.SocialParticipation") = "BI.SocialParticipation": d("BasicInfo_生活状況") = "BI.SocialParticipation": d("生活状況") = "BI.SocialParticipation"
+    AddAlias d, "Basic.InsurerNo", "InsurerNo"
+    AddAlias d, "InsurerNo", "InsurerNo"
+    AddAlias d, "Basic.ExternalSystemKey", "ExternalSystemKey"
+    AddAlias d, "ExternalSystemKey", "ExternalSystemKey"
     AddAlias d, "Basic.LifeStatus", "BI.SocialParticipation"
     d("BasicInfo_患者Needs") = "Basic.Needs.Patient": d("患者Needs") = "Basic.Needs.Patient"
     d("BasicInfo_家族Needs") = "Basic.Needs.Family":  d("家族Needs") = "Basic.Needs.Family"
@@ -2159,7 +2219,7 @@ Public Sub EnsureHeaderCol_BasicInfo(ByVal ws As Worksheet)
     ' 2) 最低限必要な列がなければ追加（Save/Loadの対象を漏れなく）
     Dim need As Variant, mustHave As Variant
     mustHave = Array( _
-        "Basic.ID", "Basic.Name", "Basic.EvalDate", "Basic.Evaluator", _
+        "Basic.ID", "Basic.Name", "InsuredNo", "InsurerNo", "ExternalSystemKey", "Basic.EvalDate", "Basic.Evaluator", _
         "BI.EvaluatorJob", _
         "Basic.Age", "Basic.Sex", "Basic.PrimaryDx", "Basic.OnsetDate", _
         "Basic.CareLevel", "Basic.DementiaADL", "BI.SocialParticipation", _
@@ -4133,8 +4193,7 @@ End Function
 Public Function SaveDailyLog_Append(owner As Object) As Boolean
 
     
-    ' 専用ボタンからの呼び出し以外では何もしない
-    If Not mDailyLogManual Then Exit Function
+    ' ヘッダ部の氏名・IDを取得
 
 
     Dim ws As Worksheet
@@ -4212,7 +4271,7 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
     End If
 
     If Trim$(commonRecord & abnormal) = "" Then
-       If MsgBox("記録が空ですが保存しますか？", vbQuestion + vbOKCancel) = vbCancel Then Exit Function
+        If MsgBox("既存の記録があります。更新しますか？", vbQuestion + vbOKCancel) = vbCancel Then Exit Function
     
  End If
 
@@ -4290,6 +4349,7 @@ Public Function SaveDailyLog_Append(owner As Object) As Boolean
     Next i
     
     CommitDailyLogWorkbook wb
+    UpdateClientMaster_AfterDailyLogSave owner, saveTargets, logDate
     SaveDailyLog_Append = True
     
 
@@ -4718,7 +4778,7 @@ Private Function CommonHistoryHeaders() As Variant
     Dim v As Variant
 
     For Each v In Array( _
-        HDR_ROWNO, "Basic.ID", "Basic.Name", "Basic.NameKana", _
+        HDR_ROWNO, "Basic.ID", "Basic.Name", "Basic.NameKana", "InsuredNo", "InsurerNo", "ExternalSystemKey", _
         "Basic.EvalDate", "Basic.Evaluator", "Basic.EvaluatorJob", "Basic.Age", _
         "Basic.BirthDate", "Basic.Sex", "Basic.PrimaryDx", "Basic.OnsetDate", _
         "Basic.CareLevel", "Basic.DementiaADL", "BI.SocialParticipation", _
@@ -5165,7 +5225,7 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
     End If
 
     
-    If Len(idVal) > 0 And Not forSave And rowsByName.count > 1 Then
+    If Len(idVal) = 0 And Not forSave And rowsByName.count > 1 Then
         Dim loadPickReason2 As String
 
         pickedRow = PickDuplicateNameIndexRow(indexWs, rowsByName, loadPickReason2)
@@ -5198,7 +5258,7 @@ Private Function ResolveUserHistorySheetEx(owner As Object, _
             Dim indexKana As String: indexKana = Trim$(CStr(indexWs.Cells(indexRow, 3).value))
             If NormalizeName(indexName) <> NormalizeName(nm) _
                Or Not IsSameKanaIfAvailable(kanaVal, indexKana) Then
-                message = BuildUserIdentityMismatchMessage(idVal, nm, indexName, kanaVal, indexKana)
+                message = BuildUserIdentityMismatchMessage(indexWs, idVal, nm, indexName, kanaVal, indexKana)
                 Exit Function
             End If
 
@@ -6068,3 +6128,443 @@ Private Sub UpdateEvalIndexStats(ByVal indexRow As Long, ByVal wsTarget As Works
     indexWs.Cells(indexRow, 6).value = latestEvalDate
     indexWs.Cells(indexRow, 7).value = recordCount
 End Sub
+Private Function NormalizeClientMasterStatus(ByVal rawStatus As Variant) As String
+    Dim normalized As String
+
+    normalized = UCase$(Trim$(CStr(rawStatus)))
+    If normalized = "ARCHIVED" Then
+        NormalizeClientMasterStatus = "Archived"
+    Else
+        NormalizeClientMasterStatus = "Active"
+    End If
+End Function
+
+Private Function FormatClientMasterDate(ByVal valueDate As Date) As String
+    FormatClientMasterDate = Format$(dateValue(valueDate), "yyyy/mm/dd")
+End Function
+
+Private Function TryParseClientMasterDateValue(ByVal rawValue As Variant, ByRef parsedDate As Date) As Boolean
+    On Error GoTo EH
+
+    If IsDate(rawValue) Then
+        parsedDate = dateValue(CDate(rawValue))
+        TryParseClientMasterDateValue = True
+        Exit Function
+    End If
+
+    Dim normalized As String
+    normalized = Trim$(CStr(rawValue))
+    If Len(normalized) = 0 Then Exit Function
+
+    normalized = Replace$(normalized, "年", "/")
+    normalized = Replace$(normalized, "月", "/")
+    normalized = Replace$(normalized, "日", "")
+    normalized = Replace$(normalized, ".", "/")
+    normalized = Replace$(normalized, "-", "/")
+
+    If IsDate(normalized) Then
+        parsedDate = dateValue(CDate(normalized))
+        TryParseClientMasterDateValue = True
+    End If
+    Exit Function
+EH:
+    TryParseClientMasterDateValue = False
+End Function
+
+Private Function BuildClientMasterCandidateItem(ByVal ws As Worksheet, ByVal rowNo As Long) As Object
+    Dim item As Object
+    Set item = CreateObject("Scripting.Dictionary")
+
+    item("Row") = rowNo
+    item("UserID") = Trim$(CStr(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_USER_ID)).value))
+    item("Name") = Trim$(CStr(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_NAME)).value))
+    item("Status") = NormalizeClientMasterStatus(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_STATUS)).value)
+    item("LastEvalDate") = Trim$(CStr(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_LAST_EVAL_DATE)).value))
+    item("LastDailyLogDate") = Trim$(CStr(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_LAST_DAILY_LOG_DATE)).value))
+    item("LastActivityDate") = Trim$(CStr(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_LAST_ACTIVITY_DATE)).value))
+    item("ArchivedAt") = Trim$(CStr(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_ARCHIVED_AT)).value))
+    item("DeleteAfter") = Trim$(CStr(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_DELETE_AFTER)).value))
+
+    Set BuildClientMasterCandidateItem = item
+End Function
+
+Private Function FindOrCreateClientMasterRowForIdentity(ByVal owner As Object, ByVal userID As String, ByVal nameText As String) As Long
+    Dim ws As Worksheet
+    Dim shouldSkip As Boolean
+    Dim rowNo As Long
+
+    Set ws = EnsureClientMasterSheet()
+    rowNo = FindClientMasterRow(ws, userID, nameText, shouldSkip)
+    If rowNo > 0 Then
+        FindOrCreateClientMasterRowForIdentity = rowNo
+        Exit Function
+    End If
+
+    If shouldSkip Then Exit Function
+    If Len(Trim$(nameText)) = 0 Then Exit Function
+
+    rowNo = NextAppendRow(ws)
+    ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_USER_ID)).value = Trim$(userID)
+    ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_NAME)).value = Trim$(nameText)
+    ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_STATUS)).value = "Active"
+    ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_ARCHIVED_AT)).value = vbNullString
+    If Not owner Is Nothing Then
+        ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_KANA)).value = Trim$(GetHdrKanaText(owner))
+    End If
+
+    FindOrCreateClientMasterRowForIdentity = rowNo
+End Function
+
+Public Sub RecalcClientMasterActivityFields(ByVal ws As Worksheet, ByVal rowNo As Long)
+    Dim colStatus As Long
+    Dim colLastEval As Long
+    Dim colLastDaily As Long
+    Dim colLastActivity As Long
+    Dim colDeleteAfter As Long
+    Dim lastEvalDate As Date
+    Dim lastDailyDate As Date
+    Dim lastActivityDate As Date
+    Dim hasLastEval As Boolean
+    Dim hasLastDaily As Boolean
+    Dim hasLastActivity As Boolean
+
+    If ws Is Nothing Then Exit Sub
+    If rowNo <= 1 Then Exit Sub
+
+    colStatus = EnsureHeaderCol(ws, HDR_STATUS)
+    colLastEval = EnsureHeaderCol(ws, HDR_LAST_EVAL_DATE)
+    colLastDaily = EnsureHeaderCol(ws, HDR_LAST_DAILY_LOG_DATE)
+    colLastActivity = EnsureHeaderCol(ws, HDR_LAST_ACTIVITY_DATE)
+    colDeleteAfter = EnsureHeaderCol(ws, HDR_DELETE_AFTER)
+
+    ws.Cells(rowNo, colStatus).value = NormalizeClientMasterStatus(ws.Cells(rowNo, colStatus).value)
+
+    hasLastEval = TryParseClientMasterDateValue(ws.Cells(rowNo, colLastEval).value, lastEvalDate)
+    hasLastDaily = TryParseClientMasterDateValue(ws.Cells(rowNo, colLastDaily).value, lastDailyDate)
+
+    If hasLastEval Then
+        lastActivityDate = lastEvalDate
+        hasLastActivity = True
+    End If
+    If hasLastDaily Then
+        If (Not hasLastActivity) Or (lastDailyDate > lastActivityDate) Then
+            lastActivityDate = lastDailyDate
+            hasLastActivity = True
+        End If
+    End If
+
+    If hasLastActivity Then
+        ws.Cells(rowNo, colLastActivity).value = FormatClientMasterDate(lastActivityDate)
+        ws.Cells(rowNo, colDeleteAfter).value = FormatClientMasterDate(DateAdd("yyyy", 5, lastActivityDate))
+    Else
+        ws.Cells(rowNo, colLastActivity).value = vbNullString
+        ws.Cells(rowNo, colDeleteAfter).value = vbNullString
+    End If
+End Sub
+
+Private Sub UpdateClientMasterRowActivity(ByVal ws As Worksheet, ByVal rowNo As Long, Optional ByVal lastEvalDateText As String = "", Optional ByVal lastDailyLogDateText As String = "", Optional ByVal reactivate As Boolean = False)
+    Dim colStatus As Long
+    Dim colArchivedAt As Long
+
+    If ws Is Nothing Then Exit Sub
+    If rowNo <= 1 Then Exit Sub
+
+    If Len(Trim$(lastEvalDateText)) > 0 Then
+        ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_LAST_EVAL_DATE)).value = Trim$(lastEvalDateText)
+    End If
+    If Len(Trim$(lastDailyLogDateText)) > 0 Then
+        ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_LAST_DAILY_LOG_DATE)).value = Trim$(lastDailyLogDateText)
+    End If
+
+    colStatus = EnsureHeaderCol(ws, HDR_STATUS)
+    colArchivedAt = EnsureHeaderCol(ws, HDR_ARCHIVED_AT)
+    If reactivate Then
+        ws.Cells(rowNo, colStatus).value = "Active"
+        ws.Cells(rowNo, colArchivedAt).value = vbNullString
+    ElseIf Len(Trim$(CStr(ws.Cells(rowNo, colStatus).value))) = 0 Then
+        ws.Cells(rowNo, colStatus).value = "Active"
+    End If
+
+    RecalcClientMasterActivityFields ws, rowNo
+End Sub
+
+Public Sub UpdateClientMaster_AfterEvalSave(ByVal owner As Object, ByVal wsUser As Worksheet)
+    Dim ws As Worksheet
+    Dim rowNo As Long
+    Dim shouldSkip As Boolean
+    Dim latestEvalDate As String
+    Dim firstEvalDate As String
+    Dim previousEvalDate As String
+    Dim recordCount As Long
+    Dim idVal As String
+    Dim nameVal As String
+
+    If owner Is Nothing Then Exit Sub
+    If wsUser Is Nothing Then Exit Sub
+
+    idVal = Trim$(GetID_FromBasicInfo(owner))
+    nameVal = GetClientMasterLookupName(owner)
+    If Len(Trim$(nameVal)) = 0 Then Exit Sub
+
+    GetUserEvalDateStats wsUser, firstEvalDate, latestEvalDate, previousEvalDate, recordCount
+    If Len(Trim$(latestEvalDate)) = 0 Then Exit Sub
+
+    Set ws = EnsureClientMasterSheet()
+    rowNo = FindClientMasterRow(ws, idVal, nameVal, shouldSkip)
+    If rowNo <= 0 Then
+        rowNo = FindOrCreateClientMasterRowForIdentity(owner, idVal, nameVal)
+    End If
+    If rowNo <= 0 Then Exit Sub
+
+    UpdateClientMasterRowActivity ws, rowNo, latestEvalDate, vbNullString, True
+End Sub
+
+Public Sub UpdateClientMaster_AfterDailyLogSave(ByVal owner As Object, ByVal saveTargets As Collection, ByVal logDate As Date)
+    Dim ws As Worksheet
+    Dim item As Object
+    Dim rowNo As Long
+    Dim logDateText As String
+    Dim targetPID As String
+    Dim targetName As String
+
+    If saveTargets Is Nothing Then Exit Sub
+
+    Set ws = EnsureClientMasterSheet()
+    logDateText = FormatClientMasterDate(logDate)
+
+    For Each item In saveTargets
+        targetPID = Trim$(CStr(item("PID")))
+        targetName = Trim$(CStr(item("Name")))
+        rowNo = FindOrCreateClientMasterRowForIdentity(owner, targetPID, targetName)
+        If rowNo > 0 Then
+            UpdateClientMasterRowActivity ws, rowNo, vbNullString, logDateText, True
+        End If
+    Next item
+End Sub
+
+Private Function ResolveCandidateReferenceDate(Optional ByVal asOfDate As Variant) As Date
+    If IsDate(asOfDate) Then
+        ResolveCandidateReferenceDate = dateValue(CDate(asOfDate))
+    Else
+        ResolveCandidateReferenceDate = Date
+    End If
+End Function
+
+Public Function GetArchiveCandidateRows(Optional ByVal asOfDate As Variant) As Collection
+    Dim ws As Worksheet
+    Dim result As Collection
+    Dim lastRow As Long
+    Dim rowNo As Long
+    Dim statusVal As String
+    Dim lastActivityDate As Date
+    Dim cutoffDate As Date
+    Dim baseDate As Date
+
+    Set result = New Collection
+    Set ws = EnsureClientMasterSheet()
+    baseDate = ResolveCandidateReferenceDate(asOfDate)
+    cutoffDate = DateAdd("m", -6, baseDate)
+    lastRow = ws.Cells(ws.rows.count, EnsureHeaderCol(ws, HDR_NAME)).End(xlUp).row
+
+    For rowNo = 2 To lastRow
+        statusVal = NormalizeClientMasterStatus(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_STATUS)).value)
+        If StrComp(statusVal, "Active", vbTextCompare) = 0 Then
+            If TryParseClientMasterDateValue(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_LAST_ACTIVITY_DATE)).value, lastActivityDate) Then
+                If lastActivityDate <= cutoffDate Then
+                    result.Add BuildClientMasterCandidateItem(ws, rowNo)
+                End If
+            End If
+        End If
+    Next rowNo
+
+    Set GetArchiveCandidateRows = result
+End Function
+
+Public Function GetDeleteCandidateRows(Optional ByVal asOfDate As Variant) As Collection
+    Dim ws As Worksheet
+    Dim result As Collection
+    Dim lastRow As Long
+    Dim rowNo As Long
+    Dim deleteAfterDate As Date
+    Dim lastActivityDate As Date
+    Dim baseDate As Date
+
+    Set result = New Collection
+    Set ws = EnsureClientMasterSheet()
+    baseDate = ResolveCandidateReferenceDate(asOfDate)
+    lastRow = ws.Cells(ws.rows.count, EnsureHeaderCol(ws, HDR_NAME)).End(xlUp).row
+
+    For rowNo = 2 To lastRow
+        If TryParseClientMasterDateValue(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_DELETE_AFTER)).value, deleteAfterDate) Then
+            If deleteAfterDate <= baseDate Then
+                result.Add BuildClientMasterCandidateItem(ws, rowNo)
+            End If
+        ElseIf TryParseClientMasterDateValue(ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_LAST_ACTIVITY_DATE)).value, lastActivityDate) Then
+            If DateAdd("yyyy", 5, lastActivityDate) <= baseDate Then
+                result.Add BuildClientMasterCandidateItem(ws, rowNo)
+            End If
+        End If
+    Next rowNo
+
+    Set GetDeleteCandidateRows = result
+End Function
+
+
+Private Function EnsureClientDeleteLogSheet() As Worksheet
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(CLIENT_DELETE_LOG_SHEET_NAME)
+    On Error GoTo 0
+
+    If ws Is Nothing Then
+        Set ws = ThisWorkbook.Worksheets.Add(After:=Sheets(Sheets.count))
+        ws.name = CLIENT_DELETE_LOG_SHEET_NAME
+    End If
+
+    ws.Cells(1, 1).value = "DeletedAt"
+    ws.Cells(1, 2).value = "Name"
+    ws.Cells(1, 3).value = "UserID"
+    ws.Cells(1, 4).value = "LastActivityDate"
+
+    Set EnsureClientDeleteLogSheet = ws
+End Function
+
+Private Sub AppendClientDeleteLog(ByVal deletedAt As Date, ByVal nameText As String, ByVal userID As String, ByVal lastActivityDateText As String)
+    Dim ws As Worksheet
+    Dim rowNo As Long
+
+    Set ws = EnsureClientDeleteLogSheet()
+    rowNo = NextAppendRow(ws)
+
+    ws.Cells(rowNo, 1).value = deletedAt
+    ws.Cells(rowNo, 1).NumberFormatLocal = "yyyy/mm/dd hh:mm"
+    ws.Cells(rowNo, 2).value = Trim$(nameText)
+    ws.Cells(rowNo, 3).value = Trim$(userID)
+    ws.Cells(rowNo, 4).value = Trim$(lastActivityDateText)
+End Sub
+
+Private Function FindDeleteEvalIndexRow(ByVal indexWs As Worksheet, ByVal userID As String, ByVal nameText As String) As Long
+    Dim rowsByID As Collection
+    Dim rowsByName As Collection
+
+    If indexWs Is Nothing Then Exit Function
+
+    If Len(Trim$(userID)) > 0 Then
+        Set rowsByID = FindEvalIndexRowsByUserID(indexWs, userID)
+        If rowsByID.count = 1 Then
+            FindDeleteEvalIndexRow = CLng(rowsByID(1))
+            Exit Function
+        ElseIf rowsByID.count > 1 Then
+            Exit Function
+        End If
+    End If
+
+    If Len(Trim$(nameText)) = 0 Then Exit Function
+
+    Set rowsByName = FindEvalIndexRowsByName(indexWs, nameText)
+    If rowsByName.count = 1 Then
+        FindDeleteEvalIndexRow = CLng(rowsByName(1))
+    End If
+End Function
+
+Private Function TryDeleteWorksheetSafe(ByVal sheetName As String) As Boolean
+    Dim ws As Worksheet
+    Dim previousAlerts As Boolean
+
+    If Len(Trim$(sheetName)) = 0 Then
+        TryDeleteWorksheetSafe = True
+        Exit Function
+    End If
+
+    If Not TryGetWorksheetByName(sheetName, ws) Then
+        TryDeleteWorksheetSafe = True
+        Exit Function
+    End If
+
+    On Error GoTo EH
+    previousAlerts = Application.DisplayAlerts
+    Application.DisplayAlerts = False
+    ws.Delete
+    Application.DisplayAlerts = previousAlerts
+    TryDeleteWorksheetSafe = True
+    Exit Function
+EH:
+    Application.DisplayAlerts = previousAlerts
+    TryDeleteWorksheetSafe = False
+End Function
+
+Private Function DeleteClientByRetentionTarget(ByVal userID As String, ByVal nameText As String, ByVal lastActivityDateText As String) As Boolean
+    Dim clientWs As Worksheet
+    Dim indexWs As Worksheet
+    Dim clientRow As Long
+    Dim indexRow As Long
+    Dim shouldSkip As Boolean
+    Dim historySheetName As String
+    Dim deletedAt As Date
+
+    Set clientWs = EnsureClientMasterSheet()
+    Set indexWs = EnsureEvalIndexSheet()
+
+    clientRow = FindClientMasterRow(clientWs, userID, nameText, shouldSkip)
+    If clientRow <= 0 Then Exit Function
+
+    indexRow = FindDeleteEvalIndexRow(indexWs, userID, nameText)
+    If indexRow <= 0 Then Exit Function
+
+    historySheetName = Trim$(CStr(indexWs.Cells(indexRow, 4).value))
+    If Not TryDeleteWorksheetSafe(historySheetName) Then Exit Function
+
+    deletedAt = Now
+    indexWs.rows(indexRow).Delete
+    clientWs.rows(clientRow).Delete
+    AppendClientDeleteLog deletedAt, nameText, userID, lastActivityDateText
+    DeleteClientByRetentionTarget = True
+End Function
+
+Public Function RunClientAutoDeleteMaintenance() As Long
+    Dim deleteTargets As Collection
+    Dim item As Object
+
+    Set deleteTargets = GetDeleteCandidateRows(Date)
+    If deleteTargets Is Nothing Then Exit Function
+
+    For Each item In deleteTargets
+        If DeleteClientByRetentionTarget( _
+            Trim$(CStr(item("UserID"))), _
+            Trim$(CStr(item("Name"))), _
+            Trim$(CStr(item("LastActivityDate")))) Then
+            RunClientAutoDeleteMaintenance = RunClientAutoDeleteMaintenance + 1
+        End If
+    Next item
+End Function
+
+Public Function SetClientArchived(ByVal userID As String, ByVal nameText As String, Optional ByVal archivedAt As Variant) As Boolean
+    Dim ws As Worksheet
+    Dim rowNo As Long
+    Dim shouldSkip As Boolean
+    Dim archivedDateText As String
+
+    Set ws = EnsureClientMasterSheet()
+    rowNo = FindClientMasterRow(ws, Trim$(userID), Trim$(nameText), shouldSkip)
+    If rowNo <= 0 Then Exit Function
+
+    If IsDate(archivedAt) Then
+        archivedDateText = FormatClientMasterDate(CDate(archivedAt))
+    Else
+        archivedDateText = FormatClientMasterDate(Date)
+    End If
+
+    ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_STATUS)).value = "Archived"
+    ws.Cells(rowNo, EnsureHeaderCol(ws, HDR_ARCHIVED_AT)).value = archivedDateText
+    RecalcClientMasterActivityFields ws, rowNo
+    SetClientArchived = True
+End Function
+
+
+
+
+
+
+
+
+

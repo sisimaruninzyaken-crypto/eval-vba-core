@@ -17,5 +17,6 @@ Public Sub Hook(ByVal x As MSForms.ListBox)
 End Sub
 Private Sub lb_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
     If lb.listIndex < 0 Then Exit Sub
-    frmEval.CommitNameSuggestSelection lb.listIndex
+    If Not lb.Visible Then Exit Sub
+    frmEval.CommitNameSuggestSelection lb.listIndex, True
 End Sub
